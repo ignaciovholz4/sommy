@@ -1,0 +1,91 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Models\WaMessage;
+use App\Services\WhatsApp\WhatsAppApiException;
+use App\Services\WhatsApp\WhatsAppService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * Envia un wa_message ya persistido (status=pending) a la Cloud API.
+ * El registro se crea antes (en el controlador de la bandeja o en el agente IA)
+ * para que aparezca al instante en la UI; este job solo lo despacha a Meta.
+ */
+class SendWhatsAppMessage implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+    public int $backoff = 15;
+
+    public int $waMessageId;
+
+    /** Payload extra para plantillas: {name, language, params[]} */
+    public ?array $template;
+
+    public function __construct(int $waMessageId, ?array $template = null)
+    {
+        $this->waMessageId = $waMessageId;
+        $this->template = $template;
+    }
+
+    public function handle(): void
+    {
+        $message = WaMessage::with('conversation.account')->find($this->waMessageId);
+        if (!$message || $message->status !== 'pending') {
+            return;
+        }
+
+        $conversation = $message->conversation;
+
+        try {
+            // Messenger / Instagram: texto simple via Messenger Platform
+            if ($conversation->channel !== 'whatsapp') {
+                $mid = \App\Services\WhatsApp\MessengerService::forAccount($conversation->account)
+                    ->sendText($conversation->external_id, (string) $message->body);
+
+                $message->update(['wa_message_id' => $mid ?: null, 'status' => 'sent']);
+                return;
+            }
+
+            $service = WhatsAppService::forAccount($conversation->account);
+
+            if ($this->template) {
+                $payload = $service->buildTemplatePayload(
+                    $conversation->phone_e164,
+                    $this->template['name'],
+                    $this->template['language'] ?? 'es_AR',
+                    $this->template['params'] ?? []
+                );
+            } else {
+                $payload = $service->buildTextPayload($conversation->phone_e164, (string) $message->body);
+            }
+
+            $response = $service->send($payload);
+
+            $message->update([
+                'wa_message_id' => $response['messages'][0]['id'] ?? null,
+                'status' => 'sent',
+            ]);
+        } catch (WhatsAppApiException $e) {
+            Log::warning('Fallo envio WhatsApp', [
+                'wa_message' => $message->id,
+                'code' => $e->errorCode,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Errores definitivos (ventana vencida, numero invalido): no reintentar
+            $message->update([
+                'status' => 'failed',
+                'error_code' => $e->errorCode,
+                'error_detail' => $e->getMessage(),
+            ]);
+        }
+    }
+}

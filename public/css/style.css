@@ -1,0 +1,425 @@
+:root {
+  --mp-yellow: #ffd200;
+  --mp-blue: #0070f0;
+  --light-grey: #f5f5f5;
+  --gray-800: #333333; /* Approximate from screenshot */
+  --gray-600: #666666; /* Approximate from screenshot */
+  --gray-500: #999999; /* Approximate from screenshot */
+  --gray-200: #e0e0e0; /* Approximate from screenshot */
+}
+
+body {
+  font-family: sans-serif; /* Or a specific font if known */
+}
+
+.text-mp-blue {
+  color: var(--mp-blue) !important;
+}
+
+.bg-mp-yellow {
+  background-color: var(--mp-yellow) !important;
+}
+
+.bg-light-grey {
+  background-color: var(--light-grey) !important;
+}
+
+.btn-mp-blue {
+  background-color: var(--mp-blue);
+  border-color: var(--mp-blue);
+}
+
+.btn-mp-blue:hover {
+  background-color: #005bb5; /* Slightly darker blue for hover */
+  border-color: #005bb5;
+}
+
+.hover-mp-blue:hover {
+  color: var(--mp-blue) !important;
+}
+
+.hover-underline:hover {
+  text-decoration: underline !important;
+}
+
+.transition-colors {
+  transition: color 0.3s ease-in-out;
+}
+
+.display-4 {
+  font-size: calc(1.525rem + 3.3vw); /* Responsive font size for large headings */
+}
+
+.display-5 {
+  font-size: calc(1.425rem + 2.1vw); /* Responsive font size for medium headings */
+}
+
+/* Custom blur effect for hero image background */
+.blur-3xl {
+  filter: blur(48px); /* Tailwind's blur-3xl equivalent */
+}
+
+/* Wave Separator Styling */
+.wave-separator {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100px; /* Height of the SVG */
+  overflow: hidden;
+  z-index: 2; /* Ensure it's above content but below images if needed */
+}
+
+.wave-separator svg {
+  display: block; /* Remove extra space below SVG */
+}
+
+/* Specific wave colors for sections */
+.bg-mp-yellow .wave-separator path {
+  fill: white; /* Wave at bottom of yellow section is white */
+}
+
+.bg-mp-yellow:nth-of-type(4) .wave-separator path {
+  /* Targeting the second yellow section */
+  fill: var(--mp-yellow); /* Wave at top of second yellow section is yellow */
+}
+
+/* Adjust main content padding for fixed header */
+main {
+  padding-top: 72px; /* Height of the header */
+}
+
+/* Utility for spacing, similar to Tailwind's space-x/y */
+.space-x-2 > *:not(:first-child) {
+  margin-left: 0.5rem;
+}
+.space-x-3 > *:not(:first-child) {
+  margin-left: 0.75rem;
+}
+.space-x-4 > *:not(:first-child) {
+  margin-left: 1rem;
+}
+.space-y-2 > *:not(:first-child) {
+  margin-top: 0.5rem;
+}
+.space-y-3 > *:not(:first-child) {
+  margin-top: 0.75rem;
+}
+.space-y-4 > *:not(:first-child) {
+  margin-top: 1rem;
+}
+
+/* Ensure full height for testimonial cards */
+.h-100 {
+  height: 100%;
+}
+.navbar-nav li.nav-item {
+  font-weight: 600;
+  padding-right: 15px;
+}
+h1.display-4.fw-bold.lh-sm.text-gray-800.mb-4 {
+  font-size: 26px;
+  margin-top: 8%;
+}
+
+/* --- Services Carousel Specific Styles --- */
+#servicesCarousel .carousel-inner {
+  overflow: visible; /* Allow cards to slightly overflow for shadow */
+}
+
+#servicesCarousel .carousel-item {
+  padding-bottom: 3rem; /* Space for indicators */
+}
+
+#servicesCarousel .carousel-indicators {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem; /* Space between indicators */
+}
+
+#servicesCarousel .carousel-indicators button {
+  width: 30px; /* Wider for rectangular shape */
+  height: 8px; /* Shorter for rectangular shape */
+  border-radius: 2px; /* Slightly rounded corners */
+  background-color: var(--mp-purple);
+  opacity: 0.5;
+  transition: opacity 0.3s ease, background-color 0.3s ease;
+  border: none; /* Remove default border */
+}
+
+#servicesCarousel .carousel-indicators button.active {
+  opacity: 1;
+  background-color: var(--mp-purple); /* Active indicator color */
+}
+
+/* Hide default carousel controls */
+#servicesCarousel .carousel-control-prev,
+#servicesCarousel .carousel-control-next {
+  display: none;
+}
+
+/* Service Card Styling */
+.service-card {
+  background-color: white; /* Base background for the card */
+  border: none;
+  position: relative;
+  height: 450px; /* Fixed height for consistency */
+  display: flex;
+  flex-direction: column;
+}
+
+.service-card-image-container {
+  position: relative;
+  width: 100%;
+  height: 70%; /* Image takes up 70% of card height */
+  overflow: hidden;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+
+.service-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.service-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--mp-purple) 0%, var(--mp-purple-light) 100%);
+  opacity: 0.8; /* Adjust opacity as needed */
+}
+
+.service-category {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+  color: white;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-radius: 3px;
+  z-index: 1;
+}
+
+.service-icons {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.25rem;
+  z-index: 1;
+}
+
+.icon-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white; /* White border around icons */
+}
+
+.icon-top-left {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  width: 24px;
+  height: 24px;
+  z-index: 1;
+}
+
+.icon-flag {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%; /* Flags are circular */
+  object-fit: cover;
+  z-index: 1;
+}
+
+.service-card-body {
+  background-color: var(--mp-purple); /* Purple background for text area */
+  color: white;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Push button to bottom */
+  position: relative; /* For button positioning */
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+}
+
+/* Specific styling for the middle card's body */
+.service-card:nth-child(2) .service-card-body {
+  background-color: white; /* White background for middle card body */
+  color: var(--gray-800); /* Dark text for middle card */
+}
+
+.service-card:nth-child(2) .service-card-body .card-title {
+  color: var(--gray-800); /* Dark text for middle card title */
+}
+
+/* SEE + Button */
+.btn-see-plus {
+  background-color: var(--mp-purple-dark); /* Darker purple for button */
+  color: white;
+  width: 50px;
+  height: 50px;
+  font-size: 1rem;
+  font-weight: bold;
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+.btn-see-plus:hover {
+  background-color: var(--mp-blue); /* Hover effect */
+  color: white;
+}
+
+.btn-see-plus i {
+  font-size: 1.5rem; /* Size of the plus icon */
+}
+
+/* Arrow Circle Button (Middle Card) */
+.btn-arrow-circle {
+  background-color: var(--bs-yellow);
+  color: var(--mp-purple); /* Purple icon */
+  width: 50px;
+  height: 50px;
+  font-size: 1.5rem;
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  border: 1px solid var(--mp-purple); /* Purple border */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-arrow-circle:hover {
+  background-color: var(--bs-yellow);
+  color: white;
+}
+.card-title font font{
+  color: #4e3f3f;
+}
+
+a.text-gray-600.hover-mp-blue.transition-colors {
+  color: black;
+  text-decoration: none;
+}
+.bg-mp-purple-light {
+  background-color: #e8e0f5 !important;
+}
+
+
+
+
+/* --- FAQ Section Specific Styles --- */
+.custom-faq-accordion .accordion-item {
+  border: 1px solid var(--faq-item-border);
+  border-radius: 0.5rem; /* Rounded corners */
+  margin-bottom: 1rem; /* Space between items */
+  background-color: var(--faq-item-bg);
+  overflow: hidden; /* Ensure border-radius applies */
+}
+
+.custom-faq-accordion .accordion-header {
+  margin-bottom: 0; /* Remove default margin */
+  background-color: #dee2e6;
+}
+
+.custom-faq-accordion .accordion-button {
+  background-color: var(--faq-item-bg);
+  color: var(--gray-800);
+  font-weight: 500;
+  font-size: 1.1rem;
+  padding: 1rem 1.5rem;
+  border: none; /* Remove default button border */
+  box-shadow: none; /* Remove default button shadow */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.custom-faq-accordion .accordion-button:not(.collapsed) {
+  background-color: var(--faq-item-bg); /* Keep same background when open */
+  color: var(--gray-800);
+  box-shadow: none;
+}
+
+.custom-faq-accordion .accordion-button:focus {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+.custom-faq-accordion .accordion-button::after {
+  display: none; /* Hide default Bootstrap arrow icon */
+}
+
+.custom-faq-accordion .accordion-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--gray-500); /* Light grey border for icon circle */
+  color: var(--gray-500); /* Icon color */
+  font-size: 1.2rem;
+  transition: transform 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.custom-faq-accordion .accordion-button.collapsed .accordion-icon::before {
+  content: "\2b"; /* Plus sign */
+}
+
+.custom-faq-accordion .accordion-button:not(.collapsed) .accordion-icon::before {
+  content: "\2212"; /* Minus sign */
+}
+
+.custom-faq-accordion .accordion-body {
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid var(--faq-item-border); /* Separator line */
+  color: var(--gray-600);
+  background-color: #dee2e6;
+}
+
+h5.card-title {
+  color: #564040 !important;
+}
+.navbar-brand img{
+  width: 190px;
+  margin-left: 20px;
+  
+}
+header.fixed-top{
+  background-color: white!important;
+}
+/* Responsive adjustments for cards in carousel */
+@media (max-width: 991.98px) {
+  /* md breakpoint */
+  #servicesCarousel .carousel-item .col-md-6:nth-child(n + 3) {
+    display: none; /* Hide third card on medium screens */
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* sm breakpoint */
+  #servicesCarousel .carousel-item .col-12:nth-child(n + 2) {
+    display: none; /* Hide second and third cards on small screens */
+  }
+}

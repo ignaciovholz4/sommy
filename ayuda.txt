@@ -1,0 +1,191 @@
+
+/*********************/
+
+<style>
+  .zoom{
+    position: relative;
+    widows: 100%;
+    overflow: hidden;
+    cursor: zoom-in;
+    border-radius: .5rem;
+  }
+  .zoom product-image{
+    transition: opacity .5s;
+    display: block;
+    width: 100%;
+  }
+</style>
+
+
+ .zoom{
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    cursor: zoom-in;
+    border-radius: .5rem;
+    height: 400px;
+  }
+  .zoom img{
+    transition: opacity .5s;
+    display: block;
+    width: 100%;
+  }
+
+  .product-tools img{
+    border-radius: 6px;
+    max-width: 100%;
+  }
+  .product-item-2{
+    width: 100%;
+    height: 400px;
+
+  position: relative;
+  background: #FFFFFF;
+  border: 1px solid #FBFBFB;
+  box-shadow: 0px 5px 22px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease-out;
+     
+  }
+.product-item-2 figure {
+  background: #ffff;
+  border-radius: 12px;
+  text-align: center;
+  display: flex;
+}
+.product-item-2 figure img {
+  max-height: 100%;
+  max-width: 100%;
+  border: 1px solid;
+}
+
+/*****************************/
+https://www.youtube.com/watch?v=aX8CJgiaCjE
+
+/*******************/
+/********QUERY PARA LA BASE DE DATOS POSVENTA_ZAPATERIA****************/
+select * from users u ;
+select * from clientes;
+
+select * from talla;
+select * from marca;
+select * from color;
+select * from grupo_producto;
+
+select * from productos p ;
+
+select * from permissions p;
+
+DELETE FROM permissions
+WHERE id in (3,15,16);
+
+/*INSERT into permissions
+(name, slug, description, created_at, updated_at)
+VALUES('Listar la seccion de marca', 'almacen_marca.index', 'Un usuario puede realizar la alta de marca', NULL, NULL);*/
+
+/*ALTER TABLE productos
+ADD COLUMN talla_id INT null AFTER categoria_id;
+
+ALTER TABLE productos ADD CONSTRAINT fk_talla FOREIGN KEY (talla_id) REFERENCES talla (id);
+
+ALTER TABLE productos
+ADD COLUMN marca_id INT null AFTER talla_id;
+
+ALTER TABLE productos ADD CONSTRAINT fk_marca FOREIGN KEY (marca_id) REFERENCES marca (id);
+
+ALTER TABLE productos
+ADD COLUMN color_id INT null AFTER marca_id;
+
+ALTER TABLE productos ADD CONSTRAINT fk_color FOREIGN KEY (color_id) REFERENCES color (id);
+
+ALTER TABLE productos
+ADD COLUMN grupop_id INT null AFTER color_id;
+
+ALTER TABLE productos ADD CONSTRAINT fk_grupop FOREIGN KEY (grupop_id) REFERENCES grupo_producto (id);*/
+
+/*CREATE TABLE talla (
+    id INT not null AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) not null,
+    tipo varchar(255) null,
+    estatus TINYINT(1) DEFAULT 1,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    
+);
+
+CREATE TABLE marca (
+    id INT not null AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) not null,
+    estatus TINYINT(1) DEFAULT 1,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE color (
+    id INT not null AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) not null,
+    estatus TINYINT(1) DEFAULT 1,
+    hexadecimal VARCHAR(255) null,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE grupo_producto (
+    id INT not null AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) not null,
+    descripcion varchar(255) null,
+    estatus TINYINT(1) DEFAULT 1,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    
+);*/
+
+
+/*CREATE PROCEDURE `add_detalle_entrada_tmp`(id_user_tmp INT, idarticulo_tmp INT,
+ codigo_tmp VARCHAR(50), nombre_tmp VARCHAR(500), cantidad_tmp DECIMAL(11,3),
+ pcompra_tmp DECIMAL(11,2), pventa_tmp DECIMAL(11,2))
+BEGIN
+INSERT INTO detalle_entrada_temp(id_user,idarticulo,codigo,nombre,
+cantidad,pcompra,pventa)VALUES(id_user_tmp,idarticulo_tmp,codigo_tmp,
+nombre_tmp,cantidad_tmp,pcompra_tmp,pventa_tmp);
+SELECT *, SUM(tmp.cantidad) AS total_articulos FROM detalle_entrada_temp tmp WHERE tmp.id_user=id_user_tmp GROUP BY tmp.idarticulo ORDER BY tmp.identradatemp DESC;
+end;*/
+
+/*CREATE PROCEDURE `add_detalle_venta_temp`(`id_user_tmp` INT, `idarticulo_tmp` INT, `codigo_tmp` VARCHAR(50), `nombre_tmp` VARCHAR(500), `cantidad_tmp` DECIMAL(11,3), `precio_tmp` DECIMAL(11,2), `descuento_tmp` DECIMAL(11,2), `iva_tmp` DECIMAL(11,2))
+BEGIN
+INSERT INTO detalle_venta_temp(id_user,idarticulo,codproducto,nombre,cantidad,precio,descuento,iva)VALUES(id_user_tmp,idarticulo_tmp,codigo_tmp,nombre_tmp,cantidad_tmp,precio_tmp,descuento_tmp,iva_tmp);
+SELECT *, SUM(tmp.cantidad) AS total_articulos FROM detalle_venta_temp tmp WHERE tmp.id_user=id_user_tmp GROUP BY tmp.idarticulo ORDER BY tmp.iddetalletemp DESC;
+end;
+*/
+
+/*CREATE PROCEDURE `delete_detalle_venta_temp`(`id_detalle_articulo_temp` INT,`id_user_temp` INT, `id_articulo` INT)
+BEGIN
+     	DELETE FROM detalle_venta_temp WHERE id_user=id_user_temp AND idarticulo=id_articulo;
+        SELECT *, SUM(tmp.cantidad) AS total_articulos FROM detalle_venta_temp tmp WHERE tmp.id_user=id_user_temp GROUP BY tmp.idarticulo ORDER BY tmp.iddetalletemp DESC;
+        
+     end;*/
+
+
+/*CREATE PROCEDURE `delete_prod_entrada_tmp`(idart_tmp INT,id_user_tmp INT,id_articulo INT)
+BEGIN
+DELETE FROM detalle_entrada_temp temp WHERE temp.id_user=id_user_tmp AND temp.idarticulo=id_articulo;
+SELECT tmp.*, SUM(tmp.cantidad) AS total_articulos FROM detalle_entrada_temp tmp WHERE tmp.id_user=id_user_tmp GROUP BY tmp.idarticulo ORDER BY tmp.identradatemp DESC;
+end;*/
+
+
+/*******************/
+
+/*******CREATE_NEW_TABLE_FOR_ECOMMERCE***********/
+CREATE TABLE variaciones (
+    id INT not null AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) not null,
+    option_type varchar(255) not null,
+    status TINYINT(1) DEFAULT 1,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE variantes_para_variaciones (
+    id INT not null AUTO_INCREMENT PRIMARY KEY,
+    variacion_id int not null,
+    name VARCHAR(255) not null,
+    option_type varchar(255) null,
+    descripcion varchar(255) null,
+    status TINYINT(1) DEFAULT 1,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (variacion_id) REFERENCES variaciones(id)
+);

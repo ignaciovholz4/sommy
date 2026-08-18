@@ -1,0 +1,101 @@
+
+/********************Procedimiento almacenado para restar el stock***************************/
+DROP PROCEDURE IF EXISTS processStockAfterOrderPaid;
+
+DELIMITER $$
+
+CREATE PROCEDURE processStockAfterOrderPaid(order_id INT)
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE v_producto_variacion_variante_id INT DEFAULT NULL;
+    DECLARE v_product_id INT;
+    DECLARE v_quantity INT;
+    DECLARE tipoProductoId INT;
+    
+    -- Declaramos el cursor
+    DECLARE cur CURSOR FOR 
+        SELECT product_id, quantity, producto_variacion_variante_id FROM order_detail_ecommerce WHERE order_ecommerce_id = order_id;
+    
+    -- Handler para controlar el final del cursor
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    -- Abrimos el cursor
+    OPEN cur;
+
+    read_loop: LOOP
+        -- Obtenemos la siguiente fila
+        FETCH cur INTO v_product_id, v_quantity, v_producto_variacion_variante_id;
+        
+        -- Verificamos si terminamos
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+        -- SELECT CONCAT('El valor de product_id es: ', v_quantity) AS mensaje;
+        -- Aquí puedes realizar la lógica con cada fila obtenida
+        SELECT tipo_producto_id INTO tipoProductoId FROM productos WHERE idarticulo = v_product_id;
+        IF tipoProductoId = 1 THEN
+		UPDATE productos SET stock=stock - v_quantity
+		WHERE productos.idarticulo=v_product_id;
+        ELSEIF tipoProductoId = 2 THEN
+		UPDATE producto_variacion_variante SET stock=stock - v_quantity 
+		WHERE id = v_producto_variacion_variante_id;
+		
+		UPDATE productos SET stock=stock - v_quantity
+		WHERE productos.idarticulo=v_product_id;
+        END IF;
+        
+    END LOOP;
+
+    -- Cerramos el cursor
+    CLOSE cur;
+END$$
+
+DELIMITER ;
+
+/*********************Trigger actualizado para llamar el procedimiento almacenado**********************************/
+DROP TRIGGER IF EXISTS trigger_afterOrderPaid;
+
+DELIMITER $$
+
+CREATE TRIGGER trigger_afterOrderPaid AFTER UPDATE ON order_ecommerce 
+    FOR EACH ROW BEGIN
+		DECLARE caja_open_id INT;
+		
+    	IF NEW.status_order_id = 2 AND OLD.status_order_id <> 2 THEN 	-- Check if the status was updated to 'Paid'
+    		SELECT caja_virtual_id INTO caja_open_id FROM aperturacajavirtual WHERE STATUS = 1 AND end_date_time IS NULL AND status_box = 'virtual_box_open';
+    		IF caja_open_id IS NOT NULL THEN
+    		   UPDATE aperturacajavirtual SET total = total + NEW.total_amount WHERE caja_virtual_id = caja_open_id; -- Update the total
+    		   CALL processStockAfterOrderPaid(NEW.order_id); -- llama al procedimiento para restar el stock al producto simple y variante
+		   UPDATE payment_ecommerce SET status_payment = 'Completado' WHERE order_id = NEW.order_id;
+    	   ELSE
+    	      UPDATE payment_ecommerce SET status_payment = 'Fallido' WHERE order_id = NEW.order_id;
+			END IF;  
+    	END IF;
+END;
+$$
+
+DELIMITER ;
+
+/*******************Trigger actualizado para restar el stock despues de una venta********************************/
+DROP TRIGGER IF EXISTS trigger_updateStockVenta;
+
+DELIMITER $$
+
+CREATE TRIGGER trigger_updateStockVenta AFTER INSERT ON detalle_ventas 
+    FOR EACH ROW BEGIN
+	IF NEW.tipo_producto_id = 2 AND new.tipo_producto_id IS NOT NULL THEN
+		UPDATE producto_variacion_variante SET stock=stock - NEW.cantidad 
+		WHERE id = NEW.producto_variacion_variante_id;
+		
+		UPDATE productos SET stock=stock-NEW.cantidad
+		WHERE productos.idarticulo=NEW.articulo_id;
+		
+	ELSEIF NEW.tipo_producto_id = 1 THEN
+		UPDATE productos SET stock=stock-NEW.cantidad
+		WHERE productos.idarticulo=NEW.articulo_id;
+	END IF;
+	UPDATE corte_cajero_dia SET total_acomulado=total_acomulado+NEW.subtotal WHERE corte_cajero_dia.apertura_id=NEW.apertura_id;
+END;
+$$
+
+DELIMITER ;

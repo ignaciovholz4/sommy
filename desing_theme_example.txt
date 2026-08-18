@@ -1,0 +1,22 @@
+https://bootstrap-ecommerce.com/
+
+/****************************/
+
+Para productos personalizado.
+ 1. El stock total sea la suma de las variantes.
+ 2. Que reste a medida que se hacen ventas y pedido ecommerce.
+ 3. Desaparecer la opcion de cargar stock desde el formulario de producto.
+ 3. Restructurar el modulo de ventas para que funcione el punto 1, 2 y 3.
+
+Para seleccionar el producto desde el ecommerce.
+ 1. Lo que hay que hacer la validacion de stock se haga cuando se agrega al carrito no cuando se selecciona la variable.
+ 2. Segun la variable seleccionada el cliente pueda saber cuanto stock de ese articulo con esas variantes hay para poder saber cuantos puede agregar al carrito.
+
+Para el modulo de pedidos
+ 1. Los pedidos pagados no descuentan del stock.
+
+Modulo de ventas
+ 1. No me esta restando stock cuando realizo ventas.
+
+Para productos personalizado. (Variantes)
+ 1. No me deja agregar varaintes. Por que dice que ya existe una. Una vez que se agrega 1 ya no se puede seguir agregando.

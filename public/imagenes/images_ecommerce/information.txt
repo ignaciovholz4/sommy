@@ -1,0 +1,1 @@
+Esta carpeta va a contener las imagenes de los productos a mostrar en el ecomerce

@@ -1,0 +1,292 @@
+@php
+    $resp = request()->path();
+@endphp
+
+<style>
+    /* Reset y Base para el Layout */
+    .content-wrapper { margin-left: 0 !important; background-color: #F8FAFC !important; }
+    .main-sidebar { display: none !important; }
+    .main-header { margin-left: 0 !important; border-bottom: none !important; padding: 0 !important; }
+
+    /* --- HEADER SOMMY: fondo noche Azul Sommy, sereno --- */
+    .dg-header-top {
+        background: linear-gradient(120deg, #1B2B5A 0%, #24356B 100%) !important;
+        height: 75px;
+        display: flex;
+        align-items: center;
+        padding: 0 5%;
+        border-bottom: none;
+        position: sticky;
+        top: 0;
+        z-index: 1100;
+        font-family: 'Poppins', -apple-system, sans-serif;
+        overflow: hidden;
+    }
+
+    /* Destellos ✦ de marca (máx. 3, serenos) */
+    .dg-header-top .dg-sparkle {
+        position: absolute;
+        color: #0EA5E9;
+        pointer-events: none;
+        font-size: 13px;
+        opacity: .55;
+    }
+    .dg-header-top .dg-sparkle--1 { top: 16px; right: 18%; }
+    .dg-header-top .dg-sparkle--2 { bottom: 12px; right: 34%; font-size: 9px; color: #E0F2FE; }
+    .dg-header-top .dg-sparkle--3 { top: 30px; left: 32%; font-size: 8px; color: #E0F2FE; opacity: .35; }
+
+    .dg-top-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .dg-brand-section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    /* Logo blanco directo sobre el fondo noche, sin placa */
+    .dg-logo-plate {
+        display: inline-flex;
+        align-items: center;
+        background: transparent;
+        padding: 8px 0;
+        margin-left: 84px;
+        transition: transform .15s ease;
+    }
+    .dg-logo-plate:hover { transform: translateY(-1px); }
+
+    .dg-logo {
+        height: 52px;
+        width: auto;
+        display: block;
+    }
+
+    .dg-mobile-burger {
+        display: none;
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        width: 40px;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+
+    .dg-tools-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-right: 72px;
+    }
+
+    /* --- BOTÓN PEDIDOS --- */
+    .dg-nav-item {
+        color: #E0F2FE !important;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        text-decoration: none !important;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 16px;
+        border-radius: 999px;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(224, 242, 254, 0.25);
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    .dg-nav-item:hover {
+        background: rgba(14, 165, 233, 0.15);
+        color: #ffffff !important;
+        border-color: #0EA5E9;
+    }
+
+    .dg-nav-item.active {
+        background: rgba(14, 165, 233, 0.2);
+        color: #ffffff !important;
+        border-color: #0EA5E9;
+    }
+
+    /* --- BOTÓN "VER MI TIENDA": pill Azul Confort --- */
+    .dg-store-btn {
+        background: #2563EB;
+        color: #ffffff !important;
+        font-weight: 500;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        padding: 7px 18px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        text-decoration: none !important;
+        border: none;
+        box-shadow: 0 10px 30px rgba(27, 43, 90, .10);
+        height: 32px;
+        cursor: pointer;
+        transition: background .2s ease, transform .1s ease;
+    }
+    .dg-store-btn:hover {
+        background: #0EA5E9;
+        transform: translateY(-1px);
+    }
+
+    .dg-divider {
+        height: 20px;
+        width: 1px;
+        background: rgba(224, 242, 254, 0.2);
+        margin: 0 5px;
+    }
+
+    .dg-logout-btn {
+        color: rgba(224, 242, 254, 0.6) !important;
+        font-size: 16px;
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        text-decoration: none !important;
+    }
+    .dg-logout-btn:hover { color: #ffffff !important; background: rgba(255,255,255,.06); }
+
+    @media (max-width: 992px) {
+        .dg-mobile-burger { display: flex; }
+        .dg-header-top { padding: 0 1.5rem; }
+        .dg-logo-plate { margin-left: 20px; padding: 6px 0; }
+        .dg-logo { height: 36px; }
+        .dg-tools-right { margin-right: 0; }
+        .dg-nav-item span { display: none; }
+        .dg-nav-item { display: none; }
+    }
+</style>
+
+<header class="dg-header-top">
+    <span class="dg-sparkle dg-sparkle--1">✦</span>
+    <span class="dg-sparkle dg-sparkle--2">✦</span>
+    <span class="dg-sparkle dg-sparkle--3">✦</span>
+    <div class="dg-top-container">
+        <div class="dg-brand-section">
+            {{-- Logotipo Sommy en blanco, directo sobre el fondo noche --}}
+            <a href="{{url('/dashboard')}}" class="dg-logo-plate" style="text-decoration: none;">
+                <img src="{{asset('imagenes/marca/sommy-logo-blanco-texto.png')}}" class="dg-logo" alt="Sommy">
+            </a>
+        </div>
+
+        <div class="dg-tools-right">
+            <a href="{{ url('/orders/order') }}" class="dg-nav-item {{ str_contains($resp, 'pedidos') ? 'active' : '' }}" title="Ver Pedidos Ecommerce" style="position:relative;">
+                <i class="fas fa-shopping-basket"></i>
+                <span>Pedidos</span>
+                <span id="dgOrdersBadge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;background:#0EA5E9;color:#fff;font-size:11px;font-weight:700;border-radius:999px;align-items:center;justify-content:center;padding:0 5px;line-height:19px;text-align:center;">0</span>
+            </a>
+
+            <div class="dg-divider"></div>
+
+            <a href="{{ url('/envios') }}" class="dg-nav-item {{ \Illuminate\Support\Str::startsWith($resp, 'envios') ? 'active' : '' }}" title="Tablero de envíos y fletes" style="position:relative;">
+                <i class="fas fa-shipping-fast"></i>
+                <span>Envíos</span>
+                <span id="dgEnviosBadge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;background:#0EA5E9;color:#fff;font-size:11px;font-weight:700;border-radius:999px;align-items:center;justify-content:center;padding:0 5px;line-height:19px;text-align:center;">0</span>
+            </a>
+
+            <div class="dg-divider"></div>
+
+            <a href="{{ url('/') }}" target="_blank" rel="noopener noreferrer" class="dg-store-btn" title="Ver mi tienda online">
+                <i class="fas fa-external-link-alt"></i>
+                <span>Ver mi tienda</span>
+            </a>
+
+            <div class="dg-divider"></div>
+
+            <a href="{{ url('/logout') }}" class="dg-logout-btn" title="Cerrar sesión">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </div>
+</header>
+
+<script>
+// Alerta de pedidos nuevos: badge en PEDIDOS + notificación al detectar un pedido entrante
+window.addEventListener('load', function () {
+    var badge = document.getElementById('dgOrdersBadge');
+    if (!badge) return;
+
+    function chequearPedidos() {
+        fetch('{{ url('/orders/new-count') }}', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data) return;
+
+                // Badge con la cantidad de pedidos pendientes
+                if (data.pendientes > 0) {
+                    badge.textContent = data.pendientes > 99 ? '99+' : data.pendientes;
+                    badge.style.display = 'inline-flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+
+                // Aviso de pedidos estancados (más de 48 hs en Pendiente), máximo una vez cada 6 horas
+                if (data.estancados > 0 && window.toastr) {
+                    var ultimoAvisoEstancados = parseInt(localStorage.getItem('sommyAvisoEstancados') || '0', 10);
+                    if (Date.now() - ultimoAvisoEstancados > 6 * 60 * 60 * 1000) {
+                        toastr.warning(
+                            'Hay ' + data.estancados + ' pedido(s) hace más de 48 hs sin atender',
+                            '⏰ Pedidos estancados',
+                            { timeOut: 15000, onclick: function () { window.location.href = '{{ url('/orders/order') }}'; } }
+                        );
+                        localStorage.setItem('sommyAvisoEstancados', String(Date.now()));
+                    }
+                }
+
+                // Notificación cuando aparece un pedido con id mayor al último visto
+                var ultimoVisto = parseInt(localStorage.getItem('sommyUltimoPedidoVisto') || '0', 10);
+                if (ultimoVisto && data.ultimo_id > ultimoVisto && window.toastr) {
+                    toastr.info(
+                        'Hacé clic para ver los pedidos',
+                        '🛒 ¡Entró un pedido nuevo! (#' + data.ultimo_id + ')',
+                        {
+                            timeOut: 12000,
+                            positionClass: 'toast-top-right',
+                            onclick: function () { window.location.href = '{{ url('/orders/order') }}'; }
+                        }
+                    );
+                }
+                localStorage.setItem('sommyUltimoPedidoVisto', String(data.ultimo_id));
+            })
+            .catch(function () {});
+    }
+
+    chequearPedidos();
+    setInterval(chequearPedidos, 45000);
+
+    // Badge de Envíos: suma lo que espera flete + lo que espera despacho
+    var badgeEnvios = document.getElementById('dgEnviosBadge');
+    function chequearEnvios() {
+        fetch('{{ url('/envios/pending-count') }}', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+                if (!data || !badgeEnvios) return;
+                var total = (data.sin_flete || 0) + (data.despachar || 0);
+                if (total > 0) {
+                    badgeEnvios.textContent = total > 99 ? '99+' : total;
+                    badgeEnvios.style.display = 'inline-flex';
+                } else {
+                    badgeEnvios.style.display = 'none';
+                }
+            })
+            .catch(function () {});
+    }
+    chequearEnvios();
+    setInterval(chequearEnvios, 45000);
+});
+</script>

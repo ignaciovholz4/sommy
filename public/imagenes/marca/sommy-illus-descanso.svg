@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 380" fill="none" role="img" aria-label="El arte del descanso Sommy">
+  <!-- halo sereno de fondo -->
+  <ellipse cx="285" cy="212" rx="245" ry="152" fill="#E0F2FE" opacity=".4"/>
+
+  <!-- luna -->
+  <circle cx="466" cy="70" r="32" fill="#E0F2FE"/>
+  <circle cx="456" cy="62" r="6" fill="#FFFFFF" opacity=".85"/>
+  <circle cx="476" cy="82" r="4" fill="#FFFFFF" opacity=".7"/>
+
+  <!-- destellos (máx. 3) -->
+  <path d="M96 74l4.2 13.8L114 92l-13.8 4.2L96 110l-4.2-13.8L78 92l13.8-4.2Z" fill="#0EA5E9" opacity=".85"/>
+  <path d="M404 140l3 9.8 9.8 3-9.8 3-3 9.8-3-9.8-9.8-3 9.8-3Z" fill="#E0F2FE"/>
+  <path d="M508 150l2.4 7.8 7.8 2.4-7.8 2.4-2.4 7.8-2.4-7.8-7.8-2.4 7.8-2.4Z" fill="#0EA5E9" opacity=".5"/>
+
+  <!-- pluma flotando -->
+  <g transform="translate(150 78) rotate(-14)">
+    <path d="M0 42Q34 2 92 0 70 44 22 52 6 52 0 42Z" fill="#E0F2FE"/>
+    <path d="M2 40Q40 6 88 2" stroke="#0EA5E9" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M10 44Q40 30 70 16" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" opacity=".9"/>
+  </g>
+
+  <!-- cama: respaldo y pie -->
+  <rect x="118" y="128" width="30" height="150" rx="15" fill="#1B2B5A"/>
+  <rect x="472" y="196" width="24" height="82" rx="12" fill="#1B2B5A"/>
+
+  <!-- base sommier -->
+  <rect x="128" y="240" width="354" height="34" rx="12" fill="#24356B"/>
+  <rect x="146" y="274" width="14" height="26" rx="6" fill="#1B2B5A"/>
+  <rect x="452" y="274" width="14" height="26" rx="6" fill="#1B2B5A"/>
+
+  <!-- colchón -->
+  <rect x="136" y="198" width="340" height="48" rx="18" fill="#FFFFFF" stroke="#E7EAF2" stroke-width="2"/>
+  <path d="M154 222h304" stroke="#E0F2FE" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- manta -->
+  <rect x="282" y="192" width="188" height="56" rx="18" fill="#1B2B5A"/>
+  <path d="M300 214q20 8 40 0t40 0" stroke="#E0F2FE" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+
+  <!-- almohada -->
+  <rect x="152" y="174" width="92" height="36" rx="16" fill="#E0F2FE"/>
+  <path d="M166 192q30-8 64 0" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+
+  <!-- sombra de piso -->
+  <ellipse cx="300" cy="318" rx="200" ry="13" fill="#1B2B5A" opacity=".07"/>
+</svg>

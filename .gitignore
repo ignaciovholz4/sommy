@@ -1,0 +1,13 @@
+vendor
+package-lock.json
+node_modules/
+*.log
+.env
+.env.local
+.env.production
+FACTURAG_V1_MULTITENANT.zip
+.env.bak
+.env.backup
+.env.temp
+holzdream_erp_hostinger.sql
+script.sql

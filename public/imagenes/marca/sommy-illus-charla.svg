@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 300" fill="none" role="img" aria-label="Conversemos sobre tu descanso">
+  <!-- halo sereno -->
+  <ellipse cx="210" cy="158" rx="180" ry="120" fill="#E0F2FE" opacity=".4"/>
+
+  <!-- burbuja principal (noche) -->
+  <rect x="62" y="58" width="196" height="92" rx="28" fill="#1B2B5A"/>
+  <path d="M96 148l-10 30 34-22Z" fill="#1B2B5A"/>
+  <circle cx="128" cy="104" r="7" fill="#E0F2FE"/>
+  <circle cx="160" cy="104" r="7" fill="#E0F2FE" opacity=".75"/>
+  <circle cx="192" cy="104" r="7" fill="#E0F2FE" opacity=".5"/>
+
+  <!-- burbuja respuesta (brisa) con pluma -->
+  <rect x="188" y="172" width="176" height="80" rx="26" fill="#E0F2FE"/>
+  <path d="M330 250l10 26-32-18Z" fill="#E0F2FE"/>
+  <g transform="translate(224 196)">
+    <path d="M0 26Q22 2 58 0 44 28 14 33 4 33 0 26Z" fill="#FFFFFF"/>
+    <path d="M2 24Q26 4 56 1" stroke="#0EA5E9" stroke-width="2" stroke-linecap="round"/>
+    <path d="M60 4q22 8 44 4" stroke="#1B2B5A" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- destellos (máx. 3) -->
+  <path d="M330 44l3.6 11.8 11.8 3.6-11.8 3.6-3.6 11.8-3.6-11.8-11.8-3.6 11.8-3.6Z" fill="#0EA5E9" opacity=".85"/>
+  <path d="M52 200l2.8 9 9 2.8-9 2.8-2.8 9-2.8-9-9-2.8 9-2.8Z" fill="#0EA5E9" opacity=".5"/>
+  <path d="M382 130l2.4 7.8 7.8 2.4-7.8 2.4-2.4 7.8-2.4-7.8-7.8-2.4 7.8-2.4Z" fill="#E0F2FE"/>
+</svg>

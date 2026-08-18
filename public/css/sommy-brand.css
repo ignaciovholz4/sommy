@@ -1,0 +1,216 @@
+/* ================================================================
+   SOMMY — Design System del Panel de Gestión (Brandbook oficial)
+   Azul Sommy #1B2B5A · Azul Confort #2563EB · Verde Agua #0EA5E9
+   Brisa Suave #E0F2FE · Blanco Algodón #F8FAFC · Borde #E7EAF2
+   Lora (titulares) · Poppins (información/formularios)
+   Sombra única permitida: 0 10px 30px rgba(27,43,90,.10)
+   ================================================================ */
+
+:root {
+    --sm-navy:      #1B2B5A;
+    --sm-navy-2:    #24356B;
+    --sm-blue:      #2563EB;
+    --sm-aqua:      #0EA5E9;
+    --sm-breeze:    #E0F2FE;
+    --sm-cotton:    #F8FAFC;
+    --sm-border:    #E7EAF2;
+    --sm-text-2:    #5D6884;
+    --sm-text-3:    #8A93AD;
+    --sm-shadow:    0 10px 30px rgba(27, 43, 90, .10);
+
+    /* Compatibilidad con variables previas del layout */
+    --farg-bg:         var(--sm-cotton);
+    --farg-blue-dark:  var(--sm-navy);
+    --farg-blue-light: var(--sm-blue);
+    --farg-yellow:     var(--sm-aqua);
+}
+
+/* ── Base ─────────────────────────────────────────────────────── */
+body,
+.content-wrapper {
+    font-family: 'Poppins', sans-serif !important;
+    background-color: var(--sm-cotton) !important;
+    color: #3d4763;
+}
+
+h1, h2, h3, h4, h5 {
+    font-family: 'Poppins', sans-serif;
+    color: var(--sm-navy);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+a { color: var(--sm-blue); }
+a:hover { color: var(--sm-navy); }
+
+/* ── Cards: radio 16px + sombra suave ─────────────────────────── */
+.card {
+    border-radius: 16px !important;
+    border: 1px solid var(--sm-border);
+    box-shadow: var(--sm-shadow) !important;
+}
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid var(--sm-border);
+    border-radius: 16px 16px 0 0 !important;
+    color: var(--sm-navy);
+}
+.card-header .card-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: var(--sm-navy);
+}
+.card-primary.card-outline { border-top: 3px solid var(--sm-navy); }
+.card-primary:not(.card-outline) > .card-header {
+    background-color: var(--sm-navy);
+    color: #fff;
+}
+
+/* ── Botones ──────────────────────────────────────────────────── */
+.btn { border-radius: 10px; font-family: 'Poppins', sans-serif; }
+
+.btn-primary,
+.btn-info {
+    background-color: var(--sm-navy) !important;
+    border-color: var(--sm-navy) !important;
+    color: #fff !important;
+}
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active,
+.btn-info:hover, .btn-info:focus, .btn-info:active {
+    background-color: var(--sm-blue) !important;
+    border-color: var(--sm-blue) !important;
+    color: #fff !important;
+}
+
+.btn-outline-primary,
+.btn-outline-info {
+    color: var(--sm-navy) !important;
+    border-color: var(--sm-navy) !important;
+    background: transparent !important;
+}
+.btn-outline-primary:hover,
+.btn-outline-info:hover {
+    background-color: var(--sm-navy) !important;
+    color: #fff !important;
+}
+
+.btn-secondary {
+    background-color: var(--sm-breeze) !important;
+    border-color: var(--sm-breeze) !important;
+    color: var(--sm-navy) !important;
+}
+.btn-secondary:hover {
+    background-color: #cfe9fb !important;
+    border-color: #cfe9fb !important;
+    color: var(--sm-navy) !important;
+}
+
+/* ── Badges y fondos de utilidad ──────────────────────────────── */
+.badge-primary, .bg-primary { background-color: var(--sm-navy) !important; }
+.badge-info,    .bg-info    { background-color: var(--sm-aqua) !important; }
+.badge { border-radius: 999px; font-weight: 500; }
+
+/* ── Tablas / DataTables ──────────────────────────────────────── */
+.table thead th {
+    color: var(--sm-navy);
+    border-bottom: 2px solid var(--sm-border);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.table-hover tbody tr:hover { background-color: var(--sm-cotton); }
+
+.page-item.active .page-link,
+.paginate_button.current,
+.paginate_button.current:hover {
+    background: var(--sm-navy) !important;
+    border-color: var(--sm-navy) !important;
+    color: #fff !important;
+}
+.page-link { color: var(--sm-navy); }
+.page-link:hover { color: var(--sm-blue); }
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--sm-navy) !important;
+    border-color: var(--sm-navy) !important;
+    color: #fff !important;
+}
+
+/* ── Formularios ──────────────────────────────────────────────── */
+.form-control, .custom-select, .select2-container--default .select2-selection--single {
+    border-radius: 10px;
+    border-color: var(--sm-border);
+}
+.form-control:focus, .custom-select:focus {
+    border-color: var(--sm-blue);
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, .12);
+}
+label { color: var(--sm-navy); font-weight: 500; }
+
+.custom-control-input:checked ~ .custom-control-label::before,
+.form-check-input:checked {
+    background-color: var(--sm-navy);
+    border-color: var(--sm-navy);
+}
+
+/* ── Alertas serenas ──────────────────────────────────────────── */
+.alert { border-radius: 12px; }
+.alert-info {
+    background-color: var(--sm-breeze);
+    border-color: #bae2f8;
+    color: var(--sm-navy);
+}
+
+/* ── Footer del panel ─────────────────────────────────────────── */
+.main-footer {
+    background: #fff;
+    border-top: 1px solid var(--sm-border);
+    color: var(--sm-text-3);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 0.85rem;
+}
+.main-footer strong { font-weight: 500; }
+
+/* ── Modales / SweetAlert ─────────────────────────────────────── */
+.modal-content { border-radius: 16px; border: 1px solid var(--sm-border); }
+.modal-header {
+    background: var(--sm-cotton);
+    border-bottom: 1px solid var(--sm-border);
+    border-radius: 16px 16px 0 0;
+}
+.modal-title { font-family: 'Poppins', sans-serif; color: var(--sm-navy); }
+/* Headers oscuros de modales: la letra va en blanco.
+   Cubre la clase .modal-header-dark y cualquier header que use la cruz blanca
+   (btn-close-white / close), que es la marca de un header con fondo oscuro. */
+.modal-header-dark,
+.modal-header-dark .modal-title,
+.modal-header:has(.btn-close-white),
+.modal-header:has(.btn-close-white) .modal-title { color: #fff; }
+.modal-header-dark .modal-title i,
+.modal-header:has(.btn-close-white) .modal-title i { color: #7FD4F5; }
+.swal2-popup { border-radius: 18px !important; font-family: 'Poppins', sans-serif !important; }
+.swal2-title { font-family: 'Poppins', sans-serif !important; color: var(--sm-navy) !important; }
+.swal2-confirm {
+    background-color: var(--sm-navy) !important;
+    border-radius: 999px !important;
+}
+
+/* ── Nav-tabs ─────────────────────────────────────────────────── */
+.nav-tabs .nav-link.active {
+    color: var(--sm-navy);
+    border-bottom: 2px solid var(--sm-blue);
+    font-weight: 600;
+}
+.nav-tabs .nav-link { color: var(--sm-text-2); }
+
+/* ── Small boxes (dashboard) ──────────────────────────────────── */
+.small-box { border-radius: 16px; box-shadow: var(--sm-shadow); }
+.small-box.bg-info    { background-color: var(--sm-navy) !important; color: #fff !important; }
+.small-box.bg-success { background-color: var(--sm-aqua) !important; color: #fff !important; }
+.small-box.bg-warning { background-color: var(--sm-breeze) !important; color: var(--sm-navy) !important; }
+
+/* ── Capas: modales siempre por encima del header (1100) y nav (1029) ── */
+.modal-backdrop { z-index: 2990 !important; }
+.modal { z-index: 3000 !important; }
+.swal2-container { z-index: 3010 !important; }

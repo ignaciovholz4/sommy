@@ -1,0 +1,1 @@
+Esta carpeta va a contener las imagenes de los productos variantes cunado un producto es personalizado para mostrar en el ecommerce

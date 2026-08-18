@@ -1,0 +1,208 @@
+/* ================================================================
+   HOLZDREAM — Identidad de marca (Brandbook Ed. 2026)
+   Paleta: Petróleo #22454C · Petróleo profundo #14333B · Salvia #8AA79B
+           Salvia clara #C9D6CF · Niebla #F6F7F5 · Blanco · Oro #C0973F
+   Tipografía única: Hanken Grotesk (Display 300 / Título 500 / Cuerpo 400)
+   Proporción: el blanco domina; petróleo = autoridad serena; oro = acento
+   ================================================================ */
+
+:root {
+    /* Tipografía */
+    --ec-font:          'Hanken Grotesk', sans-serif;
+    --ec-heading-font:  'Hanken Grotesk', sans-serif;
+
+    /* Paleta Holzdream */
+    --hz-petrol:        #22454C;
+    --hz-petrol-deep:   #14333B;
+    --hz-salvia:        #8AA79B;
+    --hz-salvia-light:  #C9D6CF;
+    --hz-niebla:        #F6F7F5;
+    --hz-gold:          #C0973F;
+    --hz-gold-soft:     #E6D6AD;
+    --hz-cream:         #F7F0E2;
+
+    /* Remapeo de variables del tema al sistema Holzdream */
+    --ec-dark:          var(--hz-petrol-deep);
+    --ec-dark-2:        var(--hz-petrol);
+    --ec-dark-3:        #33484e;
+    --ec-mid:           #5e7178;
+    --ec-light:         var(--hz-salvia);
+    --ec-border:        #e4e9e7;
+    --ec-bg:            var(--hz-niebla);
+    --ec-bg-2:          #eef1ef;
+
+    --ec-accent:        var(--hz-petrol);
+    --ec-accent-hover:  var(--hz-petrol-deep);
+}
+
+/* ── Tipografía serena: pesos del brandbook ───────────────────── */
+body { font-weight: 400; }
+
+h1, h2, h3 {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+h4, h5, h6 { font-weight: 500; }
+
+.display-5, h1.mb-1 { font-weight: 300; }
+
+/* ── Acentos dorados (gesto del wordmark) ─────────────────────── */
+
+/* Badge de oferta: oro en lugar de verde genérico */
+.badge.bg-success {
+    background: var(--hz-gold) !important;
+    color: #fff !important;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+/* Precios: petróleo con autoridad */
+.product-item .price,
+.price.effective-price,
+#showPriceVariant,
+#showTotalPedido {
+    color: var(--hz-petrol) !important;
+}
+
+/* ── Botones: petróleo sereno ─────────────────────────────────── */
+.btn-dark,
+.btn-add-prod,
+.btn-add-prod-specific,
+.checkout-btn,
+.btn-primary.checkout-btn {
+    background: var(--hz-petrol) !important;
+    border-color: var(--hz-petrol) !important;
+    color: #fff !important;
+}
+.btn-dark:hover,
+.btn-add-prod:hover,
+.btn-add-prod-specific:hover,
+.checkout-btn:hover,
+.btn-primary.checkout-btn:hover {
+    background: var(--hz-petrol-deep) !important;
+    border-color: var(--hz-petrol-deep) !important;
+}
+
+.btn-outline-dark {
+    color: var(--hz-petrol) !important;
+    border-color: var(--hz-petrol) !important;
+}
+.btn-outline-dark:hover,
+.btn-check:checked + .btn-outline-dark {
+    background: var(--hz-petrol) !important;
+    border-color: var(--hz-petrol) !important;
+    color: #fff !important;
+}
+
+/* Botones primarios del checkout (secciones) */
+.section-content-order .btn-primary {
+    background: var(--hz-petrol);
+    border-color: var(--hz-petrol);
+}
+.section-content-order .btn-primary:hover {
+    background: var(--hz-petrol-deep);
+    border-color: var(--hz-petrol-deep);
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+.ec-header { border-bottom-color: var(--ec-border) !important; }
+
+.ec-nav .ec-nav-link { color: var(--hz-petrol); }
+.ec-nav .ec-nav-link:hover {
+    background: var(--hz-niebla);
+    color: var(--hz-petrol-deep);
+}
+.ec-action-btn { color: var(--hz-petrol); }
+.ec-action-btn:hover {
+    background: var(--hz-niebla);
+    color: var(--hz-petrol-deep);
+}
+.ec-cart-count {
+    background: var(--hz-gold) !important;
+}
+.ec-logo img { border-radius: 0; }
+
+/* ── Footer: petróleo profundo ────────────────────────────────── */
+.ec-footer { background: var(--hz-petrol-deep) !important; color: var(--hz-salvia-light) !important; }
+.ec-footer h6 { color: var(--hz-gold) !important; letter-spacing: 0.12em; font-weight: 500; }
+.ec-footer-links a { color: var(--hz-salvia-light) !important; }
+.ec-footer-links a:hover { color: #fff !important; }
+.ec-footer-info i { color: var(--hz-salvia) !important; }
+.ec-footer-social a { background: var(--hz-petrol) !important; color: var(--hz-salvia-light) !important; }
+.ec-footer-social a:hover { background: var(--hz-gold) !important; color: #fff !important; }
+.ec-footer-bottom { border-top-color: var(--hz-petrol) !important; }
+.ec-footer-brand img { border-radius: 0 !important; }
+
+/* ── Checkout: tarjetas serenas ───────────────────────────────── */
+.header-content-card {
+    background: var(--hz-niebla) !important;
+    color: var(--hz-petrol) !important;
+}
+.discount-badge {
+    background: var(--hz-cream) !important;
+    color: #7c6420 !important;
+}
+.summary-card { background: #fff; }
+
+/* ── Ficha de producto ────────────────────────────────────────── */
+.tabla-especificaciones th { color: var(--hz-petrol) !important; }
+.galeria-thumbs img.active,
+.galeria-thumbs img:hover { border-color: var(--hz-gold) !important; }
+
+/* ── Filtros de categoría ─────────────────────────────────────── */
+.sidebar-filtros h6 { color: var(--hz-salvia); letter-spacing: 0.1em; }
+.sidebar-filtros .form-check-input:checked {
+    background-color: var(--hz-petrol);
+    border-color: var(--hz-petrol);
+}
+
+/* ── Paginación ───────────────────────────────────────────────── */
+.pagination .page-link { color: var(--hz-petrol); }
+.pagination .page-item.active .page-link {
+    background-color: var(--hz-petrol);
+    border-color: var(--hz-petrol);
+    color: #fff;
+}
+
+/* ── Preloader ────────────────────────────────────────────────── */
+.preloader { border-top-color: var(--hz-gold) !important; }
+
+/* ── Home: slide placeholder y flechas del carrusel ───────────── */
+.ec-demo-slide--1 {
+    background: linear-gradient(135deg, var(--hz-petrol) 0%, #3a5a61 55%, var(--hz-salvia) 100%) !important;
+}
+.btn-yellow {
+    background: var(--hz-niebla) !important;
+    color: var(--hz-petrol) !important;
+    border: 1px solid var(--ec-border) !important;
+}
+.btn-yellow:hover {
+    background: var(--hz-petrol) !important;
+    color: #fff !important;
+}
+.section-title { font-weight: 500 !important; }
+
+/* ── Offcanvas búsqueda y carrito ─────────────────────────────── */
+#offcanvasSearch .btn {
+    background: var(--hz-petrol) !important;
+    border-color: var(--hz-petrol) !important;
+    color: #fff !important;
+}
+#offcanvasSearch .btn:hover { background: var(--hz-petrol-deep) !important; }
+#offcanvasCart .offcanvas-header h5 { color: var(--hz-petrol) !important; font-weight: 500 !important; }
+
+/* ── WhatsApp (verde oficial, no flúor) ───────────────────────── */
+#btnSendDataOrderWhatsapp {
+    background-color: #25D366 !important;
+    border-radius: 10px;
+    font-weight: 500;
+}
+#btnSendDataOrderWhatsapp:hover { background-color: #1EBE5A !important; }
+
+/* ── Links y focos ────────────────────────────────────────────── */
+a { transition: color .15s; }
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--hz-salvia);
+    box-shadow: 0 0 0 0.2rem rgba(138, 167, 155, 0.2);
+}

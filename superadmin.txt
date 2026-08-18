@@ -1,0 +1,9 @@
+Access the SuperAdmin panel at: /superadmin/login
+Default credentials:
+Email: admin@facturarg.com
+Password: admin123
+
+
+php artisan superadmin:setup
+
+s

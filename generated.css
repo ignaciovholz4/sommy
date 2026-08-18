@@ -1,0 +1,61 @@
+/* generated.css — minimal custom styles for fade/slide/steps and input errors */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.input {
+  @apply px-4 py-2 bg-white rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition w-full;
+}
+.input-bordered {
+  @apply border focus:ring-2;
+}
+
+.input-error {
+  @apply text-red-500 mt-1;
+}
+
+/* Step transitions (fade in, fade out, slide up) */
+@keyframes fade-in {
+  0%   { opacity: 0; transform: translateY(32px) scale(0.97);}
+  100% { opacity: 1; transform: translateY(0) scale(1.0);}
+}
+@keyframes fade-out {
+  0%   { opacity: 1; transform: translateY(0) scale(1.0);}
+  100% { opacity: 0; transform: translateY(-32px) scale(0.97);}
+}
+.animate-fade-in {
+  animation: fade-in 0.35s cubic-bezier(.4,0,.2,1);
+}
+.animate-fade-out {
+  animation: fade-out 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+  .onboarding-step {
+    padding: 0 !important;
+  }
+}
+
+/* Steps.js progress customization */
+.stepsjs {
+  @apply flex items-center justify-center w-full mb-8 gap-3;
+  background: none !important;
+}
+.stepsjs-step {
+  @apply flex items-center gap-2 relative text-sm font-medium select-none;
+  color: theme('colors.gray.500');
+}
+.stepsjs-step.stepsjs-current {
+  @apply text-primary;
+}
+.stepsjs-circle {
+  @apply flex items-center justify-center h-8 w-8 rounded-full border-2 border-gray-300 mr-2 bg-white font-bold text-gray-500 transition-colors;
+  font-size: 1rem;
+}
+.stepsjs-step.stepsjs-completed .stepsjs-circle,
+.stepsjs-step.stepsjs-current .stepsjs-circle {
+  @apply border-primary text-primary;
+}
+/* Allow you to override as needed */

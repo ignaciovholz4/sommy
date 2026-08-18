@@ -1,0 +1,32 @@
+## 4. Install Dependencies
+
+composer install
+npm install
+npm run dev
+
+## 5. Serve the Application
+test 
+php artisan serve no dont use this 
+
+# Or use Laravel Valet or Homestead for a more advanced setup
+
+## 6. Access the Application
+
+# Open your browser and go to:
+http://localhost:8000
+
+# Log in or register as needed. Tenants can be created via the UI or artisan commands.
+
+## 7. Additional Commands
+
+# Create a new tenant
+php artisan tenants:create
+
+# Run a specific tenant migration
+php artisan tenants:migrate --tenant=tenant_id
+
+# Seed a specific tenant
+php artisan tenants:seed --tenant=tenant_id
+
+# For more options, run:
+php artisan list
