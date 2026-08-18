@@ -768,6 +768,9 @@ Route::get('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\Conoci
 Route::post('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'store'])->name('articulo.conocimiento.store')->middleware(['auth','verified']);
 Route::delete('/articulo/conocimiento/{itemId}', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'destroy'])->name('articulo.conocimiento.destroy')->middleware(['auth','verified']);
 
+/** LEGALES (públicas — las exige Meta para publicar la app) */
+Route::view('/politica-de-privacidad', 'legal.privacidad')->name('legal.privacidad');
+
 /** INTEGRACIONES (claves de API del sistema) */
 Route::get('/admin/integraciones', [\App\Http\Controllers\Configuracion\IntegracionController::class, 'index'])->name('integraciones.index')->middleware(['auth','verified']);
 Route::post('/admin/integraciones', [\App\Http\Controllers\Configuracion\IntegracionController::class, 'guardar'])->name('integraciones.guardar')->middleware(['auth','verified']);
