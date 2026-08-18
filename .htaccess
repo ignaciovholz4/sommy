@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Hosting compartido (Hostinger): el document root apunta a la raíz del
+    # proyecto, así que todo se reescribe hacia public/, donde vive Laravel.
+    RewriteRule ^$ public/ [L]
+    RewriteRule (.*) public/$1 [L]
+</IfModule>
+
+# Nunca servir archivos sensibles aunque alguien los pida directo
+<FilesMatch "^\.env|composer\.(json|lock)$">
+    Require all denied
+</FilesMatch>
