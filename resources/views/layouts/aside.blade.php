@@ -617,10 +617,44 @@
     .dg-chat-burbuja:hover .globito { opacity: 1; }
     @media (max-width: 767px) { .dg-chat-burbuja { bottom: 18px; right: 16px; } }
 </style>
-<a href="{{ route('reportes.chat.index') }}" class="dg-chat-burbuja" title="Chat de Reportes con IA">
-    <i class="fas fa-robot"></i>
+<a href="javascript:void(0)" class="dg-chat-burbuja" id="dgChatBurbuja" title="Chat de Reportes con IA">
+    <i class="fas fa-robot" id="dgChatIcono"></i>
     <span class="puntito"></span>
     <span class="globito">Preguntale a tus números 📊</span>
 </a>
+
+{{-- Panel flotante del chat (se abre sobre la pantalla actual) --}}
+<div id="dgChatPanel" style="display:none;position:fixed;bottom:96px;right:26px;width:400px;max-width:94vw;height:560px;max-height:calc(100vh - 130px);z-index:2499;background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(27,43,90,.45);overflow:hidden;flex-direction:column;">
+    <div style="background:linear-gradient(135deg,#1B2B5A,#2563EB);color:#fff;padding:11px 16px;display:flex;align-items:center;justify-content:space-between;font-family:'Poppins',sans-serif;">
+        <b style="font-size:13.5px;">🤖 Analista de Reportes</b>
+        <span>
+            <a href="{{ route('reportes.chat.index') }}" title="Abrir en pantalla completa" style="color:#C7D0E8;font-size:12px;margin-right:10px;text-decoration:none;"><i class="fas fa-expand-alt"></i></a>
+            <button onclick="dgChatCerrar()" style="border:none;background:none;color:#fff;font-size:15px;cursor:pointer;">✕</button>
+        </span>
+    </div>
+    <iframe id="dgChatFrame" data-src="{{ route('reportes.chat.index') }}?embed=1" style="border:none;width:100%;flex:1;"></iframe>
+</div>
+
+<script>
+(function () {
+    var burbuja = document.getElementById('dgChatBurbuja');
+    var panel = document.getElementById('dgChatPanel');
+    var frame = document.getElementById('dgChatFrame');
+    var icono = document.getElementById('dgChatIcono');
+
+    burbuja.addEventListener('click', function () {
+        var abierto = panel.style.display !== 'none';
+        if (abierto) { dgChatCerrar(); return; }
+        if (!frame.src) { frame.src = frame.dataset.src; } // carga perezosa la primera vez
+        panel.style.display = 'flex';
+        icono.className = 'fas fa-chevron-down';
+    });
+
+    window.dgChatCerrar = function () {
+        panel.style.display = 'none';
+        icono.className = 'fas fa-robot';
+    };
+})();
+</script>
 @endif
 @endcan

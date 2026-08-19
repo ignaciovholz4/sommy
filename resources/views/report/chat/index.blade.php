@@ -3,6 +3,16 @@
 @section('title', 'Chat de Reportes')
 
 @section('contenido')
+@if(request('embed'))
+<style>
+    /* Modo embebido (burbuja flotante): solo el chat, sin header ni menú */
+    .dg-header-top, .dg-nav-bar, .main-footer, footer, .dg-chat-burbuja { display: none !important; }
+    .chat-wrap { grid-template-columns: 1fr !important; margin: 8px !important; max-width: 100% !important; }
+    .chat-sesiones { display: none !important; }
+    .chat-panel { height: calc(100vh - 16px) !important; }
+    body, .content-wrapper { background: #fff !important; }
+</style>
+@endif
 <style>
     .chat-wrap { font-family: 'Poppins', sans-serif; color: #1B2B5A; max-width: 1100px; margin: 18px auto; display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
     @media (max-width: 800px) { .chat-wrap { grid-template-columns: 1fr; } }
