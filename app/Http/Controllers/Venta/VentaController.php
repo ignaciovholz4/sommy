@@ -181,6 +181,11 @@ class VentaController extends Controller
 
             DB::commit();
 
+            \App\Models\Notificacion::avisar('venta',
+                'Nueva venta ' . ($venta->fresh()->num_folio ?: '#' . $venta->idventa) . ' por $' . number_format($totalConIva, 0, ',', '.'),
+                'Cliente: ' . trim(optional($venta->cliente)->nombre . ' ' . optional($venta->cliente)->paterno) . ($request->revendedor_id ? ' · vendió un revendedor' : ''),
+                url('ventas?ver=' . $venta->idventa));
+
             return redirect()->route('ventas.index')->with('success', 'Venta registrada correctamente');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -480,6 +485,11 @@ class VentaController extends Controller
             if ($ingresadoFinal >= $total) {
                 $venta->estado = 'cobrada';
                 $venta->save();
+
+                \App\Models\Notificacion::avisar('cobro',
+                    'Venta ' . ($venta->num_folio ?: '#' . $venta->idventa) . ' cobrada completa ($' . number_format($total, 0, ',', '.') . ')',
+                    'Cliente: ' . trim(optional($venta->cliente)->nombre ?? ''),
+                    url('ventas?ver=' . $venta->idventa), 'exito');
             }
 
             DB::commit();

@@ -16,4 +16,7 @@ if [ "$USERS" = "0" ]; then
     /usr/bin/php artisan db:seed --force
 fi
 
+# Tareas programadas (recordatorios de cobranza, reposición, alertas de stock)
+/usr/bin/php artisan schedule:run >/dev/null 2>&1
+
 /usr/bin/php artisan queue:work --stop-when-empty --max-time=50 >/dev/null 2>&1

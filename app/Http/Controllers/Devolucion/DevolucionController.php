@@ -227,6 +227,12 @@ class DevolucionController extends Controller
             $order->update(['status_order_id' => 6]);
 
             DB::commit();
+
+            \App\Models\Notificacion::avisar('devolucion',
+                'Devolución: pedido #' . $order->order_id . ' anulado',
+                'El stock asignado se liberó y el cobro se revirtió si existía.',
+                url('orders/order/' . $order->order_id), 'alerta');
+
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -764,6 +770,12 @@ class DevolucionController extends Controller
             $venta->save();
 
             DB::commit();
+
+            \App\Models\Notificacion::avisar('devolucion',
+                'Devolución: venta ' . ($venta->num_folio ?: '#' . $venta->idventa) . ' anulada ($' . number_format($venta->total_con_iva, 0, ',', '.') . ')',
+                'El stock volvió y los cobros se revirtieron según la cuenta elegida.',
+                url('ventas?ver=' . $venta->idventa), 'alerta');
+
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             DB::rollBack();

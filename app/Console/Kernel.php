@@ -36,6 +36,9 @@ class Kernel extends ConsoleKernel
 
         // Cobranzas: genera borradores de recordatorio para deuda vencida (quedan a aprobar)
         $schedule->command('cobranzas:generar-recordatorios')->dailyAt('07:00');
+
+        // Notificaciones: alerta diaria de stock crítico / stock bajo
+        $schedule->command('stock:alertar-critico')->dailyAt('08:30');
     }
 
     /**

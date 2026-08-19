@@ -171,6 +171,11 @@ class EcommerceorderController extends Controller
             $order->order_date = Carbon::now();
             $order->save();
 
+            \App\Models\Notificacion::avisar('pedido',
+                'Pedido web nuevo #' . $order->order_id . ' por $' . number_format($totalFinal, 0, ',', '.'),
+                trim(($localidad ?: '') . ' ' . ($provincia ? '· ' . $provincia : '')) ?: null,
+                url('orders/order/' . $order->order_id), 'exito');
+
             // Detalles
             foreach ($arrayDataOrder as $products) {
                 if($products['nameSection'] === 'products'){

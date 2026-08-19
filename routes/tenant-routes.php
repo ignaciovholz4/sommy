@@ -785,6 +785,12 @@ Route::delete('/articulo/conocimiento/{itemId}', [\App\Http\Controllers\Articulo
 Route::post('/ventas/{idventa}/comprobante', [\App\Http\Controllers\Venta\VentaController::class, 'subirComprobante'])->name('ventas.comprobante')->middleware(['auth','verified']);
 Route::delete('/ventas/comprobante/{compId}', [\App\Http\Controllers\Venta\VentaController::class, 'eliminarComprobante'])->name('ventas.comprobante.eliminar')->middleware(['auth','verified']);
 
+/** CENTRO DE NOTIFICACIONES */
+Route::get('/notificaciones', [\App\Http\Controllers\NotificacionController::class, 'index'])->name('notificaciones.index')->middleware(['auth','verified']);
+Route::get('/notificaciones/feed', [\App\Http\Controllers\NotificacionController::class, 'feed'])->name('notificaciones.feed')->middleware(['auth','verified']);
+Route::get('/notificaciones/{id}/ir', [\App\Http\Controllers\NotificacionController::class, 'ir'])->name('notificaciones.ir')->middleware(['auth','verified']);
+Route::post('/notificaciones/leidas', [\App\Http\Controllers\NotificacionController::class, 'marcarLeidas'])->name('notificaciones.leidas')->middleware(['auth','verified']);
+
 /** BUSCADOR GLOBAL por DNI/CUIT (clientes, proveedores, revendedores) */
 Route::get('/buscar-persona', [\App\Http\Controllers\BuscadorGlobalController::class, 'buscar'])->name('buscar.persona')->middleware(['auth','verified']);
 

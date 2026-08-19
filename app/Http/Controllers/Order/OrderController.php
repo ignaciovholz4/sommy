@@ -170,6 +170,11 @@ class OrderController extends Controller
 
             DB::commit();
 
+            \App\Models\Notificacion::avisar('pedido',
+                'Pedido manual #' . $order->order_id . ' (' . $request->origen . ') por $' . number_format($subtotal, 0, ',', '.'),
+                'Cliente: ' . $request->nombre,
+                url('orders/order/' . $order->order_id));
+
             return redirect('/orders/order/' . $order->order_id)
                 ->with('message', 'Pedido #' . $order->order_id . ' cargado correctamente.')
                 ->with('typealert', 'success');

@@ -471,13 +471,6 @@
             </li>
             @endcan
 
-            @can('haveaccess','reportes.chat.index')
-            <li class="dg-menu-item">
-                <a href="{{ route('reportes.chat.index') }}" class="dg-menu-link {{ Str::startsWith($resp,'reportes/chat') ? 'dg-active' : '' }}">
-                    <i class="fas fa-robot main-icon"></i> Chat de Reportes
-                </a>
-            </li>
-            @endcan
 
             {{-- TIENDA (Ecommerce) --}}
             @can('haveaccess','admin.index')
@@ -594,3 +587,40 @@
     });
 })();
 </script>
+{{-- Burbuja flotante del Chat de Reportes (analista IA) --}}
+@can('haveaccess','reportes.chat.index')
+@if(!Str::startsWith($resp, 'reportes/chat'))
+<style>
+    .dg-chat-burbuja {
+        position: fixed; bottom: 26px; right: 26px; z-index: 2500;
+        width: 58px; height: 58px; border-radius: 999px;
+        background: linear-gradient(135deg, #1B2B5A, #2563EB);
+        color: #fff !important; display: flex; align-items: center; justify-content: center;
+        font-size: 23px; text-decoration: none !important;
+        box-shadow: 0 12px 30px rgba(27, 43, 90, .40);
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .dg-chat-burbuja:hover { transform: scale(1.08); box-shadow: 0 16px 38px rgba(37, 99, 235, .45); color: #fff; }
+    .dg-chat-burbuja .puntito {
+        position: absolute; top: 3px; right: 5px; width: 11px; height: 11px;
+        border-radius: 999px; background: #0EA5E9; border: 2px solid #fff;
+        animation: dgChatLate 2s infinite;
+    }
+    @keyframes dgChatLate { 0%,100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+    .dg-chat-burbuja .globito {
+        position: absolute; right: 68px; top: 50%; transform: translateY(-50%);
+        background: #1B2B5A; color: #fff; font-family: 'Poppins', sans-serif;
+        font-size: 12px; font-weight: 500; white-space: nowrap;
+        padding: 7px 14px; border-radius: 999px; opacity: 0;
+        pointer-events: none; transition: opacity .15s ease;
+    }
+    .dg-chat-burbuja:hover .globito { opacity: 1; }
+    @media (max-width: 767px) { .dg-chat-burbuja { bottom: 18px; right: 16px; } }
+</style>
+<a href="{{ route('reportes.chat.index') }}" class="dg-chat-burbuja" title="Chat de Reportes con IA">
+    <i class="fas fa-robot"></i>
+    <span class="puntito"></span>
+    <span class="globito">Preguntale a tus números 📊</span>
+</a>
+@endif
+@endcan

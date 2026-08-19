@@ -24,6 +24,13 @@ class GenerarSugerenciasReposicion extends Command
         $this->info("Articulos analizados por debajo del minimo: {$resultado['analizados']}");
         $this->info('Pedidos de compra borrador generados: ' . count($resultado['pedidos']));
 
+        if (count($resultado['pedidos']) > 0) {
+            \App\Models\Notificacion::avisar('reposicion',
+                'Reposición: se generaron ' . count($resultado['pedidos']) . ' pedido(s) de compra borrador',
+                $resultado['analizados'] . ' artículo(s) por debajo del stock mínimo. Revisalos y convertilos en compra.',
+                url('compras/pedidos'), 'alerta');
+        }
+
         foreach ($resultado['pedidos'] as $p) {
             $this->line("- {$p['num_folio']} | {$p['proveedor']} | {$p['items']} articulos | \${$p['total_con_iva']}");
         }

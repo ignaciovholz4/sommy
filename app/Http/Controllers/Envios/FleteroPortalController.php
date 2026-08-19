@@ -148,6 +148,13 @@ class FleteroPortalController extends Controller
             ]));
         }
 
+        $this->completarParada($envio);
+        \App\Models\Notificacion::avisar('entrega',
+            $fletero->nombre . ' entregó ' . $envio->parada_referencia . ($request->monto_cobrado > 0 ? ' y cobró $' . number_format((float) $request->monto_cobrado, 0, ',', '.') : ''),
+            'Cliente: ' . $envio->parada_cliente . ' · con firma' . ($fotoPlataPath ? ' y foto del efectivo (a rendir)' : ''),
+            $envio->order_ecommerce_id ? url('orders/order/' . $envio->order_ecommerce_id) : url('ventas?ver=' . $envio->venta_id),
+            'exito');
+
         return redirect(url('fletero/' . $token))->with('entrega_ok', 'Entrega registrada. ¡Gracias!');
     }
 

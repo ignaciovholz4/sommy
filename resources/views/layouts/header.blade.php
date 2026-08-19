@@ -206,6 +206,22 @@
         </style>
 
         <div class="dg-tools-right">
+            {{-- Campanita: centro de notificaciones del negocio --}}
+            <a href="javascript:void(0)" class="dg-nav-item" id="dgNotifBtn" title="Notificaciones" style="position:relative;">
+                <i class="fas fa-bell"></i>
+                <span id="dgNotifBadge" style="display:none;position:absolute;top:-7px;right:-7px;min-width:19px;height:19px;background:#F59E0B;color:#fff;font-size:11px;font-weight:700;border-radius:999px;align-items:center;justify-content:center;padding:0 5px;line-height:19px;text-align:center;">0</span>
+            </a>
+            <div id="dgNotifPanel" style="display:none;position:absolute;top:64px;right:220px;width:390px;max-width:92vw;background:#fff;border-radius:14px;box-shadow:0 18px 55px rgba(0,0,0,.30);z-index:3000;overflow:hidden;font-family:'Poppins',sans-serif;">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 15px;border-bottom:1px solid #F1F4F9;">
+                    <b style="color:#1B2B5A;font-size:13.5px;">🔔 Novedades del negocio</b>
+                    <button id="dgNotifLeidas" style="border:none;background:none;color:#2563EB;font-size:11.5px;cursor:pointer;font-family:'Poppins',sans-serif;">Marcar leídas</button>
+                </div>
+                <div id="dgNotifLista" style="max-height:380px;overflow-y:auto;"></div>
+                <a href="{{ url('notificaciones') }}" style="display:block;text-align:center;padding:9px;font-size:12px;color:#2563EB;text-decoration:none;border-top:1px solid #F1F4F9;">Ver historial completo</a>
+            </div>
+
+            <div class="dg-divider"></div>
+
             <a href="{{ url('/orders/order') }}" class="dg-nav-item {{ str_contains($resp, 'pedidos') ? 'active' : '' }}" title="Ver Pedidos Ecommerce" style="position:relative;">
                 <i class="fas fa-shopping-basket"></i>
                 <span>Pedidos</span>
@@ -309,6 +325,59 @@ window.addEventListener('load', function () {
     }
     chequearEnvios();
     setInterval(chequearEnvios, 45000);
+
+    // 🔔 Centro de notificaciones: badge + desplegable
+    var notifBtn = document.getElementById('dgNotifBtn');
+    var notifPanel = document.getElementById('dgNotifPanel');
+    var notifBadge = document.getElementById('dgNotifBadge');
+    var notifLista = document.getElementById('dgNotifLista');
+
+    function pintarNotifs(data) {
+        if (data.no_leidas > 0) {
+            notifBadge.textContent = data.no_leidas > 99 ? '99+' : data.no_leidas;
+            notifBadge.style.display = 'inline-flex';
+        } else {
+            notifBadge.style.display = 'none';
+        }
+        if (!data.ultimas.length) {
+            notifLista.innerHTML = '<div style="padding:26px;text-align:center;color:#94A3B8;font-size:12.5px;">Sin novedades por ahora. 👌</div>';
+            return;
+        }
+        notifLista.innerHTML = data.ultimas.map(function (n) {
+            return '<a href="' + n.ir + '" style="display:flex;gap:10px;padding:11px 15px;text-decoration:none;border-bottom:1px solid #F8FAFC;background:' + (n.leida ? '#fff' : '#F0F7FF') + ';">' +
+                '<span style="font-size:19px;flex-shrink:0;">' + n.icono + '</span>' +
+                '<span style="min-width:0;">' +
+                    '<span style="display:block;font-size:12.5px;font-weight:600;color:#1B2B5A;">' + n.titulo + '</span>' +
+                    (n.mensaje ? '<span style="display:block;font-size:11.5px;color:#6E7A96;">' + n.mensaje + '</span>' : '') +
+                    '<span style="display:block;font-size:10.5px;color:#94A3B8;margin-top:2px;">' + n.hace + ' · <span style="color:#2563EB;">Revisar →</span></span>' +
+                '</span></a>';
+        }).join('');
+    }
+
+    function chequearNotifs() {
+        fetch('{{ url('/notificaciones/feed') }}', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) { if (data) pintarNotifs(data); })
+            .catch(function () {});
+    }
+
+    if (notifBtn) {
+        notifBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            notifPanel.style.display = notifPanel.style.display === 'none' ? '' : 'none';
+        });
+        document.addEventListener('click', function (e) {
+            if (!notifPanel.contains(e.target) && !notifBtn.contains(e.target)) {
+                notifPanel.style.display = 'none';
+            }
+        });
+        document.getElementById('dgNotifLeidas').addEventListener('click', function () {
+            fetch('{{ url('/notificaciones/leidas') }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, credentials: 'same-origin' })
+                .then(chequearNotifs);
+        });
+        chequearNotifs();
+        setInterval(chequearNotifs, 45000);
+    }
 
     // Buscador global por DNI/CUIT/nombre → ficha del cliente/proveedor/revendedor
     var inputBuscar = document.getElementById('dgBuscarPersona');
