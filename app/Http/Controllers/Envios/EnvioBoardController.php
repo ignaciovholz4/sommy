@@ -128,11 +128,15 @@ class EnvioBoardController extends Controller
                 : (optional($e->venta)->num_folio ?: 'Venta #' . $e->venta_id);
         });
 
-        // Geocodificar las paradas que aún no tienen coordenadas (respetando ~1 req/seg)
+        // Geocodificar las paradas que aún no tienen coordenadas (respetando ~1 req/seg).
+        // Se actualizan SOLO las columnas reales: el modelo carga atributos
+        // virtuales (parada_*) que no deben viajar en el save.
         $pendientesGeo = $envios->filter(fn ($e) => (!$e->lat || !$e->lng) && $e->parada_direccion);
         foreach ($pendientesGeo as $i => $e) {
             if ($coords = $geo->geocodificar($e->parada_direccion)) {
-                $e->forceFill(['lat' => $coords['lat'], 'lng' => $coords['lng']])->save();
+                DB::table('envios')->where('id', $e->id)->update(['lat' => $coords['lat'], 'lng' => $coords['lng']]);
+                $e->lat = $coords['lat'];
+                $e->lng = $coords['lng'];
             }
             if ($i < $pendientesGeo->count() - 1) {
                 usleep(1100000); // política de uso de Nominatim: máx 1 consulta/seg
@@ -141,8 +145,11 @@ class EnvioBoardController extends Controller
 
         $ruta = $geo->ordenarRuta($envios);
 
-        // Persistir el orden calculado
-        $ruta['ordenados']->values()->each(fn ($e, $i) => $e->forceFill(['orden_ruta' => $i + 1])->save());
+        // Persistir el orden calculado (solo la columna orden_ruta)
+        $ruta['ordenados']->values()->each(function ($e, $i) {
+            DB::table('envios')->where('id', $e->id)->update(['orden_ruta' => $i + 1]);
+            $e->orden_ruta = $i + 1;
+        });
 
         // Link de navegación con toda la ruta (Google Maps con paradas en orden)
         $deposito = \App\Services\Envios\GeocodificadorService::deposito();
