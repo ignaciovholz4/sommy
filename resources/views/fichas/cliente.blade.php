@@ -47,6 +47,9 @@
                         @forelse($v->movimientos as $m)
                             {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}: ${{ number_format($m->total, 0, ',', '.') }}<br>
                         @empty — @endforelse
+                        @foreach($compVentas->get($v->idventa, collect()) as $cp)
+                            <a href="{{ asset($cp->archivo) }}" target="_blank" title="{{ $cp->nota ?: 'Comprobante' }}" style="color:#2563EB;"><i class="fas fa-paperclip"></i> Comprobante</a><br>
+                        @endforeach
                     </td>
                     <td class="der" style="font-weight:600;">${{ number_format($v->total_con_iva, 2, ',', '.') }}</td>
                 </tr>
@@ -85,6 +88,9 @@
                         @if($pagadoP > 0.009 && $faltaP > 0.009 && $p->status_order_id != 6)
                             <span style="color:#b4552d;font-weight:700;">Faltan ${{ number_format($faltaP, 0, ',', '.') }}</span>
                         @endif
+                        @foreach($compPedidos->get($p->order_id, collect()) as $cp)
+                            <a href="{{ asset($cp->archivo) }}" target="_blank" title="{{ $cp->nota ?: 'Comprobante' }}" style="color:#2563EB;"><i class="fas fa-paperclip"></i> Comprobante</a><br>
+                        @endforeach
                     </td>
                     <td class="der" style="font-weight:600;">${{ number_format($p->total_amount, 2, ',', '.') }}</td>
                 </tr>

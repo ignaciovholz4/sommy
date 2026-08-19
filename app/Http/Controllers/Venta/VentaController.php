@@ -308,7 +308,59 @@ class VentaController extends Controller
             'cobrado' => number_format($cobrado, 2, ',', '.'),
             'pendiente' => number_format(max($venta->total_con_iva - $cobrado, 0), 2, ',', '.'),
             'tiene_pendiente' => $venta->estado === 'a cobrar' && ($venta->total_con_iva - $cobrado) > 0.009,
+            'comprobantes' => DB::table('venta_pago_comprobantes')->where('venta_id', $venta->idventa)->orderByDesc('id')->get()
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'url' => asset($c->archivo),
+                    'es_imagen' => str_starts_with((string) $c->mime, 'image/'),
+                    'nota' => $c->nota,
+                    'fecha' => \Carbon\Carbon::parse($c->created_at)->format('d/m/Y'),
+                ])->values(),
         ]);
+    }
+
+    /** Comprobante de pago de la venta (foto de transferencia, recibo, PDF). */
+    public function subirComprobante(Request $request, $idventa)
+    {
+        $venta = Venta::findOrFail($idventa);
+
+        $request->validate([
+            'archivo' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'nota'    => 'nullable|string|max:200',
+        ], [
+            'archivo.required' => 'Elegí la foto o el PDF del comprobante.',
+            'archivo.mimes'    => 'Solo imágenes (JPG, PNG, WEBP) o PDF.',
+        ]);
+
+        $dir = public_path('imagenes/ventas/comprobantes');
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+        $nombre = 'venta-' . $venta->idventa . '-' . uniqid() . '.' . $request->file('archivo')->getClientOriginalExtension();
+        $request->file('archivo')->move($dir, $nombre);
+
+        DB::table('venta_pago_comprobantes')->insert([
+            'venta_id' => $venta->idventa,
+            'archivo'  => 'imagenes/ventas/comprobantes/' . $nombre,
+            'mime'     => $request->file('archivo')->getClientMimeType(),
+            'nota'     => $request->nota,
+            'user_id'  => auth()->id(),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function eliminarComprobante($compId)
+    {
+        $comp = DB::table('venta_pago_comprobantes')->find($compId);
+        if ($comp) {
+            if (is_file(public_path($comp->archivo))) {
+                @unlink(public_path($comp->archivo));
+            }
+            DB::table('venta_pago_comprobantes')->delete($compId);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     public function pendiente($idventa)
@@ -374,6 +426,8 @@ class VentaController extends Controller
                     $bancos     = 0;
                     $tarjetas   = 0;
 
+                    $cheques = 0;
+
                     if (str_starts_with($cuentaRef, 'caja-')) {
                         $aperturaId = (int) str_replace('caja-', '', $cuentaRef);
                         $apertura   = CajaApertura::findOrFail($aperturaId);
@@ -389,18 +443,34 @@ class VentaController extends Controller
                         $bancos   = $monto;
                     }
 
+                    // El medio elegido define a qué columna va el monto:
+                    // los cheques son papeles (no efectivo del cierre) y las
+                    // tarjetas liquidan aparte — así el corte de caja distingue.
+                    $medio = $request->input("medios.$index") ?: null;
+                    if ($medio) {
+                        $efectivo = $bancos = $tarjetas = 0;
+                        match (true) {
+                            $medio === 'efectivo' => $efectivo = $monto,
+                            in_array($medio, ['tarjeta_debito', 'tarjeta_credito']) => $tarjetas = $monto,
+                            $medio === 'cheque' => $cheques = $monto,
+                            default => $bancos = $monto, // transferencia, mercadopago, otro
+                        };
+                    }
+
                     // 🔹 Un único create por iteración
                     Movimiento::create([
                         'cuenta_id'        => $cuentaId,
                         'caja_apertura_id' => $aperturaId,
                         'fecha'            => now(),
                         'tipo'             => 'ingreso',
+                        'medio'            => $medio,
                         'cliente_proveedor'=> optional($venta->cliente)->nombre ?? 'Cliente',
                         'comprobante'      => $venta->num_folio,
-                        'observaciones'    => 'Pago de venta registrado',
+                        'observaciones'    => 'Pago de venta registrado' . ($medio ? ' (' . str_replace('_', ' ', $medio) . ')' : ''),
                         'efectivo'         => $efectivo,
                         'bancos'           => $bancos,
                         'tarjetas'         => $tarjetas,
+                        'cheques'          => $cheques,
                         'total'            => $monto,
                     ]);
                 }

@@ -122,7 +122,7 @@ class ProveedorController extends Controller
     {
         $proveedor = Proveedor::findOrFail($id);
 
-        $compras = \App\Models\Compra::with(['movimientos.cuenta', 'tipoComprobante'])
+        $compras = \App\Models\Compra::with(['movimientos.cuenta', 'tipoComprobante', 'adjuntos'])
             ->where('proveedor_id', $id)
             ->orderByDesc('fecha')->orderByDesc('idcompra')
             ->limit(200)->get();

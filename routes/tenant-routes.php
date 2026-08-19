@@ -768,6 +768,10 @@ Route::get('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\Conoci
 Route::post('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'store'])->name('articulo.conocimiento.store')->middleware(['auth','verified']);
 Route::delete('/articulo/conocimiento/{itemId}', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'destroy'])->name('articulo.conocimiento.destroy')->middleware(['auth','verified']);
 
+/** COMPROBANTES DE PAGO DE VENTAS */
+Route::post('/ventas/{idventa}/comprobante', [\App\Http\Controllers\Venta\VentaController::class, 'subirComprobante'])->name('ventas.comprobante')->middleware(['auth','verified']);
+Route::delete('/ventas/comprobante/{compId}', [\App\Http\Controllers\Venta\VentaController::class, 'eliminarComprobante'])->name('ventas.comprobante.eliminar')->middleware(['auth','verified']);
+
 /** BUSCADOR GLOBAL por DNI/CUIT (clientes, proveedores, revendedores) */
 Route::get('/buscar-persona', [\App\Http\Controllers\BuscadorGlobalController::class, 'buscar'])->name('buscar.persona')->middleware(['auth','verified']);
 

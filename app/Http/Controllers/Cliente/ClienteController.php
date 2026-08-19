@@ -251,6 +251,12 @@ class ClienteController extends Controller
             ->get()
             ->groupBy('comprobante');
 
+        // Comprobantes archivados (fotos de transferencias, recibos) por operación
+        $compVentas = DB::table('venta_pago_comprobantes')
+            ->whereIn('venta_id', $ventas->pluck('idventa'))->get()->groupBy('venta_id');
+        $compPedidos = DB::table('order_pago_comprobantes')
+            ->whereIn('order_id', $pedidos->pluck('order_id'))->get()->groupBy('order_id');
+
         $ccMovs = DB::table('cliente_cc_movimientos')
             ->where('cliente_id', $id)
             ->orderByDesc('created_at')->orderByDesc('id')
@@ -270,7 +276,7 @@ class ClienteController extends Controller
         ];
         $kpis['total'] = $kpis['total_ventas'] + $kpis['total_pedidos'];
 
-        return view('fichas.cliente', compact('cliente', 'ventas', 'pedidos', 'pagosPedidos', 'ccMovs', 'cc', 'kpis'));
+        return view('fichas.cliente', compact('cliente', 'ventas', 'pedidos', 'pagosPedidos', 'compVentas', 'compPedidos', 'ccMovs', 'cc', 'kpis'));
     }
 
     public function findCustomer(Request $request)

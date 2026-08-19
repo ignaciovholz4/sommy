@@ -47,6 +47,9 @@
                         @forelse($c->movimientos as $m)
                             {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}: ${{ number_format($m->total, 0, ',', '.') }}<br>
                         @empty — @endforelse
+                        @foreach($c->adjuntos as $adj)
+                            <a href="{{ $adj->url }}" target="_blank" title="{{ $adj->original_name }}" style="color:#2563EB;"><i class="fas fa-paperclip"></i> {{ \Illuminate\Support\Str::limit($adj->original_name, 22) }}</a><br>
+                        @endforeach
                     </td>
                     <td class="der" style="font-weight:600;">${{ number_format($c->total_con_iva, 2, ',', '.') }}</td>
                 </tr>
@@ -92,7 +95,12 @@
             @forelse($gastos as $g)
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($g->fecha)->format('d/m/Y') }}</td>
-                    <td>{{ $g->descripcion }}</td>
+                    <td>
+                        {{ $g->descripcion }}
+                        @if($g->comprobante_path)
+                            <br><a href="{{ asset('storage/' . $g->comprobante_path) }}" target="_blank" style="color:#2563EB;font-size:12px;"><i class="fas fa-paperclip"></i> Comprobante</a>
+                        @endif
+                    </td>
                     <td><span class="fx-chip {{ ['pagado' => 'ok', 'pendiente' => 'pend', 'anulado' => 'mal'][$g->estado] ?? '' }}">{{ ucfirst($g->estado) }}</span></td>
                     <td class="der" style="font-weight:600;">${{ number_format($g->monto, 2, ',', '.') }}</td>
                 </tr>

@@ -13,6 +13,7 @@ class Movimiento extends Model
         'caja_apertura_id', // solo aplica si la cuenta es de tipo caja
         'fecha',
         'tipo',
+        'medio',
         'cliente_proveedor',
         'comprobante',
         'observaciones',
@@ -21,6 +22,7 @@ class Movimiento extends Model
         'efectivo',
         'bancos',
         'tarjetas',
+        'cheques',
         'total',
         'referencia_type',
         'referencia_id',
@@ -31,6 +33,7 @@ class Movimiento extends Model
         'efectivo' => 'decimal:2',
         'bancos'   => 'decimal:2',
         'tarjetas' => 'decimal:2',
+        'cheques' => 'decimal:2',
         'total'    => 'decimal:2',
     ];
 

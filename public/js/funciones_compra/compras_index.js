@@ -320,19 +320,35 @@ document.addEventListener("DOMContentLoaded", () => {
             const row = document.createElement("div");
             row.classList.add("row", "mb-2");
             row.innerHTML = `
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <select name="cajas[]" class="form-control">${options}</select>
                 </div>
                 <div class="col-md-4">
-                    <input type="number" name="montos[]" class="form-control montoInput" 
+                    <select name="medios[]" class="form-control" title="Medio de pago">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="tarjeta_debito">Tarjeta débito</option>
+                        <option value="tarjeta_credito">Tarjeta crédito</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="mercadopago">MercadoPago</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" name="montos[]" class="form-control montoInput"
                         placeholder="Monto" min="0" step="0.01">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button type="button" class="btn btn-danger removeMedioPago">X</button>
                 </div>
             `;
 
             container.appendChild(row);
+
+            // Default inteligente: caja → efectivo, banco → transferencia
+            row.querySelector("select[name='cajas[]']").addEventListener("change", function () {
+                row.querySelector("select[name='medios[]']").value = this.value.startsWith("caja-") ? "efectivo" : "transferencia";
+            });
 
             row.querySelector(".removeMedioPago").addEventListener("click", () => {
                 row.remove();

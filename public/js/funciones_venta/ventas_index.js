@@ -162,6 +162,26 @@ function getDetailVenta(id) {
                 pagosWrap.style.display = "none";
             }
 
+            // 🧾 Comprobantes de pago asociados (transferencias, recibos)
+            ventaDetalleActual = id;
+            const compCont = document.querySelector("#details_v_comprobantes");
+            compCont.innerHTML = "";
+            (data.comprobantes || []).forEach(c => {
+                const inner = c.es_imagen
+                    ? `<img src="${c.url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">`
+                    : `<span style="display:inline-block;padding:24px 18px;color:#b4552d;"><i class="fas fa-file-pdf" style="font-size:26px;"></i></span>`;
+                compCont.innerHTML += `
+                    <div style="position:relative;text-align:center;background:#F8FAFC;border:1px solid #E7EAF2;border-radius:10px;padding:6px;">
+                        <a href="${c.url}" target="_blank" title="${c.nota || ''}">${inner}</a>
+                        <div style="font-size:10px;color:#6E7A96;">${c.fecha}${c.nota ? '<br>' + c.nota : ''}</div>
+                        <button onclick="eliminarComprobanteVenta(${c.id})" title="Eliminar"
+                                style="position:absolute;top:2px;right:4px;border:none;background:none;color:#b4552d;cursor:pointer;font-size:11px;">✕</button>
+                    </div>`;
+            });
+            if (!(data.comprobantes || []).length) {
+                compCont.innerHTML = '<span style="font-size:12px;color:#94A3B8;">Sin comprobantes. Subí la foto de la transferencia o el recibo.</span>';
+            }
+
             // Mostrar modal
             $('#ModalDetalleVenta').modal('show');
         })
@@ -297,19 +317,35 @@ document.addEventListener("DOMContentLoaded", () => {
             const row = document.createElement("div");
             row.classList.add("row", "mb-2");
             row.innerHTML = `
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <select name="cajas[]" class="form-control">${options}</select>
                 </div>
                 <div class="col-md-4">
-                    <input type="number" name="montos[]" class="form-control montoInput" 
+                    <select name="medios[]" class="form-control" title="Medio de pago">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="tarjeta_debito">Tarjeta débito</option>
+                        <option value="tarjeta_credito">Tarjeta crédito</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="mercadopago">MercadoPago</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" name="montos[]" class="form-control montoInput"
                         placeholder="Monto" min="0" step="0.01">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button type="button" class="btn btn-danger removeMedioPago">X</button>
                 </div>
             `;
 
             container.appendChild(row);
+
+            // Default inteligente: caja → efectivo, banco → transferencia
+            row.querySelector("select[name='cajas[]']").addEventListener("change", function () {
+                row.querySelector("select[name='medios[]']").value = this.value.startsWith("caja-") ? "efectivo" : "transferencia";
+            });
 
             row.querySelector(".removeMedioPago").addEventListener("click", () => {
                 row.remove();
@@ -330,3 +366,37 @@ document.addEventListener('DOMContentLoaded', function () {
     const verId = new URLSearchParams(window.location.search).get('ver');
     if (verId) getDetailVenta(verId);
 });
+
+// ── Comprobantes de pago de la venta (transferencias, recibos) ──
+let ventaDetalleActual = null;
+
+function subirComprobanteVenta(btn) {
+    const archivo = document.querySelector('#ventaCompArchivo').files[0];
+    if (!archivo) { alert('Elegí primero la foto o el PDF del comprobante.'); return; }
+    const fd = new FormData();
+    fd.append('archivo', archivo);
+    fd.append('nota', document.querySelector('#ventaCompNota').value);
+    btn.disabled = true;
+    fetch(`/ventas/${ventaDetalleActual}/comprobante`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' },
+        body: fd
+    }).then(res => res.json().then(data => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (ok && data.success) {
+            document.querySelector('#ventaCompArchivo').value = '';
+            document.querySelector('#ventaCompNota').value = '';
+            getDetailVenta(ventaDetalleActual); // recarga el modal con el comprobante nuevo
+        } else {
+            alert(data.message || (data.errors ? Object.values(data.errors).flat().join(' ') : 'No se pudo subir el comprobante'));
+        }
+    }).finally(() => { btn.disabled = false; });
+}
+
+function eliminarComprobanteVenta(compId) {
+    if (!confirm('¿Eliminar este comprobante?')) return;
+    fetch(`/ventas/comprobante/${compId}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Accept': 'application/json' }
+    }).then(() => getDetailVenta(ventaDetalleActual));
+}

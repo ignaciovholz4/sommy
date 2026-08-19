@@ -384,6 +384,8 @@ class CompraController extends Controller
                     $bancos     = 0;
                     $tarjetas   = 0;
 
+                    $cheques = 0;
+
                     if (str_starts_with($cuentaRef, 'caja-')) {
                         $aperturaId = (int) str_replace('caja-', '', $cuentaRef);
                         $apertura   = CajaApertura::findOrFail($aperturaId);
@@ -399,18 +401,33 @@ class CompraController extends Controller
                         $bancos   = $monto;
                     }
 
+                    // El medio elegido define a qué columna va el monto (los cheques
+                    // entregados no salen del efectivo del cierre de caja)
+                    $medio = $request->input("medios.$index") ?: null;
+                    if ($medio) {
+                        $efectivo = $bancos = $tarjetas = 0;
+                        match (true) {
+                            $medio === 'efectivo' => $efectivo = $monto,
+                            in_array($medio, ['tarjeta_debito', 'tarjeta_credito']) => $tarjetas = $monto,
+                            $medio === 'cheque' => $cheques = $monto,
+                            default => $bancos = $monto, // transferencia, mercadopago, otro
+                        };
+                    }
+
                     // 🔹 Un único create por iteración
                     $movimientosCreados[] = Movimiento::create([
                         'cuenta_id'        => $cuentaId,
                         'caja_apertura_id' => $aperturaId,
                         'fecha'            => now(),
                         'tipo'             => 'egreso', // salida de dinero
+                        'medio'            => $medio,
                         'cliente_proveedor'=> optional($compra->proveedor)->nombre ?? 'Proveedor',
                         'comprobante'      => $compra->num_folio,
-                        'observaciones'    => 'Pago de compra registrado',
+                        'observaciones'    => 'Pago de compra registrado' . ($medio ? ' (' . str_replace('_', ' ', $medio) . ')' : ''),
                         'efectivo'         => $efectivo,
                         'bancos'           => $bancos,
                         'tarjetas'         => $tarjetas,
+                        'cheques'          => $cheques,
                         'total'            => $monto,
                     ]);
                 }

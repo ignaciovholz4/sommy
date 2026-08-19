@@ -366,6 +366,18 @@
                         <label style="color:var(--facturarg-blue);font-weight:700;font-size:0.85rem;">💰 Dónde está la plata</label>
                         <div id="details_v_pagos" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 14px;font-size:13.5px;color:#166534;"></div>
                     </div>
+
+                    {{-- Comprobantes de pago (transferencias, recibos) --}}
+                    <div style="margin-top:12px;text-align:left;">
+                        <label style="color:var(--facturarg-blue);font-weight:700;font-size:0.85rem;"><i class="fas fa-receipt"></i> Comprobantes de pago</label>
+                        <div id="details_v_comprobantes" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;"></div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                            <input type="file" id="ventaCompArchivo" accept="image/*,.pdf" style="font-size:12px;max-width:220px;">
+                            <input type="text" id="ventaCompNota" placeholder="Nota (ej: transferencia Galicia)" maxlength="200"
+                                   style="border:1px solid #E7EAF2;border-radius:8px;padding:6px 10px;font-size:12.5px;">
+                            <button type="button" class="btn btn-sm btn-dark" onclick="subirComprobanteVenta(this)"><i class="fas fa-upload"></i> Subir</button>
+                        </div>
+                    </div>
                 </div>
             </div>  
           </div>
