@@ -69,6 +69,7 @@ class FleteroPortalController extends Controller
             'monto_cobrado' => 'required|numeric|min:0',
             'firma'         => 'required|string',                     // PNG en base64 del canvas
             'foto_plata'    => 'nullable|file|mimes:jpg,jpeg,png,webp|max:10240',
+            'foto_entrega'  => 'nullable|file|mimes:jpg,jpeg,png,webp|max:10240',
             'nota'          => 'nullable|string|max:300',
         ], [
             'firma.required' => 'Falta la firma del cliente.',
@@ -94,19 +95,32 @@ class FleteroPortalController extends Controller
             $fotoPlataPath = 'imagenes/entregas/' . $nombre;
         }
 
+        $fotoEntregaPath = null;
+        if ($request->hasFile('foto_entrega')) {
+            $nombre = 'entrega-' . $envio->id . '-' . uniqid() . '.' . $request->file('foto_entrega')->getClientOriginalExtension();
+            $request->file('foto_entrega')->move($dir, $nombre);
+            $fotoEntregaPath = 'imagenes/entregas/' . $nombre;
+        }
+
         DB::table('entregas_fletero')->insert([
             'envio_id'         => $envio->id,
             'transportista_id' => $fletero->id,
             'monto_cobrado'    => $request->monto_cobrado,
             'firma_path'       => $firmaPath,
             'foto_plata_path'  => $fotoPlataPath,
+            'foto_entrega_path' => $fotoEntregaPath,
             'nota'             => $request->nota,
         ]);
 
-        // La firma y la foto quedan como comprobantes DE LA OPERACIÓN (pedido o venta)
+        // La firma y las fotos quedan como comprobantes DE LA OPERACIÓN (pedido o venta)
         $notaComp = 'Entrega del fletero ' . $fletero->nombre . ' — cobró $' . number_format((float) $request->monto_cobrado, 2, ',', '.');
+        $comprobantes = array_filter([
+            'Firma del cliente' => $firmaPath,
+            'Foto del efectivo' => $fotoPlataPath,
+            'Foto de la entrega' => $fotoEntregaPath,
+        ]);
         if ($envio->order_ecommerce_id) {
-            foreach (array_filter(['Firma del cliente' => $firmaPath, 'Foto del efectivo' => $fotoPlataPath]) as $titulo => $ruta) {
+            foreach ($comprobantes as $titulo => $ruta) {
                 DB::table('order_pago_comprobantes')->insert([
                     'order_id' => $envio->order_ecommerce_id,
                     'archivo'  => $ruta,
@@ -115,7 +129,7 @@ class FleteroPortalController extends Controller
                 ]);
             }
         } elseif ($envio->venta_id) {
-            foreach (array_filter(['Firma del cliente' => $firmaPath, 'Foto del efectivo' => $fotoPlataPath]) as $titulo => $ruta) {
+            foreach ($comprobantes as $titulo => $ruta) {
                 DB::table('venta_pago_comprobantes')->insert([
                     'venta_id' => $envio->venta_id,
                     'archivo'  => $ruta,
@@ -143,6 +157,7 @@ class FleteroPortalController extends Controller
         $cliente = optional($e->orden)->cliente ?? optional($e->venta)->cliente;
         $e->parada_cliente = trim(optional($cliente)->nombre . ' ' . (optional($cliente)->paterno ?? '')) ?: 'Cliente';
         $e->parada_telefono = optional($cliente)->telefono;
+        $e->parada_dni_cuit = optional($cliente)->dni_cuit;
         $e->parada_direccion = $e->direccion_entrega ?: trim(implode(', ', array_filter([
             optional($cliente)->direccion,
             optional($cliente)->localidad ?? optional($e->orden)->direccion_localidad,

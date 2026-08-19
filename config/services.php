@@ -52,6 +52,7 @@ return [
 
     'cobranzas' => [
         'dias_gracia_default' => env('COBRANZAS_DIAS_GRACIA_DEFAULT', 30),
+        'nota_model' => env('COBRANZAS_NOTA_MODEL', 'gpt-4o-mini'),
     ],
 
     // Base de conocimiento de productos: 'public' local (con backup del server)

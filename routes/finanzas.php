@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Finanzas\CobranzaController;
 use App\Http\Controllers\Finanzas\CuentaCorrienteProveedorController;
 use App\Http\Controllers\Finanzas\EnvioController;
 use App\Http\Controllers\Finanzas\FinanzasDashboardController;
@@ -62,4 +63,9 @@ Route::middleware(['auth', 'verified'])->prefix('finanzas')->name('finanzas.')->
     Route::post('reposicion/generar-ahora', [ReposicionController::class, 'generarAhora'])->name('reposicion.generar-ahora');
     Route::get('reposicion/ajustes', [ReposicionController::class, 'ajustes'])->name('reposicion.ajustes');
     Route::post('reposicion/ajustes', [ReposicionController::class, 'guardarAjustes'])->name('reposicion.ajustes.guardar');
+
+    // Cobranzas (cola de aprobación de recordatorios por deuda vencida)
+    Route::get('cobranzas', [CobranzaController::class, 'index'])->name('cobranzas.index');
+    Route::post('cobranzas/{id}/aprobar', [CobranzaController::class, 'aprobarYEnviar'])->name('cobranzas.aprobar');
+    Route::post('cobranzas/{id}/descartar', [CobranzaController::class, 'descartar'])->name('cobranzas.descartar');
 });

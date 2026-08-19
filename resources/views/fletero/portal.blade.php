@@ -70,6 +70,9 @@
                 <div>
                     <div class="quien">{{ $e->parada_cliente }}</div>
                     <div class="ref">{{ $e->parada_referencia }}</div>
+                    @if($e->parada_dni_cuit)
+                        <div class="ref">🪪 DNI/CUIT: <b>{{ $e->parada_dni_cuit }}</b> — pedile que lo muestre para corroborar que es él</div>
+                    @endif
                 </div>
             </div>
             <div class="dir">📍 {{ $e->parada_direccion ?: 'Consultar dirección con la oficina' }}</div>
@@ -114,6 +117,9 @@
 
                 <label>📷 Foto de la plata {{ $e->parada_a_cobrar > 0.009 ? '(obligatoria si cobraste)' : '(si cobraste algo)' }}</label>
                 <input type="file" name="foto_plata" accept="image/*" capture="environment">
+
+                <label>🏠 Foto de la entrega (la casa / puerta donde entregaste)</label>
+                <input type="file" name="foto_entrega" accept="image/*" capture="environment">
 
                 <label>Nota (opcional)</label>
                 <input type="text" name="nota" maxlength="300" placeholder="Ej: recibió la esposa / pagó con billetes de 1000">

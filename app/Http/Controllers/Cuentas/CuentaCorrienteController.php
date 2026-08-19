@@ -111,13 +111,17 @@ class CuentaCorrienteController extends Controller
             'concepto.required' => 'Ingresá un concepto (ej: "Venta colchón Serena" o "Recibo seña").',
         ]);
 
-        Cliente::findOrFail($id);
+        $cliente = Cliente::findOrFail($id);
 
         DB::table('cliente_cc_movimientos')->insert([
             'cliente_id' => $id,
             'tipo'       => $request->tipo,
             'concepto'   => $request->concepto,
             'monto'      => $request->monto,
+            // Vencimiento del cargo: plazo propio del cliente o el default general (config services.cobranzas)
+            'fecha_vencimiento' => $request->tipo === 'cargo'
+                ? now()->addDays((int) ($cliente->condicion_pago_dias ?? config('services.cobranzas.dias_gracia_default')))->toDateString()
+                : null,
             'medio_pago' => $request->tipo === 'pago' ? ($request->medio_pago ?: 'efectivo') : null,
             'referencia' => $request->referencia,
             'user_id'    => Auth::id(),

@@ -33,6 +33,9 @@ class Kernel extends ConsoleKernel
 
         // Reposicion inteligente de stock: genera pedidos de compra borrador
         $schedule->command('reposicion:generar-sugerencias')->weeklyOn(1, '06:30');
+
+        // Cobranzas: genera borradores de recordatorio para deuda vencida (quedan a aprobar)
+        $schedule->command('cobranzas:generar-recordatorios')->dailyAt('07:00');
     }
 
     /**

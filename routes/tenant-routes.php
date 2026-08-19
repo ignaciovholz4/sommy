@@ -685,6 +685,14 @@ Route::get('/graph/movimientos', [GraphicsController::class, 'movimientos'])->na
 Route::post('/getdatagraph', [GraphicsController::class, 'get_data'])->name('getdatagraph')->middleware(['auth','verified']);
 Route::post('/getmesgraph', [GraphicsController::class, 'get_data_mes'])->name('getmesgraph')->middleware(['auth','verified']);
 
+/** Chat interno de Reportes (analista IA) */
+Route::prefix('reportes/chat')->middleware(['auth', 'verified'])->name('reportes.chat.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Reportes\ReportesChatController::class, 'index'])->name('index');
+    Route::post('/sesion', [\App\Http\Controllers\Reportes\ReportesChatController::class, 'crearSesion'])->name('crear-sesion');
+    Route::get('/sesion/{sesionId}', [\App\Http\Controllers\Reportes\ReportesChatController::class, 'historial'])->name('historial');
+    Route::post('/sesion/{sesionId}/enviar', [\App\Http\Controllers\Reportes\ReportesChatController::class, 'enviar'])->name('enviar');
+});
+
 
 /******QUOTES****** */
 Route::get('/quote', [QuotesController::class, 'index'])->name('quote.index')->middleware(['auth','verified']);

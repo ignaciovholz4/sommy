@@ -425,6 +425,11 @@
                         <i class="fas fa-chart-line"></i> Tablero
                     </a>
                     @endcan
+                    @can('haveaccess','finanzas.cobranzas.index')
+                    <a href="{{ route('finanzas.cobranzas.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/cobranzas') ? 'dg-drop-active' : '' }}">
+                        <i class="fas fa-robot"></i> Cobranzas (IA)
+                    </a>
+                    @endcan
                 </div>
             </li>
             @endcan
@@ -462,6 +467,14 @@
             <li class="dg-menu-item">
                 <a href="{{ route('graph') }}" class="dg-menu-link {{ $isReportes ? 'dg-active' : '' }}">
                     <i class="fas fa-chart-pie main-icon"></i> Informes
+                </a>
+            </li>
+            @endcan
+
+            @can('haveaccess','reportes.chat.index')
+            <li class="dg-menu-item">
+                <a href="{{ route('reportes.chat.index') }}" class="dg-menu-link {{ Str::startsWith($resp,'reportes/chat') ? 'dg-active' : '' }}">
+                    <i class="fas fa-robot main-icon"></i> Chat de Reportes
                 </a>
             </li>
             @endcan
