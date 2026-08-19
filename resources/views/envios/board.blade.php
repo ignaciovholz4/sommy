@@ -91,6 +91,7 @@
     <div class="env-head">
         <div class="env-title"><i class="fas fa-truck" style="color:#2563EB;"></i> Envíos</div>
         <div class="env-links">
+            <a class="env-link" href="{{ url('envios/ruta') }}" style="border-color:#2563EB;color:#2563EB;font-weight:600;"><i class="fas fa-route"></i> Hoja de ruta del día</a>
             <a class="env-link" href="{{ url('zonas-envio') }}"><i class="fas fa-map-marked-alt"></i> Zonas de envío</a>
             <a class="env-link" href="{{ route('finanzas.transportistas.index') }}"><i class="fas fa-id-card"></i> Fleteros</a>
             <a class="env-link" href="{{ route('finanzas.envios.index') }}"><i class="fas fa-list"></i> Listado completo (incluye compras)</a>

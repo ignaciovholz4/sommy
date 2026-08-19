@@ -89,6 +89,81 @@ class EnvioBoardController extends Controller
         ]);
     }
 
+    /**
+     * Hoja de ruta del día: envíos del día (y sin fecha) por fletero, con las
+     * paradas ordenadas por cercanía saliendo del depósito (vecino más cercano).
+     */
+    public function hojaRuta(Request $request, \App\Services\Envios\GeocodificadorService $geo)
+    {
+        Gate::authorize('haveaccess', 'finanzas.envios.index');
+
+        $fecha = $request->query('fecha') ?: now()->toDateString();
+        $transportistaId = $request->query('transportista_id');
+        $incluirSinFecha = $request->query('sin_fecha', '1') === '1';
+
+        $envios = Envio::with(['orden.cliente', 'venta.cliente', 'transportista'])
+            ->whereIn('tipo', ['venta', 'venta_manual'])
+            ->whereIn('estado', ['pendiente', 'despachado', 'en_transito'])
+            ->when($transportistaId, fn ($q) => $q->where('transportista_id', $transportistaId))
+            ->where(function ($q) use ($fecha, $incluirSinFecha) {
+                $q->whereDate('fecha_entrega_estimada', $fecha);
+                if ($incluirSinFecha) {
+                    $q->orWhereNull('fecha_entrega_estimada');
+                }
+            })
+            ->get();
+
+        // Completar datos de cada parada (dirección + cliente + pendiente de cobro)
+        $envios->each(function ($e) {
+            $cliente = optional($e->orden)->cliente ?? optional($e->venta)->cliente;
+            $e->parada_cliente = trim(optional($cliente)->nombre . ' ' . (optional($cliente)->paterno ?? '')) ?: 'Cliente';
+            $e->parada_telefono = optional($cliente)->telefono;
+            $e->parada_direccion = $e->direccion_entrega ?: trim(implode(', ', array_filter([
+                optional($cliente)->direccion,
+                optional($cliente)->localidad ?? optional($e->orden)->direccion_localidad,
+                optional($cliente)->provincia ?? optional($e->orden)->direccion_provincia,
+            ])));
+            $e->parada_referencia = $e->order_ecommerce_id ? 'Pedido #' . $e->order_ecommerce_id
+                : (optional($e->venta)->num_folio ?: 'Venta #' . $e->venta_id);
+        });
+
+        // Geocodificar las paradas que aún no tienen coordenadas (respetando ~1 req/seg)
+        $pendientesGeo = $envios->filter(fn ($e) => (!$e->lat || !$e->lng) && $e->parada_direccion);
+        foreach ($pendientesGeo as $i => $e) {
+            if ($coords = $geo->geocodificar($e->parada_direccion)) {
+                $e->forceFill(['lat' => $coords['lat'], 'lng' => $coords['lng']])->save();
+            }
+            if ($i < $pendientesGeo->count() - 1) {
+                usleep(1100000); // política de uso de Nominatim: máx 1 consulta/seg
+            }
+        }
+
+        $ruta = $geo->ordenarRuta($envios);
+
+        // Persistir el orden calculado
+        $ruta['ordenados']->values()->each(fn ($e, $i) => $e->forceFill(['orden_ruta' => $i + 1])->save());
+
+        // Link de navegación con toda la ruta (Google Maps con paradas en orden)
+        $deposito = \App\Services\Envios\GeocodificadorService::deposito();
+        $puntos = collect([$deposito['direccion']])
+            ->concat($ruta['ordenados']->filter(fn ($e) => $e->parada_direccion)->map(fn ($e) => $e->parada_direccion))
+            ->map(fn ($d) => rawurlencode($d))->implode('/');
+        $urlMaps = 'https://www.google.com/maps/dir/' . $puntos;
+
+        $transportistas = Transportista::where('activo', true)->orderBy('nombre')->get();
+
+        return view('envios.ruta', [
+            'paradas' => $ruta['ordenados'],
+            'kmTotal' => $ruta['km_total'],
+            'fecha' => $fecha,
+            'transportistaId' => $transportistaId,
+            'incluirSinFecha' => $incluirSinFecha,
+            'transportistas' => $transportistas,
+            'deposito' => $deposito,
+            'urlMaps' => $urlMaps,
+        ]);
+    }
+
     /** Asigna el fletero: crea el envío (y el gasto de flete si lo paga la empresa). */
     public function asignar(Request $request, EnvioController $envios)
     {

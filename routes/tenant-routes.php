@@ -791,6 +791,7 @@ Route::get('/envios', [\App\Http\Controllers\Envios\EnvioBoardController::class,
 Route::post('/envios/asignar', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'asignar'])->name('envios.asignar')->middleware(['auth','verified']);
 Route::post('/envios/{id}/etapa', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'etapa'])->name('envios.etapa')->middleware(['auth','verified']);
 Route::get('/envios/pending-count', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'pendingCount'])->name('envios.pending-count')->middleware(['auth','verified']);
+Route::get('/envios/ruta', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'hojaRuta'])->name('envios.ruta')->middleware(['auth','verified']);
 Route::get('/etiqueta/pedido/{id}', [\App\Http\Controllers\Envios\EtiquetaController::class, 'pedido'])->name('etiqueta.pedido')->middleware(['auth','verified']);
 Route::get('/etiqueta/venta/{id}', [\App\Http\Controllers\Envios\EtiquetaController::class, 'venta'])->name('etiqueta.venta')->middleware(['auth','verified']);
 
