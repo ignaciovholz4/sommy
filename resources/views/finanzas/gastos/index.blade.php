@@ -147,6 +147,11 @@
                             <input type="date" name="proximo_vencimiento" id="gasto_proximo_vencimiento" class="form-control">
                         </div>
                     </div>
+                    <div class="form-group" id="campo-cuenta-gasto">
+                        <label>¿Con qué lo pagaste? (caja o banco)</label>
+                        <select name="cuenta" id="gasto_cuenta" class="form-control"></select>
+                        <small class="text-muted">Si elegís una cuenta, el gasto se paga en el acto: genera el egreso y <b>descuenta en el cierre diario de esa caja</b>. Si lo dejás en "Pagar después", queda pendiente.</small>
+                    </div>
                     <div class="form-group">
                         <label>Comprobante (JPG, PNG o PDF, máx. 5 MB)</label>
                         <input type="file" name="comprobante" id="gasto_comprobante" class="form-control-file" accept=".jpg,.jpeg,.png,.pdf">
@@ -357,6 +362,8 @@ function nuevoGasto() {
     $('#gasto_id').val('');
     $('#gasto_fecha').val(new Date().toISOString().slice(0, 10));
     $('.campo-recurrente').hide();
+    $('#campo-cuenta-gasto').show();
+    cargarCuentasEnSelect('#gasto_cuenta', 'Pagar después (queda pendiente)');
     $('#tituloModalGasto').text('Nuevo gasto');
     $('#ModalGasto').modal('show');
 }
@@ -381,6 +388,9 @@ function editarGasto(id) {
                 $('#gasto_frecuencia').val(g.frecuencia || 'mensual');
                 $('#gasto_proximo_vencimiento').val(g.proximo_vencimiento || '');
             }
+            // Al editar no se paga desde acá: el pago tiene su propio botón en la grilla
+            $('#campo-cuenta-gasto').hide();
+            $('#gasto_cuenta').html('');
             $('#tituloModalGasto').text('Editar gasto #' + g.id);
             $('#ModalGasto').modal('show');
         });
@@ -420,12 +430,12 @@ function abrirModalPagoGasto(id) {
 }
 
 // Cajas abiertas + bancos de todas las sucursales (mismo endpoint que el pago de pedidos)
-function cargarCuentasEnSelect(selector) {
+function cargarCuentasEnSelect(selector, placeholder) {
     $(selector).html('<option value="">Cargando cuentas...</option>');
     fetch("{{ url('cuentas-abiertas') }}")
         .then(res => res.json())
         .then(data => {
-            let options = '<option value="">Seleccioná una cuenta</option>';
+            let options = '<option value="">' + (placeholder || 'Seleccioná una cuenta') + '</option>';
             (data.cajas || []).forEach(c => {
                 options += `<option value="caja-${c.id}">${c.nombre} (Caja · ${c.sucursal || ''} · ${c.moneda})</option>`;
             });

@@ -135,7 +135,23 @@ class GastoController extends Controller
 
         $gasto = Gasto::create($data);
 
-        return response()->json(['estado' => 1, 'mensaje' => 'Gasto registrado correctamente.', 'id' => $gasto->id]);
+        // Si eligieron con qué caja/banco se pagó, el gasto se paga en el acto:
+        // genera el movimiento de egreso y descuenta en el cierre diario de esa caja.
+        if ($request->filled('cuenta')) {
+            $pago = $this->registrarPago(new Request(['cuenta' => $request->cuenta]), $gasto->id)->getData(true);
+
+            if (($pago['estado'] ?? 0) === 1) {
+                return response()->json(['estado' => 1, 'mensaje' => 'Gasto registrado y pagado: ya descuenta en el cierre de la caja.', 'id' => $gasto->id]);
+            }
+
+            return response()->json([
+                'estado' => 1,
+                'mensaje' => 'Gasto registrado, pero el pago falló: ' . ($pago['mensaje'] ?? '') . ' Quedó pendiente.',
+                'id' => $gasto->id,
+            ]);
+        }
+
+        return response()->json(['estado' => 1, 'mensaje' => 'Gasto registrado correctamente (pendiente de pago).', 'id' => $gasto->id]);
     }
 
     public function update(Request $request, $id)
