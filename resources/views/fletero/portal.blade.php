@@ -74,9 +74,18 @@
             </div>
             <div class="dir">📍 {{ $e->parada_direccion ?: 'Consultar dirección con la oficina' }}</div>
 
-            <div class="cobrar {{ $e->parada_a_cobrar > 0.009 ? '' : 'nada' }}">
-                {{ $e->parada_a_cobrar > 0.009 ? '💵 COBRAR: $' . number_format($e->parada_a_cobrar, 2, ',', '.') : '✓ Ya está pago — solo entregar' }}
-            </div>
+            @if($e->parada_a_cobrar > 0.009)
+                @if(($e->parada_pagado ?? 0) > 0.009)
+                    <div class="cobrar">
+                        💵 COBRAR SOLO: ${{ number_format($e->parada_a_cobrar, 2, ',', '.') }}
+                        <div style="font-weight:500;font-size:11.5px;">El cliente ya transfirió ${{ number_format($e->parada_pagado, 2, ',', '.') }} — cobrale únicamente la diferencia.</div>
+                    </div>
+                @else
+                    <div class="cobrar">💵 COBRAR: ${{ number_format($e->parada_a_cobrar, 2, ',', '.') }}</div>
+                @endif
+            @else
+                <div class="cobrar nada">✓ EL CLIENTE YA PAGÓ (transferencia registrada) — <b>NO COBRAR</b>, solo entregar</div>
+            @endif
 
             <div class="acciones">
                 @if($e->parada_direccion)

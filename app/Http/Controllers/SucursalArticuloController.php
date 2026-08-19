@@ -139,6 +139,31 @@ class SucursalArticuloController extends Controller
         ]);
     }
 
+    // ✅ Actualizar umbral de stock minimo (lo usa la reposicion inteligente)
+    public function updateStockMinimo(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|exists:sucursal_articulo,id',
+            'stock_minimo' => 'nullable|integer|min:0'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'estado' => 0,
+                'mensaje' => $validator->errors()->all()
+            ]);
+        }
+
+        $sa = SucursalArticulo::findOrFail($request->id);
+        $sa->stock_minimo = $request->stock_minimo;
+        $sa->save();
+
+        return response()->json([
+            'estado' => 1,
+            'mensaje' => 'Stock mínimo actualizado'
+        ]);
+    }
+
     // ✅ Baja lógica del artículo en la sucursal
     public function destroy(Request $request)
     {

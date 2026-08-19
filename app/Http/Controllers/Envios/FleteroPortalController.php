@@ -151,13 +151,17 @@ class FleteroPortalController extends Controller
             : (optional($e->venta)->num_folio ?: 'Venta #' . $e->venta_id);
 
         // Cuánto tiene que cobrar en la puerta: total menos lo ya pagado
+        // (si el cliente transfirió antes, el pago figura y acá se descuenta)
         if ($e->order_ecommerce_id && $e->orden) {
             $pagado = (float) DB::table('movimientos')->where('comprobante', 'Pedido #' . $e->order_ecommerce_id)->sum('total');
+            $e->parada_pagado = $pagado;
             $e->parada_a_cobrar = max((float) $e->orden->total_amount - $pagado, 0);
         } elseif ($e->venta) {
             $pagado = (float) DB::table('movimientos')->where('comprobante', $e->venta->num_folio)->sum('total');
+            $e->parada_pagado = $pagado;
             $e->parada_a_cobrar = max((float) $e->venta->total_con_iva - $pagado, 0);
         } else {
+            $e->parada_pagado = 0;
             $e->parada_a_cobrar = 0;
         }
 

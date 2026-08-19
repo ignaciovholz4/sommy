@@ -101,9 +101,22 @@
     <div class="card mb-3">
         <div class="card-body d-flex justify-content-between align-items-center">
             <h4 class="mb-0"><i class="fas fa-file-signature mr-2"></i> Generador de Pedidos de Compra</h4>
-            <a href="{{ route('pedidos-compra.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus-circle mr-1"></i> Nuevo Pedido
-            </a>
+            <div>
+                @can('haveaccess', 'compras.reposicion.manage')
+                <a href="{{ route('finanzas.reposicion.ajustes') }}" class="btn btn-outline-secondary" title="Ajustes de reposición inteligente">
+                    <i class="fas fa-sliders-h"></i>
+                </a>
+                <form action="{{ route('finanzas.reposicion.generar-ahora') }}" method="POST" class="d-inline" onsubmit="return confirm('¿Generar pedidos de compra borrador según la reposición inteligente ahora?');">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-robot mr-1"></i> Generar reposición ahora
+                    </button>
+                </form>
+                @endcan
+                <a href="{{ route('pedidos-compra.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle mr-1"></i> Nuevo Pedido
+                </a>
+            </div>
         </div>
     </div>
 

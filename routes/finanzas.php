@@ -5,6 +5,7 @@ use App\Http\Controllers\Finanzas\EnvioController;
 use App\Http\Controllers\Finanzas\FinanzasDashboardController;
 use App\Http\Controllers\Finanzas\GastoCategoriaController;
 use App\Http\Controllers\Finanzas\GastoController;
+use App\Http\Controllers\Finanzas\ReposicionController;
 use App\Http\Controllers\Finanzas\TransportistaController;
 use Illuminate\Support\Facades\Route;
 
@@ -56,4 +57,9 @@ Route::middleware(['auth', 'verified'])->prefix('finanzas')->name('finanzas.')->
     Route::get('cxp/{proveedorId}', [CuentaCorrienteProveedorController::class, 'show'])->name('cxp.show');
     Route::post('cxp/{proveedorId}/registrar-pago', [CuentaCorrienteProveedorController::class, 'registrarPago'])->name('cxp.pagar');
     Route::post('cxp/{proveedorId}/registrar-ajuste', [CuentaCorrienteProveedorController::class, 'registrarAjuste'])->name('cxp.ajuste');
+
+    // Reposición inteligente de stock
+    Route::post('reposicion/generar-ahora', [ReposicionController::class, 'generarAhora'])->name('reposicion.generar-ahora');
+    Route::get('reposicion/ajustes', [ReposicionController::class, 'ajustes'])->name('reposicion.ajustes');
+    Route::post('reposicion/ajustes', [ReposicionController::class, 'guardarAjustes'])->name('reposicion.ajustes.guardar');
 });

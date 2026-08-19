@@ -30,6 +30,9 @@ class Kernel extends ConsoleKernel
         // Finanzas: gastos recurrentes y alertas de vencimientos de proveedores
         $schedule->command('gastos:generar-recurrentes')->dailyAt('06:00');
         $schedule->command('cxp:alertar-vencimientos')->dailyAt('08:00');
+
+        // Reposicion inteligente de stock: genera pedidos de compra borrador
+        $schedule->command('reposicion:generar-sugerencias')->weeklyOn(1, '06:30');
     }
 
     /**

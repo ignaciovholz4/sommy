@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             <td>${sa.articulo.nombre}</td>
                             <td>${sa.articulo.codigo}</td>
                             <td>${sa.stock}</td>
+                            <td>${sa.stock_minimo ?? '-'}</td>
                             <td>${sa.ubicacion ?? '-'}</td>
                             <td>
                                 ${
@@ -27,6 +28,9 @@ document.addEventListener("DOMContentLoaded", function () {
                                     ? `
                                         <button class="btn btn-sm btn-warning btnEditStock" data-id="${sa.id}" data-tipo="simple">
                                             <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-secondary btnEditMinimo" data-id="${sa.id}" data-minimo="${sa.stock_minimo ?? ''}" title="Stock mínimo (reposición IA)">
+                                            <i class="fas fa-triangle-exclamation"></i>
                                         </button>
                                         <button class="btn btn-sm btn-info btnEditUbicacion" data-id="${sa.id}" data-tipo="simple">
                                             <i class="fas fa-map-marker-alt"></i>
@@ -60,6 +64,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                 </td>
                                 <td>${a.codigo}</td>
                                 <td>${sc.stock}</td>
+                                <td>-</td>
                                 <td>${sc.ubicacion ?? '-'}</td>
                                 <td>
                                     ${
@@ -100,7 +105,11 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".btnEditUbicacion").forEach(btn => {
             btn.addEventListener("click", () => editarUbicacion(btn.dataset.id, btn.dataset.tipo));
         });
-        
+
+        document.querySelectorAll(".btnEditMinimo").forEach(btn => {
+            btn.addEventListener("click", () => editarMinimo(btn.dataset.id, btn.dataset.minimo));
+        });
+
         // Eliminar para Articulos Simple
         document.querySelectorAll(".btnEliminarArticulo").forEach(btn => {
             btn.addEventListener("click", () => eliminarArticulo(btn.dataset.id));
@@ -443,6 +452,33 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.estado === 1) {
                 cargarStock();
                 bootstrap.Modal.getInstance(document.getElementById("modalEditarUbicacionSucursal")).hide();
+            } else {
+                alert(data.mensaje);
+            }
+        });
+    });
+
+    // Editar stock mínimo (solo artículos simples: lo usa la reposición inteligente)
+    function editarMinimo(id, minimoActual) {
+        document.getElementById("registro_id_minimo").value = id;
+        document.getElementById("minimo_edit").value = minimoActual || "";
+        new bootstrap.Modal(document.getElementById("modalEditarMinimoSucursal")).show();
+    }
+
+    document.getElementById("btnGuardarMinimoSucursal").addEventListener("click", () => {
+        const id = document.getElementById("registro_id_minimo").value;
+        const stock_minimo = document.getElementById("minimo_edit").value;
+
+        fetch("/sucursal-articulo/update-stock-minimo", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrf },
+            body: JSON.stringify({ id, stock_minimo: stock_minimo === "" ? null : stock_minimo })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.estado === 1) {
+                cargarStock();
+                bootstrap.Modal.getInstance(document.getElementById("modalEditarMinimoSucursal")).hide();
             } else {
                 alert(data.mensaje);
             }

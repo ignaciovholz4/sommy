@@ -344,6 +344,10 @@ Route::post('sucursal-articulo/update-ubicacion', [SucursalArticuloController::c
     ->name('sucursal.articulo.updateUbicacion')
     ->middleware(['auth','verified']);
 
+Route::post('sucursal-articulo/update-stock-minimo', [SucursalArticuloController::class, 'updateStockMinimo'])
+    ->name('sucursal.articulo.updateStockMinimo')
+    ->middleware(['auth','verified']);
+
 Route::post('sucursal-articulo/delete', [SucursalArticuloController::class, 'destroy'])
     ->name('sucursal.articulo.delete')
     ->middleware(['auth','verified']);

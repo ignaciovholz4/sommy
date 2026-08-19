@@ -85,6 +85,7 @@
                         <th class="ps-4">Artículo / Combinación</th>
                         <th>Código</th>
                         <th>Stock Actual</th>
+                        <th>Mín.</th>
                         <th>Ubicación</th>
                         <th class="text-center pe-4" width="200">Acciones</th>
                     </tr>
@@ -177,6 +178,34 @@
                 </div>
                 <div class="d-grid mt-4">
                     <button class="btn-facturarg-save" id="btnGuardarStockSucursal" style="background-color: #1591a3;">
+                        <i class="fas fa-save me-2"></i> GUARDAR CAMBIOS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Editar Stock Mínimo (solo artículos simples: lo usa la reposición inteligente) --}}
+<div class="modal fade modal-facturarg" id="modalEditarMinimoSucursal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #1591a3;">
+                <h5 class="modal-title fw-bold text-uppercase">
+                    <i class="fas fa-triangle-exclamation me-2 text-white"></i> Stock Mínimo
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="registro_id_minimo">
+
+                <p class="text-muted small mb-3">Por debajo de este número, la <strong>reposición inteligente</strong> incluye el artículo en su próxima sugerencia de compra. Dejalo vacío para usar el mínimo por defecto del sistema.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small uppercase">Stock Mínimo</label>
+                    <input type="number" min="0" class="form-control form-control-facturarg" id="minimo_edit" placeholder="Por defecto">
+                </div>
+                <div class="d-grid mt-4">
+                    <button class="btn-facturarg-save" id="btnGuardarMinimoSucursal" style="background-color: #1591a3;">
                         <i class="fas fa-save me-2"></i> GUARDAR CAMBIOS
                     </button>
                 </div>

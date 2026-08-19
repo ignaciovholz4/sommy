@@ -147,6 +147,12 @@ class PedidoCompraController extends Controller
         $pedidos = PedidoCompra::with(['proveedor', 'tipoComprobante', 'sucursal', 'compra']);
 
         return DataTables::of($pedidos)
+            ->editColumn('num_folio', function ($p) {
+                $badge = $p->origen === 'ia_reposicion'
+                    ? ' <span class="badge bg-info text-dark" title="Generado automáticamente por reposición inteligente"><i class="fas fa-robot"></i> IA</span>'
+                    : '';
+                return e($p->num_folio) . $badge;
+            })
             ->addColumn('proveedor', fn($p) => $p->proveedor->nombre)
             ->addColumn('tipo_comprobante', fn($p) => $p->tipoComprobante?->descripcion ?? '')
             ->addColumn('sucursal', fn($p) => $p->sucursal?->nombre ?? '-')
@@ -187,7 +193,7 @@ class PedidoCompraController extends Controller
                 }
                 return $buttons;
             })
-            ->rawColumns(['estado', 'action'])
+            ->rawColumns(['num_folio', 'estado', 'action'])
             ->make(true);
     }
 

@@ -18,6 +18,9 @@ class AiAgentesFeaturesPermisosSeeder extends Seeder
         $permisos = [
             // Comprobantes con IA (compras)
             ['slug' => 'compras.ocr_ia', 'name' => 'cargar comprobantes con IA', 'description' => 'Puede subir facturas/remitos de proveedor para precargar el alta de compra con IA'],
+            // Reposición inteligente de stock
+            ['slug' => 'compras.reposicion.index', 'name' => 'ver reposición de stock', 'description' => 'Puede ver los ajustes y el estado de la reposición inteligente'],
+            ['slug' => 'compras.reposicion.manage', 'name' => 'gestionar reposición de stock', 'description' => 'Puede editar los ajustes y generar pedidos de compra sugeridos manualmente'],
         ];
 
         $ids = [];

@@ -707,6 +707,14 @@ class OrderController extends Controller
                 if($ord->status_id > $order->status_order_id){
                     $ord->action = 'falta';
                     $ord->current_active = (($ord->status_id - 1) == $order->status_order_id) ? 'active' : 'inactive';
+
+                    // 🚚 Pago contra entrega: con el stock comprobado se puede marcar
+                    // "Enviado" sin pasar por "Pagado" — cobra el fletero en la puerta
+                    // (el portal del fletero le muestra el pendiente exacto; si el
+                    // cliente ya transfirió, le avisa que NO cobre).
+                    if ($ord->status_id == 4 && $order->status_order_id == 2) {
+                        $ord->current_active = 'active';
+                    }
                 }
                 if($ord->status_id < $order->status_order_id){
                     $ord->action = 'complete';

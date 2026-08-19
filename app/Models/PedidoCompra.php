@@ -16,6 +16,7 @@ class PedidoCompra extends Model
         'num_folio',
         'fecha',
         'estado',
+        'origen',
         'a_credito',
         'observaciones',
         'compra_id',
