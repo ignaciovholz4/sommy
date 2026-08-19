@@ -63,18 +63,33 @@
             <h3><i class="fas fa-shopping-basket"></i> Pedidos web / otros canales ({{ $pedidos->count() }})</h3>
         </div>
         <table class="fx-table">
-            <thead><tr><th>Pedido</th><th>Fecha</th><th>Canal</th><th>Estado</th><th class="der">Total</th></tr></thead>
+            <thead><tr><th>Pedido</th><th>Fecha</th><th>Canal</th><th>Estado</th><th>Dónde pagó</th><th class="der">Total</th></tr></thead>
             <tbody>
             @forelse($pedidos as $p)
+                @php
+                    $movsP = $pagosPedidos->get('Pedido #' . $p->order_id, collect());
+                    $pagadoP = (float) $movsP->sum('total');
+                    $faltaP = max((float) $p->total_amount - $pagadoP, 0);
+                @endphp
                 <tr>
                     <td><a href="{{ url('orders/order/' . $p->order_id) }}">#{{ $p->order_id }}</a></td>
                     <td>{{ \Carbon\Carbon::parse($p->order_date)->format('d/m/Y') }}</td>
                     <td>{{ ucfirst($p->origen ?? 'tienda') }}</td>
                     <td><span class="fx-chip {{ $p->status_order_id == 5 ? 'ok' : ($p->status_order_id == 6 ? 'mal' : 'pend') }}">{{ optional($p->status)->status_name ?: '—' }}</span></td>
+                    <td class="fx-plata">
+                        @forelse($movsP as $m)
+                            {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}: ${{ number_format($m->total, 0, ',', '.') }}<br>
+                        @empty
+                            <span style="color:#94A3B8;">Sin pago registrado</span>
+                        @endforelse
+                        @if($pagadoP > 0.009 && $faltaP > 0.009 && $p->status_order_id != 6)
+                            <span style="color:#b4552d;font-weight:700;">Faltan ${{ number_format($faltaP, 0, ',', '.') }}</span>
+                        @endif
+                    </td>
                     <td class="der" style="font-weight:600;">${{ number_format($p->total_amount, 2, ',', '.') }}</td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="fx-vacio">Sin pedidos web.</td></tr>
+                <tr><td colspan="6" class="fx-vacio">Sin pedidos web.</td></tr>
             @endforelse
             </tbody>
         </table>

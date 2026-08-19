@@ -245,6 +245,12 @@ class ClienteController extends Controller
             ->orderByDesc('order_date')
             ->limit(200)->get();
 
+        // Pagos de los pedidos: movimientos de caja/banco con comprobante "Pedido #N"
+        $pagosPedidos = \App\Models\Movimiento::with('cuenta')
+            ->whereIn('comprobante', $pedidos->map(fn ($p) => 'Pedido #' . $p->order_id))
+            ->get()
+            ->groupBy('comprobante');
+
         $ccMovs = DB::table('cliente_cc_movimientos')
             ->where('cliente_id', $id)
             ->orderByDesc('created_at')->orderByDesc('id')
@@ -264,7 +270,7 @@ class ClienteController extends Controller
         ];
         $kpis['total'] = $kpis['total_ventas'] + $kpis['total_pedidos'];
 
-        return view('fichas.cliente', compact('cliente', 'ventas', 'pedidos', 'ccMovs', 'cc', 'kpis'));
+        return view('fichas.cliente', compact('cliente', 'ventas', 'pedidos', 'pagosPedidos', 'ccMovs', 'cc', 'kpis'));
     }
 
     public function findCustomer(Request $request)
