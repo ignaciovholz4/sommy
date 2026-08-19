@@ -272,8 +272,13 @@ btnEndBuy.addEventListener("click", (e) => {
     /******************************** */
 });
 
-btnRegisterOrder.addEventListener("click", (e) => {
-    e.preventDefault();
+// Candado: garantiza que el pedido viaje UNA sola vez aunque haya doble click
+let pedidoEnviandose = false;
+
+const fnRegistrarPedido = () => {
+    if (pedidoEnviandose) {
+        return false; // ya hay un envío en curso
+    }
 
     if(pedidoArray.length == 0){
         fnMessageToastrError("No has ingresado los datos para el pedido","Error");
@@ -300,7 +305,12 @@ btnRegisterOrder.addEventListener("click", (e) => {
 
     const formDataEcommerce = new FormData();
     formDataEcommerce.append('data', JSON.stringify(pedidoArray));
+
+    pedidoEnviandose = true;
     btnRegisterOrder.disabled = true;
+    if (btnAddPago) { btnAddPago.disabled = true; }
+    btnRegisterOrder.textContent = "Enviando pedido...";
+
     saveDataEcommerce(formDataEcommerce,'/Ecommercesaveorder').then((resp) => {
         console.log(resp);
         if(resp.status === 1){
@@ -315,15 +325,30 @@ btnRegisterOrder.addEventListener("click", (e) => {
 
             fnMessageToastrSuccess(resp.message,"Exito!");
             fnExecuteAfterRegisterOrder(resp);
-            btnRegisterOrder.disabled = false;
+            // El pedido ya está registrado: el botón NO se rehabilita (evita duplicados)
+            btnRegisterOrder.style.display = "none";
             fnShowListCartProduct();//load the list cart product
             fnShowQuantityProduct(0);//reset cart product
         }
         if(resp.status === 0){
             fnMessageToastrError(resp.message,"Error");
+            pedidoEnviandose = false;
             btnRegisterOrder.disabled = false;
+            if (btnAddPago) { btnAddPago.disabled = false; }
+            btnRegisterOrder.textContent = "Realizar pedido";
         }
+    }).catch(() => {
+        fnMessageToastrError("No se pudo enviar el pedido. Revisá tu conexión e intentá de nuevo.","Error");
+        pedidoEnviandose = false;
+        btnRegisterOrder.disabled = false;
+        if (btnAddPago) { btnAddPago.disabled = false; }
+        btnRegisterOrder.textContent = "Realizar pedido";
     });
+};
+
+btnRegisterOrder.addEventListener("click", (e) => {
+    e.preventDefault();
+    fnRegistrarPedido();
 });
 
 const fnExecuteAfterRegisterOrder = (data) => {
@@ -602,7 +627,9 @@ btnAddPago.addEventListener("click", (e) => {
         cardSectionEnvio.style.display = "none";
         cardSectionPago.style.display = "none";
         /********************************************* */
-        fnMessageToastrSuccess("Datos completos. Revisá el resumen y confirmá con 'Realizar pedido'","Listo");
+        // Un solo click: con los datos completos, el pedido se registra y
+        // se abre WhatsApp directamente (sin segundo botón de confirmación)
+        fnRegistrarPedido();
     }
 });
 

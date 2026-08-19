@@ -476,5 +476,5 @@
     window.DESC_TRANSFERENCIA = {{ (float) ($configPago['descuento_transferencia'] ?? 0) }};
 </script>
 <script src="{{asset('js/ecommerce/cart-main-shopping.js')}}"></script>
-<script src="{{asset('js/ecommerce/order-shopping-card.js')}}"></script>
+<script src="{{asset('js/ecommerce/order-shopping-card.js')}}?v={{ filemtime(public_path('js/ecommerce/order-shopping-card.js')) }}"></script>
 @endsection
