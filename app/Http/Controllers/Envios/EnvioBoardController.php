@@ -221,6 +221,26 @@ class EnvioBoardController extends Controller
             ->orderByRaw('orden_ruta IS NULL, orden_ruta')
             ->get();
 
+        // Geocodificar hasta 3 paradas sin coordenadas por consulta (incluye las ya
+        // entregadas): con el refresco de 20s el mapa converge y queda cacheado.
+        $geo = app(\App\Services\Envios\GeocodificadorService::class);
+        $sinCoords = $envios->filter(fn ($e) => !$e->lat || !$e->lng)->take(3)->values();
+        foreach ($sinCoords as $i => $e) {
+            $cliente = optional($e->orden)->cliente ?? optional($e->venta)->cliente;
+            $dir = $e->direccion_entrega ?: trim(implode(', ', array_filter([
+                optional($cliente)->direccion,
+                optional($cliente)->localidad ?? optional($e->orden)->direccion_localidad,
+            ])));
+            if ($dir && ($coords = $geo->geocodificar($dir))) {
+                DB::table('envios')->where('id', $e->id)->update(['lat' => $coords['lat'], 'lng' => $coords['lng']]);
+                $e->lat = $coords['lat'];
+                $e->lng = $coords['lng'];
+            }
+            if ($i < $sinCoords->count() - 1) {
+                usleep(1100000); // política de Nominatim: 1 consulta/seg
+            }
+        }
+
         $entregas = DB::table('entregas_fletero')
             ->whereIn('envio_id', $envios->pluck('id'))
             ->get()->keyBy('envio_id');
