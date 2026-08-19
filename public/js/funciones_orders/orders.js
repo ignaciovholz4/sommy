@@ -20,12 +20,13 @@ $(document).ready( function () {
            columns: [
                    { data: 'order_id', name: 'order_id'},
                    { data: 'canal', name: 'canal'},
-                   { data: 'telefonocliente', name: 'telefonocliente'},
+                   { data: 'cliente', name: 'cliente'},
+                   { data: 'direccion', name: 'direccion', orderable: false },
+                   { data: 'productos', name: 'productos', orderable: false },
                    { data: 'order_date', name: 'order_date' },
-                   { data: 'subtotal_amount', name: 'subtotal_amount' },
                    { data: 'total_amount', name: 'total_amount' },
                    { data: 'statusName', name: 'statusName'},
-                   {data: 'action', name:'action'}
+                   {data: 'action', name:'action', orderable: false, searchable: false}
                  ],
           order: [[0, 'desc']]
         });

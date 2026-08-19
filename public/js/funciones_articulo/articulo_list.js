@@ -224,7 +224,6 @@ const EtiquetaPrinter = (() => {
 
     function _renderPreview() {
         const mostrarNombre = document.getElementById('etiqueta-mostrar-nombre').checked;
-        const mostrarPrecio = document.getElementById('etiqueta-mostrar-precio').checked;
         const mostrarCodTxt = document.getElementById('etiqueta-mostrar-codigo-texto').checked;
         const tipoCodigo    = document.getElementById('etiqueta-tipo-codigo').value;
 
@@ -232,11 +231,6 @@ const EtiquetaPrinter = (() => {
         const elNombre = document.getElementById('preview-nombre');
         elNombre.textContent = mostrarNombre ? _nombre : '';
         elNombre.style.display = mostrarNombre ? 'block' : 'none';
-
-        // Precio
-        const elPrecio = document.getElementById('preview-precio');
-        elPrecio.textContent = mostrarPrecio ? '$ ' + _precio : '';
-        elPrecio.style.display = mostrarPrecio ? 'block' : 'none';
 
         // Barcode
         const svgEl = document.getElementById('preview-barcode');
@@ -263,7 +257,6 @@ const EtiquetaPrinter = (() => {
 
     function _buildLabelHtml(ancho, alto) {
         const mostrarNombre = document.getElementById('etiqueta-mostrar-nombre').checked;
-        const mostrarPrecio = document.getElementById('etiqueta-mostrar-precio').checked;
         const mostrarCodTxt = document.getElementById('etiqueta-mostrar-codigo-texto').checked;
         const tipoCodigo    = document.getElementById('etiqueta-tipo-codigo').value;
         const cantidad      = parseInt(document.getElementById('etiqueta-cantidad').value) || 1;
@@ -289,9 +282,10 @@ const EtiquetaPrinter = (() => {
             barcodeHtml = '<p style="color:red;font-size:9px;">Código no compatible con ' + tipoCodigo + '</p>';
         }
 
-        // Calcular fuentes en proporción al tamaño
+        // Calcular fuentes y logo en proporción al tamaño
         const fzNombre = Math.max(6, Math.round(alto * 0.12)) + 'px';
-        const fzPrecio = Math.max(8, Math.round(alto * 0.16)) + 'px';
+        const altoLogo = Math.max(4, Math.round(alto * 0.16)) + 'mm';
+        const logoUrl  = window.location.origin + '/imagenes/marca/sommy-logo-header.png';
 
         const labelStyle = `
             width:${ancho}mm;
@@ -312,9 +306,9 @@ const EtiquetaPrinter = (() => {
         for (let i = 0; i < cantidad; i++) {
             etiquetas += `
                 <div class="etiqueta" style="${labelStyle}">
+                    <img src="${logoUrl}" alt="Sommy" style="height:${altoLogo}; width:auto; max-width:70%; object-fit:contain; margin-bottom:1mm; filter:grayscale(1) brightness(0); -webkit-filter:grayscale(1) brightness(0);">
                     ${mostrarNombre ? `<div style="font-size:${fzNombre}; font-weight:700; text-align:center; line-height:1.2; word-break:break-word; max-width:100%; margin-bottom:1mm;">${_nombre}</div>` : ''}
                     <div style="max-width:100%;">${barcodeHtml}</div>
-                    ${mostrarPrecio ? `<div style="font-size:${fzPrecio}; font-weight:800; margin-top:1mm;">$ ${_precio}</div>` : ''}
                 </div>
             `;
         }
@@ -338,8 +332,12 @@ const EtiquetaPrinter = (() => {
     max-width: 100%;
     height: auto;
   }
+  .etiqueta img {
+    filter: grayscale(1) brightness(0);
+    -webkit-filter: grayscale(1) brightness(0);
+  }
   @media print {
-    body { margin:0; }
+    body { margin:0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .etiqueta { page-break-after: always; page-break-inside: avoid; }
     .etiqueta:last-child { page-break-after: auto; }
   }
@@ -438,7 +436,7 @@ ${etiquetas}
         });
 
         // Re-renderizar preview en cualquier cambio de opción
-        $(document).on('change', '#etiqueta-tipo-codigo, #etiqueta-mostrar-nombre, #etiqueta-mostrar-precio, #etiqueta-mostrar-codigo-texto, #etiqueta-ancho-custom, #etiqueta-alto-custom', function () {
+        $(document).on('change', '#etiqueta-tipo-codigo, #etiqueta-mostrar-nombre, #etiqueta-mostrar-codigo-texto, #etiqueta-ancho-custom, #etiqueta-alto-custom', function () {
             _renderPreview();
         });
 

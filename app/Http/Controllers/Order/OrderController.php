@@ -184,7 +184,7 @@ class OrderController extends Controller
      */
     public function show()
     {
-        $orders = order_ecommerce::with(['status','cliente'])
+        $orders = order_ecommerce::with(['status','cliente','detalles.producto'])
             ->where('active', true)
             ->when(request()->filled('status_id'), function ($q) {
                 $q->where('status_order_id', request('status_id'));
@@ -209,15 +209,40 @@ class OrderController extends Controller
                 $origenKey = $order->origen ?? 'tienda';
                 [$canalNombre, $canalColor] = $canales[$origenKey] ?? [ucfirst($origenKey), '#47536F'];
 
+                // Cliente: nombre + teléfono
+                $clienteNombre = trim((optional($order->cliente)->nombre ?? '') . ' ' . (optional($order->cliente)->paterno ?? '')) ?: '—';
+                $telefono = optional($order->cliente)->telefono;
+                $clienteHtml = '<div style="font-weight:700;color:#1B2B5A;">'.e($clienteNombre).'</div>'
+                    . ($telefono ? '<div style="font-size:0.78rem;"><a href="https://wa.me/'.preg_replace('/\D/', '', $telefono).'" target="_blank" rel="noopener" style="color:#0d8a4f;text-decoration:none;"><i class="fab fa-whatsapp"></i> '.e($telefono).'</a></div>' : '');
+
+                // Dirección de entrega: calle del cliente + localidad/provincia/CP del pedido
+                $direccion = trim(implode(', ', array_filter([
+                    optional($order->cliente)->direccion,
+                    $order->direccion_localidad,
+                    $order->direccion_provincia,
+                ])));
+                if ($order->direccion_cp) {
+                    $direccion .= ' (CP ' . $order->direccion_cp . ')';
+                }
+                $direccionHtml = $direccion
+                    ? '<span style="font-size:0.82rem;color:#47536F;"><i class="fas fa-map-marker-alt text-muted"></i> '.e($direccion).'</span>'
+                    : '<span class="text-muted">Sin dirección</span>';
+
+                // Productos del pedido
+                $productosHtml = $order->detalles->map(function ($d) {
+                    return '<div style="font-size:0.82rem;color:#1B2B5A;"><strong>'.$d->quantity.'x</strong> '.e(optional($d->producto)->nombre ?? '—').'</div>';
+                })->implode('') ?: '<span class="text-muted">—</span>';
+
                 return [
-                    'order_id'        => $order->order_id,
-                    'canal'           => '<span class="badge" style="background:'.$canalColor.';color:#fff;">'.$canalNombre.'</span>',
-                    'order_date'      => $order->order_date,
-                    'subtotal_amount' => $order->subtotal_amount,
-                    'total_amount'    => $order->total_amount,
-                    'telefonocliente' => $order->cliente->telefono ?? '',
-                    'statusName'      => $order->status->status_name,
-                    'action'          => '
+                    'order_id'     => $order->order_id,
+                    'canal'        => '<span class="badge" style="background:'.$canalColor.';color:#fff;">'.$canalNombre.'</span>',
+                    'cliente'      => $clienteHtml,
+                    'direccion'    => $direccionHtml,
+                    'productos'    => $productosHtml,
+                    'order_date'   => $order->order_date ? \Carbon\Carbon::parse($order->order_date)->format('d/m/Y H:i') : '—',
+                    'total_amount' => '<strong>$'.number_format($order->total_amount, 2, ',', '.').'</strong>',
+                    'statusName'   => $order->status->status_name,
+                    'action'       => '
                         <div class="text-center">
                             <a href="/orders/order/'.$order->order_id.'">
                                 '.$icon.'
@@ -239,7 +264,7 @@ class OrderController extends Controller
                 };
                 return '<h5><span class="badge '.$badgeClass.'">'.$order['statusName'].'</span></h5>';
             })
-            ->rawColumns(['action','statusName','canal'])
+            ->rawColumns(['action','statusName','canal','cliente','direccion','productos','total_amount'])
             ->make(true);
     }
 

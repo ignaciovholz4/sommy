@@ -16,6 +16,7 @@ class Venta extends Model
         "cliente_id",
         "revendedor_id",
         "tipo_comprobante_id",
+        "tipo_venta",
         "sucursal_id",
         "num_folio",
         "fecha",

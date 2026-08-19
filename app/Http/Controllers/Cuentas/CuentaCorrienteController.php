@@ -33,22 +33,33 @@ class CuentaCorrienteController extends Controller
                 $w->where('c.nombre', 'like', "%$q%")
                   ->orWhere('c.paterno', 'like', "%$q%")
                   ->orWhere('c.email', 'like', "%$q%")
-                  ->orWhere('c.telefono', 'like', "%$q%");
+                  ->orWhere('c.telefono', 'like', "%$q%")
+                  ->orWhere('c.dni_cuit', 'like', "%$q%");
             });
         }
 
-        $clientes = $saldos->get()->map(function ($c) {
+        // Deuda por ventas "a cobrar" (total - cobrado por caja/banco), por cliente
+        $ventasPend = DB::table('ventas as v')
+            ->leftJoin(DB::raw('(SELECT comprobante, SUM(total) as cobrado FROM movimientos GROUP BY comprobante) mv'), 'mv.comprobante', '=', 'v.num_folio')
+            ->where('v.estado', 'a cobrar')
+            ->groupBy('v.cliente_id')
+            ->selectRaw('v.cliente_id, SUM(v.total_con_iva - COALESCE(mv.cobrado, 0)) as pendiente')
+            ->get()->keyBy('cliente_id');
+
+        $clientes = $saldos->get()->map(function ($c) use ($ventasPend) {
+            $c->ventas_pendiente = (float) optional($ventasPend->get($c->idcliente))->pendiente ?: 0;
             $c->saldo = (float) $c->cargos - (float) $c->pagos;
+            $c->saldo_total = $c->saldo + $c->ventas_pendiente;
             return $c;
         });
 
-        // Con búsqueda se muestran todos los resultados; sin búsqueda, solo los que tienen saldo o movimientos
+        // Con búsqueda se muestran todos los resultados; sin búsqueda, solo los que tienen deuda o movimientos
         if ($q === '') {
-            $clientes = $clientes->filter(fn ($c) => $c->cargos > 0 || $c->pagos > 0)->values();
+            $clientes = $clientes->filter(fn ($c) => $c->cargos > 0 || $c->pagos > 0 || $c->ventas_pendiente > 0)->values();
         }
 
-        $clientes = $clientes->sortByDesc('saldo')->values();
-        $totalDeuda = $clientes->where('saldo', '>', 0)->sum('saldo');
+        $clientes = $clientes->sortByDesc('saldo_total')->values();
+        $totalDeuda = $clientes->where('saldo_total', '>', 0)->sum('saldo_total');
 
         return view('cuentas.cc.index', compact('clientes', 'totalDeuda', 'q'));
     }
@@ -69,7 +80,19 @@ class CuentaCorrienteController extends Controller
         $pagos  = $movimientos->where('tipo', 'pago')->sum('monto');
         $saldo  = $cargos - $pagos;
 
-        return view('cuentas.cc.cliente', compact('cliente', 'movimientos', 'saldo', 'cargos', 'pagos'));
+        // Ventas a cobrar del cliente: total, cobrado hasta ahora y lo que falta
+        $ventasACobrar = \App\Models\Venta::with('movimientos.cuenta')
+            ->where('cliente_id', $id)
+            ->where('estado', 'a cobrar')
+            ->orderByDesc('fecha')->get()
+            ->map(function ($v) {
+                $v->cobrado = (float) $v->movimientos->sum('total');
+                $v->pendiente = max((float) $v->total_con_iva - $v->cobrado, 0);
+                return $v;
+            });
+        $deudaVentas = (float) $ventasACobrar->sum('pendiente');
+
+        return view('cuentas.cc.cliente', compact('cliente', 'movimientos', 'saldo', 'cargos', 'pagos', 'ventasACobrar', 'deudaVentas'));
     }
 
     public function storeMovimiento(Request $request, $id)

@@ -79,7 +79,7 @@
     </div>
 
     <form method="GET" action="{{ url('finanzas/cxp') }}" class="cxp-buscar">
-        <input type="text" name="q" value="{{ $q }}" placeholder="Buscar proveedor por nombre, email o teléfono para abrirle cuenta...">
+        <input type="text" name="q" value="{{ $q }}" placeholder="Buscar por nombre, CUIT, email o teléfono...">
         <button type="submit"><i class="fas fa-search"></i> Buscar</button>
     </form>
 
@@ -93,7 +93,8 @@
                     <th>Vencimientos</th>
                     <th class="der">Debe</th>
                     <th class="der">Haber</th>
-                    <th class="der">Saldo</th>
+                    <th class="der">Compras a pagar</th>
+                    <th class="der">Le debemos (total)</th>
                     <th class="der"></th>
                 </tr>
             </thead>
@@ -114,14 +115,15 @@
                     </td>
                     <td class="der">${{ number_format($p->debe, 2, ',', '.') }}</td>
                     <td class="der">${{ number_format($p->haber, 2, ',', '.') }}</td>
-                    <td class="der {{ $p->saldo > 0 ? 'cxp-saldo-pos' : ($p->saldo < 0 ? 'cxp-saldo-neg' : 'cxp-saldo-cero') }}">
-                        ${{ number_format($p->saldo, 2, ',', '.') }}
-                        @if($p->saldo < 0) <small>(a favor)</small> @endif
+                    <td class="der {{ $p->compras_pendiente > 0 ? 'cxp-saldo-pos' : 'cxp-saldo-cero' }}">${{ number_format($p->compras_pendiente, 2, ',', '.') }}</td>
+                    <td class="der {{ $p->saldo_total > 0 ? 'cxp-saldo-pos' : ($p->saldo_total < 0 ? 'cxp-saldo-neg' : 'cxp-saldo-cero') }}">
+                        ${{ number_format($p->saldo_total, 2, ',', '.') }}
+                        @if($p->saldo_total < 0) <small>(a favor)</small> @endif
                     </td>
                     <td class="der"><a href="{{ url('finanzas/cxp/' . $p->idproveedor) }}" class="cxp-ver">Ver cuenta</a></td>
                 </tr>
                 @empty
-                <tr><td colspan="8" class="cxp-vacio">
+                <tr><td colspan="9" class="cxp-vacio">
                     @if($q !== '')
                         No se encontraron proveedores con "{{ $q }}".
                     @else

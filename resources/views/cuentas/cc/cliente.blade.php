@@ -10,7 +10,7 @@
     .ccd-title { font-size: 21px; font-weight: 600; }
     .ccd-sub { font-size: 13px; color: #6E7A96; font-weight: 300; }
 
-    .ccd-resumen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .ccd-resumen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
     @media (max-width: 767px) { .ccd-resumen { grid-template-columns: 1fr; } }
     .ccd-kpi {
         background: #fff; border: 1px solid #E7EAF2; border-radius: 14px;
@@ -86,14 +86,53 @@
     @endif
 
     {{-- Resumen --}}
+    @php $saldoGlobal = $saldo + $deudaVentas; @endphp
     <div class="ccd-resumen">
         <div class="ccd-kpi"><div class="l">Total cargos</div><div class="v">${{ number_format($cargos, 2, ',', '.') }}</div></div>
         <div class="ccd-kpi"><div class="l">Total pagos</div><div class="v">${{ number_format($pagos, 2, ',', '.') }}</div></div>
-        <div class="ccd-kpi saldo {{ $saldo <= 0 ? 'alDia' : '' }}">
-            <div class="l">Saldo {{ $saldo > 0 ? '(debe)' : ($saldo < 0 ? '(a favor del cliente)' : '— al día') }}</div>
-            <div class="v">${{ number_format(abs($saldo), 2, ',', '.') }}</div>
+        <div class="ccd-kpi saldo {{ $deudaVentas <= 0 ? 'alDia' : '' }}">
+            <div class="l">Deuda por ventas a cobrar</div>
+            <div class="v">${{ number_format($deudaVentas, 2, ',', '.') }}</div>
+        </div>
+        <div class="ccd-kpi saldo {{ $saldoGlobal <= 0 ? 'alDia' : '' }}">
+            <div class="l">Debe total {{ $saldoGlobal < 0 ? '(a favor del cliente)' : ($saldoGlobal == 0 ? '— al día' : '') }}</div>
+            <div class="v">${{ number_format(abs($saldoGlobal), 2, ',', '.') }}</div>
         </div>
     </div>
+
+    {{-- Ventas a cobrar: lo que falta cobrar de cada una --}}
+    @if($ventasACobrar->isNotEmpty())
+    <div class="ccd-card" style="margin-bottom:16px;">
+        <table class="ccd-table">
+            <thead>
+                <tr>
+                    <th>Venta a cobrar</th>
+                    <th>Fecha</th>
+                    <th class="der">Total</th>
+                    <th class="der">Cobrado</th>
+                    <th class="der">Falta</th>
+                    <th>Cobrado en</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($ventasACobrar as $v)
+                <tr>
+                    <td><a href="{{ url('ventas?ver=' . $v->idventa) }}" style="color:#2563EB;font-weight:600;text-decoration:none;">{{ $v->num_folio ?: '#' . $v->idventa }}</a></td>
+                    <td style="color:#6E7A96;">{{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y') }}</td>
+                    <td class="der">${{ number_format($v->total_con_iva, 2, ',', '.') }}</td>
+                    <td class="der" style="color:#0d8a4f;font-weight:600;">${{ number_format($v->cobrado, 2, ',', '.') }}</td>
+                    <td class="der" style="color:#b4552d;font-weight:700;">${{ number_format($v->pendiente, 2, ',', '.') }}</td>
+                    <td style="font-size:12px;color:#166534;">
+                        @forelse($v->movimientos as $m)
+                            {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}: ${{ number_format($m->total, 0, ',', '.') }}<br>
+                        @empty — @endforelse
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
 
     {{-- Registrar movimientos --}}
     <div class="ccd-forms">

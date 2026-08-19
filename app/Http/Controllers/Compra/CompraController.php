@@ -249,7 +249,7 @@ class CompraController extends Controller
             ->make(true);
     }
 
-    public function detail($id)
+    public function detail($idcompra)
     {
         $compra = Compra::with([
             'proveedor',
@@ -257,8 +257,17 @@ class CompraController extends Controller
             'detalles.combinacion',
             'detalles.priceList',
             'tipoComprobante',
-            'adjuntos'
-        ])->findOrFail($id);
+            'adjuntos',
+            'movimientos.cuenta'
+        ])->findOrFail($idcompra);
+
+        // Pagos realizados: a qué caja/banco fue cada uno, y cuánto falta
+        $pagado = (float) $compra->movimientos->sum('total');
+        $pagos = $compra->movimientos->map(fn ($m) => [
+            'fecha'  => \Carbon\Carbon::parse($m->fecha)->format('d/m/Y H:i'),
+            'cuenta' => optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta',
+            'monto'  => number_format($m->total, 2, ',', '.'),
+        ])->values();
 
         $detalles = $compra->detalles->map(function($d) {
             return [
@@ -292,6 +301,10 @@ class CompraController extends Controller
                 })->values()
             ],
             'detalles' => $detalles,
+            'pagos' => $pagos,
+            'pagado' => number_format($pagado, 2, ',', '.'),
+            'pendiente' => number_format(max($compra->total_con_iva - $pagado, 0), 2, ',', '.'),
+            'tiene_pendiente' => $compra->estado === 'a pagar' && ($compra->total_con_iva - $pagado) > 0.009,
             'adjuntos' => $compra->adjuntos->map(function($a) {
                 return [
                     'url' => $a->url,

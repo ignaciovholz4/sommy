@@ -184,6 +184,26 @@
             </a>
         </div>
 
+        {{-- Buscador global: DNI / CUIT / nombre → ficha del cliente, proveedor o revendedor --}}
+        <div class="dg-buscador" style="position:relative;flex:1;max-width:430px;margin:0 26px;">
+            <input id="dgBuscarPersona" type="search" placeholder="Buscar por DNI / CUIT / nombre..." autocomplete="off"
+                   style="width:100%;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 20px;font-size:13px;color:#fff;outline:none;">
+            <div id="dgBuscarResultados" style="display:none;position:absolute;top:115%;left:0;right:0;background:#fff;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.28);z-index:3000;max-height:360px;overflow-y:auto;"></div>
+        </div>
+        <style>
+            #dgBuscarPersona::placeholder { color: rgba(255,255,255,.55); }
+            #dgBuscarPersona:focus { border-color: #7FD4F5; background: rgba(255,255,255,.16); }
+            .dg-res-item { display:flex; align-items:center; gap:10px; padding:10px 14px; text-decoration:none !important; color:#1B2B5A; border-bottom:1px solid #F1F4F9; font-family:'Poppins',sans-serif; }
+            .dg-res-item:hover { background:#F8FAFC; }
+            .dg-res-tipo { border-radius:999px; font-size:9.5px; font-weight:700; padding:2px 9px; text-transform:uppercase; letter-spacing:.04em; flex-shrink:0; }
+            .dg-res-tipo.Cliente { background:#E0F2FE; color:#1B2B5A; }
+            .dg-res-tipo.Proveedor { background:#FEF3C7; color:#92400E; }
+            .dg-res-tipo.Revendedor { background:#DCFCE7; color:#166534; }
+            .dg-res-nombre { font-size:13.5px; font-weight:600; }
+            .dg-res-sub { font-size:11px; color:#6E7A96; }
+            @media (max-width: 992px) { .dg-buscador { display:none; } }
+        </style>
+
         <div class="dg-tools-right">
             <a href="{{ url('/orders/order') }}" class="dg-nav-item {{ str_contains($resp, 'pedidos') ? 'active' : '' }}" title="Ver Pedidos Ecommerce" style="position:relative;">
                 <i class="fas fa-shopping-basket"></i>
@@ -288,5 +308,41 @@ window.addEventListener('load', function () {
     }
     chequearEnvios();
     setInterval(chequearEnvios, 45000);
+
+    // Buscador global por DNI/CUIT/nombre → ficha del cliente/proveedor/revendedor
+    var inputBuscar = document.getElementById('dgBuscarPersona');
+    var panelBuscar = document.getElementById('dgBuscarResultados');
+    if (inputBuscar && panelBuscar) {
+        var timerBuscar = null;
+        inputBuscar.addEventListener('input', function () {
+            clearTimeout(timerBuscar);
+            var q = this.value.trim();
+            if (q.length < 3) { panelBuscar.style.display = 'none'; return; }
+            timerBuscar = setTimeout(function () {
+                fetch('{{ url('/buscar-persona') }}?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (data) {
+                        if (!data) return;
+                        var res = data.resultados || [];
+                        if (!res.length) {
+                            panelBuscar.innerHTML = '<div style="padding:14px;text-align:center;color:#94A3B8;font-size:12.5px;font-family:Poppins,sans-serif;">Sin resultados para "' + q.replace(/</g, '&lt;') + '"</div>';
+                        } else {
+                            panelBuscar.innerHTML = res.map(function (p) {
+                                return '<a class="dg-res-item" href="' + p.url + '">' +
+                                    '<span class="dg-res-tipo ' + p.tipo + '">' + p.tipo + '</span>' +
+                                    '<span><span class="dg-res-nombre">' + p.nombre + '</span><br>' +
+                                    '<span class="dg-res-sub">' + [p.doc, p.extra].filter(Boolean).join(' · ') + '</span></span></a>';
+                            }).join('');
+                        }
+                        panelBuscar.style.display = '';
+                    }).catch(function () {});
+            }, 300);
+        });
+        document.addEventListener('click', function (e) {
+            if (!inputBuscar.contains(e.target) && !panelBuscar.contains(e.target)) {
+                panelBuscar.style.display = 'none';
+            }
+        });
+    }
 });
 </script>

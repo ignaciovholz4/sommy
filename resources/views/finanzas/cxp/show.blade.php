@@ -66,14 +66,54 @@
     </div>
 
     {{-- Resumen --}}
-    <div class="cpd-resumen">
+    @php $deudaGlobal = $saldo + $deudaCompras; @endphp
+    <div class="cpd-resumen" style="grid-template-columns: repeat(4, 1fr);">
         <div class="cpd-kpi"><div class="l">Total debe</div><div class="v">${{ number_format($debe, 2, ',', '.') }}</div></div>
         <div class="cpd-kpi"><div class="l">Total haber (pagos)</div><div class="v">${{ number_format($haber, 2, ',', '.') }}</div></div>
-        <div class="cpd-kpi saldo {{ $saldo <= 0 ? 'alDia' : '' }}">
-            <div class="l">Saldo {{ $saldo > 0 ? '(le debemos)' : ($saldo < 0 ? '(a favor nuestro)' : '— al día') }}</div>
-            <div class="v">${{ number_format(abs($saldo), 2, ',', '.') }}</div>
+        <div class="cpd-kpi saldo {{ $deudaCompras <= 0 ? 'alDia' : '' }}">
+            <div class="l">Compras a pagar (contado)</div>
+            <div class="v">${{ number_format($deudaCompras, 2, ',', '.') }}</div>
+        </div>
+        <div class="cpd-kpi saldo {{ $deudaGlobal <= 0 ? 'alDia' : '' }}">
+            <div class="l">Le debemos (total) {{ $deudaGlobal < 0 ? '(a favor nuestro)' : ($deudaGlobal == 0 ? '— al día' : '') }}</div>
+            <div class="v">${{ number_format(abs($deudaGlobal), 2, ',', '.') }}</div>
         </div>
     </div>
+
+    {{-- Compras al contado con pago pendiente o parcial --}}
+    @if($comprasAPagar->isNotEmpty())
+    <div class="cpd-card" style="margin-bottom:16px;">
+        <h3><i class="fas fa-shopping-cart" style="color:#b4552d;"></i> Compras a pagar (lo que falta de cada una)</h3>
+        <table class="cpd-table">
+            <thead>
+                <tr>
+                    <th>Compra</th>
+                    <th>Fecha</th>
+                    <th class="der">Total</th>
+                    <th class="der">Pagado</th>
+                    <th class="der">Falta</th>
+                    <th>Pagado desde</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($comprasAPagar as $c)
+                <tr>
+                    <td style="font-weight:600;">{{ $c->num_folio ?: '#' . $c->idcompra }}</td>
+                    <td style="color:#6E7A96;">{{ \Carbon\Carbon::parse($c->fecha)->format('d/m/Y') }}</td>
+                    <td class="der">${{ number_format($c->total_con_iva, 2, ',', '.') }}</td>
+                    <td class="der" style="color:#0d8a4f;font-weight:600;">${{ number_format($c->pagado, 2, ',', '.') }}</td>
+                    <td class="der" style="color:#b4552d;font-weight:700;">${{ number_format($c->pendiente, 2, ',', '.') }}</td>
+                    <td style="font-size:12px;color:#166534;">
+                        @forelse($c->movimientos as $m)
+                            {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}: ${{ number_format($m->total, 0, ',', '.') }}<br>
+                        @empty — @endforelse
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
 
     {{-- Deudas pendientes con vencimiento (orden FIFO) --}}
     <div class="cpd-card">

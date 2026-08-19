@@ -172,6 +172,7 @@
                 $v->num_folio, 'venta #' . $v->idventa,
                 optional($v->cliente)->nombre, optional($v->cliente)->paterno,
                 optional($v->cliente)->telefono,
+                optional($v->cliente)->dni_cuit,
                 optional($v->tipoComprobante)->descripcion,
                 optional($v->sucursal)->nombre,
             ]))),
@@ -192,20 +193,33 @@
             @php $d = $cardDatos($v); @endphp
             <div class="vb-card" data-buscar="{{ $d['buscar'] }}">
                 <div class="top">
-                    <span class="folio">{{ $v->num_folio ?: 'Venta #' . $v->idventa }}</span>
+                    <span class="folio">{{ $v->num_folio ?: 'Venta #' . $v->idventa }}</span>@if($v->tipo_venta === 'mayorista')<span class="vb-rev" style="background:#E0F2FE;color:#1B2B5A;"><i class="fas fa-boxes"></i> Mayorista</span>@endif
                     @if($v->revendedor)<span class="vb-rev"><i class="fas fa-handshake"></i> {{ $v->revendedor->nombre }}</span>@endif
                 </div>
                 <div class="dato"><i class="fas fa-user"></i> {{ $d['cliente'] }}</div>
                 @if($d['telefono'])
                     <div class="dato"><i class="fab fa-whatsapp"></i> <a href="https://wa.me/{{ preg_replace('/\D/', '', $d['telefono']) }}" target="_blank" rel="noopener noreferrer" style="color:#0d8a4f; text-decoration:none;">{{ $d['telefono'] }}</a></div>
                 @endif
+                @if(optional($v->cliente)->dni_cuit)<div class="dato"><i class="fas fa-id-card"></i> {{ $v->cliente->dni_cuit }}</div>@endif
                 <div class="dato"><i class="fas fa-calendar"></i> {{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y') }}</div>
                 @if($d['compSuc'])<div class="dato"><i class="fas fa-file-alt"></i> {{ $d['compSuc'] }}</div>@endif
+                @php $cobradoV = (float) $v->movimientos->sum('total'); @endphp
+                @if($cobradoV > 0.009)
+                    <div class="monto" style="color:#0d8a4f;">${{ number_format($cobradoV, 2, ',', '.') }} <span style="color:#6E7A96;font-weight:400;font-size:12px;">de ${{ number_format($v->total_con_iva, 2, ',', '.') }}</span></div>
+                    <div style="color:#b4552d;font-weight:700;font-size:13px;">Faltan ${{ number_format($v->total_con_iva - $cobradoV, 2, ',', '.') }}</div>
+                    <div class="vb-plata" style="margin-top:5px;">
+                        <b><i class="fas fa-piggy-bank"></i> Cobrado en</b>
+                        @foreach($v->movimientos as $m)
+                            {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}: ${{ number_format($m->total, 0, ',', '.') }}<br>
+                        @endforeach
+                    </div>
+                @else
                 <div class="monto">${{ number_format($v->total_con_iva, 2, ',', '.') }}
                     @if(round($v->total_neto, 2) !== round($v->total_con_iva, 2))
                         <small class="text-muted" style="font-weight:400">(neto ${{ number_format($v->total_neto, 2, ',', '.') }})</small>
                     @endif
                 </div>
+                @endif
                 <div class="vb-btns">
                     <button class="vb-btn cobrar" onclick="openPagoModal({{ $v->idventa }}, {{ $v->sucursal_id ?: 'null' }})"><i class="fas fa-dollar-sign"></i> Cobrar</button>
                     <button class="vb-btn" onclick="getDetailVenta({{ $v->idventa }})"><i class="fas fa-eye"></i> Ver</button>
@@ -224,7 +238,7 @@
             @php $d = $cardDatos($v); @endphp
             <div class="vb-card" data-buscar="{{ $d['buscar'] }}">
                 <div class="top">
-                    <span class="folio">{{ $v->num_folio ?: 'Venta #' . $v->idventa }}</span>
+                    <span class="folio">{{ $v->num_folio ?: 'Venta #' . $v->idventa }}</span>@if($v->tipo_venta === 'mayorista')<span class="vb-rev" style="background:#E0F2FE;color:#1B2B5A;"><i class="fas fa-boxes"></i> Mayorista</span>@endif
                     @if($v->revendedor)<span class="vb-rev"><i class="fas fa-handshake"></i> {{ $v->revendedor->nombre }}</span>@endif
                 </div>
                 <div class="dato"><i class="fas fa-user"></i> {{ $d['cliente'] }}</div>
@@ -255,7 +269,7 @@
             @forelse($anuladas as $v)
             @php $d = $cardDatos($v); @endphp
             <div class="vb-card anulada" data-buscar="{{ $d['buscar'] }}">
-                <div class="top"><span class="folio">{{ $v->num_folio ?: 'Venta #' . $v->idventa }}</span></div>
+                <div class="top"><span class="folio">{{ $v->num_folio ?: 'Venta #' . $v->idventa }}</span>@if($v->tipo_venta === 'mayorista')<span class="vb-rev" style="background:#E0F2FE;color:#1B2B5A;"><i class="fas fa-boxes"></i> Mayorista</span>@endif</div>
                 <div class="dato"><i class="fas fa-user"></i> {{ $d['cliente'] }}</div>
                 <div class="dato"><i class="fas fa-calendar"></i> {{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y') }}</div>
                 @if($d['compSuc'])<div class="dato"><i class="fas fa-file-alt"></i> {{ $d['compSuc'] }}</div>@endif
@@ -338,8 +352,20 @@
                                 <td colspan="7" class="text-end"><strong>Total con IVA</strong></td>
                                 <td><strong id="details_total_con_iva"></strong></td>
                             </tr>
+                            <tr>
+                                <td colspan="7" class="text-end" style="color:#0d8a4f;">Cobrado</td>
+                                <td id="details_v_cobrado" style="color:#0d8a4f;font-weight:700;"></td>
+                            </tr>
+                            <tr id="row_details_v_pendiente" style="display:none;">
+                                <td colspan="7" class="text-end" style="color:#b4552d;"><strong>Falta cobrar</strong></td>
+                                <td id="details_v_pendiente" style="color:#b4552d;font-weight:800;"></td>
+                            </tr>
                         </tfoot>
                     </table>
+                    <div id="details_v_pagos_wrap" style="display:none;margin-top:10px;text-align:left;">
+                        <label style="color:var(--facturarg-blue);font-weight:700;font-size:0.85rem;">💰 Dónde está la plata</label>
+                        <div id="details_v_pagos" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 14px;font-size:13.5px;color:#166534;"></div>
+                    </div>
                 </div>
             </div>  
           </div>

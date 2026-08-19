@@ -212,6 +212,7 @@
                 $c->num_folio, 'compra #' . $c->idcompra,
                 optional($c->proveedor)->nombre,
                 optional($c->proveedor)->telefono,
+                optional($c->proveedor)->cuit,
                 optional($c->tipoComprobante)->descripcion,
                 optional($c->sucursal)->nombre,
             ]))),
@@ -239,13 +240,26 @@
                 @if($d['telefono'])
                     <div class="dato"><i class="fab fa-whatsapp"></i> <a href="https://wa.me/{{ preg_replace('/\D/', '', $d['telefono']) }}" target="_blank" rel="noopener noreferrer" style="color:#0d8a4f; text-decoration:none;">{{ $d['telefono'] }}</a></div>
                 @endif
+                @if(optional($c->proveedor)->cuit)<div class="dato"><i class="fas fa-id-card"></i> CUIT {{ $c->proveedor->cuit }}</div>@endif
                 <div class="dato"><i class="fas fa-calendar"></i> {{ \Carbon\Carbon::parse($c->fecha)->format('d/m/Y') }}</div>
                 @if($d['compSuc'])<div class="dato"><i class="fas fa-file-alt"></i> {{ $d['compSuc'] }}</div>@endif
+                @php $pagadoC = (float) $c->movimientos->sum('total'); @endphp
+                @if($pagadoC > 0.009)
+                    <div class="monto" style="color:#0d8a4f;">${{ number_format($pagadoC, 2, ',', '.') }} <span style="color:#6E7A96;font-weight:400;font-size:12px;">de ${{ number_format($c->total_con_iva, 2, ',', '.') }}</span></div>
+                    <div style="color:#b4552d;font-weight:700;font-size:13px;">Faltan ${{ number_format($c->total_con_iva - $pagadoC, 2, ',', '.') }}</div>
+                    <div class="vc-plata" style="margin-top:5px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:7px 10px;font-size:12px;color:#166534;">
+                        <b style="display:block;"><i class="fas fa-piggy-bank"></i> Pagado desde</b>
+                        @foreach($c->movimientos as $m)
+                            {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}: ${{ number_format($m->total, 0, ',', '.') }}<br>
+                        @endforeach
+                    </div>
+                @else
                 <div class="monto">${{ number_format($c->total_con_iva, 2, ',', '.') }}
                     @if(round($c->total_neto, 2) !== round($c->total_con_iva, 2))
                         <small class="text-muted" style="font-weight:400">(neto ${{ number_format($c->total_neto, 2, ',', '.') }})</small>
                     @endif
                 </div>
+                @endif
                 <div class="vc-btns">
                     <button class="vc-btn pagar" onclick="openPagoModalCompra({{ $c->idcompra }}, {{ $c->sucursal_id ?: 'null' }})"><i class="fas fa-dollar-sign"></i> Pagar</button>
                     <button class="vc-btn" onclick="getDetailCompra({{ $c->idcompra }})"><i class="fas fa-eye"></i> Ver</button>
@@ -374,8 +388,21 @@
                                 <td colspan="7" class="text-end fw-bold py-4">TOTAL FINAL:</td>
                                 <td><strong id="details_total_con_iva"></strong></td>
                             </tr>
+                            <tr>
+                                <td colspan="7" class="text-end fw-bold py-3" style="color:#0d8a4f;">Pagado:</td>
+                                <td id="details_c_pagado" style="color:#0d8a4f;font-weight:700;"></td>
+                            </tr>
+                            <tr id="row_details_c_pendiente" style="display:none;">
+                                <td colspan="7" class="text-end fw-bold py-3" style="color:#b4552d;">Falta pagar:</td>
+                                <td id="details_c_pendiente" style="color:#b4552d;font-weight:800;"></td>
+                            </tr>
                         </tfoot>
                     </table>
+                </div>
+
+                <div id="details_c_pagos_wrap" class="mt-3" style="display:none">
+                    <h6 class="fw-bold"><i class="fas fa-piggy-bank me-1" style="color:#0d8a4f;"></i> Dónde salió la plata</h6>
+                    <div id="details_c_pagos" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 14px;font-size:13.5px;color:#166534;"></div>
                 </div>
 
                 <div id="details_adjuntos_wrapper" class="mt-3" style="display:none">

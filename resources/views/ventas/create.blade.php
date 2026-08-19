@@ -83,6 +83,14 @@
                                 @endforeach
                             </select>
                         </div>
+
+                        <div class="form-group">
+                            <label for="tipo_venta">Tipo de venta</label>
+                            <select name="tipo_venta" id="tipo_venta" class="form-control">
+                                <option value="minorista" selected>Minorista</option>
+                                <option value="mayorista">Mayorista</option>
+                            </select>
+                        </div>
                     </div>
 
                     {{-- Agregar artículo, a lo ancho --}}

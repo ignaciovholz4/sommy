@@ -157,9 +157,10 @@
                     <tr>
                         <th>#</th>
                         <th>Canal</th>
-                        <th>Teléfono</th>
+                        <th>Cliente</th>
+                        <th>Dirección de entrega</th>
+                        <th>Productos</th>
                         <th>Fecha</th>
-                        <th>Subtotal</th>
                         <th>Total</th>
                         <th>Estado</th>
                         <th class="text-center">Acciones</th>

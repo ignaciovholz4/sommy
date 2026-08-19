@@ -99,18 +99,61 @@ class ProveedorController extends Controller
        return DataTables::of($proveedor)
         ->addColumn('action', function($proveedor){
             $id = $proveedor->idproveedor;
+            $btnFicha = '<button class="btn btn-light btn-sm" onclick="window.location.href=\'/proveedores/'.$id.'/ficha\'" title="Ficha financiera: compras, pagos y cuenta corriente"><i class="fas fa-file-invoice-dollar text-success"></i></button> &nbsp;&nbsp;&nbsp;';
             $proveedor_ingreso = DB::table('ingresos')->where('proveedor_id',$id)->first();
             if ($proveedor_ingreso == null) {
-                $button = '<button class="btn btn-light btn-sm" onclick="edit_provider('.$id.');" ><i class="fas fa-edit text-primary"></i></button> &nbsp;&nbsp;&nbsp;';
+                $button = $btnFicha.'<button class="btn btn-light btn-sm" onclick="edit_provider('.$id.');" ><i class="fas fa-edit text-primary"></i></button> &nbsp;&nbsp;&nbsp;';
                 $button .= '<button class="btn btn-light btn-sm" onclick="delete_provider('.$id.');"><i class="fas fa-trash-alt text-danger"></i></button>';
             }else{
-                $button = '<button class="btn btn-light btn-sm" onclick="edit_provider('.$id.');" ><i class="fas fa-edit text-primary"></i></button> &nbsp;&nbsp;&nbsp;';
+                $button = $btnFicha.'<button class="btn btn-light btn-sm" onclick="edit_provider('.$id.');" ><i class="fas fa-edit text-primary"></i></button> &nbsp;&nbsp;&nbsp;';
                 $button .= '<button class="btn btn-light btn-sm" title="El proveedor tiene compras"><i class="fas fa-trash-alt text-warning"></i></button>';
             }
             return $button;
         })
         ->rawColumns(['action'])
         ->make(true);
+    }
+
+    /**
+     * Ficha financiera del proveedor: compras, pedidos de compra, gastos
+     * asociados y su cuenta corriente (deuda y vencidos).
+     */
+    public function ficha($id)
+    {
+        $proveedor = Proveedor::findOrFail($id);
+
+        $compras = \App\Models\Compra::with(['movimientos.cuenta', 'tipoComprobante'])
+            ->where('proveedor_id', $id)
+            ->orderByDesc('fecha')->orderByDesc('idcompra')
+            ->limit(200)->get();
+
+        $pedidos = \App\Models\PedidoCompra::where('proveedor_id', $id)
+            ->orderByDesc('fecha')->limit(100)->get();
+
+        $gastos = \App\Models\Gasto::where('proveedor_id', $id)
+            ->orderByDesc('fecha')->limit(100)->get();
+
+        $ccMovs = DB::table('proveedor_cc_movimientos')
+            ->where('proveedor_id', $id)
+            ->orderByDesc('id')->get();
+
+        $hoy = now()->toDateString();
+        $cc = [
+            'debe'  => (float) $ccMovs->where('tipo', 'debe')->sum('monto'),
+            'haber' => (float) $ccMovs->where('tipo', 'haber')->sum('monto'),
+            'vencido' => (float) $ccMovs->filter(fn ($m) => $m->tipo === 'debe'
+                && $m->estado !== 'pagado'
+                && $m->fecha_vencimiento && $m->fecha_vencimiento < $hoy)->sum('monto'),
+        ];
+        $cc['saldo'] = round($cc['debe'] - $cc['haber'], 2);
+
+        $kpis = [
+            'total_comprado' => (float) $compras->sum('total_con_iva'),
+            'operaciones'    => $compras->count(),
+            'gastos_total'   => (float) $gastos->where('estado', '!=', 'anulado')->sum('monto'),
+        ];
+
+        return view('fichas.proveedor', compact('proveedor', 'compras', 'pedidos', 'gastos', 'ccMovs', 'cc', 'kpis'));
     }
 
     public function edit($id){

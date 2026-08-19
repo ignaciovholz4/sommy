@@ -111,13 +111,12 @@ class ClienteController extends Controller
         ->addColumn('action', function($clientes){
             $id = $clientes->idcliente;
             $cliente_venta = DB::table('ventas')->where('cliente_id',$id)->first();
+            $btnFicha = '<button class="btn btn-light mr-3 btn-sm" onclick="window.location.href=\'/clientes/'.$id.'/ficha\'" title="Ficha financiera: compras, pagos y cuenta corriente"><i class="fas fa-file-invoice-dollar text-success"></i></button>';
             if ($cliente_venta == null) {
-                //$button = '<button class="btn btn-secondary btn-sm btn-flat" onclick="edit_cliente('.$id.');" ><i class="far fa-edit"></i></button> &nbsp;&nbsp;&nbsp;';
-                //$button .= '<button class="btn btn-danger btn-sm btn-flat" onclick="down_cliente('.$id.');"><i class="fas fa-trash-alt"></i></button>';
-                $button ='<button class="btn btn-light mr-3 btn-sm" onclick="edit_cliente('.$id.');"><i class="fas fa-edit text-primary " id=""  title="Actualizar el cliente"></i></button>';
+                $button = $btnFicha.'<button class="btn btn-light mr-3 btn-sm" onclick="edit_cliente('.$id.');"><i class="fas fa-edit text-primary " id=""  title="Actualizar el cliente"></i></button>';
                 $button .='<button class="btn btn-light btn-sm" onclick="down_cliente('.$id.');"><i class="fas fa-trash-alt text-danger"  data-toggle="tooltip" title="Eliminar el cliente"></i></button>';
             }else{
-                $button ='<button class="btn btn-light mr-3 btn-sm" onclick="edit_cliente('.$id.');"><i class="fas fa-edit text-primary " id=""  title="Actualizar el cliente"></i></button>';
+                $button = $btnFicha.'<button class="btn btn-light mr-3 btn-sm" onclick="edit_cliente('.$id.');"><i class="fas fa-edit text-primary " id=""  title="Actualizar el cliente"></i></button>';
                 $button .='<button class="btn btn-light btn-sm"><i class="fas fa-trash-alt text-warning"  data-toggle="tooltip" title="El cliente tiene compras"></i></button>';
             }
             return $button;
@@ -226,6 +225,46 @@ class ClienteController extends Controller
                 'mensaje' => (array) $m,
             ]);
         }
+    }
+
+    /**
+     * Ficha financiera del cliente: todas sus ventas, pedidos ecommerce,
+     * dónde pagó cada operación y su cuenta corriente (saldo).
+     */
+    public function ficha($id)
+    {
+        $cliente = Cliente::findOrFail($id);
+
+        $ventas = \App\Models\Venta::with(['movimientos.cuenta', 'tipoComprobante'])
+            ->where('cliente_id', $id)
+            ->orderByDesc('fecha')->orderByDesc('idventa')
+            ->limit(200)->get();
+
+        $pedidos = \App\Models\ecommerce\order_ecommerce::with('status')
+            ->where('cliente_id', $id)
+            ->orderByDesc('order_date')
+            ->limit(200)->get();
+
+        $ccMovs = DB::table('cliente_cc_movimientos')
+            ->where('cliente_id', $id)
+            ->orderByDesc('created_at')->orderByDesc('id')
+            ->get();
+
+        $cc = [
+            'cargos' => (float) $ccMovs->where('tipo', 'cargo')->sum('monto'),
+            'pagos'  => (float) $ccMovs->where('tipo', 'pago')->sum('monto'),
+        ];
+        $cc['saldo'] = $cc['cargos'] - $cc['pagos'];
+
+        $kpis = [
+            'total_ventas'  => (float) $ventas->where('estado', '!=', 'anulada')->sum('total_con_iva'),
+            'total_pedidos' => (float) $pedidos->where('active', 1)->where('status_order_id', '!=', 6)->sum('total_amount'),
+            'operaciones'   => $ventas->where('estado', '!=', 'anulada')->count()
+                             + $pedidos->where('active', 1)->where('status_order_id', '!=', 6)->count(),
+        ];
+        $kpis['total'] = $kpis['total_ventas'] + $kpis['total_pedidos'];
+
+        return view('fichas.cliente', compact('cliente', 'ventas', 'pedidos', 'ccMovs', 'cc', 'kpis'));
     }
 
     public function findCustomer(Request $request)

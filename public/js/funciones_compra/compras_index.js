@@ -146,6 +146,22 @@ function getDetailCompra(id) {
                 });
             }
 
+            // 💰 Pagos: cuánto se pagó, cuánto falta y de qué caja/banco salió cada pago
+            document.querySelector("#details_c_pagado").innerText = "$" + (data.pagado || "0,00");
+            document.querySelector("#row_details_c_pendiente").style.display = data.tiene_pendiente ? "" : "none";
+            document.querySelector("#details_c_pendiente").innerText = "$" + (data.pendiente || "0,00");
+            const pagosWrapC = document.querySelector("#details_c_pagos_wrap");
+            const pagosContC = document.querySelector("#details_c_pagos");
+            pagosContC.innerHTML = "";
+            if (data.pagos && data.pagos.length > 0) {
+                data.pagos.forEach(p => {
+                    pagosContC.innerHTML += `<b>${p.cuenta}</b>: $${p.monto} <span style="color:#6E7A96;">(${p.fecha})</span><br>`;
+                });
+                pagosWrapC.style.display = "";
+            } else {
+                pagosWrapC.style.display = "none";
+            }
+
             // Comprobantes adjuntos (remitos, facturas)
             const adjWrapper = document.querySelector("#details_adjuntos_wrapper");
             const adjContainer = document.querySelector("#details_adjuntos");

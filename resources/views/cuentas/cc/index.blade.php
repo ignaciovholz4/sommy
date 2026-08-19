@@ -58,7 +58,7 @@
     </div>
 
     <form method="GET" action="{{ url('/cc') }}" class="cc-buscar">
-        <input type="text" name="q" value="{{ $q }}" placeholder="Buscar cliente por nombre, email o teléfono para abrirle cuenta...">
+        <input type="text" name="q" value="{{ $q }}" placeholder="Buscar por nombre, DNI/CUIT, email o teléfono...">
         <button type="submit"><i class="fas fa-search"></i> Buscar</button>
     </form>
 
@@ -70,7 +70,8 @@
                     <th>Contacto</th>
                     <th class="der">Cargos</th>
                     <th class="der">Pagos</th>
-                    <th class="der">Saldo</th>
+                    <th class="der">Ventas a cobrar</th>
+                    <th class="der">Debe (total)</th>
                     <th class="der"></th>
                 </tr>
             </thead>
@@ -81,14 +82,15 @@
                     <td style="color:#6E7A96;font-size:13px;">{{ $c->telefono ?: $c->email }}</td>
                     <td class="der">${{ number_format($c->cargos, 2, ',', '.') }}</td>
                     <td class="der">${{ number_format($c->pagos, 2, ',', '.') }}</td>
-                    <td class="der {{ $c->saldo > 0 ? 'cc-saldo-pos' : ($c->saldo < 0 ? 'cc-saldo-neg' : 'cc-saldo-cero') }}">
-                        ${{ number_format($c->saldo, 2, ',', '.') }}
-                        @if($c->saldo < 0) <small>(a favor)</small> @endif
+                    <td class="der {{ $c->ventas_pendiente > 0 ? 'cc-saldo-pos' : 'cc-saldo-cero' }}">${{ number_format($c->ventas_pendiente, 2, ',', '.') }}</td>
+                    <td class="der {{ $c->saldo_total > 0 ? 'cc-saldo-pos' : ($c->saldo_total < 0 ? 'cc-saldo-neg' : 'cc-saldo-cero') }}">
+                        ${{ number_format($c->saldo_total, 2, ',', '.') }}
+                        @if($c->saldo_total < 0) <small>(a favor)</small> @endif
                     </td>
                     <td class="der"><a href="{{ url('/cc/cliente/' . $c->idcliente) }}" class="cc-ver">Ver cuenta</a></td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="cc-vacio">
+                <tr><td colspan="7" class="cc-vacio">
                     @if($q !== '')
                         No se encontraron clientes con "{{ $q }}".
                     @else

@@ -204,10 +204,6 @@
                                     <label class="form-check-label fw-600" for="etiqueta-mostrar-nombre">Mostrar nombre del producto</label>
                                 </div>
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="etiqueta-mostrar-precio" checked>
-                                    <label class="form-check-label" for="etiqueta-mostrar-precio">Mostrar precio de venta</label>
-                                </div>
-                                <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="etiqueta-mostrar-codigo-texto" checked>
                                     <label class="form-check-label" for="etiqueta-mostrar-codigo-texto">Mostrar código debajo del barras</label>
                                 </div>
@@ -251,9 +247,10 @@
                                 min-width:160px;
                                 text-align:center;
                             ">
+                                <img src="{{ asset('imagenes/marca/sommy-logo-header.png') }}" alt="Sommy"
+                                     style="height:16px; width:auto; max-width:70%; object-fit:contain; filter:grayscale(1) brightness(0); -webkit-filter:grayscale(1) brightness(0);">
                                 <div id="preview-nombre" style="font-size:10px; font-weight:700; color:#0f172a; max-width:180px; word-break:break-word; line-height:1.2;"></div>
                                 <svg id="preview-barcode"></svg>
-                                <div id="preview-precio" style="font-size:12px; font-weight:800; color:#0f172a;"></div>
                             </div>
                         </div>
                         <small class="text-muted d-block mt-2" style="font-size:0.72rem;">

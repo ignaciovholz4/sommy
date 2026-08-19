@@ -88,6 +88,7 @@ class VentaController extends Controller
             'items.*.price_list_id' => 'nullable|exists:price_lists,id',
             'sucursal_id' => 'required|exists:sucursales,id',
             'revendedor_id' => 'nullable|exists:revendedores,id',
+            'tipo_venta' => 'nullable|in:minorista,mayorista',
         ]);
 
         DB::beginTransaction();
@@ -100,6 +101,7 @@ class VentaController extends Controller
             $venta->tipo_comprobante_id = $request->tipo_comprobante_id;
             $venta->sucursal_id = $request->sucursal_id;
             $venta->revendedor_id = $request->revendedor_id ?: null;
+            $venta->tipo_venta = $request->tipo_venta ?: 'minorista';
             $venta->estado = 'a cobrar';
             $venta->total_neto = 0;
             $venta->total_con_iva = 0;
@@ -258,8 +260,17 @@ class VentaController extends Controller
             'detalles.articulo.ivaVenta',
             'detalles.combinacion',
             'detalles.priceList',
-            'tipoComprobante'
+            'tipoComprobante',
+            'movimientos.cuenta'
         ])->findOrFail($idventa);
+
+        // Cobros recibidos: a qué caja/banco entró cada uno, y cuánto falta
+        $cobrado = (float) $venta->movimientos->sum('total');
+        $pagos = $venta->movimientos->map(fn ($m) => [
+            'fecha'  => \Carbon\Carbon::parse($m->fecha)->format('d/m/Y H:i'),
+            'cuenta' => optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta',
+            'monto'  => number_format($m->total, 2, ',', '.'),
+        ])->values();
 
         $detalles = $venta->detalles->map(function($d) {
             return [
@@ -293,6 +304,10 @@ class VentaController extends Controller
                 })->values()
             ],
             'detalles' => $detalles,
+            'pagos' => $pagos,
+            'cobrado' => number_format($cobrado, 2, ',', '.'),
+            'pendiente' => number_format(max($venta->total_con_iva - $cobrado, 0), 2, ',', '.'),
+            'tiene_pendiente' => $venta->estado === 'a cobrar' && ($venta->total_con_iva - $cobrado) > 0.009,
         ]);
     }
 

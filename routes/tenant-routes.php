@@ -768,6 +768,13 @@ Route::get('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\Conoci
 Route::post('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'store'])->name('articulo.conocimiento.store')->middleware(['auth','verified']);
 Route::delete('/articulo/conocimiento/{itemId}', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'destroy'])->name('articulo.conocimiento.destroy')->middleware(['auth','verified']);
 
+/** BUSCADOR GLOBAL por DNI/CUIT (clientes, proveedores, revendedores) */
+Route::get('/buscar-persona', [\App\Http\Controllers\BuscadorGlobalController::class, 'buscar'])->name('buscar.persona')->middleware(['auth','verified']);
+
+/** FICHAS FINANCIERAS (cliente y proveedor: historial + cuenta corriente) */
+Route::get('/clientes/{id}/ficha', [\App\Http\Controllers\Cliente\ClienteController::class, 'ficha'])->name('clientes.ficha')->middleware(['auth','verified']);
+Route::get('/proveedores/{id}/ficha', [\App\Http\Controllers\Proveedor\ProveedorController::class, 'ficha'])->name('proveedores.ficha')->middleware(['auth','verified']);
+
 /** LEGALES (públicas — las exige Meta para publicar la app) */
 Route::view('/politica-de-privacidad', 'legal.privacidad')->name('legal.privacidad');
 

@@ -38,22 +38,36 @@ class CuentaCorrienteProveedorController extends Controller
             $saldos->where(function ($w) use ($q) {
                 $w->where('p.nombre', 'like', "%$q%")
                   ->orWhere('p.email', 'like', "%$q%")
-                  ->orWhere('p.telefono', 'like', "%$q%");
+                  ->orWhere('p.telefono', 'like', "%$q%")
+                  ->orWhere('p.cuit', 'like', "%$q%");
             });
         }
 
-        $proveedores = $saldos->get()->map(function ($p) {
+        // Compras al contado "a pagar" (sin registro en CC): lo pendiente también es deuda
+        $comprasPend = DB::table('compras as c')
+            ->leftJoin(DB::raw('(SELECT comprobante, SUM(total) as pagado FROM movimientos GROUP BY comprobante) mv'), 'mv.comprobante', '=', 'c.num_folio')
+            ->where('c.estado', 'a pagar')
+            ->whereNotExists(function ($sub) {
+                $sub->select(DB::raw(1))->from('proveedor_cc_movimientos as pm')->whereColumn('pm.compra_id', 'c.idcompra');
+            })
+            ->groupBy('c.proveedor_id')
+            ->selectRaw('c.proveedor_id, SUM(c.total_con_iva - COALESCE(mv.pagado, 0)) as pendiente')
+            ->get()->keyBy('proveedor_id');
+
+        $proveedores = $saldos->get()->map(function ($p) use ($comprasPend) {
+            $p->compras_pendiente = (float) optional($comprasPend->get($p->idproveedor))->pendiente ?: 0;
             $p->saldo = round((float) $p->debe - (float) $p->haber, 2);
+            $p->saldo_total = round($p->saldo + $p->compras_pendiente, 2);
             return $p;
         });
 
-        // Sin búsqueda mostramos solo proveedores con movimientos; con búsqueda, todos
+        // Sin búsqueda mostramos solo proveedores con movimientos o deuda; con búsqueda, todos
         if ($q === '') {
-            $proveedores = $proveedores->filter(fn ($p) => $p->debe > 0 || $p->haber > 0)->values();
+            $proveedores = $proveedores->filter(fn ($p) => $p->debe > 0 || $p->haber > 0 || $p->compras_pendiente > 0)->values();
         }
 
-        $proveedores = $proveedores->sortByDesc('saldo')->values();
-        $totalDeuda  = $proveedores->where('saldo', '>', 0)->sum('saldo');
+        $proveedores = $proveedores->sortByDesc('saldo_total')->values();
+        $totalDeuda  = $proveedores->where('saldo_total', '>', 0)->sum('saldo_total');
         $totalVencido = $proveedores->sum('vencido');
 
         return view('finanzas.cxp.index', compact('proveedores', 'totalDeuda', 'totalVencido', 'q'));
@@ -83,7 +97,20 @@ class CuentaCorrienteProveedorController extends Controller
             ->orderByRaw('fecha_vencimiento IS NULL, fecha_vencimiento asc, id asc')
             ->get();
 
-        return view('finanzas.cxp.show', compact('proveedor', 'movimientos', 'debe', 'haber', 'saldo', 'deudasPendientes'));
+        // Compras al contado "a pagar" (sin registro en CC): total, pagado y lo que falta
+        $comprasAPagar = \App\Models\Compra::with('movimientos.cuenta')
+            ->where('proveedor_id', $proveedorId)
+            ->where('estado', 'a pagar')
+            ->whereNotIn('idcompra', ProveedorCcMovimiento::where('proveedor_id', $proveedorId)->whereNotNull('compra_id')->pluck('compra_id'))
+            ->orderByDesc('fecha')->get()
+            ->map(function ($c) {
+                $c->pagado = (float) $c->movimientos->sum('total');
+                $c->pendiente = max((float) $c->total_con_iva - $c->pagado, 0);
+                return $c;
+            });
+        $deudaCompras = (float) $comprasAPagar->sum('pendiente');
+
+        return view('finanzas.cxp.show', compact('proveedor', 'movimientos', 'debe', 'haber', 'saldo', 'deudasPendientes', 'comprasAPagar', 'deudaCompras'));
     }
 
     /**

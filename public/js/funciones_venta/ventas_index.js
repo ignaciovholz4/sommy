@@ -146,6 +146,22 @@ function getDetailVenta(id) {
                 });
             }
 
+            // 💰 Cobros: cuánto entró, cuánto falta y a qué caja/banco fue cada pago
+            document.querySelector("#details_v_cobrado").innerText = "$" + (data.cobrado || "0,00");
+            document.querySelector("#row_details_v_pendiente").style.display = data.tiene_pendiente ? "" : "none";
+            document.querySelector("#details_v_pendiente").innerText = "$" + (data.pendiente || "0,00");
+            const pagosWrap = document.querySelector("#details_v_pagos_wrap");
+            const pagosCont = document.querySelector("#details_v_pagos");
+            pagosCont.innerHTML = "";
+            if (data.pagos && data.pagos.length > 0) {
+                data.pagos.forEach(p => {
+                    pagosCont.innerHTML += `<b>${p.cuenta}</b>: $${p.monto} <span style="color:#6E7A96;">(${p.fecha})</span><br>`;
+                });
+                pagosWrap.style.display = "";
+            } else {
+                pagosWrap.style.display = "none";
+            }
+
             // Mostrar modal
             $('#ModalDetalleVenta').modal('show');
         })
