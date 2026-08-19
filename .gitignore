@@ -11,3 +11,15 @@ FACTURAG_V1_MULTITENANT.zip
 .env.temp
 holzdream_erp_hostinger.sql
 script.sql
+
+# Subidas en runtime: NO van a git — el deploy de Hostinger borra lo no versionado
+# y no ignorado, así que ignorarlas es lo que las preserva en el servidor
+/public/imagenes/entregas/
+/public/imagenes/publicaciones/
+/public/imagenes/pedidos/
+/public/imagenes/ventas/
+/public/imagenes/articulos/
+/public/imagenes/articulo_variante/
+/public/imagenes/banner/
+/public/imagenes/categorias/
+/public/imagenes/empresa/
