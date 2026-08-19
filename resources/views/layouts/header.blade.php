@@ -20,7 +20,8 @@
         top: 0;
         z-index: 1100;
         font-family: 'Poppins', -apple-system, sans-serif;
-        overflow: hidden;
+        /* visible: el desplegable del buscador global vive dentro del header */
+        overflow: visible;
     }
 
     /* Destellos ✦ de marca (máx. 3, serenos) */
