@@ -45,9 +45,7 @@
 </head>
 <body>
     <div class="cab">
-        <h1>🚚 Hola, {{ $fletero->nombre }}</h1>
-        <p>Tus entregas de la semana, en orden de reparto. Sommy · Liviano como una pluma.</p>
-        <div class="resumen">
+        <div class="resumen" style="margin-top:0;">
             <div class="kpi">Pendientes <b>{{ $porDia->flatten()->count() }}</b></div>
             <div class="kpi">Entregadas hoy <b>{{ $entregasHoy }}</b></div>
             <div class="kpi">Cobrado hoy <b>${{ number_format($cobradoHoy, 0, ',', '.') }}</b></div>
