@@ -520,6 +520,7 @@ Route::prefix('compras')->group(function () {
     Route::get('/list', [CompraController::class, 'list'])->name('compras.list');
     Route::get('/create', [CompraController::class, 'create'])->name('compras.create');
     Route::post('/store', [CompraController::class, 'store'])->name('compras.store');
+    Route::post('/ocr-upload', [CompraController::class, 'ocrUpload'])->name('compras.ocr-upload');
     Route::post('/{idcompra}/anular', [CompraController::class, 'anular'])->name('compras.anular');
     Route::get('/{idcompra}/detail', [CompraController::class, 'detail'])->name('compras.detail');
     Route::get('/{idcompra}/pendiente', [CompraController::class, 'pendiente'])->name('compras.pendiente');
@@ -792,6 +793,13 @@ Route::post('/envios/asignar', [\App\Http\Controllers\Envios\EnvioBoardControlle
 Route::post('/envios/{id}/etapa', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'etapa'])->name('envios.etapa')->middleware(['auth','verified']);
 Route::get('/envios/pending-count', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'pendingCount'])->name('envios.pending-count')->middleware(['auth','verified']);
 Route::get('/envios/ruta', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'hojaRuta'])->name('envios.ruta')->middleware(['auth','verified']);
+
+Route::get('/envios/mapa', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'mapa'])->name('envios.mapa')->middleware(['auth','verified']);
+Route::get('/envios/mapa-data', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'mapaData'])->name('envios.mapa-data')->middleware(['auth','verified']);
+
+/** PORTAL DEL FLETERO (acceso por token, mobile) */
+Route::get('/fletero/{token}', [\App\Http\Controllers\Envios\FleteroPortalController::class, 'portal'])->name('fletero.portal')->middleware('throttle:60,1');
+Route::post('/fletero/{token}/entrega/{envioId}', [\App\Http\Controllers\Envios\FleteroPortalController::class, 'confirmarEntrega'])->name('fletero.entrega')->middleware('throttle:30,1');
 Route::get('/etiqueta/pedido/{id}', [\App\Http\Controllers\Envios\EtiquetaController::class, 'pedido'])->name('etiqueta.pedido')->middleware(['auth','verified']);
 Route::get('/etiqueta/venta/{id}', [\App\Http\Controllers\Envios\EtiquetaController::class, 'venta'])->name('etiqueta.venta')->middleware(['auth','verified']);
 

@@ -18,6 +18,15 @@
 <section class="section margindivsection">
     <div class="card">
         <div class="card-body">
+            @can('haveaccess', 'compras.ocr_ia')
+            <div class="mb-3">
+                <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#modalOcrComprobante">
+                    <i class="fa fa-magic"></i> Cargar con IA
+                </button>
+                <small class="text-muted d-block mt-1">Subí la foto o el PDF de la factura/remito del proveedor y se precarga el formulario. Siempre revisá antes de guardar.</small>
+            </div>
+            @endcan
+
             <form action="{{ route('compras.store') }}" method="POST" id="formCompra">
                 @csrf
 
@@ -140,6 +149,33 @@
     </div>
 </section>
 
+@can('haveaccess', 'compras.ocr_ia')
+<div class="modal fade" id="modalOcrComprobante" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cargar comprobante con IA</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="ocrArchivo">Foto o PDF de la factura/remito del proveedor</label>
+                    <input type="file" id="ocrArchivo" class="form-control-file" accept=".jpg,.jpeg,.png,.webp,.pdf">
+                </div>
+                <div id="ocrSpinner" class="text-center d-none">
+                    <i class="fa fa-spinner fa-spin"></i> Leyendo comprobante, puede tardar unos segundos...
+                </div>
+                <div id="ocrError" class="alert alert-danger d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" id="ocrProcesarBtn" class="btn btn-primary">Procesar</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endcan
+
 <!-- Pasamos las opciones de IVA al JS -->
 <script>
     const ivaOptions = `
@@ -151,7 +187,16 @@
     `;
 </script>
 
+@can('haveaccess', 'compras.ocr_ia')
+<script>
+    const ocrUploadUrl = "{{ route('compras.ocr-upload') }}";
+</script>
+@endcan
+
 @push('ScriptCompraCreate')
 <script src="{{ asset('js/funciones_compra/create_compra.js') }}"></script>
+@can('haveaccess', 'compras.ocr_ia')
+<script src="{{ asset('js/funciones_compra/compra_ocr.js') }}"></script>
+@endcan
 @endpush
 @endsection

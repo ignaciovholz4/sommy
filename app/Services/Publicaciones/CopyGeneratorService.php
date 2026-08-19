@@ -2,6 +2,7 @@
 
 namespace App\Services\Publicaciones;
 
+use App\Services\Ai\Concerns\ExtraeJsonDeRespuesta;
 use App\Services\Ai\OpenAiClient;
 use Illuminate\Support\Facades\DB;
 
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\DB;
  */
 class CopyGeneratorService
 {
+    use ExtraeJsonDeRespuesta;
+
     protected const BRAND_VOICE = <<<'TXT'
 Marca: Sommy, fabrica argentina de colchones. Firma: "Liviano como una pluma."
 Voz: calida, cercana, serena; habla de descanso y bienestar, nunca agresiva ni "grito de oferta".
@@ -99,18 +102,5 @@ TXT;
             ->get(['titulo_ml', 'caption']);
 
         return $previas->map(fn ($p) => "---\nTitulo: {$p->titulo_ml}\nCaption:\n{$p->caption}")->implode("\n");
-    }
-
-    protected function extraerJson(string $texto): array
-    {
-        // Tolera respuestas envueltas en ```json ... ``` o con texto alrededor
-        if (preg_match('/\{.*\}/s', $texto, $m)) {
-            $data = json_decode($m[0], true);
-            if (is_array($data)) {
-                return $data;
-            }
-        }
-
-        throw new \RuntimeException('La IA no devolvio un JSON valido: ' . mb_substr($texto, 0, 200));
     }
 }

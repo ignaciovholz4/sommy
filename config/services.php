@@ -38,10 +38,20 @@ return [
         'api_key' => env('GEMINI_API_KEY'),
         'image_model' => env('GEMINI_IMAGE_MODEL', 'gemini-2.5-flash-image'),
         'video_model' => env('GEMINI_VIDEO_MODEL', 'veo-3.0-fast-generate-001'),
+        'text_model' => env('GEMINI_TEXT_MODEL', 'gemini-2.5-flash'),
     ],
 
     'publicaciones' => [
         'copy_model' => env('PUBLICACIONES_COPY_MODEL', 'gpt-4o-mini'),
+    ],
+
+    'reportes' => [
+        'provider' => env('REPORTES_AI_PROVIDER', 'openai'),
+        'model' => env('REPORTES_AI_MODEL', 'gpt-4o-mini'),
+    ],
+
+    'cobranzas' => [
+        'dias_gracia_default' => env('COBRANZAS_DIAS_GRACIA_DEFAULT', 30),
     ],
 
     // Base de conocimiento de productos: 'public' local (con backup del server)

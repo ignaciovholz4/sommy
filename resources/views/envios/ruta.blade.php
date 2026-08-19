@@ -77,7 +77,19 @@
             <a href="{{ $urlMaps }}" target="_blank" class="hr-btn verde"><i class="fas fa-map-marked-alt"></i> Abrir ruta en Google Maps</a>
             <button type="button" class="hr-btn sec" onclick="window.print()"><i class="fas fa-print"></i> Imprimir lista</button>
         @endif
+        <a href="{{ url('envios/mapa?fecha=' . $fecha . ($transportistaId ? '&transportista_id=' . $transportistaId : '')) }}" class="hr-btn sec"><i class="fas fa-satellite-dish"></i> Seguimiento en vivo</a>
     </form>
+
+    @if($linkFletero)
+    <div style="background:#DCFCE7;border:1px solid #BBF7D0;border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#166534;" class="no-print">
+        <b>📱 Portal del fletero</b> — pasale este link por WhatsApp: con él ve sus entregas en orden, cobra, hace firmar al cliente y saca la foto de la plata.
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+            <input type="text" value="{{ $linkFletero }}" readonly onclick="this.select()" style="flex:1;min-width:240px;border:1px solid #BBF7D0;border-radius:8px;padding:7px 10px;font-size:12px;color:#166534;background:#fff;">
+            <button type="button" class="hr-btn verde" onclick="navigator.clipboard.writeText('{{ $linkFletero }}').then(() => { this.textContent = '¡Copiado!'; })">Copiar</button>
+            <a class="hr-btn verde" target="_blank" href="https://wa.me/?text={{ rawurlencode('Tu lista de entregas Sommy 🚚: ' . $linkFletero) }}">Enviar por WhatsApp</a>
+        </div>
+    </div>
+    @endif
 
     {{-- Resumen --}}
     @if($paradas->isNotEmpty())

@@ -10,6 +10,7 @@ use App\Models\Transportista;
 use App\Models\Venta;
 use App\Models\ecommerce\order_ecommerce;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -152,7 +153,18 @@ class EnvioBoardController extends Controller
 
         $transportistas = Transportista::where('activo', true)->orderBy('nombre')->get();
 
+        // Link del portal del fletero elegido (se genera el token la primera vez)
+        $linkFletero = null;
+        if ($transportistaId && ($t = $transportistas->firstWhere('id', (int) $transportistaId))) {
+            if (!$t->token_acceso) {
+                $t->token_acceso = \Illuminate\Support\Str::random(40);
+                $t->save();
+            }
+            $linkFletero = url('fletero/' . $t->token_acceso);
+        }
+
         return view('envios.ruta', [
+            'linkFletero' => $linkFletero,
             'paradas' => $ruta['ordenados'],
             'kmTotal' => $ruta['km_total'],
             'fecha' => $fecha,
@@ -161,6 +173,77 @@ class EnvioBoardController extends Controller
             'transportistas' => $transportistas,
             'deposito' => $deposito,
             'urlMaps' => $urlMaps,
+        ]);
+    }
+
+    /** Mapa de seguimiento del reparto en vivo (los puntos se van poniendo verdes). */
+    public function mapa(Request $request)
+    {
+        Gate::authorize('haveaccess', 'finanzas.envios.index');
+
+        return view('envios.mapa', [
+            'fecha' => $request->query('fecha') ?: now()->toDateString(),
+            'transportistaId' => $request->query('transportista_id'),
+            'transportistas' => Transportista::where('activo', true)->orderBy('nombre')->get(),
+            'deposito' => \App\Services\Envios\GeocodificadorService::deposito(),
+        ]);
+    }
+
+    /** Datos del mapa (JSON, lo consulta la página cada ~20 seg). */
+    public function mapaData(Request $request)
+    {
+        Gate::authorize('haveaccess', 'finanzas.envios.index');
+
+        $fecha = $request->query('fecha') ?: now()->toDateString();
+        $transportistaId = $request->query('transportista_id');
+
+        $envios = Envio::with(['orden.cliente', 'venta.cliente', 'transportista'])
+            ->whereIn('tipo', ['venta', 'venta_manual'])
+            ->when($transportistaId, fn ($q) => $q->where('transportista_id', $transportistaId))
+            ->where(function ($q) use ($fecha) {
+                // El reparto del día: lo agendado para esa fecha, lo sin fecha aún
+                // pendiente, y lo que se entregó HOY aunque tuviera otra fecha
+                $q->whereDate('fecha_entrega_estimada', $fecha)
+                  ->orWhere(function ($q2) {
+                      $q2->whereNull('fecha_entrega_estimada')->whereIn('estado', ['pendiente', 'despachado', 'en_transito']);
+                  })
+                  ->orWhere(function ($q3) use ($fecha) {
+                      $q3->where('estado', 'entregado')->whereDate('fecha_entrega_real', $fecha);
+                  });
+            })
+            ->orderByRaw('orden_ruta IS NULL, orden_ruta')
+            ->get();
+
+        $entregas = DB::table('entregas_fletero')
+            ->whereIn('envio_id', $envios->pluck('id'))
+            ->get()->keyBy('envio_id');
+
+        $paradas = $envios->map(function ($e) use ($entregas) {
+            $cliente = optional($e->orden)->cliente ?? optional($e->venta)->cliente;
+            $entrega = $entregas->get($e->id);
+
+            return [
+                'id' => $e->id,
+                'lat' => $e->lat ? (float) $e->lat : null,
+                'lng' => $e->lng ? (float) $e->lng : null,
+                'orden' => $e->orden_ruta,
+                'cliente' => trim(optional($cliente)->nombre . ' ' . (optional($cliente)->paterno ?? '')) ?: 'Cliente',
+                'direccion' => $e->direccion_entrega ?: optional($cliente)->direccion,
+                'referencia' => $e->order_ecommerce_id ? 'Pedido #' . $e->order_ecommerce_id : (optional($e->venta)->num_folio ?: 'Venta #' . $e->venta_id),
+                'fletero' => optional($e->transportista)->nombre,
+                'entregado' => $e->estado === 'entregado',
+                'fallido' => $e->estado === 'fallido',
+                'hora_entrega' => $e->fecha_entrega_real ? $e->fecha_entrega_real->format('H:i') : null,
+                'monto_cobrado' => $entrega ? (float) $entrega->monto_cobrado : null,
+            ];
+        })->values();
+
+        return response()->json([
+            'deposito' => \App\Services\Envios\GeocodificadorService::deposito(),
+            'paradas' => $paradas,
+            'entregadas' => $paradas->where('entregado', true)->count(),
+            'total' => $paradas->count(),
+            'cobrado' => (float) $entregas->sum('monto_cobrado'),
         ]);
     }
 

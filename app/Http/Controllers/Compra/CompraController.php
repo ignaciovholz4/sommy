@@ -16,9 +16,12 @@ use App\Models\PriceListItem;
 use App\Models\ProveedorCcMovimiento;
 
 use App\Http\Controllers\StockController;
-
+use App\Models\CompraOcrExtraccion;
+use App\Services\Compras\ComprobanteOcrService;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
 class CompraController extends Controller
@@ -66,6 +69,84 @@ class CompraController extends Controller
             'ivas',
             'sucursales'
         ));
+    }
+
+    /**
+     * Lee una factura/remito de proveedor subido con IA y devuelve los datos
+     * extraidos + matches contra proveedor/articulos existentes, para
+     * precompletar el formulario de alta. No crea la Compra: eso lo sigue
+     * haciendo el usuario al confirmar y enviar el formulario normal.
+     */
+    public function ocrUpload(Request $request, ComprobanteOcrService $ocr)
+    {
+        Gate::authorize('haveaccess', 'compras.ocr_ia');
+
+        $request->validate([
+            'archivo' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:8192',
+        ]);
+
+        if (!$ocr->disponible()) {
+            return response()->json(['success' => false, 'error' => 'La lectura con IA no esta configurada (falta GEMINI_API_KEY).'], 422);
+        }
+
+        $file = $request->file('archivo');
+        $path = $file->store('compras/ocr-temp', 'local');
+        $rutaAbsoluta = Storage::disk('local')->path($path);
+
+        try {
+            $extraido = $ocr->extraer($rutaAbsoluta, $file->getMimeType());
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => 'No se pudo leer el comprobante: ' . $e->getMessage()], 422);
+        }
+
+        $proveedor = $ocr->matchProveedor($extraido['proveedor_nombre'], $extraido['proveedor_cuit']);
+        $tipoComprobante = $ocr->matchTipoComprobante($extraido['tipo_comprobante_sugerido']);
+
+        $items = collect($extraido['items'])->map(function ($item) use ($ocr, $proveedor) {
+            $articulo = $ocr->matchArticulo($item['descripcion'] ?? null, $item['codigo'] ?? null, $proveedor?->idproveedor);
+
+            return [
+                'descripcion_extraida' => $item['descripcion'] ?? null,
+                'codigo_extraido' => $item['codigo'] ?? null,
+                'cantidad' => $item['cantidad'] ?? null,
+                'precio_unitario' => $item['precio_unitario'] ?? null,
+                'idarticulo' => $articulo?->idarticulo,
+                'nombre' => $articulo?->nombre,
+                'codigo' => $articulo?->codigo,
+                'tipo_producto_id' => $articulo?->tipo_producto_id,
+                'pcompra_con_iva' => $articulo?->pcompra_con_iva,
+                'iva_compra' => $articulo?->ivaCompra?->value_iva ?? 0,
+                'descuento' => $articulo?->descuento ?? 0,
+                'necesita_confirmacion' => $articulo === null,
+            ];
+        });
+
+        $extraccion = CompraOcrExtraccion::create([
+            'user_id' => auth()->id(),
+            'archivo_path' => $path,
+            'mime' => $file->getMimeType(),
+            'proveedor_extraido' => $extraido['proveedor_nombre'],
+            'proveedor_id_matched' => $proveedor?->idproveedor,
+            'fecha_extraida' => $extraido['fecha'],
+            'num_folio_extraido' => $extraido['num_folio'],
+            'tipo_comprobante_sugerido' => $extraido['tipo_comprobante_sugerido'],
+            'items_json' => $items->all(),
+            'confianza' => $extraido['confianza_global'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'extraccion_id' => $extraccion->id,
+            'proveedor_id' => $proveedor?->idproveedor,
+            'proveedor_necesita_confirmacion' => $proveedor === null,
+            'proveedor_extraido' => $extraido['proveedor_nombre'],
+            'fecha' => $extraido['fecha'],
+            'num_folio_extraido' => $extraido['num_folio'],
+            'tipo_comprobante_id' => $tipoComprobante?->idtipo_comprobante,
+            'tipo_comprobante_necesita_confirmacion' => $tipoComprobante === null,
+            'confianza' => $extraido['confianza_global'],
+            'items' => $items->values(),
+        ]);
     }
 
     public function store(Request $request)
