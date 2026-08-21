@@ -55,7 +55,7 @@
 </style>
 
 <div class="con-wrap">
-    <a href="{{ url('almacen/articulos') }}" class="con-volver"><i class="fas fa-arrow-left"></i> Productos</a>
+    <a href="{{ url('almacen/articulo') }}" class="con-volver"><i class="fas fa-arrow-left"></i> Productos</a>
     <div class="con-title">
         <i class="fas fa-brain" style="color:#2563EB;"></i> Conocimiento: {{ $articulo->nombre }}
         <span class="con-interno"><i class="fas fa-lock"></i> Solo interno — no se ve en el ecommerce</span>

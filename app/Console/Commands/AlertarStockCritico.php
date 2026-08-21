@@ -34,14 +34,14 @@ class AlertarStockCritico extends Command
             Notificacion::avisar('stock',
                 '⛔ ' . $sinStock->count() . ' producto(s) SIN stock',
                 $sinStock->take(4)->pluck('nombre')->implode(', ') . ($sinStock->count() > 4 ? '…' : ''),
-                url('almacen/articulos'), 'alerta');
+                url('almacen/articulo'), 'alerta');
         }
 
         if ($bajo->isNotEmpty()) {
             Notificacion::avisar('stock',
                 $bajo->count() . ' producto(s) con stock bajo (≤ 5 u.)',
                 $bajo->take(4)->map(fn ($p) => $p->nombre . ' (' . (int) $p->stock . ')')->implode(', ') . ($bajo->count() > 4 ? '…' : ''),
-                url('almacen/articulos'), 'alerta');
+                url('almacen/articulo'), 'alerta');
         }
 
         $this->info('Sin stock: ' . $sinStock->count() . ' · Stock bajo: ' . $bajo->count());
