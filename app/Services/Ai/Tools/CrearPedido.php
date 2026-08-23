@@ -40,6 +40,17 @@ class CrearPedido
             return ['error' => 'No hay una cotización vigente. Primero armá una con la herramienta cotizar.'];
         }
 
+        // Candado: ningún producto con variantes puede ir al pedido sin su medida elegida
+        foreach ($draft->items as $item) {
+            if (empty($item['combinacion_id'])) {
+                $tieneVariantes = \Illuminate\Support\Facades\DB::table('producto_combinaciones')
+                    ->where('producto_id', $item['producto_id'])->exists();
+                if ($tieneVariantes) {
+                    return ['error' => 'El producto "' . ($item['descripcion'] ?? $item['producto_id']) . '" tiene variantes y la cotización no tiene la medida elegida. Preguntale al cliente la medida (mostrale las variantes reales con su precio) y volvé a cotizar con el combinacion_id.'];
+                }
+            }
+        }
+
         $draft->update([
             'status' => 'pendiente_confirmacion',
             'datos_entrega' => [

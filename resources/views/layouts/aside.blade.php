@@ -453,11 +453,6 @@
                         <i class="fas fa-robot"></i> Agentes de venta IA
                     </a>
                     @endcan
-                    @can('haveaccess','whatsapp.templates')
-                    <a href="{{ url('whatsapp/templates') }}" class="dg-drop-item {{ Str::startsWith($resp,'whatsapp/templates') ? 'dg-drop-active' : '' }}">
-                        <i class="fas fa-file-alt"></i> Plantillas de mensajes
-                    </a>
-                    @endcan
                 </div>
             </li>
             @endcan
