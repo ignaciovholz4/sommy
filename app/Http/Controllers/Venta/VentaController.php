@@ -291,6 +291,7 @@ class VentaController extends Controller
                 'iva_label' => $d->articulo->ivaVenta ? $d->articulo->ivaVenta->tipo_iva : null,
                 'subtotal_neto' => number_format($d->subtotal_neto, 2, ',', '.'),
                 'subtotal_con_iva' => number_format($d->subtotal_con_iva, 2, ',', '.'),
+                'subtotal_con_iva_raw' => (float) $d->subtotal_con_iva, // para calculos en JS (devoluciones/cambios)
             ];
         });
 
@@ -302,6 +303,7 @@ class VentaController extends Controller
                 'tipo_comprobante' => $venta->tipoComprobante ? $venta->tipoComprobante->descripcion : '',
                 'total_neto' => number_format($venta->total_neto, 2, ',', '.'),
                 'total_con_iva' => number_format($venta->total_con_iva, 2, ',', '.'),
+                'total_con_iva_raw' => (float) $venta->total_con_iva,
                 'iva_discriminado' => collect($venta->iva_discriminado)->map(function($monto, $porcentaje) {
                     return [
                         'porcentaje' => $porcentaje,
