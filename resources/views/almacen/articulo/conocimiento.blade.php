@@ -126,16 +126,27 @@
         {{-- Listado --}}
         <div>
             @forelse($items as $item)
-            <div class="con-item">
+            <div class="con-item" id="con-item-{{ $item->id }}">
                 <button class="del" onclick="conEliminar({{ $item->id }}, this)" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
+                <button class="del" style="right:44px;color:#2563EB;" onclick="conEditar({{ $item->id }})" title="Editar"><i class="fas fa-edit"></i></button>
                 <div class="tit">
                     <i class="fas {{ ['instrucciones' => 'fa-list-ol', 'caracteristicas' => 'fa-cogs', 'faq' => 'fa-question-circle', 'nota' => 'fa-sticky-note', 'imagen' => 'fa-image', 'video' => 'fa-video', 'audio' => 'fa-microphone', 'documento' => 'fa-file-pdf'][$item->tipo] ?? 'fa-file' }}"></i>
-                    {{ $item->titulo }}
+                    <span class="con-item-titulo">{{ $item->titulo }}</span>
                     <span class="tipo">{{ $tipos[$item->tipo] ?? $item->tipo }}</span>
                 </div>
                 @if($item->contenido)
-                    <div class="cuerpo">{{ $item->contenido }}</div>
+                    <div class="cuerpo con-item-contenido">{{ $item->contenido }}</div>
                 @endif
+                <div class="con-item-editor" style="display:none;margin-top:8px;">
+                    <input type="text" class="form-control con-edit-titulo" maxlength="150" value="{{ $item->titulo }}" style="margin-bottom:6px;">
+                    @if($item->esTexto())
+                        <textarea class="form-control con-edit-contenido" rows="5" maxlength="8000">{{ $item->contenido }}</textarea>
+                    @endif
+                    <div style="display:flex;gap:6px;margin-top:8px;">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="conGuardarEdicion({{ $item->id }}, this)"><i class="fas fa-save"></i> Guardar</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="conEditar({{ $item->id }})">Cancelar</button>
+                    </div>
+                </div>
                 @if($item->archivo_url)
                     @if($item->tipo === 'imagen')
                         <a href="{{ $item->archivo_url }}" target="_blank"><img src="{{ $item->archivo_url }}" alt="{{ $item->titulo }}"></a>
@@ -179,6 +190,36 @@ function conEliminar(id, btn) {
         method: 'DELETE',
         headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
     }).then(() => location.reload());
+}
+
+function conEditar(id) {
+    const item = document.getElementById('con-item-' + id);
+    const editor = item.querySelector('.con-item-editor');
+    const abierto = editor.style.display !== 'none';
+    editor.style.display = abierto ? 'none' : '';
+    const cuerpo = item.querySelector('.con-item-contenido');
+    if (cuerpo) cuerpo.style.display = abierto ? '' : 'none';
+}
+
+function conGuardarEdicion(id, btn) {
+    const item = document.getElementById('con-item-' + id);
+    const titulo = item.querySelector('.con-edit-titulo').value.trim();
+    const contenidoEl = item.querySelector('.con-edit-contenido');
+    if (!titulo) { alert('El título no puede quedar vacío.'); return; }
+    btn.disabled = true;
+
+    const datos = new FormData();
+    datos.append('titulo', titulo);
+    if (contenidoEl) datos.append('contenido', contenidoEl.value);
+
+    fetch('{{ url('articulo/conocimiento') }}/' + id + '/editar', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+        body: datos
+    }).then(r => r.json()).then(d => {
+        if (d.estado === 1) location.reload();
+        else { alert(d.mensaje || 'No se pudo guardar'); btn.disabled = false; }
+    }).catch(() => { alert('Error al guardar'); btn.disabled = false; });
 }
 </script>
 @endsection

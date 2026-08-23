@@ -201,11 +201,12 @@ class AiAgentService
 
         $defs = array_values(array_intersect_key($all, array_flip($agent->tools_enabled ?? [])));
 
-        // Ficha interna, envío de material y catálogo completo: acompañan a buscar_productos
+        // Ficha interna, envío de material, catálogo y FAQs: acompañan a buscar_productos
         if ($agent->toolEnabled('buscar_productos')) {
             $defs[] = Tools\InfoProducto::definition();
             $defs[] = Tools\EnviarMaterial::definition();
             $defs[] = Tools\VerCatalogo::definition();
+            $defs[] = Tools\GuardarFaq::definition();
         }
 
         // Herramientas de gestión de estado: siempre disponibles para todos los agentes
@@ -226,6 +227,7 @@ class AiAgentService
                 'info_producto' => new Tools\InfoProducto(),
                 'enviar_material' => new Tools\EnviarMaterial(),
                 'ver_catalogo' => new Tools\VerCatalogo(),
+                'guardar_faq' => new Tools\GuardarFaq(),
                 'cerrar_conversacion' => new Tools\CerrarConversacion(),
                 'etiquetar_conversacion' => new Tools\EtiquetarConversacion(),
                 default => null,
@@ -233,7 +235,7 @@ class AiAgentService
 
             // Tools acompañantes que no figuran en tools_enabled del agente
             $esAcompanante = in_array($toolCall['name'], ['cerrar_conversacion', 'etiquetar_conversacion'])
-                || (in_array($toolCall['name'], ['info_producto', 'enviar_material', 'ver_catalogo']) && $agent->toolEnabled('buscar_productos'));
+                || (in_array($toolCall['name'], ['info_producto', 'enviar_material', 'ver_catalogo', 'guardar_faq']) && $agent->toolEnabled('buscar_productos'));
 
             if (!$tool || (!$agent->toolEnabled($toolCall['name']) && !$esAcompanante)) {
                 return ['error' => 'Herramienta no disponible'];
@@ -327,23 +329,33 @@ class AiAgentService
 
     protected function reply(WaConversation $conversation, AiAgent $agent, string $text): void
     {
-        $message = $conversation->messages()->create([
-            'direction' => 'out',
-            'type' => 'text',
-            'body' => $text,
-            'status' => 'pending',
-            'sent_by_agent_id' => $agent->id,
-        ]);
+        // WhatsApp usa *negrita* con un solo asterisco, no **markdown**
+        $text = preg_replace('/\*\*(.+?)\*\*/s', '*$1*', $text);
+
+        // Como una persona real: cada bloque separado por línea en blanco sale
+        // como un mensaje aparte (la cola los procesa en orden, y el bridge
+        // simula "escribiendo..." entre uno y otro).
+        $chunks = array_values(array_filter(array_map('trim', preg_split("/\n{2,}/", trim($text)))));
+        $chunks = array_slice($chunks, 0, 5) ?: [trim($text)];
+
+        foreach ($chunks as $chunk) {
+            $message = $conversation->messages()->create([
+                'direction' => 'out',
+                'type' => 'text',
+                'body' => $chunk,
+                'status' => 'pending',
+                'sent_by_agent_id' => $agent->id,
+            ]);
+            SendWhatsAppMessage::dispatch($message->id);
+        }
 
         // Bot respondió: la pelota queda del lado del cliente (salvo que el
         // agente haya cerrado la conversación en este mismo turno)
         $conversation->update([
             'last_message_at' => now(),
-            'last_message_preview' => Str::limit($text, 120),
+            'last_message_preview' => Str::limit(end($chunks) ?: $text, 120),
             'status' => $conversation->status === 'cerrada' ? 'cerrada' : 'esperando_cliente',
         ]);
-
-        SendWhatsAppMessage::dispatch($message->id);
     }
 
     /**

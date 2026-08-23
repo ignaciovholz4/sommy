@@ -30,6 +30,25 @@ class ConocimientoController extends Controller
         ]);
     }
 
+    /** Edita titulo/contenido de un item de conocimiento (el archivo no cambia). */
+    public function update(Request $request, $itemId)
+    {
+        $item = ArticuloConocimiento::findOrFail($itemId);
+
+        $request->validate([
+            'titulo'    => 'required|string|max:150',
+            'contenido' => 'nullable|string|max:8000',
+        ]);
+
+        $item->titulo = trim($request->titulo);
+        if ($item->esTexto()) {
+            $item->contenido = trim((string) $request->contenido);
+        }
+        $item->save();
+
+        return response()->json(['estado' => 1]);
+    }
+
     /** Tilda/destilda el producto para que el bot de ventas lo ofrezca. */
     public function toggleBot($id)
     {

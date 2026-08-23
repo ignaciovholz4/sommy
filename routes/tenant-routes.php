@@ -790,6 +790,7 @@ Route::get('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\Conoci
 Route::post('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'store'])->name('articulo.conocimiento.store')->middleware(['auth','verified']);
 Route::post('/articulo/{id}/bot-toggle', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'toggleBot'])->name('articulo.bot.toggle')->middleware(['auth','verified']);
 Route::delete('/articulo/conocimiento/{itemId}', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'destroy'])->name('articulo.conocimiento.destroy')->middleware(['auth','verified']);
+Route::post('/articulo/conocimiento/{itemId}/editar', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'update'])->name('articulo.conocimiento.update')->middleware(['auth','verified']);
 
 /** COMPROBANTES DE PAGO DE VENTAS */
 Route::post('/ventas/{idventa}/comprobante', [\App\Http\Controllers\Venta\VentaController::class, 'subirComprobante'])->name('ventas.comprobante')->middleware(['auth','verified']);

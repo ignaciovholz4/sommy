@@ -71,7 +71,14 @@ class BuscarProductos
                 'precio' => (float) $p->pventa_con_iva,
                 'stock' => (int) $p->stock_total,
                 'descripcion' => Str::limit(strip_tags((string) $p->descripcion), 150),
+                // Primera foto de la ficha: mandarla con enviar_material al presentar
+                'foto_material_id' => DB::table('articulo_conocimiento')
+                    ->where('articulo_id', $p->idarticulo)
+                    ->where('tipo', 'imagen')->where('activo', 1)
+                    ->whereNotNull('archivo')
+                    ->orderBy('id')->value('id'),
             ])->all(),
+            'nota' => 'Cuando presentes un producto que tenga foto_material_id, mandá la foto con enviar_material en el mismo turno, como haría un vendedor mostrando el producto.',
         ];
     }
 }
