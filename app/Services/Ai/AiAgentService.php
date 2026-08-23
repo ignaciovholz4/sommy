@@ -212,6 +212,7 @@ class AiAgentService
         // Herramientas de gestión de estado: siempre disponibles para todos los agentes
         $defs[] = Tools\CerrarConversacion::definition();
         $defs[] = Tools\EtiquetarConversacion::definition();
+        $defs[] = Tools\AgendarCliente::definition();
 
         return $defs;
     }
@@ -230,11 +231,12 @@ class AiAgentService
                 'guardar_faq' => new Tools\GuardarFaq(),
                 'cerrar_conversacion' => new Tools\CerrarConversacion(),
                 'etiquetar_conversacion' => new Tools\EtiquetarConversacion(),
+                'agendar_cliente' => new Tools\AgendarCliente(),
                 default => null,
             };
 
             // Tools acompañantes que no figuran en tools_enabled del agente
-            $esAcompanante = in_array($toolCall['name'], ['cerrar_conversacion', 'etiquetar_conversacion'])
+            $esAcompanante = in_array($toolCall['name'], ['cerrar_conversacion', 'etiquetar_conversacion', 'agendar_cliente'])
                 || (in_array($toolCall['name'], ['info_producto', 'enviar_material', 'ver_catalogo', 'guardar_faq']) && $agent->toolEnabled('buscar_productos'));
 
             if (!$tool || (!$agent->toolEnabled($toolCall['name']) && !$esAcompanante)) {
