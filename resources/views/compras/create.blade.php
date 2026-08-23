@@ -34,15 +34,21 @@
                 <div class="compra-head-grid">
                     <div class="form-group">
                         <label for="proveedor_id">Proveedor</label>
-                        <select name="proveedor_id" id="proveedor_id" class="form-control" required>
-                            <option value="">Seleccione un proveedor</option>
-                            @foreach($proveedores as $p)
-                                <option value="{{ $p->idproveedor }}">
-                                    {{ $p->nombre }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <div style="display:flex;gap:6px;">
+                            <select name="proveedor_id" id="proveedor_id" class="form-control" required style="flex:1;">
+                                <option value="">Seleccione un proveedor</option>
+                                @foreach($proveedores as $p)
+                                    <option value="{{ $p->idproveedor }}">
+                                        {{ $p->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" onclick="abrirAltaRapida_qprovCompra()" title="Crear proveedor rápido">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
+                    @include('partials.alta_rapida', ['arPrefijo' => 'qprovCompra', 'arTitulo' => 'Crear proveedor rápido', 'arRuta' => route('quick_create_supplier'), 'arSelect' => 'proveedor_id', 'arKey' => 'supplier', 'arPk' => 'idproveedor'])
 
                     <div class="form-group">
                         <label for="fecha">Fecha</label>

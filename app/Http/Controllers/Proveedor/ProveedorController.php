@@ -244,29 +244,26 @@ class ProveedorController extends Controller
     {
         Gate::authorize('haveaccess','compras_proveedor.index');
         
+        // Alta rápida: solo el nombre es obligatorio, el resto se completa después
         $request->validate([
             'nombre' => 'required|string|max:200',
-            'direccion' => 'required|string|max:500',
-            'telefono' => 'required|digits:10',
-            'email' => 'required|email|max:200',
+            'direccion' => 'nullable|string|max:500',
+            'telefono' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:200',
+            'cuit' => 'nullable|string|max:20',
         ], [
             'nombre.required' => 'El nombre es requerido',
             'nombre.max' => 'El nombre no puede exceder 200 caracteres',
-            'direccion.required' => 'La direccion es requerida',
-            'direccion.max' => 'La direccion no puede exceder 500 caracteres',
-            'telefono.required' => 'El telefono es requerido',
-            'telefono.digits' => 'El numero de telefono debe tener 10 digitos',
-            'email.required' => 'El email es requerido',
             'email.email' => 'El formato de su correo electronico es invalido',
-            'email.max' => 'El email no puede exceder 200 caracteres',
         ]);
 
         try {
             $proveedor = new Proveedor;
             $proveedor->nombre = trim($request->nombre);
-            $proveedor->direccion = trim($request->direccion);
-            $proveedor->telefono = trim($request->telefono);
-            $proveedor->email = trim($request->email);
+            $proveedor->direccion = trim((string) $request->direccion);
+            $proveedor->telefono = trim((string) $request->telefono);
+            $proveedor->email = trim((string) $request->email);
+            $proveedor->cuit = $request->cuit ? trim($request->cuit) : null;
             $proveedor->estado = "Activo";
             
             if($proveedor->save()){

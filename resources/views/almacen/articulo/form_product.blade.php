@@ -89,15 +89,20 @@
                     <div class="col-sm-4">
                         <div class="form-group">
                             <label for="proveedor_id">Proveedor</label>
-                            <select name="proveedor_id" id="proveedor-select" class="form-control">
-                                <option value="">Sin proveedor</option>
-                                @foreach ($proveedores ?? [] as $prov)
-                                    <option value="{{ $prov->idproveedor }}"
-                                        {{ old('proveedor_id', isset($product->proveedor_id) ? $product->proveedor_id : null) == $prov->idproveedor ? 'selected' : '' }}>
-                                        {{ $prov->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="input-group">
+                                <select name="proveedor_id" id="proveedor-select" class="form-control">
+                                    <option value="">Sin proveedor</option>
+                                    @foreach ($proveedores ?? [] as $prov)
+                                        <option value="{{ $prov->idproveedor }}"
+                                            {{ old('proveedor_id', isset($product->proveedor_id) ? $product->proveedor_id : null) == $prov->idproveedor ? 'selected' : '' }}>
+                                            {{ $prov->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="btn btn-outline-primary" onclick="abrirAltaRapida_qprovProd()" title="Crear proveedor rápido">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="col-sm-4">
@@ -722,3 +727,4 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 </script>
+@include('partials.alta_rapida', ['arPrefijo' => 'qprovProd', 'arTitulo' => 'Crear proveedor rápido', 'arRuta' => route('quick_create_supplier'), 'arSelect' => 'proveedor-select', 'arKey' => 'supplier', 'arPk' => 'idproveedor'])

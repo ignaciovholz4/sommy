@@ -304,34 +304,30 @@ class ClienteController extends Controller
     {
         Gate::authorize('haveaccess','ventas_cliente.index');
         
+        // Alta rápida: solo el nombre es obligatorio, el resto se completa después
         $request->validate([
             'nombre' => 'required|string|max:200',
-            'direccion' => 'required|string|max:500',
-            'telefono' => 'required|digits:10',
-            'email' => 'required|email|max:200',
+            'direccion' => 'nullable|string|max:500',
+            'telefono' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:200',
+            'dni_cuit' => 'nullable|string|max:20',
         ], [
             'nombre.required' => 'El nombre es requerido',
             'nombre.max' => 'El nombre no puede exceder 200 caracteres',
-            'direccion.required' => 'La direccion es requerida',
-            'direccion.max' => 'La direccion no puede exceder 500 caracteres',
-            'telefono.required' => 'El telefono es requerido',
-            'telefono.digits' => 'El numero de telefono debe tener 10 digitos',
-            'email.required' => 'El email es requerido',
             'email.email' => 'El formato de su correo electronico es invalido',
-            'email.max' => 'El email no puede exceder 200 caracteres',
         ]);
 
         try {
             $cliente = new Cliente;
             $cliente->nombre = trim($request->nombre);
-            $cliente->direccion = trim($request->direccion);
+            $cliente->direccion = trim((string) $request->direccion);
             $cliente->localidad = $request->localidad ? trim($request->localidad) : null;
             $cliente->provincia = $request->provincia ? trim($request->provincia) : null;
             $cliente->codigo_postal = $request->codigo_postal ? trim($request->codigo_postal) : null;
             $cliente->dni_cuit = $request->dni_cuit ? trim($request->dni_cuit) : null;
             $cliente->condicion_fiscal = $request->condicion_fiscal ?: 'consumidor_final';
-            $cliente->telefono = trim($request->telefono);
-            $cliente->email = trim($request->email);
+            $cliente->telefono = trim((string) $request->telefono);
+            $cliente->email = trim((string) $request->email);
             $cliente->estatus = "Activo";
 
             if($cliente->save()){

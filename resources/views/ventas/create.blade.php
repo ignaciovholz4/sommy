@@ -33,15 +33,21 @@
                     <div class="venta-head-grid">
                         <div class="form-group">
                             <label for="cliente_id">Cliente</label>
-                            <select name="cliente_id" id="cliente_id" class="form-control" required>
-                                <option value="">Seleccione un cliente</option>
-                                @foreach($clientes as $c)
-                                    <option value="{{ $c->idcliente }}">
-                                        {{ $c->nombre }} {{ $c->paterno }} {{ $c->materno }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div style="display:flex;gap:6px;">
+                                <select name="cliente_id" id="cliente_id" class="form-control" required style="flex:1;">
+                                    <option value="">Seleccione un cliente</option>
+                                    @foreach($clientes as $c)
+                                        <option value="{{ $c->idcliente }}">
+                                            {{ $c->nombre }} {{ $c->paterno }} {{ $c->materno }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="btn btn-outline-primary" onclick="abrirAltaRapida_qcliVenta()" title="Crear cliente rápido">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
+                        @include('partials.alta_rapida', ['arPrefijo' => 'qcliVenta', 'arTitulo' => 'Crear cliente rápido', 'arRuta' => route('quick_create_customer'), 'arSelect' => 'cliente_id', 'arKey' => 'customer', 'arPk' => 'idcliente'])
 
                         <div class="form-group">
                             <label for="fecha">Fecha</label>
