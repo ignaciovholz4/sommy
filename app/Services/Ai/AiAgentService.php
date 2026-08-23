@@ -317,13 +317,14 @@ class AiAgentService
      */
     protected function botTurnsWithoutHuman(WaConversation $conversation): int
     {
-        $lastHuman = $conversation->messages()
+        // Se cuentan CORRIDAS del agente (una por mensaje entrante), no mensajes
+        // enviados: una respuesta dividida en varios mensajes sigue siendo 1 turno.
+        $lastHumanAt = $conversation->messages()
             ->whereNotNull('sent_by_user_id')
-            ->max('id') ?? 0;
+            ->max('created_at');
 
-        return $conversation->messages()
-            ->whereNotNull('sent_by_agent_id')
-            ->where('id', '>', $lastHuman)
+        return \App\Models\AiAgentRun::where('conversation_id', $conversation->id)
+            ->when($lastHumanAt, fn ($q) => $q->where('created_at', '>', $lastHumanAt))
             ->count();
     }
 
