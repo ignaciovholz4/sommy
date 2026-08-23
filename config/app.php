@@ -67,7 +67,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Hora argentina en todo el sistema (ventas, movimientos, chat, cron)
+    'timezone' => env('APP_TIMEZONE', 'America/Argentina/Cordoba'),
 
     /*
     |--------------------------------------------------------------------------

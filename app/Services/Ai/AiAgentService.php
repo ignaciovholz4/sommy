@@ -149,6 +149,37 @@ class AiAgentService
             'completion_tokens' => $completionTokens,
             'costo_estimado' => $this->estimateCost($agent->model, $promptTokens, $completionTokens),
         ])->save();
+
+        $this->autoEtiquetar($conversation, $toolLog);
+    }
+
+    /**
+     * Etiquetas automaticas segun lo que hizo el bot en el turno: el equipo
+     * filtra la bandeja por etapa comercial sin etiquetar a mano.
+     */
+    protected function autoEtiquetar(WaConversation $conversation, array $toolLog): void
+    {
+        $mapa = [
+            'buscar_productos'  => ['consultando productos', '#6f42c1'],
+            'ver_catalogo'      => ['consultando productos', '#6f42c1'],
+            'info_producto'     => ['consultando productos', '#6f42c1'],
+            'cotizar'           => ['cotizado', '#17a2b8'],
+            'crear_pedido'      => ['pedido armado', '#28a745'],
+            'derivar_a_humano'  => ['derivado', '#dc3545'],
+        ];
+
+        try {
+            foreach ($toolLog as $call) {
+                if (!isset($mapa[$call['tool']])) {
+                    continue;
+                }
+                [$nombre, $color] = $mapa[$call['tool']];
+                $tag = \App\Models\WaTag::firstOrCreate(['nombre' => $nombre], ['color' => $color]);
+                $conversation->tags()->syncWithoutDetaching([$tag->id]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('No se pudo auto-etiquetar la conversación', ['error' => $e->getMessage()]);
+        }
     }
 
     // ------------------------------------------------------------------
@@ -177,8 +208,9 @@ class AiAgentService
             $defs[] = Tools\VerCatalogo::definition();
         }
 
-        // Herramienta de gestión de estado: siempre disponible para todos los agentes
+        // Herramientas de gestión de estado: siempre disponibles para todos los agentes
         $defs[] = Tools\CerrarConversacion::definition();
+        $defs[] = Tools\EtiquetarConversacion::definition();
 
         return $defs;
     }
@@ -195,11 +227,12 @@ class AiAgentService
                 'enviar_material' => new Tools\EnviarMaterial(),
                 'ver_catalogo' => new Tools\VerCatalogo(),
                 'cerrar_conversacion' => new Tools\CerrarConversacion(),
+                'etiquetar_conversacion' => new Tools\EtiquetarConversacion(),
                 default => null,
             };
 
             // Tools acompañantes que no figuran en tools_enabled del agente
-            $esAcompanante = $toolCall['name'] === 'cerrar_conversacion'
+            $esAcompanante = in_array($toolCall['name'], ['cerrar_conversacion', 'etiquetar_conversacion'])
                 || (in_array($toolCall['name'], ['info_producto', 'enviar_material', 'ver_catalogo']) && $agent->toolEnabled('buscar_productos'));
 
             if (!$tool || (!$agent->toolEnabled($toolCall['name']) && !$esAcompanante)) {
