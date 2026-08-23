@@ -102,6 +102,13 @@ class BaileysWebhookController extends Controller
         }
         $conversation->save();
 
+        // Conversaciones creadas antes de que existiera un agente quedan sin
+        // ai_agent_id: se les asigna el agente activo en el momento.
+        if ($conversation->mode === 'bot' && !$conversation->ai_agent_id) {
+            $conversation->ai_agent_id = AiAgent::where('activo', true)->value('id');
+            $conversation->save();
+        }
+
         if ($conversation->mode === 'bot' && $conversation->ai_agent_id) {
             RunAiAgent::dispatch($waMessage->id);
         }
