@@ -262,9 +262,32 @@ class AiAgentService
             ->get()
             ->reverse();
 
+        // Vision: las 2 imagenes mas recientes del cliente se mandan al modelo
+        // para que las VEA (identificar el producto de una foto, el sommier, etc.)
+        $imagenesConVision = $recent
+            ->filter(fn ($m) => $m->direction === 'in' && $m->type === 'image' && $m->media_path)
+            ->sortByDesc('id')->take(2)->pluck('id')->all();
+
         $messages = [];
         foreach ($recent as $m) {
             $body = trim((string) $m->body);
+
+            if (in_array($m->id, $imagenesConVision, true)) {
+                $ruta = storage_path('app/' . $m->media_path);
+                if (file_exists($ruta) && filesize($ruta) < 8_000_000) {
+                    $messages[] = [
+                        'role' => 'user',
+                        'content' => [
+                            ['type' => 'text', 'text' => $body !== '' ? $body : 'El cliente mandó esta imagen:'],
+                            ['type' => 'image_url', 'image_url' => [
+                                'url' => 'data:' . ($m->media_mime ?: 'image/jpeg') . ';base64,' . base64_encode(file_get_contents($ruta)),
+                            ]],
+                        ],
+                    ];
+                    continue;
+                }
+            }
+
             if ($body === '') {
                 $body = '[' . $m->type . ' adjunto]';
             }
