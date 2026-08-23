@@ -424,6 +424,7 @@ Route::get('almacen/get-product-types', [ArticuloController::class, 'getProductT
 Route::get('almacen/get-brands', [ArticuloController::class, 'getBrands'])->name('get_brands')->middleware(['auth','verified']);
 Route::get('almacen/get-locations', [ArticuloController::class, 'getLocations'])->name('get_locations')->middleware(['auth','verified']);
 /** RUTAS QUICK CREATE */
+Route::get('almacen/lista-precios-pdf', [ArticuloController::class, 'listaPreciosPdf'])->name('articulo.lista.precios')->middleware(['auth','verified']);
 Route::post('almacen/quick-create-category', [ArticuloController::class, 'quickCreateCategory'])->name('quick_create_category')->middleware(['auth','verified']);
 Route::post('almacen/quick-create-marca', [ArticuloController::class, 'quickCreateMarca'])->name('quick_create_marca')->middleware(['auth','verified']);
 Route::post('almacen/quick-create-unidad', [ArticuloController::class, 'quickCreateUnidad'])->name('quick_create_unidad')->middleware(['auth','verified']);

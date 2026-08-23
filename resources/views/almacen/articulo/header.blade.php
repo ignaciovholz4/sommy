@@ -83,6 +83,11 @@
                 </button>
             </form>
 
+            <a href="{{ url('almacen/lista-precios-pdf') }}" target="_blank" class="btn-facturarg-action btn-export-pdf" style="border-color:#2563EB;color:#2563EB;">
+                <i class="fas fa-images"></i>
+                <span>Lista de precios</span>
+            </a>
+
             <div class="d-none d-md-block mx-1" style="width: 1px; height: 24px; background: #e2e8f0;"></div>
 
             <a href="{{url('almacen/formproduct')}}" class="btn-facturarg-action btn-main-dark">

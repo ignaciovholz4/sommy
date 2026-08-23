@@ -50,6 +50,39 @@ class ArticuloController extends Controller
         ]);
     }
 
+    /**
+     * Lista de precios para clientes: PDF con marca Sommy, foto de cada
+     * producto y precio de venta por variante (o precio unico).
+     */
+    public function listaPreciosPdf()
+    {
+        $productos = Articulo::with(['categoria', 'combinaciones', 'imagenes'])
+            ->where('estado', 'Activo')
+            ->orderBy('categoria_id')->orderBy('nombre')
+            ->get()
+            ->filter(fn ($a) => $a->combinaciones->isNotEmpty() || (float) $a->pventa_con_iva > 0)
+            ->map(function ($a) {
+                // Foto: imagen principal de la galeria, o la imagen base del producto
+                $path = optional($a->imagenes->firstWhere('principal', true) ?: $a->imagenes->first())->path;
+                if (!$path && $a->imagen) {
+                    $path = 'imagenes/articulos/' . $a->imagen;
+                }
+                $absoluta = $path ? public_path($path) : null;
+                $a->foto_local = ($absoluta && file_exists($absoluta)) ? $absoluta : null;
+                return $a;
+            });
+
+        $empresa = DB::table('configuracion')->first();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('almacen.articulo.lista_precios_pdf', [
+            'productos' => $productos,
+            'empresa'   => $empresa,
+            'fecha'     => now()->format('d/m/Y'),
+        ])->setPaper('a4');
+
+        return $pdf->stream('lista-de-precios-sommy.pdf');
+    }
+
     public function store(Request $request)
     {
         try {
