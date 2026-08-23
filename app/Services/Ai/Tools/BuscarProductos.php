@@ -77,8 +77,23 @@ class BuscarProductos
                     ->where('tipo', 'imagen')->where('activo', 1)
                     ->whereNotNull('archivo')
                     ->orderBy('id')->value('id'),
+                // Variantes: medidas/colores con SU precio y SU stock (el precio real vive acá)
+                'variantes' => DB::table('producto_combinaciones as pc')
+                    ->leftJoin('sucursal_combinacion as sc', function ($join) {
+                        $join->on('sc.combinacion_id', '=', 'pc.idcombinacion')->where('sc.activo', 1);
+                    })
+                    ->where('pc.producto_id', $p->idarticulo)
+                    ->groupBy('pc.idcombinacion', 'pc.combinacion', 'pc.pventa_variante')
+                    ->selectRaw('pc.idcombinacion, pc.combinacion, pc.pventa_variante, COALESCE(SUM(sc.stock),0) as stock')
+                    ->get()
+                    ->map(fn ($v) => [
+                        'combinacion_id' => $v->idcombinacion,
+                        'detalle' => $v->combinacion, // medida / color / tamaño
+                        'precio' => (float) $v->pventa_variante,
+                        'stock' => (int) $v->stock,
+                    ])->all(),
             ])->all(),
-            'nota' => 'Cuando presentes un producto que tenga foto_material_id, mandá la foto con enviar_material en el mismo turno, como haría un vendedor mostrando el producto.',
+            'nota' => 'IMPORTANTE: si un producto tiene "variantes", el precio REAL depende de la medida/color: NUNCA informes el precio base, siempre el de la variante puntual (o el rango). Preguntá la medida antes de dar precio. Cotizá con el combinacion_id de la variante elegida. Si tiene foto_material_id, mandá la foto con enviar_material al presentarlo.',
         ];
     }
 }

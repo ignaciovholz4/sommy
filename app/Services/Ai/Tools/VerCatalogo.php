@@ -44,16 +44,32 @@ class VerCatalogo
             return ['resultado' => 'No hay productos habilitados para ofrecer en este momento. Derivá a un humano si el cliente quiere comprar.'];
         }
 
+        $variantes = DB::table('producto_combinaciones as pc')
+            ->leftJoin('sucursal_combinacion as sc', function ($join) {
+                $join->on('sc.combinacion_id', '=', 'pc.idcombinacion')->where('sc.activo', 1);
+            })
+            ->whereIn('pc.producto_id', $productos->pluck('idarticulo'))
+            ->groupBy('pc.producto_id', 'pc.idcombinacion', 'pc.combinacion', 'pc.pventa_variante')
+            ->selectRaw('pc.producto_id, pc.idcombinacion, pc.combinacion, pc.pventa_variante, COALESCE(SUM(sc.stock),0) as stock')
+            ->get()
+            ->groupBy('producto_id');
+
         $catalogo = $productos->groupBy('categoria')->map(fn ($items) => $items->map(fn ($p) => [
             'producto_id' => $p->idarticulo,
             'nombre'      => $p->nombre,
-            'precio'      => (float) $p->pventa_con_iva,
+            'precio_base' => (float) $p->pventa_con_iva,
             'stock'       => (int) $p->stock_total,
+            'variantes'   => ($variantes[$p->idarticulo] ?? collect())->map(fn ($v) => [
+                'combinacion_id' => $v->idcombinacion,
+                'detalle' => $v->combinacion,
+                'precio'  => (float) $v->pventa_variante,
+                'stock'   => (int) $v->stock,
+            ])->values()->all(),
         ])->values())->toArray();
 
         return [
             'catalogo' => $catalogo,
-            'nota' => 'Este es todo el catálogo ofrecible. Los de stock 0 se pueden mencionar como "a pedido / consultar demora" pero priorizá los que tienen stock. Presentalo resumido, no como lista cruda.',
+            'nota' => 'Si un producto tiene "variantes", el precio real es el de cada medida/color (precio_base es solo referencia: no lo uses). Los de stock 0 se pueden ofrecer como "a pedido". Presentalo resumido, no como lista cruda.',
         ];
     }
 }

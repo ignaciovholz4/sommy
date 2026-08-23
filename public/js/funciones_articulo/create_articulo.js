@@ -101,11 +101,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // 🔹 Función global: habilita/deshabilita el tab de variantes
 function toggleVariantesCard(selectTipo, cardVariantes) {
-  
+
     if (selectTipo.value === "2") {
         cardVariantes.style.display = "block";
     } else {
         cardVariantes.style.display = "none";
+    }
+
+    // Con variantes el precio se carga POR VARIANTE: el precio base no aplica
+    const preciosBase = document.getElementById("seccion-precios-base");
+    if (preciosBase) {
+        preciosBase.style.display = selectTipo.value === "2" ? "none" : "";
     }
 }
 

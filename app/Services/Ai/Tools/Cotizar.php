@@ -24,6 +24,7 @@ class Cotizar
                             'type' => 'object',
                             'properties' => [
                                 'producto_id' => ['type' => 'integer'],
+                                'combinacion_id' => ['type' => 'integer', 'description' => 'OBLIGATORIO si el producto tiene variantes: la medida/color exacta que eligió el cliente (el precio sale de ahí)'],
                                 'cantidad' => ['type' => 'integer', 'minimum' => 1],
                             ],
                             'required' => ['producto_id', 'cantidad'],
@@ -52,11 +53,31 @@ class Cotizar
                 return ['error' => 'Producto ' . ($item['producto_id'] ?? '?') . ' inexistente. Volvé a buscarlo con buscar_productos.'];
             }
             $cantidad = max(1, (int) ($item['cantidad'] ?? 1));
+
+            // Con variante: el precio y la descripcion salen de la combinacion elegida
+            $combinacionId = (int) ($item['combinacion_id'] ?? 0);
+            $combinacion = null;
+            if ($combinacionId) {
+                $combinacion = DB::table('producto_combinaciones')
+                    ->where('idcombinacion', $combinacionId)
+                    ->where('producto_id', $producto->idarticulo)
+                    ->first();
+                if (!$combinacion) {
+                    return ['error' => 'La variante ' . $combinacionId . ' no corresponde al producto ' . $producto->nombre . '. Revisá las variantes con buscar_productos.'];
+                }
+            } else {
+                $tieneVariantes = DB::table('producto_combinaciones')->where('producto_id', $producto->idarticulo)->exists();
+                if ($tieneVariantes) {
+                    return ['error' => $producto->nombre . ' tiene variantes (medidas/colores): preguntale al cliente cuál quiere y cotizá con su combinacion_id — el precio depende de la variante.'];
+                }
+            }
+
             $items[] = [
                 'producto_id' => $producto->idarticulo,
+                'combinacion_id' => $combinacion->idcombinacion ?? null,
                 'cantidad' => $cantidad,
-                'precio_unitario' => (float) $producto->pventa_con_iva,
-                'descripcion' => $producto->nombre,
+                'precio_unitario' => (float) ($combinacion->pventa_variante ?? $producto->pventa_con_iva),
+                'descripcion' => $producto->nombre . ($combinacion ? ' — ' . $combinacion->combinacion : ''),
             ];
         }
 

@@ -53,15 +53,19 @@ class ArticuloController extends Controller
     public function store(Request $request)
     {
         try {
+            // Producto con variantes (tipo 2): el precio vive en cada variante,
+            // el precio base no se pide
+            $esVariante = (string) $request->input('tipo_producto') === '2';
+
             $rules = array_merge([
                 'nombre' => 'required',
                 'idcategoria' => 'required',
                 'codigo' => 'nullable|unique:productos,codigo|max:13',
                 'tipo_producto' => 'required',
-                'pcompra-sin-iva' => 'required|numeric',
-                'pcompra-con-iva' => 'required|numeric',
-                'pventa-sin-iva' => 'required|numeric',
-                'pventa-con-iva' => 'required|numeric',
+                'pcompra-sin-iva' => $esVariante ? 'nullable|numeric' : 'required|numeric',
+                'pcompra-con-iva' => $esVariante ? 'nullable|numeric' : 'required|numeric',
+                'pventa-sin-iva' => $esVariante ? 'nullable|numeric' : 'required|numeric',
+                'pventa-con-iva' => $esVariante ? 'nullable|numeric' : 'required|numeric',
                 'articulo_des' => 'required|numeric|min:0|max:100',
                 'descripcion' => 'required',
                 'idmarca' => 'required',
@@ -418,16 +422,18 @@ class ArticuloController extends Controller
 
             $articulo = Articulo::findOrFail($request->productoId);
 
-            // ✅ Validaciones
+            // ✅ Validaciones (con variantes el precio va por variante, no base)
+            $esVariante = (string) $request->input('tipo_producto') === '2';
+
             $rules = array_merge([
                 'nombre' => 'required',
                 'idcategoria' => 'required',
                 'codigo' => 'required|unique:productos,codigo,' . $request->productoId . ',idarticulo',
                 'tipo_producto' => 'required',
-                'pcompra-sin-iva' => 'required|numeric',
-                'pcompra-con-iva' => 'required|numeric',
-                'pventa-sin-iva' => 'required|numeric',
-                'pventa-con-iva' => 'required|numeric',
+                'pcompra-sin-iva' => $esVariante ? 'nullable|numeric' : 'required|numeric',
+                'pcompra-con-iva' => $esVariante ? 'nullable|numeric' : 'required|numeric',
+                'pventa-sin-iva' => $esVariante ? 'nullable|numeric' : 'required|numeric',
+                'pventa-con-iva' => $esVariante ? 'nullable|numeric' : 'required|numeric',
                 'articulo_des' => 'required|numeric|min:0|max:100',
                 'descripcion' => 'required',
                 'idmarca' => 'required',

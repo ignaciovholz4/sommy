@@ -85,6 +85,7 @@ class OrderDraftService
                 order_detail_ecommerce::create([
                     'order_ecommerce_id' => $order->order_id,
                     'product_id' => $item['producto_id'],
+                    'producto_variacion_variante_id' => $item['combinacion_id'] ?? null,
                     'quantity' => $item['cantidad'],
                     'price' => $item['precio_unitario'],
                     'total' => $item['cantidad'] * $item['precio_unitario'],

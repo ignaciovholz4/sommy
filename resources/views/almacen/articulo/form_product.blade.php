@@ -144,7 +144,8 @@
                         </div>
                     </div>
                     <hr>
-                    <div class="row">
+                    {{-- Con variantes (tipo 2) el precio va por variante: esta sección se oculta --}}
+                    <div class="row" id="seccion-precios-base">
                         <div class="col-lg-6">
                             <div class="row">
                                 <h3>Detalles Compra</h3>
