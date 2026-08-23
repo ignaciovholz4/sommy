@@ -460,8 +460,14 @@ class VentaController extends Controller
                         $bancos   = $monto;
                     } elseif (str_starts_with($cuentaRef, 'tercero-')) {
                         $cuentaId = (int) str_replace('tercero-', '', $cuentaRef);
-                        $tercero  = \App\Models\Cuenta::find($cuentaId);
                         $bancos   = $monto; // transferencia a la cuenta de un tercero
+                        // Alias dinámico: se registra en el movimiento a qué alias/CUIT fue la plata
+                        $aliasTercero = trim((string) $request->input("alias_tercero.$index")) ?: null;
+                        $cuitTercero  = trim((string) $request->input("cuit_tercero.$index")) ?: null;
+                        if (!$aliasTercero) {
+                            return response()->json(['success' => false, 'error' => 'Indicá el alias del tercero que recibió la transferencia.']);
+                        }
+                        $tercero = ['alias' => $aliasTercero, 'cuit' => $cuitTercero];
                     }
 
                     // El medio elegido define a qué columna va el monto:
@@ -485,10 +491,12 @@ class VentaController extends Controller
                         'fecha'            => now(),
                         'tipo'             => 'ingreso',
                         'medio'            => $medio,
+                        'alias_tercero'    => $tercero['alias'] ?? null,
+                        'cuit_tercero'     => $tercero['cuit'] ?? null,
                         'cliente_proveedor'=> optional($venta->cliente)->nombre ?? 'Cliente',
                         'comprobante'      => $venta->num_folio,
                         'observaciones'    => 'Pago de venta registrado' . ($medio ? ' (' . str_replace('_', ' ', $medio) . ')' : '')
-                            . ($tercero ? ' — transferido a cuenta de terceros: ' . $tercero->alias . ' (CUIT ' . $tercero->cuit . ')' : ''),
+                            . ($tercero ? ' — transferido al alias ' . $tercero['alias'] . ($tercero['cuit'] ? ' (CUIT ' . $tercero['cuit'] . ')' : '') : ''),
                         'efectivo'         => $efectivo,
                         'bancos'           => $bancos,
                         'tarjetas'         => $tarjetas,

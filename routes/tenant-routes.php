@@ -578,6 +578,15 @@ Route::prefix('cuentas')->middleware(['auth','verified'])->group(function () {
     // Gestor de cuentas
     Route::get('gestor', [CuentasController::class, 'index'])
         ->name('cuentas.index');
+    // Control de terceros: cuánta plata fue a cada alias/CUIT (alias dinámico por movimiento)
+    Route::get('terceros', [CuentasController::class, 'terceros'])
+        ->name('cuentas.terceros');
+    Route::get('terceros/data', [CuentasController::class, 'tercerosData'])
+        ->name('cuentas.terceros.data');
+    Route::get('terceros/movimientos', [CuentasController::class, 'tercerosMovimientos'])
+        ->name('cuentas.terceros.movimientos');
+    Route::get('terceros/alias', [CuentasController::class, 'tercerosAlias'])
+        ->name('cuentas.terceros.alias');
     // Historial de aperturas (solo aplica si la cuenta es tipo caja)
     Route::get('{cuenta}/historial/data', [CajaAperturaController::class, 'historialData'])
         ->name('cuentas.historial.data');

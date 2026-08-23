@@ -291,6 +291,21 @@
             </div>
           </div>
 
+          @if($cuenta->esTercero())
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Alias del tercero</label>
+              <input type="text" class="form-control" id="mov_alias_tercero" maxlength="60"
+                     placeholder="Alias que tiene/recibió la plata" list="movAliasConocidos">
+              <datalist id="movAliasConocidos"></datalist>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">CUIT del titular (opcional)</label>
+              <input type="text" class="form-control" id="mov_cuit_tercero" maxlength="20" placeholder="XX-XXXXXXXX-X">
+            </div>
+          </div>
+          @endif
+
           <div class="mb-3">
             <label class="form-label">Observaciones</label>
             <textarea class="form-control" id="mov_observaciones" name="observaciones" rows="2"></textarea>

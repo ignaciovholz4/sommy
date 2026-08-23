@@ -300,7 +300,7 @@ class OrderController extends Controller
             ->map(fn ($c) => ['id' => 'banco-' . $c->id, 'nombre' => $c->nombre . ' — banco']);
 
         $terceros = \App\Models\Cuenta::where('tipo', 'tercero')->where('activa', 1)->get()
-            ->map(fn ($c) => ['id' => 'tercero-' . $c->id, 'nombre' => $c->nombre . ' — ' . $c->alias . ' (tercero)']);
+            ->map(fn ($c) => ['id' => 'tercero-' . $c->id, 'nombre' => $c->nombre . ' (cuenta de terceros)']);
 
         return response()->json([
             'total'     => $total,
@@ -372,7 +372,12 @@ class OrderController extends Controller
             $cuentaId = (int) str_replace('banco-', '', $request->destino);
         } elseif (str_starts_with($request->destino, 'tercero-')) {
             $cuentaId = (int) str_replace('tercero-', '', $request->destino);
-            $tercero = \App\Models\Cuenta::find($cuentaId);
+            // Alias dinámico: el alias/CUIT viaja con cada pago, no está fijo en la cuenta
+            $aliasTercero = trim((string) $request->alias_tercero) ?: null;
+            if (!$aliasTercero) {
+                return response()->json(['status' => 0, 'mensaje' => ['Indicá el alias del tercero que recibió la plata.']]);
+            }
+            $tercero = ['alias' => $aliasTercero, 'cuit' => trim((string) $request->cuit_tercero) ?: null];
         } else {
             return response()->json(['status' => 0, 'mensaje' => ['Destino de pago inválido.']]);
         }
@@ -391,8 +396,10 @@ class OrderController extends Controller
             'tipo'              => 'ingreso',
             'cliente_proveedor' => optional($order->cliente)->nombre ?? 'Cliente ecommerce',
             'comprobante'       => 'Pedido #' . $order->order_id,
+            'alias_tercero'     => $tercero['alias'] ?? null,
+            'cuit_tercero'      => $tercero['cuit'] ?? null,
             'observaciones'     => ($request->observaciones ?: ('Pago de pedido ecommerce (' . $request->medio . ')'))
-                . ($tercero ? ' — transferido a cuenta de terceros: ' . $tercero->alias . ' (CUIT ' . $tercero->cuit . ')' : ''),
+                . ($tercero ? ' — transferido al alias ' . $tercero['alias'] . (($tercero['cuit'] ?? null) ? ' (CUIT ' . $tercero['cuit'] . ')' : '') : ''),
             'adjunto_path'      => $adjuntoPath,
             'adjunto_nombre'    => $adjuntoNombre,
             'efectivo'          => $request->medio === 'efectivo' ? $monto : 0,

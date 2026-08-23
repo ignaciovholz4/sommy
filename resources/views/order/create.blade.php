@@ -109,6 +109,14 @@
                     </select>
                     <small class="text-muted">Si cobraste por MercadoPago, elegí la cuenta banco donde concilia MP.</small>
                 </div>
+                <div class="mb-3" id="pg-tercero-wrap" style="display:none;">
+                    <label class="form-label">¿A qué alias fue la plata?</label>
+                    <input type="text" id="pg-alias-tercero" class="form-control mb-2" maxlength="60"
+                           placeholder="Alias que recibió la transferencia (ej: juan.perez.mp)" list="aliasTercerosConocidosPedido">
+                    <input type="text" id="pg-cuit-tercero" class="form-control" maxlength="20"
+                           placeholder="CUIT del titular (opcional)">
+                    <datalist id="aliasTercerosConocidosPedido"></datalist>
+                </div>
                 <div class="mb-3">
                     <label class="form-label">Medio de pago</label>
                     <select id="pg-medio" class="form-select">
@@ -223,6 +231,28 @@
             });
     }
 
+    // Si el destino es una cuenta de terceros, pedir alias/CUIT (dinámico por pago)
+    let aliasConocidos = [];
+    document.getElementById('pg-destino').addEventListener('change', function () {
+        const esTercero = this.value.startsWith('tercero-');
+        document.getElementById('pg-tercero-wrap').style.display = esTercero ? '' : 'none';
+        if (esTercero && !aliasConocidos.length) {
+            fetch('/cuentas/terceros/alias')
+                .then(r => r.json())
+                .then(d => {
+                    aliasConocidos = d.alias || [];
+                    document.getElementById('aliasTercerosConocidosPedido').innerHTML =
+                        aliasConocidos.map(a => '<option value="' + a.alias + '">' + (a.cuit ? 'CUIT ' + a.cuit : '') + '</option>').join('');
+                })
+                .catch(() => {});
+        }
+    });
+    document.getElementById('pg-alias-tercero').addEventListener('change', function () {
+        const conocido = aliasConocidos.find(a => a.alias === this.value.trim().toLowerCase());
+        const cuitInput = document.getElementById('pg-cuit-tercero');
+        if (conocido && conocido.cuit && !cuitInput.value) cuitInput.value = conocido.cuit;
+    });
+
     document.getElementById('btn-registrar-pago').addEventListener('click', function () {
         document.getElementById('pg-monto').value = pendienteActual > 0 ? pendienteActual.toFixed(2) : '';
         document.getElementById('pg-obs').value = '';
@@ -234,10 +264,17 @@
         const monto = parseFloat(document.getElementById('pg-monto').value);
         if (!destino) { Swal.fire('Atención', 'Elegí la cuenta donde entró la plata.', 'warning'); return; }
         if (!monto || monto <= 0) { Swal.fire('Atención', 'Ingresá un monto válido.', 'warning'); return; }
+        if (destino.startsWith('tercero-') && !document.getElementById('pg-alias-tercero').value.trim()) {
+            Swal.fire('Atención', 'Indicá el alias del tercero que recibió la plata.', 'warning'); return;
+        }
 
         const formData = new FormData();
         formData.append('destino', destino);
         formData.append('medio', document.getElementById('pg-medio').value);
+        if (destino.startsWith('tercero-')) {
+            formData.append('alias_tercero', document.getElementById('pg-alias-tercero').value.trim());
+            formData.append('cuit_tercero', document.getElementById('pg-cuit-tercero').value.trim());
+        }
         formData.append('monto', monto);
         formData.append('observaciones', document.getElementById('pg-obs').value);
         const archivo = document.getElementById('pg-archivo').files[0];

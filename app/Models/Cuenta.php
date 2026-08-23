@@ -13,8 +13,6 @@ class Cuenta extends Model
         'sucursal_id',
         'moneda_id',
         'tipo',   // 'caja', 'banco' o 'tercero'
-        'alias',
-        'cuit',
         'activa',
     ];
 

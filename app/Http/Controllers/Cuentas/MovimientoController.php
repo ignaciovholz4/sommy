@@ -166,6 +166,9 @@ class MovimientoController extends Controller
             'tarjetas'         => 'nullable|numeric|min:0',
             'total'            => 'required|numeric|min:0',
             'apertura_id'      => $cuenta->esCaja() ? 'required|exists:caja_aperturas,id' : 'nullable',
+            // En cuentas de terceros el alias/CUIT identifica de quién es la plata
+            'alias_tercero'    => $cuenta->esTercero() ? 'required|string|max:60' : 'nullable|string|max:60',
+            'cuit_tercero'     => 'nullable|string|max:20',
         ]);
 
         // Crear movimiento
@@ -174,6 +177,8 @@ class MovimientoController extends Controller
             'caja_apertura_id' => $cuenta->esCaja() ? $validated['apertura_id'] : null,
             'fecha'            => now(),
             'tipo'             => $validated['tipo'],
+            'alias_tercero'    => ($validated['alias_tercero'] ?? null) ? trim($validated['alias_tercero']) : null,
+            'cuit_tercero'     => ($validated['cuit_tercero'] ?? null) ? trim($validated['cuit_tercero']) : null,
             'cliente_proveedor'=> $validated['cliente_proveedor'] ?? null,
             'comprobante'      => $validated['comprobante'],
             'observaciones'    => $validated['observaciones'] ?? null,

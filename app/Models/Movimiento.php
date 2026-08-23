@@ -14,6 +14,8 @@ class Movimiento extends Model
         'fecha',
         'tipo',
         'medio',
+        'alias_tercero',
+        'cuit_tercero',
         'cliente_proveedor',
         'comprobante',
         'observaciones',

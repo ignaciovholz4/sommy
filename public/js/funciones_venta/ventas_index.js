@@ -255,12 +255,33 @@ function recalcularMontos() {
     document.querySelector("#monto_pendiente").innerText = (pendienteFinal > 0 ? pendienteFinal : 0).toFixed(2);
 }
 
+// Alias/CUIT ya usados en otros cobros, para autocompletar (datalist compartido)
+function cargarAliasTercerosConocidos() {
+    if (window.aliasTercerosConocidos) return;
+    window.aliasTercerosConocidos = [];
+    if (!document.getElementById("aliasTercerosConocidos")) {
+        const dl = document.createElement("datalist");
+        dl.id = "aliasTercerosConocidos";
+        document.body.appendChild(dl);
+    }
+    fetch('/cuentas/terceros/alias')
+        .then(r => r.json())
+        .then(d => {
+            window.aliasTercerosConocidos = d.alias || [];
+            const dl = document.getElementById("aliasTercerosConocidos");
+            dl.innerHTML = window.aliasTercerosConocidos
+                .map(a => `<option value="${a.alias}">${a.cuit ? 'CUIT ' + a.cuit : ''}</option>`).join("");
+        })
+        .catch(() => {});
+}
+
 function validarMontos() {
     const pendienteInicial = parseFloat(document.querySelector("#monto_pendiente").dataset.pendienteInicial) || 0;
     let ingresado = 0;
     let cuentasValidas = true;
+    let faltaAlias = false;
 
-    document.querySelectorAll("#mediosPagoContainer .row").forEach(row => {
+    document.querySelectorAll("#mediosPagoContainer > .row").forEach(row => {
         const cuentaSelect = row.querySelector("select[name='cajas[]']");
         const montoInput = row.querySelector("input[name='montos[]']");
         const monto = parseFloat(montoInput.value) || 0;
@@ -271,9 +292,17 @@ function validarMontos() {
         if (monto < 0.01) {
             cuentasValidas = false;
         }
+        if (cuentaSelect.value.startsWith("tercero-") && !row.querySelector(".aliasTerceroInput").value.trim()) {
+            faltaAlias = true;
+        }
 
         ingresado += monto;
     });
+
+    if (faltaAlias) {
+        alert("Cuando la plata va a una cuenta de terceros tenés que indicar el alias que la recibió.");
+        return false;
+    }
 
     if (!cuentasValidas) {
         alert("Debe seleccionar una cuenta y un monto válido (mínimo 0.01) para cada medio de pago.");
@@ -336,9 +365,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 options += `<option value="banco-${b.id}">${b.nombre} (Banco - ${b.moneda})</option>`;
             });
 
-            // 🔹 Agregar cuentas de terceros
+            // 🔹 Agregar cuentas de terceros (el alias se carga en cada cobro)
             window.cuentasDisponibles.terceros.forEach(t => {
-                options += `<option value="tercero-${t.id}">${t.nombre} — ${t.alias} (Tercero - ${t.moneda})</option>`;
+                options += `<option value="tercero-${t.id}">${t.nombre} (Terceros - ${t.moneda})</option>`;
             });
 
             const row = document.createElement("div");
@@ -365,13 +394,40 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="col-md-1">
                     <button type="button" class="btn btn-danger removeMedioPago">X</button>
                 </div>
+                <div class="col-12 terceroWrap" style="display:none;">
+                    <div class="row mt-1">
+                        <div class="col-md-6">
+                            <input type="text" name="alias_tercero[]" class="form-control aliasTerceroInput"
+                                placeholder="Alias que recibió la plata (ej: juan.perez.mp)" list="aliasTercerosConocidos" maxlength="60">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="cuit_tercero[]" class="form-control cuitTerceroInput"
+                                placeholder="CUIT del titular (opcional)" maxlength="20">
+                        </div>
+                    </div>
+                </div>
             `;
 
             container.appendChild(row);
+            cargarAliasTercerosConocidos();
 
-            // Default inteligente: caja → efectivo, banco → transferencia
+            // Default inteligente: caja → efectivo, banco → transferencia.
+            // Si el destino es una cuenta de terceros, pedir alias/CUIT del que recibió.
             row.querySelector("select[name='cajas[]']").addEventListener("change", function () {
                 row.querySelector("select[name='medios[]']").value = this.value.startsWith("caja-") ? "efectivo" : "transferencia";
+                const esTercero = this.value.startsWith("tercero-");
+                row.querySelector(".terceroWrap").style.display = esTercero ? "" : "none";
+                if (!esTercero) {
+                    row.querySelector(".aliasTerceroInput").value = "";
+                    row.querySelector(".cuitTerceroInput").value = "";
+                }
+            });
+
+            // Al elegir un alias conocido, autocompletar su CUIT
+            row.querySelector(".aliasTerceroInput").addEventListener("change", function () {
+                const conocido = (window.aliasTercerosConocidos || []).find(a => a.alias === this.value.trim().toLowerCase());
+                const cuitInput = row.querySelector(".cuitTerceroInput");
+                if (conocido && conocido.cuit && !cuitInput.value) cuitInput.value = conocido.cuit;
             });
 
             row.querySelector(".removeMedioPago").addEventListener("click", () => {

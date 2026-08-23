@@ -16,12 +16,12 @@ $(document).ready(function () {
         });
     }
 
-    // Mostrar alias/CUIT solo cuando el tipo elegido es "tercero"
+    // Aviso: en cuentas de terceros el alias/CUIT se carga en cada cobro
     const tipoSelect = document.getElementById('nueva_cuenta_tipo');
     if (tipoSelect) {
         tipoSelect.addEventListener('change', function () {
-            document.getElementById('nueva_cuenta_tercero_wrap').style.display =
-                this.value === 'tercero' ? '' : 'none';
+            const hint = document.getElementById('nueva_cuenta_tercero_hint');
+            if (hint) hint.style.display = this.value === 'tercero' ? '' : 'none';
         });
     }
 });

@@ -225,17 +225,16 @@ class SucursalController extends Controller
                 ];
             });
 
-        // 🔹 Cuentas de terceros (alias de un tercero, usadas para cobrar)
+        // 🔹 Cuentas de terceros (el alias/CUIT se carga en cada cobro, no acá)
         $terceros = Cuenta::with('moneda')
             ->where('sucursal_id', $sucursal->id)
             ->where('tipo', 'tercero')
+            ->where('activa', 1)
             ->get()
             ->map(function ($t) {
                 return [
                     'id'     => $t->id,
                     'nombre' => $t->nombre,
-                    'alias'  => $t->alias,
-                    'cuit'   => $t->cuit,
                     'tipo'   => 'tercero',
                     'moneda' => $t->moneda->codigo,
                 ];
@@ -351,17 +350,16 @@ class SucursalController extends Controller
                 ];
             });
 
-        // 🔹 Cuentas de terceros de todas las sucursales
+        // 🔹 Cuentas de terceros de todas las sucursales (alias dinámico por movimiento)
         $terceros = Cuenta::with(['moneda','sucursal'])
             ->where('tipo', 'tercero')
+            ->where('activa', 1)
             ->get()
             ->map(function ($t) {
                 return [
                     'id'       => $t->id,
                     'sucursal' => $t->sucursal->nombre,
                     'nombre'   => $t->nombre,
-                    'alias'    => $t->alias,
-                    'cuit'     => $t->cuit,
                     'tipo'     => 'tercero',
                     'moneda'   => $t->moneda->codigo,
                 ];

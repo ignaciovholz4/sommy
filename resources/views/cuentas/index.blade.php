@@ -280,9 +280,14 @@
             <p class="text-muted small mb-0">Administre cuentas de caja y bancos.</p>
         </div>
         
-        <button class="btn-facturarg-main" data-bs-toggle="modal" data-bs-target="#modalNuevaCuenta">
-            <i class="fas fa-plus-circle me-2"></i> NUEVA CUENTA
-        </button>
+        <div class="d-flex gap-2">
+            <a href="{{ route('cuentas.terceros') }}" class="btn btn-outline-dark fw-bold">
+                <i class="fas fa-user-friends me-2"></i> CONTROL DE TERCEROS
+            </a>
+            <button class="btn-facturarg-main" data-bs-toggle="modal" data-bs-target="#modalNuevaCuenta">
+                <i class="fas fa-plus-circle me-2"></i> NUEVA CUENTA
+            </button>
+        </div>
     </div>
 
     @php
@@ -313,7 +318,7 @@
             <div class="cuentas-grid mb-4">
                 @foreach($grupo['items'] as $cuenta)
                 <div class="cuenta-card {{ $cuenta->activa ? '' : 'cuenta-inactiva' }}"
-                     data-buscar="{{ mb_strtolower($cuenta->nombre . ' ' . ($cuenta->sucursal->nombre ?? '') . ' ' . ($cuenta->alias ?? '')) }}">
+                     data-buscar="{{ mb_strtolower($cuenta->nombre . ' ' . ($cuenta->sucursal->nombre ?? '')) }}">
                     <div class="cuenta-card-top">
                         <div class="cuenta-icon {{ $cuenta->tipo === 'caja' ? 'cuenta-icon-caja' : 'cuenta-icon-banco' }}">
                             <i class="fas {{ $cuenta->tipo === 'caja' ? 'fa-cash-register' : ($cuenta->tipo === 'tercero' ? 'fa-user-friends' : 'fa-university') }}"></i>
@@ -321,7 +326,7 @@
                         <div class="flex-grow-1 min-w-0">
                             <div class="cuenta-nombre">{{ $cuenta->nombre }}</div>
                             @if($cuenta->tipo === 'tercero')
-                                <div class="cuenta-sub">Alias: {{ $cuenta->alias ?: '—' }} · CUIT: {{ $cuenta->cuit ?: '—' }}</div>
+                                <div class="cuenta-sub">Plata en cuentas de otras personas · {{ $cuenta->moneda->codigo ?? '' }}</div>
                             @else
                                 <div class="cuenta-sub">{{ $cuenta->sucursal->nombre ?? '—' }} · {{ $cuenta->moneda->codigo ?? '' }}</div>
                             @endif
@@ -442,18 +447,11 @@
                         <select class="form-select form-control-custom" id="nueva_cuenta_tipo" name="tipo" required>
                             <option value="caja">Caja</option>
                             <option value="banco">Banco</option>
-                            <option value="tercero">Cuenta de terceros (alias de un tercero)</option>
+                            <option value="tercero">Cuenta de terceros (plata en cuentas de otros)</option>
                         </select>
-                    </div>
-                    <div id="nueva_cuenta_tercero_wrap" style="display:none;">
-                        <div class="mb-3">
-                            <label class="form-label-custom">Alias</label>
-                            <input type="text" class="form-control form-control-custom" name="alias" placeholder="Ej: juan.perez.mp">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label-custom">CUIT del titular</label>
-                            <input type="text" class="form-control form-control-custom" name="cuit" placeholder="XX-XXXXXXXX-X">
-                        </div>
+                        <small class="text-muted" id="nueva_cuenta_tercero_hint" style="display:none;">
+                            El alias y CUIT se cargan en cada cobro: después podés ver cuánta plata fue a cada alias en <strong>Control de terceros</strong>.
+                        </small>
                     </div>
                     <div class="form-check form-switch mt-3">
                         <input class="form-check-input" type="checkbox" id="activa" name="activa" value="1" checked>

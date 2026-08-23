@@ -68,8 +68,6 @@ class CuentasController extends Controller
             'sucursal_id'  => 'required|exists:sucursales,id',
             'moneda_id'    => 'required|exists:monedas,id',
             'tipo'         => 'required|in:caja,banco,tercero',
-            'alias'        => 'required_if:tipo,tercero|nullable|string|max:60',
-            'cuit'         => 'required_if:tipo,tercero|nullable|string|max:20',
             'activa'       => 'boolean',
         ]);
 
@@ -78,8 +76,6 @@ class CuentasController extends Controller
             'sucursal_id' => $request->sucursal_id,
             'moneda_id'   => $request->moneda_id,
             'tipo'        => $request->tipo,
-            'alias'       => $request->tipo === 'tercero' ? $request->alias : null,
-            'cuit'        => $request->tipo === 'tercero' ? $request->cuit : null,
             'activa'      => $request->has('activa'),
         ]);
 
@@ -210,5 +206,93 @@ class CuentasController extends Controller
             'estado' => 1,
             'mensaje' => 'Cuenta activada correctamente'
         ]);
+    }
+
+    /**
+     * Panel de control de plata en cuentas de terceros: cada movimiento
+     * registra el alias/CUIT al que fue el dinero, acá se agrupa por
+     * alias+CUIT con totales y se puede filtrar.
+     */
+    public function terceros()
+    {
+        return view('cuentas.terceros');
+    }
+
+    public function tercerosData(Request $request)
+    {
+        $query = DB::table('movimientos')
+            ->whereNotNull('alias_tercero')
+            ->where('alias_tercero', '!=', '');
+
+        if ($request->filled('alias')) {
+            $query->where('alias_tercero', 'like', '%' . $request->alias . '%');
+        }
+        if ($request->filled('cuit')) {
+            // Se compara sin guiones para que "20-12345678-9" matchee "20123456789"
+            $cuitLimpio = preg_replace('/[^0-9]/', '', $request->cuit);
+            $query->whereRaw("REPLACE(REPLACE(cuit_tercero, '-', ''), ' ', '') LIKE ?", ['%' . $cuitLimpio . '%']);
+        }
+        if ($request->filled('desde')) {
+            $query->whereDate('fecha', '>=', $request->desde);
+        }
+        if ($request->filled('hasta')) {
+            $query->whereDate('fecha', '<=', $request->hasta);
+        }
+
+        $resumen = (clone $query)
+            ->selectRaw("
+                LOWER(TRIM(alias_tercero)) as alias,
+                MAX(cuit_tercero) as cuit,
+                SUM(CASE WHEN tipo = 'ingreso' THEN total ELSE 0 END) as ingresos,
+                SUM(CASE WHEN tipo = 'egreso' THEN total ELSE 0 END) as egresos,
+                SUM(CASE WHEN tipo = 'ingreso' THEN total ELSE -total END) as neto,
+                COUNT(*) as cantidad,
+                MAX(fecha) as ultimo
+            ")
+            ->groupBy(DB::raw('LOWER(TRIM(alias_tercero))'))
+            ->orderByDesc('neto')
+            ->get();
+
+        $totales = [
+            'ingresos' => (float) $resumen->sum('ingresos'),
+            'egresos'  => (float) $resumen->sum('egresos'),
+            'neto'     => (float) $resumen->sum('neto'),
+            'aliases'  => $resumen->count(),
+        ];
+
+        return response()->json(['estado' => 1, 'resumen' => $resumen, 'totales' => $totales]);
+    }
+
+    /** Movimientos individuales de un alias (detalle al hacer click) */
+    public function tercerosMovimientos(Request $request)
+    {
+        $movs = DB::table('movimientos')
+            ->leftJoin('cuentas', 'cuentas.id', '=', 'movimientos.cuenta_id')
+            ->whereRaw('LOWER(TRIM(movimientos.alias_tercero)) = ?', [mb_strtolower(trim($request->alias ?? ''))])
+            ->orderByDesc('movimientos.fecha')
+            ->limit(300)
+            ->get([
+                'movimientos.fecha', 'movimientos.tipo', 'movimientos.medio',
+                'movimientos.cliente_proveedor', 'movimientos.comprobante',
+                'movimientos.observaciones', 'movimientos.total',
+                'movimientos.cuit_tercero', 'cuentas.nombre as cuenta',
+            ]);
+
+        return response()->json(['estado' => 1, 'movimientos' => $movs]);
+    }
+
+    /** Alias/CUIT ya usados, para autocompletar en los formularios de cobro */
+    public function tercerosAlias()
+    {
+        $alias = DB::table('movimientos')
+            ->whereNotNull('alias_tercero')
+            ->where('alias_tercero', '!=', '')
+            ->selectRaw('LOWER(TRIM(alias_tercero)) as alias, MAX(cuit_tercero) as cuit, MAX(fecha) as ultimo')
+            ->groupBy(DB::raw('LOWER(TRIM(alias_tercero))'))
+            ->orderByDesc('ultimo')
+            ->limit(100)
+            ->get(['alias', 'cuit']);
+
+        return response()->json(['estado' => 1, 'alias' => $alias]);
     }
 }

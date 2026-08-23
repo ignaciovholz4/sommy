@@ -91,6 +91,24 @@ $(document).ready(function () {
 
     $('#mov_efectivo, #mov_bancos, #mov_tarjetas').on('input', calcularTotal);
 
+    // Autocompletar alias ya usados (solo existe en cuentas de terceros)
+    if (document.getElementById('mov_alias_tercero')) {
+        let aliasConocidos = [];
+        fetch('/cuentas/terceros/alias')
+            .then(r => r.json())
+            .then(d => {
+                aliasConocidos = d.alias || [];
+                document.getElementById('movAliasConocidos').innerHTML =
+                    aliasConocidos.map(a => `<option value="${a.alias}">${a.cuit ? 'CUIT ' + a.cuit : ''}</option>`).join('');
+            })
+            .catch(() => {});
+        document.getElementById('mov_alias_tercero').addEventListener('change', function () {
+            const conocido = aliasConocidos.find(a => a.alias === this.value.trim().toLowerCase());
+            const cuitInput = document.getElementById('mov_cuit_tercero');
+            if (conocido && conocido.cuit && !cuitInput.value) cuitInput.value = conocido.cuit;
+        });
+    }
+
     // Envío del formulario
     $('#formAgregarMovimiento').on('submit', function(e) {
         e.preventDefault();
@@ -112,6 +130,17 @@ $(document).ready(function () {
         // Solo enviar apertura_id si existe (caja)
         if (aperturaId) {
             data.apertura_id = aperturaId;
+        }
+
+        // En cuentas de terceros, el alias identifica de quién es la plata
+        const aliasInput = document.getElementById('mov_alias_tercero');
+        if (aliasInput) {
+            data.alias_tercero = aliasInput.value.trim();
+            data.cuit_tercero = (document.getElementById('mov_cuit_tercero').value || '').trim();
+            if (!data.alias_tercero) {
+                Swal.fire('Error', 'Indicá el alias del tercero al que corresponde el movimiento', 'error');
+                return;
+            }
         }
 
         if (!data.tipo || !data.comprobante) {
