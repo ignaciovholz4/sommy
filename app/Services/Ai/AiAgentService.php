@@ -291,6 +291,30 @@ class AiAgentService
             $system .= "\n\nDatos del cliente (del sistema): nombre " . trim($cliente->nombre . ' ' . ($cliente->paterno ?? ''))
                 . ($cliente->localidad ? ", localidad {$cliente->localidad}" : '')
                 . ($cliente->direccion ? ", dirección registrada: {$cliente->direccion}" : '') . '.';
+
+            // Historial de compras: para reconocerlo como cliente y asesorar mejor.
+            // OJO: es contexto tuyo — el ESTADO de pedidos en curso NUNCA se informa.
+            $compras = collect();
+            $ventas = \Illuminate\Support\Facades\DB::table('ventas')
+                ->join('detalle_ventas as dv', 'dv.venta_id', '=', 'ventas.idventa')
+                ->join('productos as p', 'p.idarticulo', '=', 'dv.articulo_id')
+                ->where('ventas.cliente_id', $cliente->idcliente)
+                ->where('ventas.estado', '!=', 'anulada')
+                ->orderByDesc('ventas.fecha')->limit(5)
+                ->get(['p.nombre', 'ventas.fecha']);
+            $pedidos = \Illuminate\Support\Facades\DB::table('order_ecommerce as o')
+                ->join('order_detail_ecommerce as od', 'od.order_ecommerce_id', '=', 'o.order_id')
+                ->join('productos as p', 'p.idarticulo', '=', 'od.product_id')
+                ->where('o.cliente_id', $cliente->idcliente)
+                ->orderByDesc('o.order_date')->limit(5)
+                ->get(['p.nombre', 'o.order_date as fecha']);
+            $compras = $ventas->concat($pedidos)->sortByDesc('fecha')->take(5);
+
+            if ($compras->isNotEmpty()) {
+                $lineas = $compras->map(fn ($c) => $c->nombre . ' (' . \Carbon\Carbon::parse($c->fecha)->format('m/Y') . ')')->unique()->implode('; ');
+                $system .= "\nEs un cliente que YA NOS COMPRÓ. Últimas compras: {$lineas}. "
+                    . 'Saludalo como cliente conocido y, si viene al caso, preguntale cómo le fue con lo que compró.';
+            }
         } elseif ($conversation->profile_name) {
             $system .= "\n\nEl cliente aparece en WhatsApp como \"{$conversation->profile_name}\" (todavía no está registrado en el sistema).";
         }
