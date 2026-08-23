@@ -170,10 +170,11 @@ class AiAgentService
 
         $defs = array_values(array_intersect_key($all, array_flip($agent->tools_enabled ?? [])));
 
-        // Ficha interna del producto + envío de material: acompañan a buscar_productos
+        // Ficha interna, envío de material y catálogo completo: acompañan a buscar_productos
         if ($agent->toolEnabled('buscar_productos')) {
             $defs[] = Tools\InfoProducto::definition();
             $defs[] = Tools\EnviarMaterial::definition();
+            $defs[] = Tools\VerCatalogo::definition();
         }
 
         // Herramienta de gestión de estado: siempre disponible para todos los agentes
@@ -192,13 +193,14 @@ class AiAgentService
                 'crear_pedido' => new CrearPedido(),
                 'info_producto' => new Tools\InfoProducto(),
                 'enviar_material' => new Tools\EnviarMaterial(),
+                'ver_catalogo' => new Tools\VerCatalogo(),
                 'cerrar_conversacion' => new Tools\CerrarConversacion(),
                 default => null,
             };
 
             // Tools acompañantes que no figuran en tools_enabled del agente
             $esAcompanante = $toolCall['name'] === 'cerrar_conversacion'
-                || (in_array($toolCall['name'], ['info_producto', 'enviar_material']) && $agent->toolEnabled('buscar_productos'));
+                || (in_array($toolCall['name'], ['info_producto', 'enviar_material', 'ver_catalogo']) && $agent->toolEnabled('buscar_productos'));
 
             if (!$tool || (!$agent->toolEnabled($toolCall['name']) && !$esAcompanante)) {
                 return ['error' => 'Herramienta no disponible'];

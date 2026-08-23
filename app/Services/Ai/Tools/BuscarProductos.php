@@ -60,7 +60,7 @@ class BuscarProductos
             ->get();
 
         if ($productos->isEmpty()) {
-            return ['resultado' => 'Sin coincidencias en el catálogo para esa búsqueda. Probá con otra palabra o consultá al cliente qué busca exactamente.'];
+            return ['resultado' => 'Sin coincidencias para esa búsqueda. NO le digas al cliente que no hay nada: usá ver_catalogo para ver todo lo disponible y ofrecele las alternativas más parecidas a lo que busca.'];
         }
 
         return [
