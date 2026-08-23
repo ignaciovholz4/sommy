@@ -246,12 +246,15 @@ class SucursalController extends Controller
             $articulosQuery->where('stock', '>', 0);
         }
 
-        $articulos = $articulosQuery->get()->map(function ($sa) {
+        // En compras se usa el nombre del proveedor (nombre_compra); en ventas el comercial
+        $esCompra = $context === 'compra';
+
+        $articulos = $articulosQuery->get()->map(function ($sa) use ($esCompra) {
             return [
                 'idarticulo'       => $sa->articulo->idarticulo,
                 'producto_id'      => $sa->articulo->idarticulo,
                 'tipo_producto_id' => $sa->articulo->tipo_producto_id,
-                'nombre'           => $sa->articulo->nombre,
+                'nombre'           => $esCompra ? ($sa->articulo->nombre_compra ?: $sa->articulo->nombre) : $sa->articulo->nombre,
                 'codigo'           => $sa->articulo->codigo,
                 'pventa_con_iva'   => $sa->articulo->pventa_con_iva,
                 'pcompra_con_iva'  => $sa->articulo->pcompra_con_iva,
@@ -271,12 +274,12 @@ class SucursalController extends Controller
             $combinacionesQuery->where('stock', '>', 0);
         }
 
-        $combinaciones = $combinacionesQuery->get()->map(function ($sc) {
+        $combinaciones = $combinacionesQuery->get()->map(function ($sc) use ($esCompra) {
             return [
                 'idcombinacion'    => $sc->combinacion->idcombinacion,
                 'producto_id'      => $sc->combinacion->producto->idarticulo,
                 'tipo_producto_id' => 2,
-                'nombre'           => $sc->combinacion->producto->nombre . ' - ' . $sc->combinacion->combinacion,
+                'nombre'           => ($esCompra ? ($sc->combinacion->producto->nombre_compra ?: $sc->combinacion->producto->nombre) : $sc->combinacion->producto->nombre) . ' - ' . $sc->combinacion->combinacion,
                 'codigo'           => $sc->combinacion->sku ?: $sc->combinacion->producto->codigo,
                 'sku'              => $sc->combinacion->sku,
                 'pventa_con_iva'   => $sc->combinacion->pventa_variante,

@@ -108,6 +108,7 @@ class ArticuloController extends Controller
                 'unidad_id'              => $request->get('idunidad'),
                 'codigo'                 => $request->get('codigo') ?? '',
                 'nombre'                 => $request->get('nombre'),
+                'nombre_compra'          => $request->get('nombre_compra') ?: null,
                 'descripcion'            => $request->get('descripcion'),
                 'estado'                 => 'Activo',
                 'descuento'              => $request->get('articulo_des'),
@@ -452,6 +453,7 @@ class ArticuloController extends Controller
 
             $articulo->codigo = $request->codigo;
             $articulo->nombre = $request->nombre;
+            $articulo->nombre_compra = $request->nombre_compra ?: null;
             $articulo->descripcion = $request->descripcion;
             $articulo->estado = "Activo";
             $articulo->descuento = $request->articulo_des;

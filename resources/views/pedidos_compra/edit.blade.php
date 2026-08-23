@@ -100,7 +100,7 @@
                                     <input type="hidden" name="items[{{ $i }}][idarticulo]" value="{{ $d->articulo_id }}">
                                     <input type="hidden" name="items[{{ $i }}][combinacion_id]" value="{{ $d->combinacion_id ?? '' }}">
                                     <input type="hidden" name="items[{{ $i }}][tipo_producto_id]" value="{{ $d->tipo_producto_id }}">
-                                    {{ $d->articulo->nombre }}{{ $d->combinacion ? ' - ' . $d->combinacion->combinacion : '' }}
+                                    {{ $d->articulo->nombre_compra ?: $d->articulo->nombre }}{{ $d->combinacion ? ' - ' . $d->combinacion->combinacion : '' }}
                                 </td>
                                 <td>
                                     <input type="number" name="items[{{ $i }}][cantidad]" value="{{ $d->cantidad }}" min="1" class="form-control cantidad">

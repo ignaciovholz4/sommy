@@ -352,7 +352,7 @@ class CompraController extends Controller
 
         $detalles = $compra->detalles->map(function($d) {
             return [
-                'articulo' => $d->articulo->nombre,
+                'articulo' => $d->articulo->nombre_compra ?: $d->articulo->nombre,
                 'combinacion' => $d->combinacion ? $d->combinacion->combinacion : null, // ✅ nuevo campo
                 'cantidad' => $d->cantidad,
                 'precio_unitario' => number_format($d->precio_unitario, 2, ',', '.'),

@@ -55,6 +55,7 @@ class Articulo extends Model
         'categoria_id',
         'codigo',
         'nombre',
+        'nombre_compra',
         'slug',
         'meta_title',
         'meta_description',

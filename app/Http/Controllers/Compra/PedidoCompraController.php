@@ -210,7 +210,7 @@ class PedidoCompraController extends Controller
 
         $detalles = $pedido->detalles->map(function ($d) {
             return [
-                'articulo' => $d->articulo->nombre,
+                'articulo' => $d->articulo->nombre_compra ?: $d->articulo->nombre,
                 'combinacion' => $d->combinacion ? $d->combinacion->combinacion : null,
                 'cantidad' => $d->cantidad,
                 'precio_unitario' => number_format($d->precio_unitario, 2, ',', '.'),
@@ -268,7 +268,8 @@ class PedidoCompraController extends Controller
         ])->findOrFail($id);
 
         $detalle = $pedido->detalles->map(function ($d) {
-            $nombre = $d->articulo->nombre;
+            // En compras se usa el nombre del proveedor si está cargado
+            $nombre = $d->articulo->nombre_compra ?: $d->articulo->nombre;
             if ($d->combinacion) {
                 $nombre .= ' - ' . $d->combinacion->combinacion;
             }

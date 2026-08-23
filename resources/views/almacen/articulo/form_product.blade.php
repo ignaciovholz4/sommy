@@ -34,10 +34,18 @@
                     <hr>
                     <div class="col-sm-4">
                         <div class="form-group">
-                            <label for="nombre">Nombre<i class="text-danger"><strong>*</strong></i></label>
+                            <label for="nombre">Nombre (venta)<i class="text-danger"><strong>*</strong></i></label>
                             <input type="text" name="nombre" class="form-control"
-                                   placeholder="Nombre..."
+                                   placeholder="Nombre comercial (ventas, web, presupuestos)..."
                                    value="{{ old('nombre', isset($product->nombre) ? $product->nombre : '') }}">
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-group">
+                            <label for="nombre_compra">Nombre para compras <small class="text-muted">(como lo llama el proveedor)</small></label>
+                            <input type="text" name="nombre_compra" class="form-control"
+                                   placeholder="Opcional: se usa en compras y pedidos de compra"
+                                   value="{{ old('nombre_compra', isset($product->nombre_compra) ? $product->nombre_compra : '') }}">
                         </div>
                     </div>
                     <div class="col-sm-4">
