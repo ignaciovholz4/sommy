@@ -40,11 +40,12 @@ class BuscarProductos
             ->take(5);
 
         $productos = DB::table('productos as p')
-            ->leftJoin('categorias as c', 'c.id', '=', 'p.categoria_id')
+            ->leftJoin('categorias as c', 'c.idcategoria', '=', 'p.categoria_id')
             ->leftJoin('sucursal_articulo as sa', function ($join) {
                 $join->on('sa.articulo_id', '=', 'p.idarticulo')->where('sa.activo', 1);
             })
             ->where('p.estado', 'Activo')
+            ->where('p.bot_ofrecer', 1) // el bot solo ofrece lo tildado por el dueño
             ->where(function ($sub) use ($terms, $query) {
                 $sub->where('p.nombre', 'like', "%{$query}%");
                 foreach ($terms as $term) {

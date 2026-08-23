@@ -49,4 +49,36 @@ class WhatsAppBaileysService
 
         return $response->json('id');
     }
+
+    /**
+     * Envia un archivo nativo de WhatsApp (imagen/video/audio/documento).
+     * La URL debe ser publica: el bridge la descarga y la manda como adjunto real.
+     */
+    public function sendMedia(string $to, string $type, string $url, ?string $caption = null, ?string $filename = null, ?string $mimetype = null): ?string
+    {
+        $response = Http::withToken(config('services.whatsapp_baileys.bridge_token'))
+            ->acceptJson()
+            ->timeout(60) // subir un video puede tardar
+            ->post(rtrim(config('services.whatsapp_baileys.bridge_url'), '/') . '/send', [
+                'to' => $to,
+                'media' => [
+                    'type' => $type,
+                    'url' => $url,
+                    'caption' => $caption,
+                    'filename' => $filename,
+                    'mimetype' => $mimetype,
+                ],
+            ]);
+
+        if ($response->failed()) {
+            $error = $response->json('error') ?? $response->body();
+            throw new WhatsAppApiException(
+                is_string($error) ? $error : ($error['message'] ?? 'Error desconocido del bridge Baileys'),
+                (string) $response->status(),
+                is_array($error) ? $error : []
+            );
+        }
+
+        return $response->json('id');
+    }
 }

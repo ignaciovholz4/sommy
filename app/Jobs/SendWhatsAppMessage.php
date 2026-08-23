@@ -57,8 +57,22 @@ class SendWhatsAppMessage implements ShouldQueue
             // WhatsApp no oficial (Baileys): el "to" es el JID guardado en external_id,
             // no el phone_e164 (formato distinto al wa_id que usa la Cloud API de Meta).
             if ($conversation->account->provider === 'baileys') {
-                $mid = \App\Services\WhatsApp\WhatsAppBaileysService::forAccount($conversation->account)
-                    ->sendText($conversation->external_id, (string) $message->body);
+                $service = \App\Services\WhatsApp\WhatsAppBaileysService::forAccount($conversation->account);
+
+                // Mensajes con adjunto (material de producto que manda el bot):
+                // media_path guarda la URL publica del archivo
+                if (in_array($message->type, ['image', 'video', 'audio', 'document']) && $message->media_path) {
+                    $mid = $service->sendMedia(
+                        $conversation->external_id,
+                        $message->type,
+                        $message->media_path,
+                        $message->body ?: null,
+                        $message->payload['filename'] ?? null,
+                        $message->media_mime
+                    );
+                } else {
+                    $mid = $service->sendText($conversation->external_id, (string) $message->body);
+                }
 
                 $message->update(['wa_message_id' => $mid ?: null, 'status' => 'sent']);
                 return;

@@ -62,6 +62,28 @@
     </div>
     <div class="con-sub">Todo lo que cargues acá lo usan el bot de ventas del CRM (responde con esta info por WhatsApp) y el Estudio de Publicaciones (para generar contenido con contexto real).</div>
 
+    <div style="background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 8px rgba(15,23,42,.06);">
+        <div>
+            <b><i class="fas fa-robot" style="color:#2563EB;"></i> Ofrecer este producto en el bot de ventas</b>
+            <div class="con-sub" style="margin:2px 0 0;">Si está apagado, el bot no lo menciona ni lo recomienda por WhatsApp.</div>
+        </div>
+        <button id="btn-bot-toggle" class="btn {{ $articulo->bot_ofrecer ? 'btn-success' : 'btn-outline-secondary' }}" style="border-radius:999px;min-width:130px;font-weight:700;">
+            {{ $articulo->bot_ofrecer ? 'ACTIVADO' : 'APAGADO' }}
+        </button>
+    </div>
+    <script>
+        document.getElementById('btn-bot-toggle').addEventListener('click', function () {
+            fetch('{{ route('articulo.bot.toggle', $articulo->idarticulo) }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+            }).then(r => r.json()).then(d => {
+                this.className = 'btn ' + (d.bot_ofrecer ? 'btn-success' : 'btn-outline-secondary');
+                this.style.cssText = 'border-radius:999px;min-width:130px;font-weight:700;';
+                this.textContent = d.bot_ofrecer ? 'ACTIVADO' : 'APAGADO';
+            });
+        });
+    </script>
+
     @if(session('con_ok'))
         <div class="alert alert-success" style="border-radius:12px;">{{ session('con_ok') }}</div>
     @endif

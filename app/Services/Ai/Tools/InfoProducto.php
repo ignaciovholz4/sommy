@@ -56,18 +56,18 @@ class InfoProducto
             'contenido' => Str::limit((string) $i->contenido, 1200),
         ])->values();
 
-        // Material multimedia: el bot puede ofrecer el link al cliente
+        // Material multimedia: el bot lo manda como adjunto real con enviar_material
         $archivos = $items->filter(fn ($i) => !$i->esTexto() && $i->archivo)->map(fn ($i) => [
+            'material_id' => $i->id,
             'tipo'   => ArticuloConocimiento::TIPOS[$i->tipo] ?? $i->tipo,
             'titulo' => $i->titulo,
-            'link'   => $i->archivo_url,
         ])->values();
 
         return [
             'producto'     => $articulo->nombre,
             'conocimiento' => $textos,
             'material'     => $archivos,
-            'nota'         => 'Esta información es la ficha oficial interna: usala como fuente de verdad. Si el cliente quiere ver un video/imagen/audio del material, compartile el link.',
+            'nota'         => 'Esta información es la ficha oficial interna: usala como fuente de verdad. Para mostrarle al cliente una foto/video/audio del material, usá la herramienta enviar_material con el material_id: le llega como adjunto de WhatsApp.',
         ];
     }
 }

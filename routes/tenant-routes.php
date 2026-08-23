@@ -788,6 +788,7 @@ Route::get('/procesos', function () {
 /** BASE DE CONOCIMIENTO DE PRODUCTOS (interna, para el bot del CRM y el Estudio) */
 Route::get('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'index'])->name('articulo.conocimiento')->middleware(['auth','verified']);
 Route::post('/articulo/{id}/conocimiento', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'store'])->name('articulo.conocimiento.store')->middleware(['auth','verified']);
+Route::post('/articulo/{id}/bot-toggle', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'toggleBot'])->name('articulo.bot.toggle')->middleware(['auth','verified']);
 Route::delete('/articulo/conocimiento/{itemId}', [\App\Http\Controllers\Articulo\ConocimientoController::class, 'destroy'])->name('articulo.conocimiento.destroy')->middleware(['auth','verified']);
 
 /** COMPROBANTES DE PAGO DE VENTAS */

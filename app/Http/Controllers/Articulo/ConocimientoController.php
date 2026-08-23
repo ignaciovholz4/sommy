@@ -30,6 +30,16 @@ class ConocimientoController extends Controller
         ]);
     }
 
+    /** Tilda/destilda el producto para que el bot de ventas lo ofrezca. */
+    public function toggleBot($id)
+    {
+        $articulo = Articulo::findOrFail($id);
+        $articulo->bot_ofrecer = !$articulo->bot_ofrecer;
+        $articulo->save();
+
+        return response()->json(['estado' => 1, 'bot_ofrecer' => (bool) $articulo->bot_ofrecer]);
+    }
+
     public function store(Request $request, $id)
     {
         Articulo::findOrFail($id);
