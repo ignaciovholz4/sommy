@@ -12,7 +12,7 @@ class CrearPedido
     {
         return [
             'name' => 'crear_pedido',
-            'description' => 'Pasa la cotización vigente a "pendiente de confirmación" para que un vendedor humano la revise y confirme el pedido real. Usala recién cuando el cliente aceptó la cotización y te dio TODOS los datos de entrega: nombre completo, dirección con calle y número, localidad y provincia (el flete se organiza con esos datos). NO crea el pedido definitivo: eso lo hace un vendedor.',
+            'description' => 'CARGA EL PEDIDO REAL en el sistema. Usala SOLO cuando: (1) le mandaste al cliente el resumen COMPLETO (cada producto con su medida, cantidad y precio, el total, y los datos de entrega) y (2) el cliente CONFIRMÓ explícitamente ese resumen. Necesitás todos los datos de entrega: nombre completo, calle y número, localidad y provincia.',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
@@ -52,7 +52,6 @@ class CrearPedido
         }
 
         $draft->update([
-            'status' => 'pendiente_confirmacion',
             'datos_entrega' => [
                 'nombre_cliente' => $args['nombre_cliente'] ?? null,
                 'direccion' => $args['direccion'] ?? '',
@@ -64,11 +63,19 @@ class CrearPedido
             'notas' => $args['notas'] ?? null,
         ]);
 
+        // El cliente ya confirmó el resumen: el pedido se carga directo al
+        // sistema (aparece en Pedidos, listo para cobrar y asignar flete).
+        try {
+            $order = app(\App\Services\OrderDraftService::class)->confirm($draft->fresh(), null);
+        } catch (\Throwable $e) {
+            return ['error' => 'No se pudo cargar el pedido: ' . $e->getMessage()];
+        }
+
         return [
             'resultado' => 'ok',
-            'pedido_borrador_id' => $draft->id,
+            'pedido_numero' => $order->order_id,
             'total' => $draft->total,
-            'nota' => 'Avisale al cliente que su pedido quedó registrado y que un asesor se lo confirma a la brevedad. No prometas fecha de entrega exacta.',
+            'nota' => 'El pedido #' . $order->order_id . ' ya quedó cargado y el sistema le avisó al cliente. No repitas la confirmación: seguí con la derivación a un vendedor para el cobro. No prometas fecha de entrega exacta.',
         ];
     }
 }

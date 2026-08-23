@@ -18,9 +18,11 @@ use Illuminate\Support\Facades\DB;
 class OrderDraftService
 {
     /**
+     * @param int|null $confirmedByUserId null = lo confirmó el propio cliente
+     *                 por WhatsApp (el bot carga el pedido directo).
      * @throws \RuntimeException si el draft no esta en estado confirmable
      */
-    public function confirm(WaOrderDraft $draft, int $confirmedByUserId): order_ecommerce
+    public function confirm(WaOrderDraft $draft, ?int $confirmedByUserId): order_ecommerce
     {
         if (!in_array($draft->status, ['borrador', 'pendiente_confirmacion'], true)) {
             throw new \RuntimeException('El borrador no está en un estado confirmable (' . $draft->status . ').');
@@ -105,10 +107,11 @@ class OrderDraftService
             $message = $conversation->messages()->create([
                 'direction' => 'out',
                 'type' => 'text',
-                'body' => "✅ ¡Tu pedido #{$order->order_id} quedó confirmado! Total: $" . number_format($draft->total, 2, ',', '.')
-                    . ". En breve nos comunicamos para coordinar la entrega. ¡Gracias!",
+                'body' => "✅ Pedido confirmado! Es el #{$order->order_id}, total $" . number_format($draft->total, 2, ',', '.')
+                    . ". En breve te contactamos para coordinar el pago y la entrega",
                 'status' => 'pending',
                 'sent_by_user_id' => $confirmedByUserId,
+                'sent_by_agent_id' => $confirmedByUserId ? null : $draft->ai_agent_id,
             ]);
             SendWhatsAppMessage::dispatch($message->id);
 
