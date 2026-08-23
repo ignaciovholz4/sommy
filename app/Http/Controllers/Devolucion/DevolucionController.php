@@ -608,20 +608,27 @@ class DevolucionController extends Controller
 
     public function anularVenta(Request $request, $idventa)
     {
+        $venta = Venta::with(['movimientos.cuenta', 'movimientos.cajaApertura', 'detalles'])->findOrFail($idventa);
+
+        if ($venta->estado === 'anulada') {
+            return response()->json(['success' => false, 'error' => 'La venta ya está anulada.']);
+        }
+
+        if ($request->input('resolucion') === 'cambio') {
+            return $this->cambiarProductoVenta($request, $venta);
+        }
+
         DB::beginTransaction();
         try {
-            $venta = Venta::with(['movimientos.cuenta', 'movimientos.cajaApertura', 'detalles'])->findOrFail($idventa);
-
-            if ($venta->estado === 'anulada') {
-                return response()->json(['success' => false, 'error' => 'La venta ya está anulada.']);
-            }
-
             Devolucion::create([
                 'tipo'          => 'venta',
+                'resolucion'    => 'reintegro',
                 'referencia_id' => $venta->idventa,
-                'motivo'        => 'Anulación de venta',
+                'motivo'        => $request->input('motivo') ?: 'Anulación de venta',
                 'fecha'         => now(),
                 'monto'         => $venta->total_con_iva,
+                'diferencia'    => -$venta->total_con_iva,
+                'user_id'       => auth()->id(),
             ]);
 
             $pendientes = ['efectivo'=>0,'bancos'=>0,'tarjetas'=>0,'total'=>0];
@@ -781,6 +788,183 @@ class DevolucionController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Devolucion resuelta como cambio de producto: repone stock de las lineas
+     * devueltas, descuenta el del producto nuevo, y ajusta el total de la
+     * MISMA venta (no la anula). La diferencia de precio se cobra sola via
+     * el flujo normal de registrarPago (si es a favor del negocio) o se
+     * devuelve como egreso (si es a favor del cliente) — el llamador nunca
+     * elige entre 3 botones fijos, el sistema calcula que corresponde.
+     */
+    protected function cambiarProductoVenta(Request $request, Venta $venta)
+    {
+        $request->validate([
+            'articulo_nuevo_id'      => 'required|exists:productos,idarticulo',
+            'combinacion_nueva_id'   => 'nullable|exists:producto_combinaciones,idcombinacion',
+            'tipo_producto_id_nuevo' => 'required|integer|min:1',
+            'cantidad_nueva'         => 'required|integer|min:1',
+            'precio_unitario_nuevo'  => 'required|numeric|min:0',
+            'iva_nuevo'              => 'required|numeric|min:0',
+            'descuento_nuevo'        => 'nullable|numeric|min:0|max:100',
+            'detalles_devueltos'     => 'nullable|array',
+            'detalles_devueltos.*'   => 'integer|exists:detalle_ventas,id_detalle',
+            'motivo'                 => 'nullable|string|max:255',
+            'cuenta_id'              => 'nullable|string',
+        ]);
+
+        $devueltos = $request->filled('detalles_devueltos')
+            ? $venta->detalles->whereIn('id_detalle', $request->detalles_devueltos)
+            : $venta->detalles;
+
+        if ($devueltos->isEmpty()) {
+            return response()->json(['success' => false, 'error' => 'Elegí qué producto de la venta se devuelve.']);
+        }
+
+        $restantes = $venta->detalles->diff($devueltos);
+        $totalNetoRestante = (float) $restantes->sum('subtotal_neto');
+        $totalConIvaRestante = (float) $restantes->sum('subtotal_con_iva');
+
+        $descuento = $request->descuento_nuevo ?? 0;
+        $precioConDescuento = $request->precio_unitario_nuevo - ($request->precio_unitario_nuevo * $descuento / 100);
+        $subtotalNetoNuevo = $request->cantidad_nueva * $precioConDescuento;
+        $subtotalConIvaNuevo = $subtotalNetoNuevo + ($subtotalNetoNuevo * ($request->iva_nuevo / 100));
+
+        $nuevoTotalNeto = $totalNetoRestante + $subtotalNetoNuevo;
+        $nuevoTotalConIva = $totalConIvaRestante + $subtotalConIvaNuevo;
+        $diferencia = round($nuevoTotalConIva - $venta->total_con_iva, 2);
+
+        if ($diferencia < 0) {
+            $cuentaId = $request->input('cuenta_id');
+            if (!$cuentaId) {
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'Elegí a qué cuenta le sale la diferencia a favor del cliente.',
+                    'cuentas' => $this->cuentasParaSucursal($venta->sucursal_id),
+                ]);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $articuloNuevo = \App\Models\Articulo::findOrFail($request->articulo_nuevo_id);
+            $combinacionNueva = $request->combinacion_nueva_id
+                ? \App\Models\ProductoCombinacion::find($request->combinacion_nueva_id)
+                : null;
+
+            $descripcionAnterior = $devueltos->map(fn ($d) => $d->cantidad . ' x ' . $d->articulo->nombre)->implode(', ');
+            $descripcionNueva = $request->cantidad_nueva . ' x ' . $articuloNuevo->nombre . ($combinacionNueva ? ' - ' . $combinacionNueva->combinacion : '');
+
+            // Repone stock de lo devuelto, descuenta el del producto nuevo (sin stock => excepcion => rollback)
+            foreach ($devueltos as $detalle) {
+                app(StockController::class)->incrementarStockEnSucursal(
+                    $venta->sucursal_id, $detalle->articulo_id, $detalle->cantidad, $detalle->combinacion_id
+                );
+            }
+            app(StockController::class)->disminuirStockEnSucursal(
+                $venta->sucursal_id, $request->articulo_nuevo_id, $request->cantidad_nueva, $request->combinacion_nueva_id
+            );
+
+            foreach ($devueltos as $detalle) {
+                $detalle->delete();
+            }
+
+            $venta->detalles()->create([
+                'articulo_id'      => $request->articulo_nuevo_id,
+                'combinacion_id'   => $request->combinacion_nueva_id,
+                'tipo_producto_id' => $request->tipo_producto_id_nuevo,
+                'cantidad'         => $request->cantidad_nueva,
+                'precio_unitario'  => $request->precio_unitario_nuevo,
+                'descuento'        => $descuento,
+                'iva'              => $request->iva_nuevo,
+                'subtotal_neto'    => $subtotalNetoNuevo,
+                'subtotal_con_iva' => $subtotalConIvaNuevo,
+            ]);
+
+            $venta->total_neto = $nuevoTotalNeto;
+            $venta->total_con_iva = $nuevoTotalConIva;
+
+            if ($diferencia > 0.009) {
+                $venta->estado = 'a cobrar'; // el cajero la cobra con el flujo normal de registrarPago
+            } elseif ($diferencia < -0.009) {
+                $cuentaId = $request->input('cuenta_id');
+                $monto = abs($diferencia);
+
+                if (str_starts_with($cuentaId, 'caja-')) {
+                    $aperturaId = (int) str_replace('caja-', '', $cuentaId);
+                    $apertura = CajaApertura::findOrFail($aperturaId);
+                    if (!$apertura->estaAbierta()) {
+                        DB::rollBack();
+                        return response()->json(['success' => false, 'error' => 'La caja seleccionada no está abierta.']);
+                    }
+                    Movimiento::create([
+                        'cuenta_id' => $apertura->cuenta_id, 'caja_apertura_id' => $apertura->id,
+                        'fecha' => now(), 'tipo' => 'egreso',
+                        'cliente_proveedor' => optional($venta->cliente)->nombre ?? 'Cliente',
+                        'comprobante' => $venta->num_folio,
+                        'observaciones' => 'Diferencia a favor del cliente por cambio de producto',
+                        'efectivo' => $monto, 'bancos' => 0, 'tarjetas' => 0, 'total' => $monto,
+                    ]);
+                } elseif (str_starts_with($cuentaId, 'banco-')) {
+                    $cuenta = Cuenta::findOrFail((int) str_replace('banco-', '', $cuentaId));
+                    Movimiento::create([
+                        'cuenta_id' => $cuenta->id, 'caja_apertura_id' => null,
+                        'fecha' => now(), 'tipo' => 'egreso',
+                        'cliente_proveedor' => optional($venta->cliente)->nombre ?? 'Cliente',
+                        'comprobante' => $venta->num_folio,
+                        'observaciones' => 'Diferencia a favor del cliente por cambio de producto (Banco)',
+                        'efectivo' => 0, 'bancos' => $monto, 'tarjetas' => 0, 'total' => $monto,
+                    ]);
+                }
+                $venta->estado = 'cobrada'; // el total nuevo ya quedo saldado con lo ya cobrado
+            }
+            // diferencia == 0: la venta sigue como estaba, no se mueve plata
+
+            $venta->save();
+
+            Devolucion::create([
+                'tipo' => 'venta', 'resolucion' => 'cambio',
+                'referencia_id' => $venta->idventa,
+                'motivo' => $request->input('motivo') ?: 'Cambio de producto',
+                'fecha' => now(), 'monto' => $subtotalConIvaNuevo,
+                'producto_anterior' => $descripcionAnterior,
+                'producto_nuevo' => $descripcionNueva,
+                'diferencia' => $diferencia,
+                'user_id' => auth()->id(),
+            ]);
+
+            DB::commit();
+
+            \App\Models\Notificacion::avisar('devolucion',
+                'Cambio de producto: venta ' . ($venta->num_folio ?: '#' . $venta->idventa),
+                $descripcionAnterior . ' → ' . $descripcionNueva,
+                url('ventas?ver=' . $venta->idventa), 'alerta');
+
+            return response()->json([
+                'success' => true,
+                'diferencia' => $diferencia,
+                'pendiente_cobro' => $diferencia > 0 ? $diferencia : 0,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    /** Cajas abiertas + bancos de una sucursal, para elegir a donde sale/entra una diferencia. */
+    protected function cuentasParaSucursal(int $sucursalId): array
+    {
+        $cajas = CajaApertura::with('cuenta')
+            ->where('abierta', true)->whereNull('fecha_cierre')
+            ->whereHas('cuenta', fn ($q) => $q->where('sucursal_id', $sucursalId)->where('tipo', 'caja'))
+            ->get()
+            ->map(fn ($a) => ['id' => 'caja-' . $a->id, 'nombre' => $a->cuenta->nombre, 'tipo' => 'caja']);
+
+        $bancos = Cuenta::where('sucursal_id', $sucursalId)->where('tipo', 'banco')->get()
+            ->map(fn ($c) => ['id' => 'banco-' . $c->id, 'nombre' => $c->nombre, 'tipo' => 'banco']);
+
+        return $cajas->concat($bancos)->values()->all();
     }
 
 }

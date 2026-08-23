@@ -6,7 +6,9 @@ use App\Http\Controllers\Finanzas\EnvioController;
 use App\Http\Controllers\Finanzas\FinanzasDashboardController;
 use App\Http\Controllers\Finanzas\GastoCategoriaController;
 use App\Http\Controllers\Finanzas\GastoController;
+use App\Http\Controllers\Finanzas\RendicionFleteroController;
 use App\Http\Controllers\Finanzas\ReposicionController;
+use App\Http\Controllers\Finanzas\ResumenController;
 use App\Http\Controllers\Finanzas\TransportistaController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +46,10 @@ Route::middleware(['auth', 'verified'])->prefix('finanzas')->name('finanzas.')->
     Route::post('transportistas', [TransportistaController::class, 'store'])->name('transportistas.store');
     Route::post('transportistas/{id}/update', [TransportistaController::class, 'update'])->name('transportistas.update');
     Route::delete('transportistas/{id}', [TransportistaController::class, 'destroy'])->name('transportistas.destroy');
+    Route::post('fleteros/{transportista}/rendir', [RendicionFleteroController::class, 'rendir'])->name('fleteros.rendir');
+
+    // Resumen de movimientos del dia / mes (botones del nav)
+    Route::get('resumen', [ResumenController::class, 'index'])->name('resumen');
 
     // Envíos y fletes
     Route::get('envios', [EnvioController::class, 'index'])->name('envios.index');

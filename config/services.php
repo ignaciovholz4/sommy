@@ -84,6 +84,14 @@ return [
         'ig_account_id' => env('IG_ACCOUNT_ID'),
     ],
 
+    // WhatsApp no oficial (Baileys): bridge Node.js propio, sin pasar por Meta.
+    // Bot 100% reactivo mientras se completa la verificacion de negocio en Meta.
+    'whatsapp_baileys' => [
+        'bridge_url' => env('WHATSAPP_BRIDGE_URL', 'http://127.0.0.1:3300'),
+        'bridge_token' => env('WHATSAPP_BRIDGE_TOKEN'),
+        'inbound_token' => env('WHATSAPP_BRIDGE_INBOUND_TOKEN'),
+    ],
+
     'anthropic' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
     ],

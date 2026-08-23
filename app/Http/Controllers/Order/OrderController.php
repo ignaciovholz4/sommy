@@ -299,6 +299,9 @@ class OrderController extends Controller
         $bancos = \App\Models\Cuenta::where('tipo', 'banco')->where('activa', 1)->get()
             ->map(fn ($c) => ['id' => 'banco-' . $c->id, 'nombre' => $c->nombre . ' — banco']);
 
+        $terceros = \App\Models\Cuenta::where('tipo', 'tercero')->where('activa', 1)->get()
+            ->map(fn ($c) => ['id' => 'tercero-' . $c->id, 'nombre' => $c->nombre . ' — ' . $c->alias . ' (tercero)']);
+
         return response()->json([
             'total'     => $total,
             'pagado'    => $pagado,
@@ -318,7 +321,7 @@ class OrderController extends Controller
                 'adjunto_nombre'=> $m->adjunto_nombre,
                 'monto'         => (float) $m->total,
             ])->values(),
-            'destinos' => $cajasAbiertas->concat($bancos)->values(),
+            'destinos' => $cajasAbiertas->concat($bancos)->concat($terceros)->values(),
         ]);
     }
 
@@ -356,6 +359,7 @@ class OrderController extends Controller
 
         $cuentaId = null;
         $aperturaId = null;
+        $tercero = null;
 
         if (str_starts_with($request->destino, 'caja-')) {
             $aperturaId = (int) str_replace('caja-', '', $request->destino);
@@ -366,6 +370,9 @@ class OrderController extends Controller
             $cuentaId = $apertura->cuenta_id;
         } elseif (str_starts_with($request->destino, 'banco-')) {
             $cuentaId = (int) str_replace('banco-', '', $request->destino);
+        } elseif (str_starts_with($request->destino, 'tercero-')) {
+            $cuentaId = (int) str_replace('tercero-', '', $request->destino);
+            $tercero = \App\Models\Cuenta::find($cuentaId);
         } else {
             return response()->json(['status' => 0, 'mensaje' => ['Destino de pago inválido.']]);
         }
@@ -384,7 +391,8 @@ class OrderController extends Controller
             'tipo'              => 'ingreso',
             'cliente_proveedor' => optional($order->cliente)->nombre ?? 'Cliente ecommerce',
             'comprobante'       => 'Pedido #' . $order->order_id,
-            'observaciones'     => $request->observaciones ?: ('Pago de pedido ecommerce (' . $request->medio . ')'),
+            'observaciones'     => ($request->observaciones ?: ('Pago de pedido ecommerce (' . $request->medio . ')'))
+                . ($tercero ? ' — transferido a cuenta de terceros: ' . $tercero->alias . ' (CUIT ' . $tercero->cuit . ')' : ''),
             'adjunto_path'      => $adjuntoPath,
             'adjunto_nombre'    => $adjuntoNombre,
             'efectivo'          => $request->medio === 'efectivo' ? $monto : 0,

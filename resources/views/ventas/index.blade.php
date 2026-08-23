@@ -378,8 +378,14 @@
                             <button type="button" class="btn btn-sm btn-dark" onclick="subirComprobanteVenta(this)"><i class="fas fa-upload"></i> Subir</button>
                         </div>
                     </div>
+
+                    {{-- Devoluciones / cambios de esta venta --}}
+                    <div id="details_v_devoluciones_wrap" style="display:none;margin-top:12px;text-align:left;">
+                        <label style="color:var(--facturarg-blue);font-weight:700;font-size:0.85rem;"><i class="fas fa-undo"></i> Devoluciones / cambios</label>
+                        <div id="details_v_devoluciones" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:10px 14px;font-size:13px;color:#9A3412;"></div>
+                    </div>
                 </div>
-            </div>  
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>

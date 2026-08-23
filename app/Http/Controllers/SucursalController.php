@@ -225,10 +225,27 @@ class SucursalController extends Controller
                 ];
             });
 
+        // 🔹 Cuentas de terceros (alias de un tercero, usadas para cobrar)
+        $terceros = Cuenta::with('moneda')
+            ->where('sucursal_id', $sucursal->id)
+            ->where('tipo', 'tercero')
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'id'     => $t->id,
+                    'nombre' => $t->nombre,
+                    'alias'  => $t->alias,
+                    'cuit'   => $t->cuit,
+                    'tipo'   => 'tercero',
+                    'moneda' => $t->moneda->codigo,
+                ];
+            });
+
         return response()->json([
-            'estado' => 1,
-            'cajas'  => $cajas,
-            'bancos' => $bancos,
+            'estado'   => 1,
+            'cajas'    => $cajas,
+            'bancos'   => $bancos,
+            'terceros' => $terceros,
         ]);
     }
 
@@ -334,10 +351,27 @@ class SucursalController extends Controller
                 ];
             });
 
+        // 🔹 Cuentas de terceros de todas las sucursales
+        $terceros = Cuenta::with(['moneda','sucursal'])
+            ->where('tipo', 'tercero')
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'id'       => $t->id,
+                    'sucursal' => $t->sucursal->nombre,
+                    'nombre'   => $t->nombre,
+                    'alias'    => $t->alias,
+                    'cuit'     => $t->cuit,
+                    'tipo'     => 'tercero',
+                    'moneda'   => $t->moneda->codigo,
+                ];
+            });
+
         return response()->json([
-            'estado' => 1,
-            'cajas'  => $cajas,
-            'bancos' => $bancos,
+            'estado'   => 1,
+            'cajas'    => $cajas,
+            'bancos'   => $bancos,
+            'terceros' => $terceros,
         ]);
     }
 

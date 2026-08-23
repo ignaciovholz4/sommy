@@ -12,7 +12,9 @@ class Cuenta extends Model
         'nombre',
         'sucursal_id',
         'moneda_id',
-        'tipo',   // 'caja' o 'banco'
+        'tipo',   // 'caja', 'banco' o 'tercero'
+        'alias',
+        'cuit',
         'activa',
     ];
 
@@ -49,5 +51,10 @@ class Cuenta extends Model
     public function esBanco(): bool
     {
         return $this->tipo === 'banco';
+    }
+
+    public function esTercero(): bool
+    {
+        return $this->tipo === 'tercero';
     }
 }

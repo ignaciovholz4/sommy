@@ -814,6 +814,7 @@ Route::get('/envios/ruta', [\App\Http\Controllers\Envios\EnvioBoardController::c
 
 Route::get('/envios/mapa', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'mapa'])->name('envios.mapa')->middleware(['auth','verified']);
 Route::get('/envios/mapa-data', [\App\Http\Controllers\Envios\EnvioBoardController::class, 'mapaData'])->name('envios.mapa-data')->middleware(['auth','verified']);
+Route::get('/envios/reporte-pdf', [\App\Http\Controllers\Envios\EnvioReporteController::class, 'pdf'])->name('envios.reporte-pdf')->middleware(['auth','verified']);
 
 /** PORTAL DEL FLETERO (acceso por token, mobile) */
 Route::get('/fletero/{token}', [\App\Http\Controllers\Envios\FleteroPortalController::class, 'portal'])->name('fletero.portal')->middleware('throttle:60,1');

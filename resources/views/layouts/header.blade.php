@@ -238,6 +238,18 @@
 
             <div class="dg-divider"></div>
 
+            <a href="{{ url('finanzas/resumen?periodo=hoy') }}" class="dg-nav-item" title="Todos los movimientos de hoy">
+                <i class="fas fa-calendar-day"></i>
+                <span>Hoy</span>
+            </a>
+
+            <a href="{{ url('finanzas/resumen?periodo=mes') }}" class="dg-nav-item" title="Todos los movimientos del mes">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Mes</span>
+            </a>
+
+            <div class="dg-divider"></div>
+
             <a href="{{ url('/') }}" target="_blank" rel="noopener noreferrer" class="dg-store-btn" title="Ver mi tienda online">
                 <i class="fas fa-external-link-alt"></i>
                 <span>Ver mi tienda</span>

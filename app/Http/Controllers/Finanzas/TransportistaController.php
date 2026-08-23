@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Finanzas;
 use App\Http\Controllers\Controller;
 use App\Models\Transportista;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -29,6 +30,20 @@ class TransportistaController extends Controller
                     ? '<span class="badge badge-success">Activo</span>'
                     : '<span class="badge badge-secondary">Inactivo</span>';
             })
+            ->addColumn('efectivo_pendiente', function ($t) {
+                $pendiente = (float) DB::table('entregas_fletero')
+                    ->where('transportista_id', $t->id)->where('rendido', false)
+                    ->sum('monto_cobrado');
+
+                if ($pendiente <= 0) {
+                    return '<span class="text-muted">$0</span>';
+                }
+
+                return '<b class="text-danger">$' . number_format($pendiente, 2, ',', '.') . '</b> '
+                    . '<button class="btn btn-sm btn-warning" title="Rendir efectivo" '
+                    . 'onclick="rendirEfectivo(' . $t->id . ', \'' . e($t->nombre) . '\', ' . $pendiente . ')">'
+                    . '<i class="fa fa-hand-holding-usd"></i> Rendir</button>';
+            })
             ->addColumn('action', function ($t) {
                 $datos = e(json_encode([
                     'id'       => $t->id,
@@ -43,7 +58,7 @@ class TransportistaController extends Controller
                 return '<button class="btn btn-sm btn-primary" title="Editar" data-transportista="' . $datos . '" onclick="editarTransportista(this)"><i class="fa fa-edit"></i></button> '
                     . '<button class="btn btn-sm btn-danger" title="Eliminar" onclick="eliminarTransportista(' . $t->id . ')"><i class="fa fa-trash"></i></button>';
             })
-            ->rawColumns(['activo', 'action'])
+            ->rawColumns(['activo', 'efectivo_pendiente', 'action'])
             ->make(true);
     }
 

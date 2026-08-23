@@ -20,6 +20,7 @@
                         <th>Teléfono</th>
                         <th>Email</th>
                         <th>Envíos</th>
+                        <th>Efectivo a rendir</th>
                         <th>Estado</th>
                         <th>Acciones</th>
                     </tr>
@@ -75,6 +76,38 @@
         </div>
     </div>
 </div>
+{{-- Modal rendir efectivo del fletero --}}
+<div class="modal fade" id="ModalRendicion" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-hand-holding-usd"></i> Rendir efectivo <span id="rendicionNombre"></span></h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <p>Monto a rendir: <b id="rendicionMonto"></b></p>
+                <input type="hidden" id="rendicionTransportistaId">
+                <div class="form-group">
+                    <label>¿A qué caja o banco entra la plata?</label>
+                    <select id="rendicionDestino" class="form-control">
+                        <option value="">Seleccioná una cuenta...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Medio</label>
+                    <select id="rendicionMedio" class="form-control">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="confirmarRendicion()"><i class="fas fa-save"></i> Rendir</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -96,6 +129,7 @@ $(document).ready(function () {
             { data: 'telefono', name: 'telefono', defaultContent: '' },
             { data: 'email', name: 'email', defaultContent: '' },
             { data: 'envios_count', name: 'envios_count', searchable: false },
+            { data: 'efectivo_pendiente', name: 'efectivo_pendiente', orderable: false, searchable: false },
             { data: 'activo', name: 'activo' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
@@ -176,6 +210,51 @@ function eliminarTransportista(id) {
                 if (data.estado === 1) { toastr.success(data.mensaje); tablaTransportistas.ajax.reload(null, false); }
                 else { toastr.error(data.mensaje); }
             });
+    });
+}
+
+function rendirEfectivo(id, nombre, monto) {
+    $('#rendicionTransportistaId').val(id);
+    $('#rendicionNombre').text('— ' + nombre);
+    $('#rendicionMonto').text('$' + Number(monto).toLocaleString('es-AR', { minimumFractionDigits: 2 }));
+
+    fetch("{{ url('cuentas-abiertas') }}")
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('rendicionDestino');
+            sel.innerHTML = '<option value="">Seleccioná una cuenta...</option>';
+            (data.cajas || []).forEach(c => {
+                sel.innerHTML += `<option value="caja-${c.id}">${c.nombre} (Caja${c.sucursal ? ' — ' + c.sucursal : ''})</option>`;
+            });
+            (data.bancos || []).forEach(b => {
+                sel.innerHTML += `<option value="banco-${b.id}">${b.nombre} (Banco${b.sucursal ? ' — ' + b.sucursal : ''})</option>`;
+            });
+        });
+
+    $('#ModalRendicion').modal('show');
+}
+
+function confirmarRendicion() {
+    const id = $('#rendicionTransportistaId').val();
+    const destino = $('#rendicionDestino').val();
+    const medio = $('#rendicionMedio').val();
+
+    if (!destino) { toastr.error('Elegí a qué cuenta entra la plata.'); return; }
+
+    fetch(`${URL_FINANZAS}/fleteros/${id}/rendir`, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': CSRF, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destino: destino, medio: medio })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.estado === 1) {
+            toastr.success(data.mensaje);
+            $('#ModalRendicion').modal('hide');
+            tablaTransportistas.ajax.reload(null, false);
+        } else {
+            toastr.error(data.mensaje || 'No se pudo registrar la rendición.');
+        }
     });
 }
 </script>

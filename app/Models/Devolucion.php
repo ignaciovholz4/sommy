@@ -13,6 +13,11 @@ class Devolucion extends Model
         'motivo',
         'fecha',
         'monto',
+        'resolucion',
+        'producto_anterior',
+        'producto_nuevo',
+        'diferencia',
+        'user_id',
     ];
 
     public function compra()

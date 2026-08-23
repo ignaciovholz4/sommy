@@ -52,6 +52,17 @@ class IntegracionController extends Controller
                 ],
                 'configurada' => fn () => (bool) (env('WHATSAPP_TOKEN') || env('FB_PAGE_TOKEN')),
             ],
+            'whatsapp_baileys' => [
+                'titulo' => 'WhatsApp no oficial (Baileys)',
+                'icono' => 'fa-qrcode',
+                'descripcion' => 'Bot reactivo sobre WhatsApp Web mientras se completa la verificación de Meta. Requiere levantar el proceso Node de whatsapp-bridge/ (ver whatsapp-bridge/README.md) y vincular el número escaneando el QR en {bridge_url}/qr — cargar estas claves NO levanta el proceso por sí solo.',
+                'campos' => [
+                    ['env' => 'WHATSAPP_BRIDGE_URL', 'label' => 'URL del bridge', 'secreto' => false, 'ayuda' => 'Donde corre el proceso Node, ej: http://127.0.0.1:3300'],
+                    ['env' => 'WHATSAPP_BRIDGE_TOKEN', 'label' => 'Token del bridge (Laravel → bridge)', 'secreto' => true, 'ayuda' => 'Mismo valor que BRIDGE_TOKEN en whatsapp-bridge/.env'],
+                    ['env' => 'WHATSAPP_BRIDGE_INBOUND_TOKEN', 'label' => 'Token de entrada (bridge → Laravel)', 'secreto' => true, 'ayuda' => 'Mismo valor que INBOUND_TOKEN en whatsapp-bridge/.env'],
+                ],
+                'configurada' => fn () => (bool) (env('WHATSAPP_BRIDGE_TOKEN') && env('WHATSAPP_BRIDGE_INBOUND_TOKEN')),
+            ],
             'mercadopago' => [
                 'titulo' => 'MercadoPago',
                 'icono' => 'fa-credit-card',

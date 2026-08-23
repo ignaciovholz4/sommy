@@ -110,7 +110,7 @@
                         <div class="dato">{{ trim(optional($v->cliente)->nombre . ' ' . optional($v->cliente)->paterno) ?: '—' }} · {{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y') }}</div>
                         <div class="monto">${{ number_format($v->total_con_iva, 2, ',', '.') }}</div>
                     </div>
-                    <button class="dv-btn" onclick="devolverVenta({{ $v->idventa }}, '{{ e($v->num_folio) }}')">
+                    <button class="dv-btn" onclick="devolverVenta({{ $v->idventa }}, '{{ e($v->num_folio) }}', {{ $v->sucursal_id }})">
                         <i class="fas fa-undo-alt"></i> Devolver
                     </button>
                 </div>

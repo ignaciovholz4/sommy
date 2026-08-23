@@ -279,6 +279,7 @@ class VentaController extends Controller
 
         $detalles = $venta->detalles->map(function($d) {
             return [
+                'id_detalle' => $d->id_detalle,
                 'articulo' => $d->articulo->nombre,
                 'combinacion' => $d->combinacion ? $d->combinacion->combinacion : null, // ✅ nuevo campo
                 'cantidad' => $d->cantidad,
@@ -320,6 +321,16 @@ class VentaController extends Controller
                     'es_imagen' => str_starts_with((string) $c->mime, 'image/'),
                     'nota' => $c->nota,
                     'fecha' => \Carbon\Carbon::parse($c->created_at)->format('d/m/Y'),
+                ])->values(),
+            'devoluciones' => \App\Models\Devolucion::where('tipo', 'venta')->where('referencia_id', $venta->idventa)
+                ->orderByDesc('fecha')->get()
+                ->map(fn ($d) => [
+                    'resolucion' => $d->resolucion,
+                    'producto_anterior' => $d->producto_anterior,
+                    'producto_nuevo' => $d->producto_nuevo,
+                    'diferencia' => number_format($d->diferencia, 2, ',', '.'),
+                    'motivo' => $d->motivo,
+                    'fecha' => \Carbon\Carbon::parse($d->fecha)->format('d/m/Y H:i'),
                 ])->values(),
         ]);
     }
@@ -430,6 +441,7 @@ class VentaController extends Controller
                     $efectivo   = 0;
                     $bancos     = 0;
                     $tarjetas   = 0;
+                    $tercero    = null;
 
                     $cheques = 0;
 
@@ -446,6 +458,10 @@ class VentaController extends Controller
                     } elseif (str_starts_with($cuentaRef, 'banco-')) {
                         $cuentaId = (int) str_replace('banco-', '', $cuentaRef);
                         $bancos   = $monto;
+                    } elseif (str_starts_with($cuentaRef, 'tercero-')) {
+                        $cuentaId = (int) str_replace('tercero-', '', $cuentaRef);
+                        $tercero  = \App\Models\Cuenta::find($cuentaId);
+                        $bancos   = $monto; // transferencia a la cuenta de un tercero
                     }
 
                     // El medio elegido define a qué columna va el monto:
@@ -471,7 +487,8 @@ class VentaController extends Controller
                         'medio'            => $medio,
                         'cliente_proveedor'=> optional($venta->cliente)->nombre ?? 'Cliente',
                         'comprobante'      => $venta->num_folio,
-                        'observaciones'    => 'Pago de venta registrado' . ($medio ? ' (' . str_replace('_', ' ', $medio) . ')' : ''),
+                        'observaciones'    => 'Pago de venta registrado' . ($medio ? ' (' . str_replace('_', ' ', $medio) . ')' : '')
+                            . ($tercero ? ' — transferido a cuenta de terceros: ' . $tercero->alias . ' (CUIT ' . $tercero->cuit . ')' : ''),
                         'efectivo'         => $efectivo,
                         'bancos'           => $bancos,
                         'tarjetas'         => $tarjetas,

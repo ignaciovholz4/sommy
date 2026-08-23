@@ -286,8 +286,9 @@
     </div>
 
     @php
-        $cajas  = $cuentas->where('tipo', 'caja');
-        $bancos = $cuentas->where('tipo', 'banco');
+        $cajas    = $cuentas->where('tipo', 'caja');
+        $bancos   = $cuentas->where('tipo', 'banco');
+        $terceros = $cuentas->where('tipo', 'tercero');
     @endphp
 
     @if($cuentas->isEmpty())
@@ -305,20 +306,25 @@
         </div>
 
         @foreach([['titulo' => 'Cajas', 'icono' => 'fa-cash-register', 'items' => $cajas],
-                  ['titulo' => 'Bancos', 'icono' => 'fa-university', 'items' => $bancos]] as $grupo)
+                  ['titulo' => 'Bancos', 'icono' => 'fa-university', 'items' => $bancos],
+                  ['titulo' => 'Cuentas de terceros', 'icono' => 'fa-user-friends', 'items' => $terceros]] as $grupo)
             @if($grupo['items']->isNotEmpty())
             <h5 class="cuentas-grupo-titulo"><i class="fas {{ $grupo['icono'] }}"></i> {{ $grupo['titulo'] }}</h5>
             <div class="cuentas-grid mb-4">
                 @foreach($grupo['items'] as $cuenta)
                 <div class="cuenta-card {{ $cuenta->activa ? '' : 'cuenta-inactiva' }}"
-                     data-buscar="{{ mb_strtolower($cuenta->nombre . ' ' . ($cuenta->sucursal->nombre ?? '')) }}">
+                     data-buscar="{{ mb_strtolower($cuenta->nombre . ' ' . ($cuenta->sucursal->nombre ?? '') . ' ' . ($cuenta->alias ?? '')) }}">
                     <div class="cuenta-card-top">
                         <div class="cuenta-icon {{ $cuenta->tipo === 'caja' ? 'cuenta-icon-caja' : 'cuenta-icon-banco' }}">
-                            <i class="fas {{ $cuenta->tipo === 'caja' ? 'fa-cash-register' : 'fa-university' }}"></i>
+                            <i class="fas {{ $cuenta->tipo === 'caja' ? 'fa-cash-register' : ($cuenta->tipo === 'tercero' ? 'fa-user-friends' : 'fa-university') }}"></i>
                         </div>
                         <div class="flex-grow-1 min-w-0">
                             <div class="cuenta-nombre">{{ $cuenta->nombre }}</div>
-                            <div class="cuenta-sub">{{ $cuenta->sucursal->nombre ?? '—' }} · {{ $cuenta->moneda->codigo ?? '' }}</div>
+                            @if($cuenta->tipo === 'tercero')
+                                <div class="cuenta-sub">Alias: {{ $cuenta->alias ?: '—' }} · CUIT: {{ $cuenta->cuit ?: '—' }}</div>
+                            @else
+                                <div class="cuenta-sub">{{ $cuenta->sucursal->nombre ?? '—' }} · {{ $cuenta->moneda->codigo ?? '' }}</div>
+                            @endif
                         </div>
                         <div class="text-end">
                             @if(!$cuenta->activa)
@@ -329,6 +335,8 @@
                                 @else
                                     <span class="cuenta-chip cuenta-chip-gris"><i class="fas fa-door-closed"></i> Cerrada</span>
                                 @endif
+                            @elseif($cuenta->tipo === 'tercero')
+                                <span class="cuenta-chip cuenta-chip-azul">Tercero</span>
                             @else
                                 <span class="cuenta-chip cuenta-chip-azul">Banco</span>
                             @endif
@@ -431,10 +439,21 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label-custom">Tipo de cuenta</label>
-                        <select class="form-select form-control-custom" name="tipo" required>
+                        <select class="form-select form-control-custom" id="nueva_cuenta_tipo" name="tipo" required>
                             <option value="caja">Caja</option>
                             <option value="banco">Banco</option>
+                            <option value="tercero">Cuenta de terceros (alias de un tercero)</option>
                         </select>
+                    </div>
+                    <div id="nueva_cuenta_tercero_wrap" style="display:none;">
+                        <div class="mb-3">
+                            <label class="form-label-custom">Alias</label>
+                            <input type="text" class="form-control form-control-custom" name="alias" placeholder="Ej: juan.perez.mp">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-custom">CUIT del titular</label>
+                            <input type="text" class="form-control form-control-custom" name="cuit" placeholder="XX-XXXXXXXX-X">
+                        </div>
                     </div>
                     <div class="form-check form-switch mt-3">
                         <input class="form-check-input" type="checkbox" id="activa" name="activa" value="1" checked>

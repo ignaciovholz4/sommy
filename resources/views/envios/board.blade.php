@@ -96,6 +96,7 @@
             <a class="env-link" href="{{ url('zonas-envio') }}"><i class="fas fa-map-marked-alt"></i> Zonas de envío</a>
             <a class="env-link" href="{{ route('finanzas.transportistas.index') }}"><i class="fas fa-id-card"></i> Fleteros</a>
             <a class="env-link" href="{{ route('finanzas.envios.index') }}"><i class="fas fa-list"></i> Listado completo (incluye compras)</a>
+            <a class="env-link" href="#" data-toggle="modal" data-bs-toggle="modal" data-target="#modalReporteFletes" data-bs-target="#modalReporteFletes"><i class="fas fa-file-pdf"></i> Reporte de fletes</a>
         </div>
     </div>
 
@@ -313,6 +314,28 @@
         </div>
     </div>
 </div>
+{{-- Modal reporte de fletes (PDF por periodo) --}}
+<div class="modal fade" id="modalReporteFletes" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-file-pdf" style="color:#b4552d;"></i> Reporte de fletes</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <label>Desde</label>
+                <input type="date" id="reporteFletesDesde" value="{{ now()->startOfMonth()->toDateString() }}">
+                <label>Hasta</label>
+                <input type="date" id="reporteFletesHasta" value="{{ now()->toDateString() }}">
+                <div class="pista">Incluye entregas a clientes (ventas y pedidos), con cobros y fotos del fletero.</div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #E7EAF2;">
+                <button type="button" class="env-btn sec" data-dismiss="modal" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="env-btn" onclick="generarReporteFletes()"><i class="fas fa-download"></i> Generar PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -409,6 +432,12 @@ function quitarFlete(envioId, btn) {
         if (data.estado === 1) location.reload();
         else { alert(data.mensaje || 'No se pudo quitar el flete'); btn.disabled = false; }
     });
+}
+
+function generarReporteFletes() {
+    const desde = document.getElementById('reporteFletesDesde').value;
+    const hasta = document.getElementById('reporteFletesHasta').value;
+    window.open('{{ url('envios/reporte-pdf') }}?desde=' + desde + '&hasta=' + hasta, '_blank');
 }
 </script>
 @endsection

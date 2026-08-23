@@ -23,6 +23,9 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::get('/whatsapp/webhook', [\App\Http\Controllers\WhatsApp\WebhookController::class, 'verify']);
 Route::post('/whatsapp/webhook', [\App\Http\Controllers\WhatsApp\WebhookController::class, 'handle']);
 
+// Webhook del bridge Baileys (WhatsApp no oficial) — shared secret propio, no HMAC de Meta
+Route::post('/whatsapp/baileys/webhook', [\App\Http\Controllers\WhatsApp\BaileysWebhookController::class, 'handle']);
+
 // Rutas de las devoluciones — require auth
 Route::middleware('auth:api')->prefix('devoluciones')->group(function () {
     Route::post('/anular-compra/{idcompra}', [DevolucionController::class, 'anularCompra'])

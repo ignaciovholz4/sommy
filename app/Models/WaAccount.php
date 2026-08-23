@@ -9,7 +9,7 @@ class WaAccount extends Model
     protected $table = 'wa_accounts';
 
     protected $fillable = [
-        'nombre', 'channel', 'phone_number_id', 'waba_id', 'page_id', 'ig_account_id',
+        'nombre', 'channel', 'provider', 'phone_number_id', 'waba_id', 'page_id', 'ig_account_id',
         'display_phone', 'token', 'verify_token', 'app_secret', 'activo',
     ];
 

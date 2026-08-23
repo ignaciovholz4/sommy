@@ -67,7 +67,9 @@ class CuentasController extends Controller
             'nombre'       => 'required|string|max:255',
             'sucursal_id'  => 'required|exists:sucursales,id',
             'moneda_id'    => 'required|exists:monedas,id',
-            'tipo'         => 'required|in:caja,banco',
+            'tipo'         => 'required|in:caja,banco,tercero',
+            'alias'        => 'required_if:tipo,tercero|nullable|string|max:60',
+            'cuit'         => 'required_if:tipo,tercero|nullable|string|max:20',
             'activa'       => 'boolean',
         ]);
 
@@ -76,6 +78,8 @@ class CuentasController extends Controller
             'sucursal_id' => $request->sucursal_id,
             'moneda_id'   => $request->moneda_id,
             'tipo'        => $request->tipo,
+            'alias'       => $request->tipo === 'tercero' ? $request->alias : null,
+            'cuit'        => $request->tipo === 'tercero' ? $request->cuit : null,
             'activa'      => $request->has('activa'),
         ]);
 

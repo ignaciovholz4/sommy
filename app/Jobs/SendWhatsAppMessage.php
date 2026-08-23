@@ -54,6 +54,16 @@ class SendWhatsAppMessage implements ShouldQueue
                 return;
             }
 
+            // WhatsApp no oficial (Baileys): el "to" es el JID guardado en external_id,
+            // no el phone_e164 (formato distinto al wa_id que usa la Cloud API de Meta).
+            if ($conversation->account->provider === 'baileys') {
+                $mid = \App\Services\WhatsApp\WhatsAppBaileysService::forAccount($conversation->account)
+                    ->sendText($conversation->external_id, (string) $message->body);
+
+                $message->update(['wa_message_id' => $mid ?: null, 'status' => 'sent']);
+                return;
+            }
+
             $service = WhatsAppService::forAccount($conversation->account);
 
             if ($this->template) {

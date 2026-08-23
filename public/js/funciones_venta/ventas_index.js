@@ -182,6 +182,27 @@ function getDetailVenta(id) {
                 compCont.innerHTML = '<span style="font-size:12px;color:#94A3B8;">Sin comprobantes. Subí la foto de la transferencia o el recibo.</span>';
             }
 
+            // ↩️ Devoluciones / cambios de esta venta
+            const devWrap = document.querySelector("#details_v_devoluciones_wrap");
+            const devCont = document.querySelector("#details_v_devoluciones");
+            devCont.innerHTML = "";
+            if (data.devoluciones && data.devoluciones.length > 0) {
+                data.devoluciones.forEach(d => {
+                    if (d.resolucion === 'cambio') {
+                        const diffNum = parseFloat((d.diferencia || '0').replace(/\./g, '').replace(',', '.'));
+                        let diffTxt = 'Sin diferencia de plata';
+                        if (diffNum > 0) diffTxt = 'Cliente pagó $' + d.diferencia + ' de diferencia';
+                        else if (diffNum < 0) diffTxt = 'Se devolvieron $' + d.diferencia.replace('-', '') + ' de diferencia';
+                        devCont.innerHTML += `<div style="margin-bottom:6px;"><b>Cambio</b>: ${d.producto_anterior} → ${d.producto_nuevo}<br>${diffTxt} · <span style="color:#6E7A96;">${d.fecha}</span>${d.motivo ? '<br><i>' + d.motivo + '</i>' : ''}</div>`;
+                    } else {
+                        devCont.innerHTML += `<div style="margin-bottom:6px;"><b>Reintegro total</b> · <span style="color:#6E7A96;">${d.fecha}</span>${d.motivo ? '<br><i>' + d.motivo + '</i>' : ''}</div>`;
+                    }
+                });
+                devWrap.style.display = "";
+            } else {
+                devWrap.style.display = "none";
+            }
+
             // Mostrar modal
             $('#ModalDetalleVenta').modal('show');
         })
@@ -210,7 +231,8 @@ function openPagoModal(idventa, sucursalId) {
         .then(data => {
             window.cuentasDisponibles = {
                 cajas: data.cajas || [],
-                bancos: data.bancos || []
+                bancos: data.bancos || [],
+                terceros: data.terceros || []
             };
             document.querySelector("#mediosPagoContainer").innerHTML = "";
             document.querySelector("#monto_ingresado").innerText = "0";
@@ -312,6 +334,11 @@ document.addEventListener("DOMContentLoaded", () => {
             // 🔹 Agregar bancos
             window.cuentasDisponibles.bancos.forEach(b => {
                 options += `<option value="banco-${b.id}">${b.nombre} (Banco - ${b.moneda})</option>`;
+            });
+
+            // 🔹 Agregar cuentas de terceros
+            window.cuentasDisponibles.terceros.forEach(t => {
+                options += `<option value="tercero-${t.id}">${t.nombre} — ${t.alias} (Tercero - ${t.moneda})</option>`;
             });
 
             const row = document.createElement("div");
