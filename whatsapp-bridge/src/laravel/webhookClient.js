@@ -39,9 +39,13 @@ async function handleInboundMessage(sock, msg) {
   const pushName = msg.pushName || '';
   const timestamp = Number(msg.messageTimestamp) || Math.floor(Date.now() / 1000);
 
+  // Con JIDs @lid (privacidad de WhatsApp) el numero real viene aparte
+  const fromAlt = msg.key.senderPn || msg.key.remoteJidAlt || msg.key.participantPn || '';
+
   const form = new FormData();
   form.append('message_id', messageId);
   form.append('from', jid);
+  form.append('from_alt', fromAlt);
   form.append('push_name', pushName);
   form.append('type', type);
   form.append('body', body);

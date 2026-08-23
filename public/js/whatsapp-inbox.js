@@ -60,6 +60,7 @@
                     '<div class="wa-conv-name"><span>' + (CHANNEL_ICONS[c.channel] || '') + ' ' + esc(name) + '</span>' +
                     (c.unread_count > 0 ? '<span class="wa-unread">' + c.unread_count + '</span>' : '<small class="text-muted">' + (c.last_message_human || '') + '</small>') +
                     '</div>' +
+                    (c.phone && c.phone !== name ? '<div style="font-size:11.5px;color:#059669;font-weight:600;"><i class="fab fa-whatsapp"></i> ' + esc(c.phone) + '</div>' : '') +
                     '<div class="wa-conv-prev">' + esc(c.last_message_preview || '') + '</div>' +
                     '<div class="wa-conv-meta">' + badges + '</div>'
                 );
@@ -108,7 +109,7 @@
     function updateHeader(c) {
         state.channel = c.channel;
         $('#th-name').html((CHANNEL_ICONS[c.channel] || '') + ' ' + esc(c.cliente_nombre || c.profile_name || c.phone));
-        $('#th-phone').text(c.phone + (c.cliente_nombre && c.profile_name ? ' · ' + c.profile_name : ''));
+        $('#th-phone').text((c.phone || 'número no disponible') + (c.cliente_nombre && c.profile_name ? ' · ' + c.profile_name : ''));
         $('#th-status').val(c.status);
         var $mode = $('#th-mode');
         if (c.mode === 'bot') {

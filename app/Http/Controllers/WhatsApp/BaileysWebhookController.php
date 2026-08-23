@@ -46,7 +46,12 @@ class BaileysWebhookController extends Controller
             ['nombre' => 'WhatsApp (no oficial)', 'channel' => 'whatsapp', 'activo' => true]
         );
 
-        $phoneE164 = PhoneAr::toE164(explode('@', $jid)[0] ?? '');
+        // JIDs @lid no traen el numero: usar from_alt (senderPn) que manda el bridge
+        $numeroCrudo = explode('@', $jid)[0] ?? '';
+        if (str_ends_with($jid, '@lid')) {
+            $numeroCrudo = explode('@', (string) $request->input('from_alt', ''))[0] ?? '';
+        }
+        $phoneE164 = PhoneAr::toE164($numeroCrudo);
 
         $conversation = WaConversation::firstOrCreate(
             ['wa_account_id' => $account->id, 'external_id' => $jid],
@@ -64,6 +69,14 @@ class BaileysWebhookController extends Controller
         $pushName = $request->input('push_name');
         if ($pushName && $conversation->profile_name !== $pushName) {
             $conversation->profile_name = $pushName;
+        }
+
+        // Conversaciones viejas sin numero: completarlo apenas se conozca
+        if (!$conversation->phone_e164 && $phoneE164) {
+            $conversation->phone_e164 = $phoneE164;
+            if (!$conversation->cliente_id) {
+                $conversation->cliente_id = Cliente::wherePhoneMatches($phoneE164)->value('idcliente');
+            }
         }
 
         $type = $request->input('type', 'text');

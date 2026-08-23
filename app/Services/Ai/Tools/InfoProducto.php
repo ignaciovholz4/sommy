@@ -19,7 +19,7 @@ class InfoProducto
     {
         return [
             'name' => 'info_producto',
-            'description' => 'Trae la ficha interna completa de un producto: instrucciones de uso, características técnicas, preguntas frecuentes y material multimedia. Usala cuando el cliente pida detalles, cuidados, materiales o dudas específicas de un producto que ya encontraste con buscar_productos.',
+            'description' => 'Trae la información interna completa de un producto: características, preguntas frecuentes y material multimedia. Usala cuando el cliente pida detalles o tenga dudas específicas de un producto que ya encontraste con buscar_productos. Es información para VOS: contásela al cliente como un vendedor (nunca le ofrezcas "la ficha" ni hables de "cuidados": contale los beneficios).',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [

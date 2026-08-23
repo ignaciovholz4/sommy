@@ -33,16 +33,28 @@ class OrderDraftService
             $conversation = $draft->conversation;
 
             // Cliente: el vinculado al draft, o el de la conversacion, o crear uno con los datos del chat
+            $entregaCliente = $draft->datos_entrega ?? [];
             $cliente = $draft->cliente ?: $conversation->cliente;
             if (!$cliente) {
                 $cliente = Cliente::create([
-                    'nombre' => $conversation->profile_name ?: ('Cliente ' . ucfirst($conversation->channel)),
-                    'telefono' => PhoneAr::pretty($conversation->phone_e164) ?? '',
+                    'nombre' => $entregaCliente['nombre_cliente'] ?? ($conversation->profile_name ?: ('Cliente ' . ucfirst($conversation->channel))),
+                    'telefono' => $entregaCliente['telefono_contacto'] ?? (PhoneAr::pretty($conversation->phone_e164) ?? ''),
                     'email' => '',
-                    'direccion' => $draft->datos_entrega['direccion'] ?? '',
+                    'direccion' => $entregaCliente['direccion'] ?? '',
+                    'localidad' => $entregaCliente['localidad'] ?? null,
+                    'provincia' => $entregaCliente['provincia'] ?? null,
+                    'codigo_postal' => $entregaCliente['cp'] ?? null,
                     'estatus' => 1,
                 ]);
                 $conversation->update(['cliente_id' => $cliente->idcliente]);
+            } else {
+                // Completar datos que le falten al cliente con lo juntado en el chat
+                $cliente->fill(array_filter([
+                    'direccion' => $cliente->direccion ?: ($entregaCliente['direccion'] ?? null),
+                    'localidad' => $cliente->localidad ?: ($entregaCliente['localidad'] ?? null),
+                    'provincia' => $cliente->provincia ?: ($entregaCliente['provincia'] ?? null),
+                    'codigo_postal' => $cliente->codigo_postal ?: ($entregaCliente['cp'] ?? null),
+                ]))->save();
             }
 
             $draft->recalcularTotales();
@@ -64,6 +76,8 @@ class OrderDraftService
                 'additional_info' => trim('Pedido tomado por WhatsApp'
                     . ($draft->ai_agent_id ? ' (agente IA)' : '')
                     . (!empty($entrega['direccion']) ? '. Entrega: ' . $entrega['direccion'] : '')
+                    . (!empty($entrega['nombre_cliente']) ? '. Recibe: ' . $entrega['nombre_cliente'] : '')
+                    . (!empty($entrega['telefono_contacto']) ? ' (tel ' . $entrega['telefono_contacto'] . ')' : '')
                     . ($draft->notas ? '. Notas: ' . $draft->notas : '')),
             ]);
 

@@ -12,17 +12,19 @@ class CrearPedido
     {
         return [
             'name' => 'crear_pedido',
-            'description' => 'Pasa la cotización vigente a "pendiente de confirmación" para que un vendedor humano la revise y confirme el pedido real. Usala recién cuando el cliente aceptó la cotización y te dio la dirección de entrega. NO crea el pedido definitivo: eso lo hace un vendedor.',
+            'description' => 'Pasa la cotización vigente a "pendiente de confirmación" para que un vendedor humano la revise y confirme el pedido real. Usala recién cuando el cliente aceptó la cotización y te dio TODOS los datos de entrega: nombre completo, dirección con calle y número, localidad y provincia (el flete se organiza con esos datos). NO crea el pedido definitivo: eso lo hace un vendedor.',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
-                    'direccion' => ['type' => 'string', 'description' => 'Dirección de entrega (calle y número)'],
-                    'localidad' => ['type' => 'string'],
+                    'nombre_cliente' => ['type' => 'string', 'description' => 'Nombre y apellido de quien recibe'],
+                    'direccion' => ['type' => 'string', 'description' => 'Dirección de entrega (calle y número, piso/depto si aplica)'],
+                    'localidad' => ['type' => 'string', 'description' => 'Localidad/ciudad de entrega (obligatoria para armar la hoja de ruta del fletero)'],
                     'provincia' => ['type' => 'string'],
                     'cp' => ['type' => 'string', 'description' => 'Código postal'],
+                    'telefono_contacto' => ['type' => 'string', 'description' => 'Teléfono alternativo de contacto si dio uno distinto al del chat'],
                     'notas' => ['type' => 'string', 'description' => 'Aclaraciones del cliente (horarios, piso, forma de pago conversada, etc.)'],
                 ],
-                'required' => ['direccion'],
+                'required' => ['nombre_cliente', 'direccion', 'localidad', 'provincia'],
             ],
         ];
     }
@@ -41,10 +43,12 @@ class CrearPedido
         $draft->update([
             'status' => 'pendiente_confirmacion',
             'datos_entrega' => [
+                'nombre_cliente' => $args['nombre_cliente'] ?? null,
                 'direccion' => $args['direccion'] ?? '',
                 'localidad' => $args['localidad'] ?? null,
                 'provincia' => $args['provincia'] ?? null,
                 'cp' => $args['cp'] ?? null,
+                'telefono_contacto' => $args['telefono_contacto'] ?? null,
             ],
             'notas' => $args['notas'] ?? null,
         ]);
