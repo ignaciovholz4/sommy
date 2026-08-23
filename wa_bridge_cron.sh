@@ -4,7 +4,8 @@
 # health-check lo levanta de nuevo con nohup. CloudLinux puede matar el
 # proceso cuando quiere; este script lo resucita en el proximo minuto.
 
-BASE="$HOME/domains/palegreen-tiger-296316.hostingersite.com/public_html"
+# Se auto-ubica: vive en la raíz del proyecto y viaja con cada deploy
+BASE="$(cd "$(dirname "$0")" && pwd)"
 BRIDGE_DIR="$BASE/whatsapp-bridge"
 NODE_BIN="/opt/alt/alt-nodejs22/root/usr/bin/node"
 LOG="$BASE/storage/logs/wa-bridge.log"

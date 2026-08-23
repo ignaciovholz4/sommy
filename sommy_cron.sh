@@ -19,4 +19,7 @@ fi
 # Tareas programadas (recordatorios de cobranza, reposición, alertas de stock)
 /usr/bin/php artisan schedule:run >/dev/null 2>&1
 
+# Vigilante del bridge de WhatsApp (Baileys): lo relevanta si el hosting lo mató
+sh wa_bridge_cron.sh >/dev/null 2>&1
+
 /usr/bin/php artisan queue:work --stop-when-empty --max-time=50 >/dev/null 2>&1
