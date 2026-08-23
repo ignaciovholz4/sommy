@@ -17,6 +17,10 @@ Route::middleware(['auth', 'verified'])->prefix('whatsapp')->name('whatsapp.')->
 
     // Bandeja
     Route::get('/', [ConversationController::class, 'index'])->name('inbox');
+
+    // Conexion del numero via bridge Baileys (QR desde el CRM)
+    Route::get('/bridge/estado', [\App\Http\Controllers\WhatsApp\BridgeController::class, 'estado'])->name('bridge.estado');
+    Route::get('/bridge/qr', [\App\Http\Controllers\WhatsApp\BridgeController::class, 'qr'])->name('bridge.qr');
     Route::get('/tablero', [ConversationController::class, 'board'])->name('board');
     Route::get('/conversations', [ConversationController::class, 'list'])->name('conversations.list');
     Route::get('/conversations/{id}', [ConversationController::class, 'show'])->name('conversations.show');

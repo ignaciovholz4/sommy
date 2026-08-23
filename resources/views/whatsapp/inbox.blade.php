@@ -73,6 +73,7 @@
         <button id="btn-drafts" class="btn btn-sm btn-warning position-relative" style="display:none">
             <i class="fas fa-clipboard-check"></i> Pedidos por confirmar <span id="drafts-count" class="badge badge-dark">0</span>
         </button>
+        <button id="btn-conectar-wa" class="btn btn-sm btn-success"><i class="fab fa-whatsapp"></i> Conectar WhatsApp</button>
         <a href="{{ route('whatsapp.board') }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-columns"></i> Tablero</a>
         @can('haveaccess','agents.index')
         <a href="{{ route('whatsapp.agents.index') }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-robot"></i> Agentes IA</a>
@@ -239,6 +240,33 @@
         </div>
     </div>
 </div>
+
+{{-- Modal conectar WhatsApp (QR del bridge Baileys) --}}
+<div class="modal fade" id="modal-conectar-wa" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title"><i class="fab fa-whatsapp text-success"></i> Conectar WhatsApp</h6>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body text-center" style="min-height:340px;">
+                <div id="wa-qr-estado" class="mb-2 text-muted">Consultando estado...</div>
+                <img id="wa-qr-img" src="" alt="QR de WhatsApp" onerror="this.style.display='none'" style="display:none;width:280px;height:280px;border:1px solid #e5e7eb;border-radius:8px;">
+                <div id="wa-qr-conectado" style="display:none;">
+                    <i class="fas fa-check-circle text-success" style="font-size:64px;"></i>
+                    <p class="mt-2 mb-0 font-weight-bold">¡WhatsApp conectado!</p>
+                    <p class="text-muted small">Ya podés recibir y enviar mensajes desde el CRM.</p>
+                </div>
+                <div id="wa-qr-apagado" style="display:none;">
+                    <i class="fas fa-plug text-danger" style="font-size:48px;"></i>
+                    <p class="mt-2 mb-0 font-weight-bold">El bridge de WhatsApp no está corriendo</p>
+                    <p class="text-muted small mb-0">Esperá un minuto (el vigilante lo levanta solo) y volvé a abrir este modal.</p>
+                </div>
+                <p class="text-muted small mt-3 mb-0">En tu teléfono: WhatsApp → Ajustes → <b>Dispositivos vinculados</b> → <b>Vincular un dispositivo</b> → escaneá el QR.</p>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -251,4 +279,48 @@ window.WA_CONFIG = {
 };
 </script>
 <script src="{{ asset('js/whatsapp-inbox.js') }}?v={{ filemtime(public_path('js/whatsapp-inbox.js')) }}"></script>
+<script>
+// ── Conexión del número por QR (bridge Baileys) ──
+(function () {
+    let waQrTimer = null;
+
+    function pollQr() {
+        fetch("{{ route('whatsapp.bridge.estado') }}")
+            .then(r => r.json())
+            .then(d => {
+                const img = document.getElementById('wa-qr-img');
+                const estado = document.getElementById('wa-qr-estado');
+                const ok = document.getElementById('wa-qr-conectado');
+                const off = document.getElementById('wa-qr-apagado');
+                img.style.display = 'none'; ok.style.display = 'none'; off.style.display = 'none';
+
+                if (d.estado === 'conectado') {
+                    estado.style.display = 'none';
+                    ok.style.display = '';
+                    clearInterval(waQrTimer); waQrTimer = null;
+                } else if (d.estado === 'esperando_qr') {
+                    estado.style.display = '';
+                    estado.textContent = 'Escaneá el QR con tu teléfono (se renueva solo):';
+                    img.src = "{{ route('whatsapp.bridge.qr') }}?ts=" + Date.now();
+                    img.style.display = '';
+                } else {
+                    estado.style.display = 'none';
+                    off.style.display = '';
+                }
+            })
+            .catch(() => {});
+    }
+
+    document.getElementById('btn-conectar-wa').addEventListener('click', function () {
+        $('#modal-conectar-wa').modal('show');
+        pollQr();
+        if (waQrTimer) clearInterval(waQrTimer);
+        waQrTimer = setInterval(pollQr, 4000);
+    });
+
+    $('#modal-conectar-wa').on('hidden.bs.modal', function () {
+        if (waQrTimer) { clearInterval(waQrTimer); waQrTimer = null; }
+    });
+})();
+</script>
 @endsection
