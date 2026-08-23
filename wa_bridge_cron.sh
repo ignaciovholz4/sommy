@@ -8,10 +8,13 @@ BASE="$HOME/domains/palegreen-tiger-296316.hostingersite.com/public_html"
 BRIDGE_DIR="$BASE/whatsapp-bridge"
 NODE_BIN="/opt/alt/alt-nodejs22/root/usr/bin/node"
 LOG="$BASE/storage/logs/wa-bridge.log"
-PORT=3300
 
 # Sin .env no hay nada que arrancar (los tokens viven ahi)
 [ -f "$BRIDGE_DIR/.env" ] || exit 0
+
+# El puerto se lee del .env del bridge (en hosting compartido pueden chocar)
+PORT=$(grep '^PORT=' "$BRIDGE_DIR/.env" | cut -d= -f2)
+[ -n "$PORT" ] || PORT=3300
 
 # ¿Responde el health-check? Entonces esta vivo, no hay nada que hacer.
 if curl -s -m 5 "http://127.0.0.1:$PORT/health" | grep -q '"status":"ok"'; then
