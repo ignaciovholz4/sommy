@@ -120,6 +120,7 @@
         <button class="ceo-tab" data-pane="ventas"><i class="fas fa-hand-holding-usd"></i> Ventas y productos</button>
         <button class="ceo-tab" data-pane="clientes"><i class="fas fa-users"></i> Clientes y cuentas</button>
         <button class="ceo-tab" data-pane="stock"><i class="fas fa-boxes"></i> Stock</button>
+        <button class="ceo-tab" data-pane="finanzas"><i class="fas fa-sack-dollar"></i> Finanzas</button>
     </div>
 
     {{-- ═══ PESTAÑA RESUMEN ═══ --}}
@@ -316,6 +317,116 @@
             </div>
         </div>
     </div>
+
+    {{-- ═══ PESTAÑA FINANZAS ═══ --}}
+    <div class="ceo-pane" id="pane-finanzas">
+        <div class="ceo-kpis">
+            <div class="ceo-kpi">
+                <div class="k-label">Saldo total en cuentas</div>
+                <div class="k-value" style="color:{{ $saldoTotalCuentas >= 0 ? '#0d8a4f' : '#b4552d' }};">{{ $money($saldoTotalCuentas) }}</div>
+                <span class="k-delta flat">caja + bancos, foto actual</span>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Ingresos del período</div>
+                <div class="k-value">{{ $money($ingresosPeriodo) }}</div>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Egresos del período</div>
+                <div class="k-value">{{ $money($egresosPeriodo) }}</div>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Resultado del período</div>
+                <div class="k-value" style="color:{{ $resultadoPeriodo >= 0 ? '#0d8a4f' : '#b4552d' }};">{{ $money($resultadoPeriodo) }}</div>
+                <span class="k-delta flat">ingresos − egresos</span>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Gastos operativos del período</div>
+                <div class="k-value">{{ $money($gastosPeriodo) }}</div>
+                <a class="ceo-link" href="{{ url('/finanzas/gastos') }}">Cargar gasto →</a>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Devoluciones del período</div>
+                <div class="k-value" style="color:{{ $devolucionesPeriodo->monto > 0 ? '#b4552d' : '#0d8a4f' }};">{{ $money($devolucionesPeriodo->monto) }}</div>
+                <span class="k-delta flat">{{ $devolucionesPeriodo->cantidad }} devolución(es)</span>
+            </div>
+        </div>
+
+        <div class="ceo-grid">
+            <div class="ceo-panel">
+                <h3>Ingresos vs. egresos en el período</h3>
+                <canvas id="chartTesoreria" height="105"></canvas>
+            </div>
+            <div class="ceo-panel">
+                <h3>Gastos por categoría del período</h3>
+                @if($gastosPorCategoriaPeriodo->isEmpty())
+                    <div class="empty">Sin gastos cargados en el período. <br><a class="ceo-link" href="{{ url('/finanzas/gastos') }}">Cargar el primero →</a></div>
+                @else
+                    <canvas id="chartGastos" height="170"></canvas>
+                    <ul class="ceo-list" style="margin-top:10px;">
+                        @foreach($gastosPorCategoriaPeriodo as $gc)
+                        <li><span class="n">{{ $gc->nombre }}</span><span class="v">{{ $money($gc->total) }}</span></li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        </div>
+
+        <div class="ceo-grid-2">
+            <div class="ceo-panel">
+                <h3>Cuentas por pagar — vencidas ({{ $money($cxpVencidoTotal) }})</h3>
+                @if($cxpVencidas->isEmpty())
+                    <div class="empty">No hay deuda vencida con proveedores. ✔</div>
+                @else
+                    <ul class="ceo-list">
+                        @foreach($cxpVencidas as $cv)
+                        <li>
+                            <span class="n">{{ $cv->nombre }}</span>
+                            <span class="v crit">{{ $money($cv->monto) }} · vence {{ \Carbon\Carbon::parse($cv->vencimiento)->format('d/m/Y') }}</span>
+                        </li>
+                        @endforeach
+                    </ul>
+                @endif
+                <a class="ceo-link" href="{{ route('finanzas.dashboard') }}">Ver dashboard financiero completo →</a>
+            </div>
+            <div class="ceo-panel">
+                <h3>Cuentas por pagar — próximos 30 días ({{ $money($cxpProximasTotal) }})</h3>
+                @if($cxpProximas->isEmpty())
+                    <div class="empty">Sin vencimientos en los próximos 30 días.</div>
+                @else
+                    <ul class="ceo-list">
+                        @foreach($cxpProximas as $cp)
+                        <li>
+                            <span class="n">{{ $cp->nombre }}</span>
+                            <span class="v">{{ $money($cp->monto) }} · vence {{ \Carbon\Carbon::parse($cp->vencimiento)->format('d/m/Y') }}</span>
+                        </li>
+                        @endforeach
+                    </ul>
+                @endif
+                <a class="ceo-link" href="{{ url('/cc') }}">Ver cuenta corriente de clientes →</a>
+            </div>
+        </div>
+
+        @if($comparativaProveedores->isNotEmpty())
+        <div class="ceo-panel">
+            <h3>Comparación de precios de proveedores por categoría (últimos 12 meses)</h3>
+            <div class="ceo-grid-2">
+                @foreach($comparativaProveedores as $categoria => $filas)
+                <div>
+                    <div style="font-weight:600;font-size:12.5px;color:#1B2B5A;margin-bottom:4px;">{{ $categoria }}</div>
+                    <ul class="ceo-list">
+                        @foreach($filas as $i => $f)
+                        <li>
+                            <span class="n">{{ $f->proveedor }} @if($i === 0)<span style="color:#0d8a4f;font-weight:700;">· más barato</span>@endif</span>
+                            <span class="v">{{ $money($f->precio_promedio) }}/u · {{ (int) $f->unidades }} u</span>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+    </div>
 </div>
 @endsection
 
@@ -392,6 +503,34 @@ document.addEventListener('DOMContentLoaded', function () {
         if (pane === 'ventas') {
             dona('chartCategorias', @json($mixCategorias->pluck('nombre')), @json($mixCategorias->pluck('facturado')), true);
             dona('chartPlazas', @json($mixPlazas->pluck('plazas')), @json($mixPlazas->pluck('unidades')), false);
+        }
+
+        if (pane === 'finanzas') {
+            var tes = document.getElementById('chartTesoreria');
+            if (tes) {
+                new Chart(tes, {
+                    type: 'bar',
+                    data: {
+                        labels: @json($labelsEvolucion),
+                        datasets: [
+                            { label: 'Ingresos', data: @json($serieIngresos), backgroundColor: '#0d8a4f', borderRadius: 5 },
+                            { label: 'Egresos', data: @json($serieEgresos), backgroundColor: '#b4552d', borderRadius: 5 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Poppins' } } },
+                            tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + fmt(c.parsed.y); } } }
+                        },
+                        scales: {
+                            y: { ticks: { callback: function (v) { return fmt(v); }, font: { family: 'Poppins', size: 10 } }, grid: { color: '#F1F4F9' } },
+                            x: { grid: { display: false }, ticks: { font: { family: 'Poppins', size: 10 }, maxTicksLimit: 16 } }
+                        }
+                    }
+                });
+            }
+            dona('chartGastos', @json($gastosPorCategoriaPeriodo->pluck('nombre')), @json($gastosPorCategoriaPeriodo->pluck('total')), true);
         }
     }
 

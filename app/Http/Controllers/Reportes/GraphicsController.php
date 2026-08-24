@@ -91,15 +91,28 @@ class GraphicsController extends Controller
             ->selectRaw("DATE_FORMAT(order_date, '$formatoSql') as k, SUM(total_amount) as total")
             ->groupBy('k')->pluck('total', 'k');
 
+        $ingresosSerieRaw = DB::table('movimientos')->where('tipo', 'ingreso')
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->selectRaw("DATE_FORMAT(fecha, '$formatoSql') as k, SUM(total) as total")
+            ->groupBy('k')->pluck('total', 'k');
+        $egresosSerieRaw = DB::table('movimientos')->where('tipo', 'egreso')
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->selectRaw("DATE_FORMAT(fecha, '$formatoSql') as k, SUM(total) as total")
+            ->groupBy('k')->pluck('total', 'k');
+
         $labelsEvolucion = [];
         $serieVentas = [];
         $serieWeb = [];
+        $serieIngresos = [];
+        $serieEgresos = [];
         $cursor = $desde->copy();
         while ($cursor->lte($hasta)) {
             $k = $porDia ? $cursor->format('Y-m-d') : $cursor->format('Y-m');
             $labelsEvolucion[] = $porDia ? $cursor->format('d/m') : ucfirst($cursor->locale('es')->isoFormat('MMM YY'));
             $serieVentas[] = round((float) ($ventasSerie[$k] ?? 0), 2);
             $serieWeb[]    = round((float) ($webSerie[$k] ?? 0), 2);
+            $serieIngresos[] = round((float) ($ingresosSerieRaw[$k] ?? 0), 2);
+            $serieEgresos[]  = round((float) ($egresosSerieRaw[$k] ?? 0), 2);
             $porDia ? $cursor->addDay() : $cursor->addMonth()->startOfMonth();
         }
 
@@ -198,12 +211,83 @@ class GraphicsController extends Controller
             ->selectRaw('c.nombre, COALESCE(SUM(sa.stock),0) as unidades, COALESCE(SUM(sa.stock * p.pventa_con_iva),0) as valor')
             ->orderByDesc('valor')->get();
 
+        // ── Finanzas: tesorería, gastos, devoluciones, deudas (período) ──
+        $ingresosPeriodo = (float) DB::table('movimientos')->where('tipo', 'ingreso')
+            ->whereBetween('fecha', [$desde, $hasta])->sum('total');
+        $egresosPeriodo = (float) DB::table('movimientos')->where('tipo', 'egreso')
+            ->whereBetween('fecha', [$desde, $hasta])->sum('total');
+        $resultadoPeriodo = round($ingresosPeriodo - $egresosPeriodo, 2);
+
+        $saldoTotalCuentas = (float) DB::table('movimientos')
+            ->selectRaw("COALESCE(SUM(CASE WHEN tipo='ingreso' THEN total ELSE -total END),0) as saldo")
+            ->value('saldo');
+
+        $gastosPeriodo = (float) DB::table('gastos')->where('estado', 'pagado')
+            ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])->sum('monto');
+
+        $gastosPorCategoriaPeriodo = DB::table('gastos as g')
+            ->join('gasto_categorias as c', 'c.id', '=', 'g.gasto_categoria_id')
+            ->where('g.estado', 'pagado')
+            ->whereBetween('g.fecha', [$desde->toDateString(), $hasta->toDateString()])
+            ->groupBy('c.id', 'c.nombre')
+            ->selectRaw('c.nombre, SUM(g.monto) as total')
+            ->orderByDesc('total')->get();
+
+        $devolucionesPeriodo = DB::table('devoluciones')
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->selectRaw("COUNT(*) as cantidad, COALESCE(SUM(monto),0) as monto")
+            ->first();
+
+        // Cuentas por pagar a proveedores: foto actual (no es del período, es deuda viva)
+        $hoy = Carbon::today();
+        $cxpVencidas = DB::table('proveedor_cc_movimientos as m')
+            ->join('proveedores as p', 'p.idproveedor', '=', 'm.proveedor_id')
+            ->where('m.tipo', 'debe')->where('m.estado', '!=', 'pagado')
+            ->whereNotNull('m.fecha_vencimiento')->whereDate('m.fecha_vencimiento', '<', $hoy)
+            ->groupBy('p.idproveedor', 'p.nombre')
+            ->selectRaw('p.nombre, SUM(m.monto) as monto, MIN(m.fecha_vencimiento) as vencimiento')
+            ->orderBy('vencimiento')->get();
+
+        $cxpProximas = DB::table('proveedor_cc_movimientos as m')
+            ->join('proveedores as p', 'p.idproveedor', '=', 'm.proveedor_id')
+            ->where('m.tipo', 'debe')->where('m.estado', '!=', 'pagado')
+            ->whereNotNull('m.fecha_vencimiento')
+            ->whereBetween('m.fecha_vencimiento', [$hoy->toDateString(), $hoy->copy()->addDays(30)->toDateString()])
+            ->groupBy('p.idproveedor', 'p.nombre')
+            ->selectRaw('p.nombre, SUM(m.monto) as monto, MIN(m.fecha_vencimiento) as vencimiento')
+            ->orderBy('vencimiento')->get();
+
+        $cxpVencidoTotal  = (float) $cxpVencidas->sum('monto');
+        $cxpProximasTotal = (float) $cxpProximas->sum('monto');
+
+        // Comparación de precios de proveedores por categoría (últimos 12 meses,
+        // no se limita al período del filtro para tener volumen suficiente de compras)
+        $comparativaProveedores = DB::table('detalle_compras as dc')
+            ->join('compras as co', 'co.idcompra', '=', 'dc.compra_id')
+            ->join('productos as p', 'p.idarticulo', '=', 'dc.articulo_id')
+            ->join('categorias as cat', 'cat.idcategoria', '=', 'p.categoria_id')
+            ->join('proveedores as pr', 'pr.idproveedor', '=', 'co.proveedor_id')
+            ->where('co.estado', 'NOT LIKE', 'Cancel%')
+            ->where('co.fecha', '>=', now()->subMonths(12))
+            ->groupBy('cat.idcategoria', 'cat.nombre', 'pr.idproveedor', 'pr.nombre')
+            ->selectRaw('cat.nombre as categoria, pr.nombre as proveedor,
+                AVG(dc.precio_unitario) as precio_promedio, SUM(dc.cantidad) as unidades')
+            ->orderBy('cat.nombre')->orderBy('precio_promedio')
+            ->get()
+            ->groupBy('categoria')
+            ->filter(fn ($grupo) => $grupo->pluck('proveedor')->unique()->count() > 1)
+            ->values();
+
         return view('report.graph.index', compact(
             'desde', 'hasta', 'dias', 'kpis',
-            'labelsEvolucion', 'serieVentas', 'serieWeb', 'pedidosPorCanal',
+            'labelsEvolucion', 'serieVentas', 'serieWeb', 'serieIngresos', 'serieEgresos', 'pedidosPorCanal',
             'topProductos', 'mixCategorias', 'mixPlazas',
             'clientesTotal', 'clientesConCuenta', 'topClientes', 'deudaCC', 'topDeudores',
-            'inv', 'stockCritico', 'stockPorCategoria'
+            'inv', 'stockCritico', 'stockPorCategoria',
+            'ingresosPeriodo', 'egresosPeriodo', 'resultadoPeriodo', 'saldoTotalCuentas',
+            'gastosPeriodo', 'gastosPorCategoriaPeriodo', 'devolucionesPeriodo',
+            'cxpVencidas', 'cxpProximas', 'cxpVencidoTotal', 'cxpProximasTotal',
+            'comparativaProveedores'
         ));
     }
 
