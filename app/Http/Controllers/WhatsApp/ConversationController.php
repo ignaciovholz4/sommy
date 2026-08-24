@@ -51,7 +51,17 @@ class ConversationController extends Controller
             ->where('last_message_at', '>=', now()->subDays(7))
             ->limit(30)->get();
 
-        return view('whatsapp.board', compact('sinAtender', 'enAtencion', 'esperando', 'cerradas'));
+        // Clientes con pedido en marcha (todavía no entregado ni cancelado):
+        // sus tarjetas muestran el chip "Pedido en marcha"
+        $clienteIds = collect([$sinAtender, $enAtencion, $esperando, $cerradas])
+            ->flatten()->pluck('cliente_id')->filter()->unique();
+        $conPedidoEnMarcha = \Illuminate\Support\Facades\DB::table('order_ecommerce')
+            ->whereIn('cliente_id', $clienteIds)
+            ->where('active', 1)
+            ->whereNotIn('status_order_id', [5, 6]) // 5 Entregado, 6 Cancelado
+            ->pluck('cliente_id')->unique()->flip();
+
+        return view('whatsapp.board', compact('sinAtender', 'enAtencion', 'esperando', 'cerradas', 'conPedidoEnMarcha'));
     }
 
     /**

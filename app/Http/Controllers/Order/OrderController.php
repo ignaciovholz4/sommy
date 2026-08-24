@@ -515,6 +515,14 @@ class OrderController extends Controller
             // 🔹 Actualizar estado de la orden
             $order->update(['status_order_id' => $request->statusId]);
 
+            // Pedido entregado o cancelado: la conversación del cliente migra a
+            // "cerrada" y vuelve al bot — lista para empezar de cero si vuelve a escribir
+            if (in_array((int) $request->statusId, [5, 6]) && $order->cliente_id) {
+                \App\Models\WaConversation::where('cliente_id', $order->cliente_id)
+                    ->where('status', '!=', 'cerrada')
+                    ->update(['status' => 'cerrada', 'mode' => 'bot']);
+            }
+
             $statusOrder = status_order_ecommerce::find($request->statusId);
 
             // 📩 Aviso automático al cliente en cada cambio de estado (si falla el mail, el cambio no se rompe)

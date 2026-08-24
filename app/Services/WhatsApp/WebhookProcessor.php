@@ -127,6 +127,12 @@ class WebhookProcessor
             'last_message_preview' => Str::limit($body !== '' ? $body : "[{$type}]", 120),
             'unread_count' => $conversation->unread_count + 1,
         ]);
+        // Conversación cerrada que revive: arranca de cero con el bot
+        if ($conversation->status === 'cerrada') {
+            $conversation->mode = 'bot';
+            $conversation->ai_agent_id = $conversation->ai_agent_id ?: \App\Models\AiAgent::where('activo', true)->value('id');
+            $conversation->assigned_user_id = null;
+        }
         if ($conversation->status === 'cerrada' || $conversation->status === 'esperando_cliente') {
             $conversation->status = $conversation->assigned_user_id ? 'en_atencion' : 'nueva';
         }
@@ -233,6 +239,12 @@ class WebhookProcessor
             'last_message_preview' => Str::limit($body !== '' ? $body : "[{$type}]", 120),
             'unread_count' => $conversation->unread_count + 1,
         ]);
+        // Conversación cerrada que revive: arranca de cero con el bot
+        if ($conversation->status === 'cerrada') {
+            $conversation->mode = 'bot';
+            $conversation->ai_agent_id = $conversation->ai_agent_id ?: \App\Models\AiAgent::where('activo', true)->value('id');
+            $conversation->assigned_user_id = null;
+        }
         if ($conversation->status === 'cerrada' || $conversation->status === 'esperando_cliente') {
             $conversation->status = $conversation->assigned_user_id ? 'en_atencion' : 'nueva';
         }

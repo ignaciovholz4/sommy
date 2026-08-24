@@ -54,6 +54,7 @@
 
     .att-chip { border-radius: 999px; font-size: 10.5px; font-weight: 600; padding: 3px 10px; white-space: nowrap; }
     .chip-bot     { background: #EDE9FE; color: #5B21B6; }
+    .chip-pedido  { background: #FEF3C7; color: #92400E; }
     .chip-humano  { background: #DBEAFE; color: #1D4ED8; }
     .chip-tiempo  { background: #F8FAFC; color: #6E7A96; border: 1px solid #E7EAF2; font-weight: 500; }
     .chip-tiempo.viejo { background: #FEF2F2; color: #991B1B; border-color: #FECACA; }
@@ -128,6 +129,9 @@
                         <span class="att-chip {{ $c->mode === 'bot' ? 'chip-bot' : 'chip-humano' }}">
                             {{ $c->mode === 'bot' ? '🤖 Bot' : '👤 Humano' }}
                         </span>
+                        @if($c->cliente_id && isset($conPedidoEnMarcha[$c->cliente_id]))
+                            <span class="att-chip chip-pedido">🛒 Pedido en marcha</span>
+                        @endif
                         @if($d['hace'])
                             <span class="att-chip chip-tiempo {{ $d['viejo'] && $col['clase'] !== 'c4' ? 'viejo' : '' }}">
                                 <i class="far fa-clock"></i> hace {{ $d['hace'] }}

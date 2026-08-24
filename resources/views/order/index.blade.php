@@ -3,6 +3,9 @@
 @section('contenido')
 <style>
     /* --- Listado de pedidos: estilo Sommy --- */
+    /* Pedidos que nadie abrió todavía: fila amarilla hasta que se entra al detalle */
+    tr.pedido-no-visto > td { background-color: #FEF9C3 !important; }
+    tr.pedido-no-visto:hover > td { background-color: #FEF3A2 !important; }
     .section-farg {
         padding: 20px;
         background-color: #F8FAFC;

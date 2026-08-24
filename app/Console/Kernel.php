@@ -27,6 +27,9 @@ class Kernel extends ConsoleKernel
         // WhatsApp: cotizaciones abandonadas
         $schedule->command('whatsapp:expirar-drafts')->dailyAt('05:00');
 
+        // WhatsApp: lo resuelto migra a "cerradas" y vuelve al bot (higiene del tablero)
+        $schedule->command('whatsapp:cerrar-inactivas')->hourly();
+
         // Finanzas: gastos recurrentes y alertas de vencimientos de proveedores
         $schedule->command('gastos:generar-recurrentes')->dailyAt('06:00');
         $schedule->command('cxp:alertar-vencimientos')->dailyAt('08:00');
