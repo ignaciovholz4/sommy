@@ -26,6 +26,7 @@ use App\Http\Controllers\Caja\CajaResumenController;
 use App\Http\Controllers\Cuentas\CuentasController;
 use App\Http\Controllers\Cuentas\CajaAperturaController;
 use App\Http\Controllers\Cuentas\MovimientoController;
+use App\Http\Controllers\Cuentas\ConciliacionController;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\Venta\VentaController;
 use App\Http\Controllers\Venta\VentaController2;
@@ -651,6 +652,33 @@ Route::prefix('cuentas')->middleware(['auth','verified'])->group(function () {
     // Detalle de un movimiento (resuelve tipo de comprobante)
     Route::get('{cuenta}/movimientos/{movimiento}/detalle', [MovimientoController::class, 'detalle'])
         ->name('cuentas.movimientos.detalle');
+});
+
+Route::prefix('cuentas')->middleware(['auth','verified'])->group(function () {
+    // Conciliación bancaria: carga de extractos y match manual/sugerido
+    Route::get('{cuenta}/conciliacion', [ConciliacionController::class, 'index'])
+        ->name('cuentas.conciliacion.index');
+
+    Route::get('{cuenta}/conciliacion/data', [ConciliacionController::class, 'data'])
+        ->name('cuentas.conciliacion.data');
+
+    Route::post('{cuenta}/conciliacion/previsualizar', [ConciliacionController::class, 'previsualizar'])
+        ->name('cuentas.conciliacion.previsualizar');
+
+    Route::post('{cuenta}/conciliacion/importar', [ConciliacionController::class, 'importar'])
+        ->name('cuentas.conciliacion.importar');
+
+    Route::get('{cuenta}/conciliacion/buscar-movimientos', [ConciliacionController::class, 'buscarMovimientos'])
+        ->name('cuentas.conciliacion.buscar');
+
+    Route::post('{cuenta}/conciliacion/{importado}/conciliar', [ConciliacionController::class, 'conciliar'])
+        ->name('cuentas.conciliacion.conciliar');
+
+    Route::post('{cuenta}/conciliacion/{importado}/deshacer', [ConciliacionController::class, 'deshacer'])
+        ->name('cuentas.conciliacion.deshacer');
+
+    Route::post('{cuenta}/conciliacion/{importado}/descartar', [ConciliacionController::class, 'descartar'])
+        ->name('cuentas.conciliacion.descartar');
 });
 
 /* PRESUPUESTO */

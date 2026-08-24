@@ -171,6 +171,11 @@
         </div>
 
         <div class="d-flex" style="gap:10px">
+            @if(!$cuenta->esCaja())
+                <a href="{{ route('cuentas.conciliacion.index', $cuenta->id) }}" class="btn btn-outline-secondary fw-bold">
+                    <i class="fas fa-check-double me-2"></i> Conciliación bancaria
+                </a>
+            @endif
             <button id="btnTransferencia" class="btn btn-facturarg-main btn-abrir-principal">
                 <i class="fas fa-exchange-alt me-2"></i> Transferencia
             </button>
