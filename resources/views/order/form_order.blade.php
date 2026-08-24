@@ -303,7 +303,7 @@
                         <tbody>
                             @forelse($detailsOrder as $product)
                             <tr>
-                                <td style="font-weight:500;">{{ $product->producto->nombre }}</td>
+                                <td style="font-weight:500;">{{ optional($product->producto)->nombre ?? 'Producto eliminado del catálogo' }}</td>
                                 <td class="text-center">{{ $product->quantity }}</td>
                                 <td>
                                     @if(!empty($product->json_detalle))

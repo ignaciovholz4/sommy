@@ -46,7 +46,7 @@
         <tbody>
             @foreach($presupuesto->detalles as $detalle)
             <tr>
-                <td>{{ $detalle->articulo->nombre }}</td>
+                <td>{{ optional($detalle->articulo)->nombre ?? 'Producto eliminado del catálogo' }}</td>
                 <td>{{ $detalle->cantidad }}</td>
                 <td>${{ number_format($detalle->precio_unitario, 2, ',', '.') }}</td>
                 <td>${{ number_format($detalle->subtotal, 2, ',', '.') }}</td>

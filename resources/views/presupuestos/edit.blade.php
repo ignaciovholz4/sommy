@@ -102,7 +102,7 @@
                                     <input type="hidden" name="items[{{ $i }}][idarticulo]" value="{{ $detalle->idarticulo }}">
                                     <input type="hidden" name="items[{{ $i }}][combinacion_id]" value="{{ $detalle->combinacion_id }}">
                                     <input type="hidden" name="items[{{ $i }}][tipo_producto_id]" value="{{ $detalle->tipo_producto_id }}">
-                                    {{ $detalle->articulo->nombre }}
+                                    {{ optional($detalle->articulo)->nombre ?? 'Producto eliminado del catálogo' }}
                                     @if($detalle->combinacion)
                                         - {{ $detalle->combinacion->combinacion }}
                                     @endif
