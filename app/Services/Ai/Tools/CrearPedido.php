@@ -37,7 +37,7 @@ class CrearPedido
             ->first();
 
         if (!$draft || empty($draft->items)) {
-            return ['error' => 'No hay una cotización vigente. Primero armá una con la herramienta cotizar.'];
+            return ['error' => 'No hay una cotización vigente. LLAMÁ A cotizar AHORA MISMO, en este mismo turno, con los productos y variantes que el cliente eligió — y después volvé a llamar crear_pedido. NO le respondas al cliente sin haber completado los dos pasos: el pedido tiene que quedar cargado en esta misma respuesta.'];
         }
 
         // Candado: ningún producto con variantes puede ir al pedido sin su medida elegida

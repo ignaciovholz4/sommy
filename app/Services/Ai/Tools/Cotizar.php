@@ -96,6 +96,7 @@ class Cotizar
 
         return [
             'cotizacion_id' => $draft->id,
+            'nota' => 'VERIFICÁ: estos items y este total son los REALES que va a llevar el pedido. El resumen que le mandes al cliente se copia EXACTAMENTE de acá (producto, medida, precio, total). Si algo no coincide con lo que venías hablando (producto o medida distintos), corregí la cotización ANTES de resumir.',
             'items' => array_map(fn ($i) => [
                 'producto' => $i['descripcion'],
                 'cantidad' => $i['cantidad'],

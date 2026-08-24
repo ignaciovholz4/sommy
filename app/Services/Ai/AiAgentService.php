@@ -95,14 +95,47 @@ class AiAgentService
         $completionTokens = 0;
         $toolLog = [];
 
+        $correccionesPrecio = 0;
+
         for ($i = 1; $i <= self::MAX_ITERATIONS; $i++) {
             $response = $client->chat($system, $messages, $tools, $agent->model, $agent->temperature);
             $promptTokens += $response->promptTokens;
             $completionTokens += $response->completionTokens;
 
             if (!$response->hasToolCalls()) {
-                if ($response->text) {
-                    $this->reply($conversation, $agent, $response->text);
+                $texto = (string) $response->text;
+
+                // GUARDA anti-precios-inventados: si la respuesta menciona plata
+                // y en este turno no consultó el catálogo, se la rebota y se la
+                // obliga a verificar con herramientas antes de responder.
+                $mencionaPrecio = preg_match('/\$\s?[\d]{2}[\d\.\,]{2,}/u', $texto);
+                $consultoCatalogo = collect($toolLog)->pluck('tool')
+                    ->intersect(['buscar_productos', 'ver_catalogo', 'info_producto', 'cotizar'])->isNotEmpty();
+
+                if ($mencionaPrecio && !$consultoCatalogo && $correccionesPrecio < 2) {
+                    $correccionesPrecio++;
+                    $messages[] = ['role' => 'assistant', 'content' => $texto];
+                    $messages[] = ['role' => 'system', 'content' => 'CORRECCIÓN OBLIGATORIA: tu respuesta menciona precios pero NO consultaste el catálogo en este turno. Está PROHIBIDO informar montos sin verificarlos con buscar_productos/ver_catalogo. Consultá las herramientas AHORA y reescribí la respuesta solo con precios reales del sistema.'];
+                    continue;
+                }
+                if ($mencionaPrecio && !$consultoCatalogo) {
+                    // No obedeció tras 2 correcciones: mejor derivar que mentir
+                    $this->escalate($conversation, $agent, 'Guarda de precios: el agente insistió en informar montos sin verificar el catálogo');
+                    $run->status = 'escalated';
+                    break;
+                }
+
+                if ($texto !== '') {
+                    $this->reply($conversation, $agent, $texto);
+
+                    // GUARDA de derivación real: si ANUNCIA que deriva pero no
+                    // ejecutó derivar_a_humano, la derivación se hace igual.
+                    $anunciaDerivacion = preg_match('/deriv|compañer|colega|un vendedor (te|se) va|te va a contactar|se va a comunicar|te lo confirma (un|el)/iu', $texto);
+                    $derivoDeVerdad = collect($toolLog)->pluck('tool')->contains('derivar_a_humano');
+                    if ($anunciaDerivacion && !$derivoDeVerdad) {
+                        $this->escalate($conversation, $agent, 'El agente anunció derivación en su texto (guarda automática)', false);
+                        $run->status = 'escalated';
+                    }
                 }
                 break;
             }
@@ -129,6 +162,9 @@ class AiAgentService
                 }
 
                 $result = $this->executeTool($toolCall, $agent, $conversation);
+                // Registrar si la tool falló: las etiquetas automáticas solo se
+                // ponen sobre acciones que realmente funcionaron
+                $toolLog[count($toolLog) - 1]['error'] = isset($result['error']);
                 $messages[] = [
                     'role' => 'tool',
                     'tool_call_id' => $toolCall['id'],
@@ -170,7 +206,7 @@ class AiAgentService
 
         try {
             foreach ($toolLog as $call) {
-                if (!isset($mapa[$call['tool']])) {
+                if (!isset($mapa[$call['tool']]) || !empty($call['error'])) {
                     continue;
                 }
                 [$nombre, $color] = $mapa[$call['tool']];
@@ -384,8 +420,12 @@ class AiAgentService
 
         // Como una persona real: cada bloque separado por línea en blanco sale
         // como un mensaje aparte (la cola los procesa en orden, y el bridge
-        // simula "escribiendo..." entre uno y otro).
-        $chunks = array_values(array_filter(array_map('trim', preg_split("/\n{2,}/", trim($text)))));
+        // simula "escribiendo..." entre uno y otro). Los separadores decorativos
+        // del modelo ("---", "***") no son mensajes: se descartan.
+        $chunks = array_values(array_filter(
+            array_map('trim', preg_split("/\n{2,}/", trim($text))),
+            fn ($c) => $c !== '' && !preg_match('/^[\s\-_=*·—#]+$/u', $c)
+        ));
         $chunks = array_slice($chunks, 0, 5) ?: [trim($text)];
 
         foreach ($chunks as $chunk) {

@@ -29,9 +29,21 @@ class OpenAiClient implements LlmClient
             ], $tools);
         }
 
-        $response = Http::withToken(config('services.openai.api_key'))
-            ->timeout(90)
-            ->post('https://api.openai.com/v1/chat/completions', $payload);
+        // Rate limit (TPM): esperar y reintentar antes de rendirse — evita que
+        // una rafaga de mensajes derive conversaciones a humano por un 429.
+        $response = null;
+        foreach ([0, 20, 30] as $espera) {
+            if ($espera) {
+                sleep($espera);
+            }
+            $response = Http::withToken(config('services.openai.api_key'))
+                ->timeout(90)
+                ->post('https://api.openai.com/v1/chat/completions', $payload);
+
+            if ($response->status() !== 429) {
+                break;
+            }
+        }
 
         if ($response->failed()) {
             throw new \RuntimeException('OpenAI error: ' . ($response->json('error.message') ?? $response->body()));
