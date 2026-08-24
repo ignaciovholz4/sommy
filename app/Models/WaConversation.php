@@ -74,6 +74,12 @@ class WaConversation extends Model
      */
     public function isSessionOpen(): bool
     {
+        // La ventana de 24 h es una regla de la Cloud API de Meta. Por Baileys
+        // (WhatsApp Web propio) no existe: siempre se puede escribir libre.
+        if ($this->account && $this->account->provider === 'baileys') {
+            return true;
+        }
+
         return $this->last_inbound_at !== null
             && $this->last_inbound_at->gt(now()->subHours(24));
     }

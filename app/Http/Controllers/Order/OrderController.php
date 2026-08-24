@@ -240,6 +240,7 @@ class OrderController extends Controller
 
                 return [
                     'order_id'     => $order->order_id,
+                    'no_visto'     => is_null($order->visto_at),
                     'canal'        => '<span class="badge" style="background:'.$canalColor.';color:#fff;">'.$canalNombre.'</span>',
                     'cliente'      => $clienteHtml,
                     'direccion'    => $direccionHtml,
@@ -257,6 +258,8 @@ class OrderController extends Controller
             });
 
         return DataTables::of($orders)
+            // Pedidos que nadie abrió todavía: fila amarilla en la grilla
+            ->setRowClass(fn ($order) => !empty($order['no_visto']) ? 'pedido-no-visto' : '')
             ->editColumn('statusName', function($order){
                 $badgeClass = match($order['statusName']) {
                     'Pagado' => 'bg-warning',
@@ -695,6 +698,12 @@ class OrderController extends Controller
             'detalles.combinacion',
             'pago'
         ])->findOrFail($id);
+
+        // Primera vez que alguien lo abre: deja de estar resaltado en la grilla
+        if (is_null($order->visto_at)) {
+            $order->visto_at = now();
+            $order->saveQuietly();
+        }
 
         // 🔹 Comprobantes de pago cargados (transferencias, capturas)
         $comprobantesPago = DB::table('order_pago_comprobantes')
