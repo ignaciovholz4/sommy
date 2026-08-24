@@ -6,9 +6,13 @@ use App\Models\ReporteChatMensaje;
 use App\Models\ReporteChatSesion;
 use App\Services\Ai\Contracts\LlmClient;
 use App\Services\Ai\ReportesTools\ComprasQueryTool;
+use App\Services\Ai\ReportesTools\CuentasPorPagarQueryTool;
 use App\Services\Ai\ReportesTools\DeudoresQueryTool;
+use App\Services\Ai\ReportesTools\DevolucionesQueryTool;
+use App\Services\Ai\ReportesTools\GastosQueryTool;
 use App\Services\Ai\ReportesTools\MargenQueryTool;
 use App\Services\Ai\ReportesTools\StockQueryTool;
+use App\Services\Ai\ReportesTools\TesoreriaQueryTool;
 use App\Services\Ai\ReportesTools\VentasQueryTool;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -117,6 +121,10 @@ class ReportesAgentService
             StockQueryTool::definition(),
             DeudoresQueryTool::definition(),
             ComprasQueryTool::definition(),
+            GastosQueryTool::definition(),
+            TesoreriaQueryTool::definition(),
+            CuentasPorPagarQueryTool::definition(),
+            DevolucionesQueryTool::definition(),
         ];
     }
 
@@ -129,6 +137,10 @@ class ReportesAgentService
                 'consultar_stock' => new StockQueryTool(),
                 'consultar_deudores' => new DeudoresQueryTool(),
                 'consultar_compras' => new ComprasQueryTool(),
+                'consultar_gastos' => new GastosQueryTool(),
+                'consultar_tesoreria' => new TesoreriaQueryTool(),
+                'consultar_cuentas_por_pagar' => new CuentasPorPagarQueryTool(),
+                'consultar_devoluciones' => new DevolucionesQueryTool(),
                 default => null,
             };
 
@@ -181,11 +193,17 @@ class ReportesAgentService
 
     protected function buildSystem(): string
     {
-        return "Sos el analista de datos interno de Sommy, una distribuidora de colchones. "
-            . "Respondes preguntas del equipo sobre ventas, margen, stock y cuentas corrientes usando EXCLUSIVAMENTE "
-            . "los resultados de las herramientas disponibles: nunca inventes cifras. Si una pregunta necesita un dato "
-            . "que ninguna herramienta puede traer, decilo explícitamente en vez de estimarlo. "
+        return "Sos el analista financiero y de negocio interno de Sommy, una distribuidora de colchones. "
+            . "Respondes preguntas del equipo sobre ventas, margen, stock, cuentas corrientes de clientes, "
+            . "gastos operativos (incluidos publicidad/ads, IA y fletes), tesorería (caja y bancos), cuentas por pagar "
+            . "a proveedores y devoluciones, usando EXCLUSIVAMENTE los resultados de las herramientas disponibles: "
+            . "nunca inventes cifras. Si una pregunta necesita un dato que ninguna herramienta puede traer "
+            . "(por ejemplo el costo real de Meta Ads u OpenAI si todavía no se cargó como gasto en el sistema), "
+            . "decilo explícitamente en vez de estimarlo, y sugerí cargarlo en Finanzas > Gastos. "
             . "Cuando falten fechas en la pregunta, asumí el mes actual y aclaralo en la respuesta. "
+            . "No te limites a responder lo que se te pregunta literalmente: si al consultar una herramienta ves algo "
+            . "que amerita una alerta (deuda vencida, margen cayendo, gasto que se disparó, stock crítico en un producto "
+            . "que se vende mucho), mencionalo aunque no te lo hayan preguntado directamente. "
             . "Respondé en español rioplatense, corto y directo, con los números formateados en pesos argentinos cuando corresponda. "
             . "Fecha actual: " . now()->format('d/m/Y') . '.';
     }
