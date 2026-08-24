@@ -77,7 +77,13 @@ class EcommerceorderController extends Controller
 
                 if($rowData['nameSection'] === 'pagoSection'){
                     // Medios habilitados en la tienda (todos existen en payment_methods)
-                    $metodoPago = in_array($rowData['data']['metodo'] ?? '', ['transferencia', 'mercadopago', 'efectivo', 'tarjeta'])
+                    // MercadoPago está deshabilitado a pedido del cliente: nunca se acepta acá,
+                    // aunque alguien llame a este endpoint directo sin pasar por el checkbox oculto.
+                    $metodosHabilitados = ['transferencia', 'efectivo', 'tarjeta'];
+                    if (app(MercadoPagoService::class)->habilitado()) {
+                        $metodosHabilitados[] = 'mercadopago';
+                    }
+                    $metodoPago = in_array($rowData['data']['metodo'] ?? '', $metodosHabilitados)
                         ? $rowData['data']['metodo']
                         : 'transferencia';
                 }

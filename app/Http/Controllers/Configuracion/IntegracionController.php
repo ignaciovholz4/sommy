@@ -66,7 +66,7 @@ class IntegracionController extends Controller
             'mercadopago' => [
                 'titulo' => 'MercadoPago',
                 'icono' => 'fa-credit-card',
-                'descripcion' => 'Checkout Pro del ecommerce. Con cargar las credenciales ya queda activo.',
+                'descripcion' => 'Checkout Pro del ecommerce. DESHABILITADO a pedido: aunque cargues el Access Token acá, el checkout no lo va a ofrecer como medio de pago hasta que MERCADOPAGO_ENABLED=true se active a mano en el servidor.',
                 'campos' => [
                     ['env' => 'MERCADOPAGO_ACCESS_TOKEN', 'label' => 'Access Token', 'secreto' => true, 'ayuda' => 'Credenciales de producción de tu cuenta'],
                     ['env' => 'MERCADOPAGO_PUBLIC_KEY', 'label' => 'Public Key', 'secreto' => false, 'ayuda' => 'Clave pública del checkout'],

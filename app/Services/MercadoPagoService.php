@@ -21,7 +21,7 @@ class MercadoPagoService
 
     public function habilitado(): bool
     {
-        return !empty(config('services.mercadopago.access_token'));
+        return (bool) config('services.mercadopago.enabled') && !empty(config('services.mercadopago.access_token'));
     }
 
     /**
