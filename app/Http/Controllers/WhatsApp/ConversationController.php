@@ -44,24 +44,38 @@ class ConversationController extends Controller
         $base = WaConversation::with(['cliente', 'assignedUser', 'aiAgent'])
             ->orderByDesc('last_message_at');
 
-        $sinAtender = (clone $base)->where('status', 'nueva')->get();
-        $enAtencion = (clone $base)->where('status', 'en_atencion')->get();
-        $esperando  = (clone $base)->where('status', 'esperando_cliente')->get();
-        $cerradas   = (clone $base)->where('status', 'cerrada')
+        $cerradas = (clone $base)->where('status', 'cerrada')
             ->where('last_message_at', '>=', now()->subDays(7))
             ->limit(30)->get();
 
-        // Clientes con pedido en marcha (todavía no entregado ni cancelado):
-        // sus tarjetas muestran el chip "Pedido en marcha"
-        $clienteIds = collect([$sinAtender, $enAtencion, $esperando, $cerradas])
-            ->flatten()->pluck('cliente_id')->filter()->unique();
-        $conPedidoEnMarcha = \Illuminate\Support\Facades\DB::table('order_ecommerce')
+        $abiertas = (clone $base)->where('status', '!=', 'cerrada')->get();
+
+        // Pedido en marcha (todavía no entregado ni cancelado): tiene prioridad sobre
+        // cualquier otro estado y se saca a su propia columna hasta que el pedido termine.
+        $clienteIds = $abiertas->pluck('cliente_id')->filter()->unique();
+        $clientesConPedido = \Illuminate\Support\Facades\DB::table('order_ecommerce')
             ->whereIn('cliente_id', $clienteIds)
             ->where('active', 1)
             ->whereNotIn('status_order_id', [5, 6]) // 5 Entregado, 6 Cancelado
             ->pluck('cliente_id')->unique()->flip();
 
-        return view('whatsapp.board', compact('sinAtender', 'enAtencion', 'esperando', 'cerradas', 'conPedidoEnMarcha'));
+        $pedidoEnMarcha = $abiertas->filter(fn ($c) => $c->cliente_id && $clientesConPedido->has($c->cliente_id))->values();
+        $idsPedido = $pedidoEnMarcha->pluck('id')->flip();
+        $resto = $abiertas->reject(fn ($c) => $idsPedido->has($c->id));
+
+        // Derivada a un humano: el bot la escaló (AiAgentService::escalate() fuerza
+        // status='nueva' + mode='humano') y todavía nadie la tomó.
+        $derivadas = $resto->filter(fn ($c) => $c->status === 'nueva' && $c->mode === 'humano')->values();
+        $idsDerivadas = $derivadas->pluck('id')->flip();
+        $resto = $resto->reject(fn ($c) => $idsDerivadas->has($c->id));
+
+        $sinAtender = $resto->where('status', 'nueva')->values();
+        $enAtencion = $resto->where('status', 'en_atencion')->values();
+        $esperando  = $resto->where('status', 'esperando_cliente')->values();
+
+        return view('whatsapp.board', compact(
+            'sinAtender', 'derivadas', 'enAtencion', 'esperando', 'pedidoEnMarcha', 'cerradas'
+        ));
     }
 
     /**

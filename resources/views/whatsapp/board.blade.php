@@ -14,8 +14,7 @@
     }
     .att-link:hover { border-color: #2563EB; color: #2563EB; text-decoration: none; }
 
-    .att-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: start; }
-    @media (max-width: 1300px) { .att-board { grid-template-columns: repeat(2, 1fr); } }
+    .att-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; align-items: start; }
     @media (max-width: 767px)  { .att-board { grid-template-columns: 1fr; } }
 
     .att-col { background: #F1F4F9; border-radius: 16px; padding: 10px; }
@@ -29,9 +28,13 @@
         display: inline-flex; align-items: center; justify-content: center; font-size: 12px;
     }
     .att-col.c1 .att-col-head i { color: #b4552d; }
-    .att-col.c2 .att-col-head i { color: #2563EB; }
-    .att-col.c3 .att-col-head i { color: #0EA5E9; }
-    .att-col.c4 .att-col-head i { color: #0d8a4f; }
+    .att-col.c2 .att-col-head i { color: #7c3aed; }
+    .att-col.c3 .att-col-head i { color: #2563EB; }
+    .att-col.c4 .att-col-head i { color: #0EA5E9; }
+    .att-col.c5 .att-col-head i { color: #92400e; }
+    .att-col.c6 .att-col-head i { color: #0d8a4f; }
+
+    .chip-origen  { background: #F1F5F9; color: #475569; }
 
     .att-card {
         background: #fff; border: 1px solid #E7EAF2; border-radius: 14px;
@@ -79,6 +82,14 @@
         $viejo  = $c->last_message_at && \Carbon\Carbon::parse($c->last_message_at)->lt(now()->subHours(4));
         return compact('nombre', 'hace', 'viejo');
     };
+
+    // Solo se usa dentro de "Pedido en marcha", porque esa columna saca la tarjeta
+    // de donde estaría normalmente y ese contexto (sin atender/en atención/esperando) se pierde.
+    $estadoOrigen = [
+        'nueva'              => '🔔 Sin atender',
+        'en_atencion'        => '💬 En atención',
+        'esperando_cliente'  => '⏳ Esperando cliente',
+    ];
 @endphp
 
 <div class="att-wrap">
@@ -96,10 +107,12 @@
 
     <div class="att-board">
         @foreach([
-            ['clase' => 'c1', 'icono' => 'fa-bell',            'titulo' => 'Sin atender',        'items' => $sinAtender, 'vacio' => 'No hay clientes esperando. 🎉'],
-            ['clase' => 'c2', 'icono' => 'fa-comments',        'titulo' => 'En atención',        'items' => $enAtencion, 'vacio' => 'Nadie siendo atendido ahora.'],
-            ['clase' => 'c3', 'icono' => 'fa-hourglass-half',  'titulo' => 'Esperando cliente',  'items' => $esperando,  'vacio' => 'Sin respuestas pendientes del cliente.'],
-            ['clase' => 'c4', 'icono' => 'fa-check-circle',    'titulo' => 'Cerradas (7 días)',  'items' => $cerradas,   'vacio' => 'Sin conversaciones cerradas esta semana.'],
+            ['clase' => 'c1', 'icono' => 'fa-bell',            'titulo' => 'Sin atender',           'items' => $sinAtender,   'vacio' => 'No hay clientes esperando. 🎉'],
+            ['clase' => 'c2', 'icono' => 'fa-user-shield',     'titulo' => 'Derivada a un humano',  'items' => $derivadas,    'vacio' => 'El bot no derivó ninguna conversación.'],
+            ['clase' => 'c3', 'icono' => 'fa-comments',        'titulo' => 'En atención',           'items' => $enAtencion,   'vacio' => 'Nadie siendo atendido ahora.'],
+            ['clase' => 'c4', 'icono' => 'fa-hourglass-half',  'titulo' => 'Esperando cliente',     'items' => $esperando,    'vacio' => 'Sin respuestas pendientes del cliente.'],
+            ['clase' => 'c5', 'icono' => 'fa-truck',           'titulo' => 'Pedido en marcha',      'items' => $pedidoEnMarcha, 'vacio' => 'Nadie con un pedido activo ahora mismo.', 'mostrarOrigen' => true],
+            ['clase' => 'c6', 'icono' => 'fa-check-circle',    'titulo' => 'Cerradas (7 días)',     'items' => $cerradas,     'vacio' => 'Sin conversaciones cerradas esta semana.'],
         ] as $col)
         <div class="att-col {{ $col['clase'] }}">
             <div class="att-col-head">
@@ -129,11 +142,11 @@
                         <span class="att-chip {{ $c->mode === 'bot' ? 'chip-bot' : 'chip-humano' }}">
                             {{ $c->mode === 'bot' ? '🤖 Bot' : '👤 Humano' }}
                         </span>
-                        @if($c->cliente_id && isset($conPedidoEnMarcha[$c->cliente_id]))
-                            <span class="att-chip chip-pedido">🛒 Pedido en marcha</span>
+                        @if(!empty($col['mostrarOrigen']) && isset($estadoOrigen[$c->status]))
+                            <span class="att-chip chip-origen">{{ $estadoOrigen[$c->status] }}</span>
                         @endif
                         @if($d['hace'])
-                            <span class="att-chip chip-tiempo {{ $d['viejo'] && $col['clase'] !== 'c4' ? 'viejo' : '' }}">
+                            <span class="att-chip chip-tiempo {{ $d['viejo'] && $col['clase'] !== 'c6' ? 'viejo' : '' }}">
                                 <i class="far fa-clock"></i> hace {{ $d['hace'] }}
                             </span>
                         @endif
