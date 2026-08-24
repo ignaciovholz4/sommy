@@ -332,6 +332,14 @@ Route::get('sucursal/{id}/articulos', [SucursalArticuloController::class, 'index
     ->name('sucursal.articulos')
     ->middleware(['auth','verified']);
 
+Route::get('sucursal/{id}/stock/excel', [SucursalArticuloController::class, 'exportExcel'])
+    ->name('sucursal.stock.excel')
+    ->middleware(['auth','verified']);
+
+Route::get('sucursal/{id}/stock/pdf', [SucursalArticuloController::class, 'exportPdf'])
+    ->name('sucursal.stock.pdf')
+    ->middleware(['auth','verified']);
+
 /** ArtÃ­culos simples */
 Route::post('sucursal-articulo/store', [SucursalArticuloController::class, 'store'])
     ->name('sucursal.articulo.store')

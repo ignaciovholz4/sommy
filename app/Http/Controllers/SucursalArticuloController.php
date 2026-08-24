@@ -8,6 +8,9 @@ use App\Models\SucursalArticulo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\SucursalCombinacion;
+use App\Exports\SucursalStockExport;
+use Maatwebsite\Excel\Facades\Excel;
+use PDF;
 
 class SucursalArticuloController extends Controller
 {
@@ -39,6 +42,26 @@ class SucursalArticuloController extends Controller
             'articulos'     => $articulos,
             'combinaciones' => $combinaciones
         ]);
+    }
+
+    // ✅ Exportar el stock de la sucursal a Excel
+    public function exportExcel($id)
+    {
+        $sucursal = Sucursal::findOrFail($id);
+        $nombre = 'stock_' . \Illuminate\Support\Str::slug($sucursal->nombre) . '.xlsx';
+
+        return Excel::download(new SucursalStockExport((int) $id), $nombre);
+    }
+
+    // ✅ Exportar el stock de la sucursal a PDF
+    public function exportPdf($id)
+    {
+        $sucursal = Sucursal::findOrFail($id);
+        $filas = SucursalStockExport::filas((int) $id);
+
+        $pdf = PDF::loadView('sucursal.stock_pdf', compact('sucursal', 'filas'));
+
+        return $pdf->download('stock_' . \Illuminate\Support\Str::slug($sucursal->nombre) . '.pdf');
     }
 
 

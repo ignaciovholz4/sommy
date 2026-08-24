@@ -33,15 +33,16 @@
         <table class="table table-bordered">
             <thead class="borders">
                 <tr>
-                    <th class="borders letter th" style="width: 10%">CÓDIGO</th>
-                    <th class="borders letter th" style="width: 25%">NOMBRE</th>
-                    <th class="borders letter th" style="width: 20%">DESCRIPCIÓN</th>
-                    <th class="borders letter th" style="width: 10%">TIPO</th>
-                    <th class="borders letter th" style="width: 10%">PESABLE</th>
+                    <th class="borders letter th" style="width: 9%">CÓDIGO</th>
+                    <th class="borders letter th" style="width: 20%">NOMBRE</th>
+                    <th class="borders letter th" style="width: 15%">DESCRIPCIÓN</th>
+                    <th class="borders letter th" style="width: 8%">TIPO</th>
+                    <th class="borders letter th" style="width: 7%">STOCK</th>
                     <th class="borders letter th" style="width: 10%">PRECIO COMPRA S/IVA</th>
                     <th class="borders letter th" style="width: 10%">PRECIO VENTA S/IVA</th>
-                    <th class="borders letter th" style="width: 10%">IVA COMPRA</th>
-                    <th class="borders letter th" style="width: 10%">IVA VENTA</th>
+                    <th class="borders letter th" style="width: 7%">MARGEN</th>
+                    <th class="borders letter th" style="width: 7%">IVA COMPRA</th>
+                    <th class="borders letter th" style="width: 7%">IVA VENTA</th>
                 </tr>
             </thead>
             <tbody class="borders">
@@ -51,9 +52,10 @@
                         <td class="borders letter2">{{ $row['Nombre'] }}</td>
                         <td class="borders letter2">{{ $row['Descripcion'] }}</td>
                         <td class="borders text-center letter2">{{ $row['Tipo producto'] }}</td>
-                        <td class="borders text-center letter2">{{ $row['Pesable'] }}</td>
+                        <td class="borders text-center letter2">{{ rtrim(rtrim(number_format($row['Stock'], 2), '0'), '.') }}</td>
                         <td class="borders text-center letter2">${{ number_format($row['Precio compra sin IVA'], 2) }}</td>
                         <td class="borders text-center letter2">${{ number_format($row['Precio venta sin IVA'], 2) }}</td>
+                        <td class="borders text-center letter2">{{ $row['Margen %'] !== null ? $row['Margen %'] . '%' : '—' }}</td>
                         <td class="borders text-center letter2">{{ $row['IVA compra'] }}</td>
                         <td class="borders text-center letter2">{{ $row['IVA venta'] }}</td>
                     </tr>
