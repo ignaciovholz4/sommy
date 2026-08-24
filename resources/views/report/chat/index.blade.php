@@ -36,13 +36,13 @@
     .chat-input-wrap button:disabled { opacity: .6; }
 </style>
 
-<div class="chat-wrap">
+<div class="chat-wrap" data-sesion-abrir="{{ $sesionAbrir ?? '' }}">
     <div class="chat-sesiones">
         <button class="btn btn-primary btn-nueva" id="btnNuevaSesion"><i class="fas fa-plus me-1"></i> Nueva consulta</button>
         <h6>Consultas anteriores</h6>
         <div id="listaSesiones">
             @forelse($sesiones as $s)
-                <button class="sesion-item" data-id="{{ $s->id }}">{{ $s->titulo ?: 'Sin título' }}</button>
+                <button class="sesion-item" data-id="{{ $s->id }}">{{ str_starts_with($s->titulo ?? '', 'Resumen ejecutivo') ? '🧭 ' : '' }}{{ $s->titulo ?: 'Sin título' }}</button>
             @empty
                 <p class="text-muted small">Todavía no hiciste ninguna consulta.</p>
             @endforelse
@@ -132,6 +132,10 @@ document.addEventListener('DOMContentLoaded', function () {
     listaSesiones.querySelectorAll('.sesion-item').forEach(btn => {
         btn.addEventListener('click', () => abrirSesion(btn.dataset.id));
     });
+
+    // Deep-link desde la notificación del resumen del agente CEO (?sesion=ID)
+    const sesionInicial = document.querySelector('.chat-wrap').dataset.sesionAbrir;
+    if (sesionInicial) abrirSesion(sesionInicial);
 
     function enviar() {
         const pregunta = inputPregunta.value.trim();

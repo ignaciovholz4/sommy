@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Gate;
 
 class ReportesChatController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         Gate::authorize('haveaccess', 'reportes.chat.index');
 
@@ -18,7 +18,12 @@ class ReportesChatController extends Controller
             ->orderByDesc('updated_at')
             ->get();
 
-        return view('report.chat.index', compact('sesiones'));
+        // Deep-link desde la notificación del resumen del agente CEO
+        $sesionAbrir = $sesiones->pluck('id')->contains((int) $request->query('sesion'))
+            ? (int) $request->query('sesion')
+            : null;
+
+        return view('report.chat.index', compact('sesiones', 'sesionAbrir'));
     }
 
     public function crearSesion()

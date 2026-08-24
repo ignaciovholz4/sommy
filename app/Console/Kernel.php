@@ -42,6 +42,9 @@ class Kernel extends ConsoleKernel
 
         // Notificaciones: alerta diaria de stock crítico / stock bajo
         $schedule->command('stock:alertar-critico')->dailyAt('08:30');
+
+        // Agente CEO: resumen ejecutivo diario dentro del panel (despues de las alertas de arriba)
+        $schedule->command('ceo:resumen-diario')->dailyAt('09:00');
     }
 
     /**

@@ -26,6 +26,7 @@ class Notificacion extends Model
         'devolucion' => '↩️',
         'stock'      => '⚠️',
         'reposicion' => '📦',
+        'ceo'        => '🧭',
     ];
 
     /**
