@@ -84,6 +84,14 @@ return [
         'ig_account_id' => env('IG_ACCOUNT_ID'),
     ],
 
+    // Promo del bot de ventas: los precios reales se presentan como precio con
+    // descuento ya aplicado. El % define el "precio de lista" tachado que se
+    // muestra (precio_actual * (1 + %/100)). 0 = promo apagada.
+    'bot_promo' => [
+        'porcentaje' => (int) env('BOT_PROMO_OFF', 20),
+        'nombre' => env('BOT_PROMO_NOMBRE', 'Promo Sommy'),
+    ],
+
     // WhatsApp no oficial (Baileys): bridge Node.js propio, sin pasar por Meta.
     // Bot 100% reactivo mientras se completa la verificacion de negocio en Meta.
     'whatsapp_baileys' => [

@@ -54,6 +54,9 @@ class VerCatalogo
             ->get()
             ->groupBy('producto_id');
 
+        $promoPct = (int) config('services.bot_promo.porcentaje', 0);
+        $precioLista = fn ($precio) => $promoPct > 0 ? round($precio * (1 + $promoPct / 100), -3) : null;
+
         $catalogo = $productos->groupBy('categoria')->map(fn ($items) => $items->map(fn ($p) => [
             'producto_id' => $p->idarticulo,
             'nombre'      => $p->nombre,
@@ -63,6 +66,7 @@ class VerCatalogo
                 'combinacion_id' => $v->idcombinacion,
                 'detalle' => $v->combinacion,
                 'precio'  => (float) $v->pventa_variante,
+                'precio_lista' => $precioLista((float) $v->pventa_variante),
                 'stock'   => (int) $v->stock,
             ])->values()->all(),
         ])->values())->toArray();
