@@ -49,10 +49,26 @@ class OperacionCambioController extends Controller
                 'cuenta_ars' => optional($o->cuentaArs)->nombre,
                 'cuenta_moneda' => optional($o->cuentaMoneda)->nombre,
                 'disponible' => $o->tipo === 'compra' ? (float) $o->disponible : null,
-                'resultado' => $o->tipo === 'venta' ? (float) $o->resultado : null,
+                'resultado' => $o->resultado !== null ? (float) $o->resultado : null,
                 'observaciones' => $o->observaciones,
+                // Cuando no hay cuenta ARS real (pago/cobro directo de una compra/venta)
+                'referencia' => $this->etiquetaReferencia($o),
             ])->values(),
         ]);
+    }
+
+    /** Para operaciones sin cuenta ARS (pago/cobro directo de una compra/venta), un link legible al origen. */
+    private function etiquetaReferencia(OperacionCambio $o): ?string
+    {
+        if (!$o->referencia_type || !$o->referencia_id) {
+            return null;
+        }
+
+        return match ($o->referencia_type) {
+            \App\Models\Compra::class => 'Compra #' . $o->referencia_id,
+            \App\Models\Venta::class => 'Venta #' . $o->referencia_id,
+            default => null,
+        };
     }
 
     /** Cuentas y disponible de una moneda, para armar el formulario de compra/venta. */

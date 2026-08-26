@@ -23,6 +23,8 @@ class OperacionCambio extends Model
         'disponible',
         'resultado',
         'creado_por',
+        'referencia_type',
+        'referencia_id',
     ];
 
     protected $casts = [

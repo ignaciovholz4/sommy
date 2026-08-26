@@ -66,6 +66,10 @@ function filaOperacion(o) {
         const cls = o.resultado >= 0 ? 'text-success' : 'text-danger';
         resultado = `<span class="${cls} font-weight-bold">${moneyFmt(o.resultado)}</span>`;
     }
+    // Sin cuenta ARS real: fue un pago/cobro directo de una compra o venta, no un cambio manual
+    const cuentas = o.cuenta_ars
+        ? `${esc(o.cuenta_ars)} ↔ ${esc(o.cuenta_moneda)}`
+        : `<span class="text-muted">${esc(o.referencia || 'Pago/cobro directo')}</span> — ${esc(o.cuenta_moneda)}`;
     return `<tr>
         <td>${esc(o.fecha)}</td>
         <td>${tipoBadge}</td>
@@ -73,7 +77,7 @@ function filaOperacion(o) {
         <td class="text-right">${Number(o.monto_moneda).toLocaleString('es-AR', {minimumFractionDigits:2})}</td>
         <td class="text-right">${moneyFmt(o.cotizacion)}</td>
         <td class="text-right">${moneyFmt(o.monto_ars)}</td>
-        <td>${esc(o.cuenta_ars)} ↔ ${esc(o.cuenta_moneda)}</td>
+        <td>${cuentas}</td>
         <td class="text-right">${resultado}</td>
     </tr>`;
 }

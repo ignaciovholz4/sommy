@@ -516,14 +516,17 @@ class VentaController extends Controller
                     // cotización para saber cuánto de la deuda (siempre en ARS) cubre.
                     $cotizacion = null;
                     $totalArs   = $monto;
+                    $monedaCuentaPago = null;
                     if ($cuentaId) {
-                        $cuentaMoneda = optional(Cuenta::with('moneda')->find($cuentaId))->moneda?->codigo ?? 'ARS';
-                        if ($cuentaMoneda !== 'ARS') {
+                        $monedaCuentaPago = optional(Cuenta::with('moneda')->find($cuentaId))->moneda;
+                        if ($monedaCuentaPago && $monedaCuentaPago->codigo !== 'ARS') {
                             $cotizacion = (float) ($request->input("cotizaciones.$index") ?: 0);
                             if ($cotizacion <= 0) {
-                                return response()->json(['success' => false, 'error' => "Indicá la cotización del cobro en $cuentaMoneda."]);
+                                return response()->json(['success' => false, 'error' => "Indicá la cotización del cobro en {$monedaCuentaPago->codigo}."]);
                             }
                             $totalArs = round($monto * $cotizacion, 2);
+                        } else {
+                            $monedaCuentaPago = null;
                         }
                     }
                     $sumaArsNuevos += $totalArs;
@@ -549,6 +552,28 @@ class VentaController extends Controller
                         'cotizacion'       => $cotizacion,
                         'total_ars'        => $totalArs,
                     ]);
+
+                    // Se cobró con una cuenta en moneda extranjera: registrarlo también
+                    // como ingreso de divisa (lote FIFO nuevo) para que el historial de
+                    // divisas y el disponible de esa moneda lo reflejen. Si esto falla,
+                    // no debe frenar el cobro de la venta.
+                    if ($monedaCuentaPago) {
+                        try {
+                            app(\App\Services\OperacionCambioService::class)->registrarIngresoPorCobro([
+                                'moneda_id'        => $monedaCuentaPago->id,
+                                'cuenta_moneda_id' => $cuentaId,
+                                'monto_moneda'     => $monto,
+                                'cotizacion'       => $cotizacion,
+                                'fecha'            => now(),
+                                'movimiento_id'    => $mov->id,
+                                'observaciones'    => 'Cobro de venta #' . $venta->idventa . ($venta->num_folio ? ' (' . $venta->num_folio . ')' : ''),
+                                'referencia_type'  => Venta::class,
+                                'referencia_id'    => $venta->idventa,
+                            ], auth()->id());
+                        } catch (\Throwable $divisaError) {
+                            \Illuminate\Support\Facades\Log::warning('No se pudo registrar el ingreso de divisa para la venta #' . $venta->idventa . ': ' . $divisaError->getMessage());
+                        }
+                    }
 
                     if ($medio === 'cheque') {
                         $chequeService->registrarRecibido([

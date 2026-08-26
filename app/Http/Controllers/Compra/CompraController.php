@@ -547,14 +547,17 @@ class CompraController extends Controller
                     // cotización para saber cuánto de la deuda (siempre en ARS) cubre.
                     $cotizacion = null;
                     $totalArs   = $monto;
+                    $monedaCuentaPago = null;
                     if (!$chequeEndosado && $cuentaId) {
-                        $cuentaMoneda = optional(Cuenta::with('moneda')->find($cuentaId))->moneda?->codigo ?? 'ARS';
-                        if ($cuentaMoneda !== 'ARS') {
+                        $monedaCuentaPago = optional(Cuenta::with('moneda')->find($cuentaId))->moneda;
+                        if ($monedaCuentaPago && $monedaCuentaPago->codigo !== 'ARS') {
                             $cotizacion = (float) ($request->input("cotizaciones.$index") ?: 0);
                             if ($cotizacion <= 0) {
-                                return response()->json(['success' => false, 'error' => "Indicá la cotización del pago en $cuentaMoneda."]);
+                                return response()->json(['success' => false, 'error' => "Indicá la cotización del pago en {$monedaCuentaPago->codigo}."]);
                             }
                             $totalArs = round($monto * $cotizacion, 2);
+                        } else {
+                            $monedaCuentaPago = null;
                         }
                     }
                     $sumaArsNuevos += $totalArs;
@@ -583,6 +586,28 @@ class CompraController extends Controller
                     ]);
 
                     $movimientosCreados[] = $mov;
+
+                    // Se pagó con una cuenta en moneda extranjera: registrarlo también como
+                    // consumo de divisa (FIFO) para que el historial de divisas y el
+                    // disponible de esa moneda lo reflejen. Si esto falla, no debe frenar
+                    // el pago de la compra (mismo criterio que la reimputación de CxP).
+                    if ($monedaCuentaPago) {
+                        try {
+                            app(\App\Services\OperacionCambioService::class)->registrarConsumoPorPago([
+                                'moneda_id'        => $monedaCuentaPago->id,
+                                'cuenta_moneda_id' => $cuentaId,
+                                'monto_moneda'     => $monto,
+                                'cotizacion'       => $cotizacion,
+                                'fecha'            => now(),
+                                'movimiento_id'    => $mov->id,
+                                'observaciones'    => 'Pago de compra #' . $compra->idcompra . ($compra->num_folio ? ' (' . $compra->num_folio . ')' : ''),
+                                'referencia_type'  => Compra::class,
+                                'referencia_id'    => $compra->idcompra,
+                            ], auth()->id());
+                        } catch (\Throwable $divisaError) {
+                            \Illuminate\Support\Facades\Log::warning('No se pudo registrar el consumo de divisa para la compra #' . $compra->idcompra . ': ' . $divisaError->getMessage());
+                        }
+                    }
 
                     if ($chequeEndosado) {
                         $chequeService->entregar($chequeEndosado, $mov);
