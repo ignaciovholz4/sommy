@@ -235,9 +235,13 @@ class GraphicsController extends Controller
             ->orderByDesc('valor')->get();
 
         // Sin stock (foto actual) y sin movimiento de ventas en el período (estancados)
+        // select() explícito: sucursal_articulo y productos comparten la columna
+        // "ubicacion" — un SELECT * acá rompe el count() (MySQL no puede armar la
+        // tabla derivada con dos columnas del mismo nombre).
         $productosSinStock = DB::table('sucursal_articulo as sa')
             ->join('productos as p', 'p.idarticulo', '=', 'sa.articulo_id')
             ->where('sa.activo', 1)->where('p.estado', 'Activo')
+            ->select('p.idarticulo')
             ->groupBy('p.idarticulo')
             ->havingRaw('SUM(sa.stock) <= 0')
             ->count();
