@@ -471,8 +471,13 @@ class acciones_articulo extends articulo {
     try {
       let seend = await fetch(url, {
         method: "post",
+        headers: { 'X-CSRF-TOKEN': token },
         body: formData,
       });
+      if (!seend.ok) {
+        alert('No se pudo guardar el producto (error ' + seend.status + '). Volvé a intentar.');
+        return;
+      }
       let data = await seend.json();
       console.log(data);
         let resp = data.estado;
@@ -495,6 +500,7 @@ class acciones_articulo extends articulo {
         }
     } catch (error) {
       console.log(error);
+      alert('Ocurrió un error al guardar el producto. Revisá tu conexión e intentá de nuevo.');
     }
   };
 
@@ -555,15 +561,22 @@ class acciones_articulo extends articulo {
     try {
       let seend = await fetch(url, {
         method: "post",
+        headers: { 'X-CSRF-TOKEN': token },
         body: formData,
       });
+      if (!seend.ok) {
+        alert('No se pudo actualizar el producto (error ' + seend.status + '). Volvé a intentar.');
+        return;
+      }
       let data = await seend.json();
       let resp = data.estado;
       let msg = data.mensaje;
       switch (resp) {
         case 1:
           super.success_message(msg);
-          super.refresh_table_product();
+          setTimeout(() => {
+            window.location.href = '/almacen/articulo';
+          }, 800);
           break;
         case 0:
           alert(msg);
@@ -574,6 +587,7 @@ class acciones_articulo extends articulo {
       }
     } catch (error) {
       console.log(error);
+      alert('Ocurrió un error al actualizar el producto. Revisá tu conexión e intentá de nuevo.');
     }
   }
 
@@ -812,7 +826,10 @@ function saveProductoConVariantes() {
     const acciones = new acciones_articulo();
 
     console.log(formData);
-    if (!esNuevo) {
+    if (!esNuevo && selectTipo.value == 2) {
+        // Solo advertir cuando el producto tiene variantes: es lo único que puede
+        // afectar sucursales/stock. Para un producto simple (o solo cambiar fotos)
+        // no hace falta esta confirmación.
         Swal.fire({
             title: "Advertencia",
             html: "Al modificar combinaciones, las <b>sucursales</b> pueden verse afectadas.<br><br>" +
@@ -830,6 +847,9 @@ function saveProductoConVariantes() {
                 acciones.update_product("/updateproduct", formData, errorform);
             }
         });
+    } else if (!esNuevo) {
+        console.log("🟡 Actualizando producto...");
+        acciones.update_product("/updateproduct", formData, errorform);
     } else {
         console.log("🟢 Creando producto...");
         acciones.articulo_main("/savearticulo", formData, errorform, previewimage);
