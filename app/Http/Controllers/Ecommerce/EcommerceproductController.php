@@ -89,19 +89,8 @@ class EcommerceproductController extends Controller
             //         );
             //     }
             // }
-            // Imagen por combinación: expone combinacion->url para que el front
-            // cambie la foto al seleccionar una medida (shopping-card.js)
-            $imagenesPorCombinacion = ProductoImagen::where('producto_id', $id)
-                ->whereNotNull('combinacion_id')
-                ->get()
-                ->keyBy('combinacion_id');
-
-            foreach ($productoConStock->combinaciones as $item) {
-                $img = $imagenesPorCombinacion->get($item->combinacion_id);
-                if ($img) {
-                    $item->combinacion->url = asset($img->path);
-                }
-            }
+            // Todas las variantes muestran siempre la misma foto del artículo
+            // principal (galería de abajo) — no hay foto propia por variante.
 
             $getVariantesData = $productoConStock->combinaciones->map(fn($c) => $c->combinacion);
             $getEachVarianteProd = $productoConStock->combinaciones;

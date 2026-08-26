@@ -309,20 +309,36 @@ class ArticuloController extends Controller
                 'tp.name as tipo_producto'
             )
             ->selectRaw('COALESCE(ss.stock, 0) + COALESCE(sv.stock, 0) as stock_total')
+            ->addSelect('p.imagen')
             ->where('p.estado', '=', 'Activo')
             ->get();
+
+        // Foto del artículo (nunca por variante: todas comparten la misma foto principal)
+        $fotos = DB::table('producto_imagenes')
+            ->whereNull('combinacion_id')
+            ->orderByDesc('principal')
+            ->orderBy('orden')
+            ->get(['producto_id', 'path'])
+            ->groupBy('producto_id')
+            ->map(fn ($g) => $g->first()->path);
 
         return DataTables::of($articulo)
             ->addColumn('select', fn($a) =>
                 '<input type="checkbox" class="row-select-product" data-id="'.$a->idarticulo.'" />'
             )
-            ->addColumn('producto', function ($a) {
+            ->addColumn('producto', function ($a) use ($fotos) {
+                $ruta = $fotos->get($a->idarticulo) ?: ($a->imagen ? 'imagenes/articulos/'.$a->imagen : null);
+                $foto = $ruta
+                    ? '<img src="'.asset($ruta).'" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;flex-shrink:0;">'
+                    : '<div style="width:44px;height:44px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-image text-muted"></i></div>';
+
                 $sub = implode(' · ', array_filter([$a->codigo, $a->categoria, $a->marca]));
                 $chip = $a->tipo_producto_id == 2
                     ? ' <span class="badge" style="background:#EDE9FE;color:#5B21B6;font-size:0.62rem;">Variantes</span>'
                     : '';
-                return '<div style="font-weight:700;color:#0f172a;">'.e($a->nombre).$chip.'</div>'
-                     . '<div style="font-size:0.75rem;color:#94a3b8;">'.e($sub).'</div>';
+                return '<div style="display:flex;align-items:center;gap:10px;">'.$foto
+                     . '<div><div style="font-weight:700;color:#0f172a;">'.e($a->nombre).$chip.'</div>'
+                     . '<div style="font-size:0.75rem;color:#94a3b8;">'.e($sub).'</div></div></div>';
             })
             ->addColumn('stock_badge', function ($a) {
                 $stock = (float) $a->stock_total;
