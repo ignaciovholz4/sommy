@@ -53,8 +53,8 @@ class BuscarProductos
                         ->orWhere('c.nombre', 'like', "%{$term}%");
                 }
             })
-            ->groupBy('p.idarticulo', 'p.nombre', 'p.descripcion', 'p.pventa_con_iva', 'c.nombre')
-            ->selectRaw('p.idarticulo, p.nombre, p.descripcion, p.pventa_con_iva, c.nombre as categoria, COALESCE(SUM(sa.stock),0) as stock_total')
+            ->groupBy('p.idarticulo', 'p.nombre', 'p.descripcion', 'p.pventa_con_iva', 'p.slug', 'c.nombre')
+            ->selectRaw('p.idarticulo, p.nombre, p.descripcion, p.pventa_con_iva, p.slug, c.nombre as categoria, COALESCE(SUM(sa.stock),0) as stock_total')
             ->orderByDesc('stock_total')
             ->limit(8)
             ->get();
@@ -81,6 +81,8 @@ class BuscarProductos
                 'precio_lista' => $precioLista((float) $p->pventa_con_iva),
                 'stock' => (int) $p->stock_total,
                 'descripcion' => Str::limit(strip_tags((string) $p->descripcion), 150),
+                // Link a la ficha pública del producto en la tienda online: incluirlo siempre al presentar
+                'link' => $p->slug ? route('ecommerce.producto', $p->slug) : null,
                 // Primera foto de la ficha: mandarla con enviar_material al presentar
                 'foto_material_id' => $this->fotoMaterialId($p->idarticulo),
                 // Variantes: medidas/colores con SU precio y SU stock (el precio real vive acá)
@@ -100,7 +102,7 @@ class BuscarProductos
                         'stock' => (int) $v->stock,
                     ])->all(),
             ])->all(),
-            'nota' => 'IMPORTANTE: si un producto tiene "variantes", el precio REAL depende de la medida/color: NUNCA informes el precio base, siempre el de la variante puntual (o el rango). Preguntá la medida antes de dar precio. Cotizá con el combinacion_id de la variante elegida. Si tiene foto_material_id, mandá la foto con enviar_material al presentarlo.',
+            'nota' => 'IMPORTANTE: si un producto tiene "variantes", el precio REAL depende de la medida/color: NUNCA informes el precio base, siempre el de la variante puntual (o el rango). Preguntá la medida antes de dar precio. Cotizá con el combinacion_id de la variante elegida. Si tiene foto_material_id, mandá la foto con enviar_material al presentarlo. Si tiene "link", incluilo SIEMPRE en el mensaje al presentar el producto (ej: "Miralo acá: {link}"), así el cliente puede verlo y comprarlo online.',
         ];
     }
 

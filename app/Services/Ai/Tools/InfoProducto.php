@@ -77,9 +77,10 @@ class InfoProducto
 
         return [
             'producto'     => $articulo->nombre,
+            'link'         => $articulo->slug ? route('ecommerce.producto', $articulo->slug) : null,
             'conocimiento' => $textos,
             'material'     => $archivos,
-            'nota'         => 'Esta información es la ficha oficial interna: usala como fuente de verdad. Para mostrarle al cliente una foto/video/audio del material, usá la herramienta enviar_material con el material_id: le llega como adjunto de WhatsApp.',
+            'nota'         => 'Esta información es la ficha oficial interna: usala como fuente de verdad. Para mostrarle al cliente una foto/video/audio del material, usá la herramienta enviar_material con el material_id: le llega como adjunto de WhatsApp. Si hay "link", incluilo en tu mensaje para que el cliente pueda verlo y comprarlo online.',
         ];
     }
 }
