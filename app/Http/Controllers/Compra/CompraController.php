@@ -19,6 +19,7 @@ use App\Http\Controllers\StockController;
 use App\Models\CompraOcrExtraccion;
 use App\Services\ChequeService;
 use App\Services\Compras\ComprobanteOcrService;
+use App\Services\SolicitudAprobacionService;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -272,11 +273,25 @@ class CompraController extends Controller
         }
     }
 
-    public function anular($idcompra)
+    public function anular($idcompra, SolicitudAprobacionService $solicitudes)
     {
         $compra = Compra::findOrFail($idcompra);
-        $compra->estado = 'anulada';
-        $compra->save();
+
+        $resultado = $solicitudes->ejecutarOSolicitar(
+            'compra.anular',
+            'Anular compra ' . ($compra->num_folio ?: '#' . $compra->idcompra) . ' ($' . number_format($compra->total_con_iva, 0, ',', '.') . ')',
+            ['idcompra' => (int) $idcompra],
+            $compra,
+            function () use ($idcompra) {
+                $compra = Compra::findOrFail($idcompra);
+                $compra->estado = 'anulada';
+                $compra->save();
+            }
+        );
+
+        if (!$resultado['ejecutado']) {
+            return response()->json(['success' => true, 'pendiente' => true, 'mensaje' => 'Tu solicitud de anulación quedó pendiente de aprobación del administrador.']);
+        }
 
         return response()->json(['success' => true]);
     }

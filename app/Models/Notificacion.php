@@ -28,6 +28,7 @@ class Notificacion extends Model
         'reposicion' => '📦',
         'ceo'        => '🧭',
         'cheque'     => '📝',
+        'solicitud'  => '🖐️',
     ];
 
     /**

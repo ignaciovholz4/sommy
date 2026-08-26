@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Finanzas;
 use App\Http\Controllers\Controller;
 use App\Models\Cheque;
 use App\Models\Notificacion;
+use App\Services\SolicitudAprobacionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -100,7 +101,7 @@ class ChequeController extends Controller
         return response()->json(['estado' => 1, 'mensaje' => 'Cheque acreditado.']);
     }
 
-    public function rechazar(Request $request, Cheque $cheque)
+    public function rechazar(Request $request, Cheque $cheque, SolicitudAprobacionService $solicitudes)
     {
         Gate::authorize('haveaccess', 'finanzas.cheques.manage');
 
@@ -110,20 +111,32 @@ class ChequeController extends Controller
 
         $motivo = trim((string) $request->input('motivo', ''));
 
-        $cheque->update([
-            'estado' => 'rechazado',
-            'observaciones' => trim(($cheque->observaciones ? $cheque->observaciones . ' — ' : '') . 'Rechazado' . ($motivo ? ": {$motivo}" : '')),
-        ]);
+        $resultado = $solicitudes->ejecutarOSolicitar(
+            'cheque.rechazar',
+            'Rechazar cheque Nº ' . ($cheque->numero ?: $cheque->id) . ' ($' . number_format($cheque->monto, 0, ',', '.') . ')',
+            ['cheque_id' => $cheque->id, 'motivo' => $motivo ?: null],
+            $cheque,
+            function () use ($cheque, $motivo) {
+                $cheque->update([
+                    'estado' => 'rechazado',
+                    'observaciones' => trim(($cheque->observaciones ? $cheque->observaciones . ' — ' : '') . 'Rechazado' . ($motivo ? ": {$motivo}" : '')),
+                ]);
 
-        Notificacion::avisar('cheque',
-            'Cheque Nº ' . ($cheque->numero ?: $cheque->id) . ' rechazado ($' . number_format($cheque->monto, 0, ',', '.') . ')',
-            $motivo ?: null,
-            url('finanzas/cheques'), 'alerta');
+                Notificacion::avisar('cheque',
+                    'Cheque Nº ' . ($cheque->numero ?: $cheque->id) . ' rechazado ($' . number_format($cheque->monto, 0, ',', '.') . ')',
+                    $motivo ?: null,
+                    url('finanzas/cheques'), 'alerta');
+            }
+        );
+
+        if (!$resultado['ejecutado']) {
+            return response()->json(['estado' => 1, 'pendiente' => true, 'mensaje' => 'Tu solicitud de rechazo quedó pendiente de aprobación del administrador.']);
+        }
 
         return response()->json(['estado' => 1, 'mensaje' => 'Cheque marcado como rechazado.']);
     }
 
-    public function anular(Cheque $cheque)
+    public function anular(Cheque $cheque, SolicitudAprobacionService $solicitudes)
     {
         Gate::authorize('haveaccess', 'finanzas.cheques.manage');
 
@@ -131,7 +144,17 @@ class ChequeController extends Controller
             return response()->json(['estado' => 0, 'mensaje' => 'Un cheque entregado o acreditado no se puede anular.'], 422);
         }
 
-        $cheque->update(['estado' => 'anulado']);
+        $resultado = $solicitudes->ejecutarOSolicitar(
+            'cheque.anular',
+            'Anular cheque Nº ' . ($cheque->numero ?: $cheque->id) . ' ($' . number_format($cheque->monto, 0, ',', '.') . ')',
+            ['cheque_id' => $cheque->id],
+            $cheque,
+            fn () => $cheque->update(['estado' => 'anulado'])
+        );
+
+        if (!$resultado['ejecutado']) {
+            return response()->json(['estado' => 1, 'pendiente' => true, 'mensaje' => 'Tu solicitud de anulación quedó pendiente de aprobación del administrador.']);
+        }
 
         return response()->json(['estado' => 1, 'mensaje' => 'Cheque anulado.']);
     }

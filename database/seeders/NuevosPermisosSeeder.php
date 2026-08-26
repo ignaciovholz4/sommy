@@ -46,6 +46,9 @@ class NuevosPermisosSeeder extends Seeder
             // Gap preexistente: GraphicsController exige este slug pero nunca se habia sembrado
             // (solo los roles full-access podian abrir Informes hasta ahora)
             ['slug' => 'reporte.index',           'name' => 'ver informes del negocio',              'description' => 'Puede ver el tablero de Informes (ventas, productos, clientes, stock, finanzas)'],
+            // Solicitudes de aprobacion (anulaciones, compra/venta de divisas)
+            ['slug' => 'admin.solicitudes.index', 'name' => 'ver solicitudes de aprobación',         'description' => 'Puede ver la lista de solicitudes pendientes de aprobación'],
+            ['slug' => 'admin.solicitudes.manage','name' => 'aprobar/rechazar solicitudes',          'description' => 'Puede aprobar o rechazar solicitudes de anulación y compra/venta de divisas'],
         ];
 
         $ids = [];

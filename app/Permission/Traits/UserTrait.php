@@ -29,6 +29,18 @@ trait UserTrait {
         return empty($ids) ? null : $ids;
     }
 
+    /** true si tiene un rol full-access — "superadministrador" para el flujo de aprobaciones. */
+    public function esSuperAdmin(): bool
+    {
+        foreach ($this->roles as $role) {
+            if (strtolower($role['full-access']) == "yes") {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function havePermission($permission)
     {
         $override = UserPermission::where('user_id', $this->id)

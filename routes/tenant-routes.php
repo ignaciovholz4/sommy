@@ -260,6 +260,12 @@ Route::post('/downrol', 'RoleController@downRol')->name('downrol')->middleware([
 Route::get('admin/auditoria', 'Admin\AuditoriaController@index')->name('auditoria.index')->middleware(['auth','verified']);
 Route::get('admin/auditoria/data', 'Admin\AuditoriaController@data')->name('auditoria.data')->middleware(['auth','verified']);
 
+/** SOLICITUDES DE APROBACION */
+Route::get('admin/solicitudes', 'Admin\SolicitudAprobacionController@index')->name('solicitudes.index')->middleware(['auth','verified']);
+Route::get('admin/solicitudes/data', 'Admin\SolicitudAprobacionController@data')->name('solicitudes.data')->middleware(['auth','verified']);
+Route::post('admin/solicitudes/{solicitud}/aprobar', 'Admin\SolicitudAprobacionController@aprobar')->name('solicitudes.aprobar')->middleware(['auth','verified']);
+Route::post('admin/solicitudes/{solicitud}/rechazar', 'Admin\SolicitudAprobacionController@rechazar')->name('solicitudes.rechazar')->middleware(['auth','verified']);
+
 /** SEGURIDAD DE LA CUENTA: verificacion en dos pasos (2FA), opt-in por usuario */
 Route::middleware(['auth','verified'])->prefix('mi-perfil/seguridad')->group(function () {
     Route::get('/', [\App\Http\Controllers\Auth\TwoFactorSettingsController::class, 'show'])->name('two-factor.settings');

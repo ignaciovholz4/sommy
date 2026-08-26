@@ -7,6 +7,7 @@ use App\Models\Cuenta;
 use App\Models\Moneda;
 use App\Models\OperacionCambio;
 use App\Services\OperacionCambioService;
+use App\Services\SolicitudAprobacionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -78,7 +79,7 @@ class OperacionCambioController extends Controller
         ]);
     }
 
-    public function store(Request $request, OperacionCambioService $service)
+    public function store(Request $request, OperacionCambioService $service, SolicitudAprobacionService $solicitudes)
     {
         Gate::authorize('haveaccess', 'finanzas.divisas.manage');
 
@@ -93,13 +94,30 @@ class OperacionCambioController extends Controller
             'observaciones' => 'nullable|string|max:255',
         ]);
 
+        $moneda = Moneda::find($validated['moneda_id']);
+        $descripcion = ($validated['tipo'] === 'compra' ? 'Comprar ' : 'Vender ')
+            . number_format($validated['monto_moneda'], 2, ',', '.') . ' ' . optional($moneda)->codigo
+            . ' a $' . number_format($validated['cotizacion'], 2, ',', '.');
+
         try {
-            $operacion = $validated['tipo'] === 'compra'
-                ? $service->registrarCompra($validated, Auth::id())
-                : $service->registrarVenta($validated, Auth::id());
+            $resultado = $solicitudes->ejecutarOSolicitar(
+                'divisa.' . $validated['tipo'],
+                $descripcion,
+                $validated,
+                null,
+                fn () => $validated['tipo'] === 'compra'
+                    ? $service->registrarCompra($validated, Auth::id())
+                    : $service->registrarVenta($validated, Auth::id())
+            );
         } catch (\RuntimeException $e) {
             return response()->json(['estado' => 0, 'mensaje' => $e->getMessage()], 422);
         }
+
+        if (!$resultado['ejecutado']) {
+            return response()->json(['estado' => 1, 'pendiente' => true, 'mensaje' => 'Tu solicitud quedó pendiente de aprobación del administrador.']);
+        }
+
+        $operacion = $resultado['resultado'];
 
         return response()->json([
             'estado' => 1,

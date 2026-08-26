@@ -10,6 +10,11 @@
     $isReportes  = Str::startsWith($resp, ['graph', 'inventory', 'pdfinventario']);
     $isEcommerce = Str::startsWith($resp, ['orders', 'banner', 'zonas-envio', 'Ecommerce', 'ventas/ecommerce', 'ventas/ordenes', 'publicaciones', 'revendedores-panel', 'envios']);
     $isSistema   = Str::startsWith($resp, ['config', 'admin/', 'chatbot', 'documentation', 'training-videos']);
+
+    // Badge de solicitudes de aprobación pendientes (solo se consulta si el usuario puede verlas)
+    $solicitudesPendientes = auth()->check() && auth()->user()->havePermission('admin.solicitudes.index')
+        ? \App\Models\Solicitud::where('estado', 'pendiente')->count()
+        : 0;
 @endphp
 
 <style>
@@ -535,6 +540,14 @@
                     @can('haveaccess','admin.auditoria.index')
                     <a href="{{ url('admin/auditoria') }}" class="dg-drop-item {{ Str::startsWith($resp,'admin/auditoria') ? 'dg-drop-active' : '' }}">
                         <i class="fas fa-user-secret"></i> Auditoría
+                    </a>
+                    @endcan
+                    @can('haveaccess','admin.solicitudes.index')
+                    <a href="{{ url('admin/solicitudes') }}" class="dg-drop-item {{ Str::startsWith($resp,'admin/solicitudes') ? 'dg-drop-active' : '' }}">
+                        <i class="fas fa-hand-paper"></i> Solicitudes de Aprobación
+                        @if($solicitudesPendientes > 0)
+                            <span class="badge bg-warning text-dark ms-auto">{{ $solicitudesPendientes }}</span>
+                        @endif
                     </a>
                     @endcan
                     <div class="dg-drop-sep"></div>

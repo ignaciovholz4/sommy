@@ -16,6 +16,7 @@ use App\Models\PriceListItem;
 use App\Models\Revendedor;
 use App\Models\RevendedorComision;
 use App\Services\ChequeService;
+use App\Services\SolicitudAprobacionService;
 
 use App\Http\Controllers\StockController;
 
@@ -194,16 +195,30 @@ class VentaController extends Controller
         }
     }
 
-    public function anular($idventa)
+    public function anular($idventa, SolicitudAprobacionService $solicitudes)
     {
         $venta = Venta::findOrFail($idventa);
-        $venta->estado = 'anulada';
-        $venta->save();
 
-        // Si la venta tenía comisión de revendedor sin pagar, se anula con ella
-        RevendedorComision::where('venta_id', $idventa)
-            ->whereIn('estado', ['pendiente', 'aprobada'])
-            ->update(['estado' => 'anulada']);
+        $resultado = $solicitudes->ejecutarOSolicitar(
+            'venta.anular',
+            'Anular venta ' . ($venta->num_folio ?: '#' . $venta->idventa) . ' ($' . number_format($venta->total_con_iva, 0, ',', '.') . ')',
+            ['idventa' => (int) $idventa],
+            $venta,
+            function () use ($idventa) {
+                $venta = Venta::findOrFail($idventa);
+                $venta->estado = 'anulada';
+                $venta->save();
+
+                // Si la venta tenía comisión de revendedor sin pagar, se anula con ella
+                RevendedorComision::where('venta_id', $idventa)
+                    ->whereIn('estado', ['pendiente', 'aprobada'])
+                    ->update(['estado' => 'anulada']);
+            }
+        );
+
+        if (!$resultado['ejecutado']) {
+            return response()->json(['success' => true, 'pendiente' => true, 'mensaje' => 'Tu solicitud de anulación quedó pendiente de aprobación del administrador.']);
+        }
 
         return response()->json(['success' => true]);
     }
