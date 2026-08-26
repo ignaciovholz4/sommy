@@ -14,6 +14,17 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('imagenes/marca/sommy-favicon.svg') }}">
 
+    {{-- Microsoft Clarity: mapas de calor + grabaciones de sesion (gratis, no toca nuestro server) --}}
+    @if(config('services.clarity.project_id'))
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "{{ config('services.clarity.project_id') }}");
+    </script>
+    @endif
+
     {{-- AOS: animaciones al hacer scroll (alojado localmente, carga async e init resiliente) --}}
     <link rel="stylesheet" href="{{ assetv('css/ecommerce/aos.css') }}">
     <script src="{{ assetv('js/ecommerce/aos.js') }}" async></script>

@@ -146,4 +146,11 @@ return [
         'moneda' => env('GOOGLE_ADS_MONEDA', 'ARS'),
     ],
 
+    // Microsoft Clarity: mapas de calor + grabaciones de sesion de la tienda online.
+    // Gratis, no guarda nada en nuestro servidor. Crear proyecto en clarity.microsoft.com
+    // y pegar el Project ID aqui — sin eso, el script ni se inyecta.
+    'clarity' => [
+        'project_id' => env('MICROSOFT_CLARITY_ID'),
+    ],
+
 ];
