@@ -23,11 +23,23 @@ class FinanzasDashboardController extends Controller
         $inicioMes   = $hoy->copy()->startOfMonth();
         $hace12Meses = $hoy->copy()->startOfMonth()->subMonths(11);
 
-        // (a) Ingresos vs egresos por mes, últimos 12 meses
-        $porMes = DB::table('movimientos')
-            ->selectRaw("DATE_FORMAT(fecha, '%Y-%m') as mes, tipo, SUM(total) as total")
-            ->where('fecha', '>=', $hace12Meses)
-            ->groupBy('mes', 'tipo')
+        // (a) Ingresos vs egresos por mes, últimos 12 meses.
+        // Solo cuentas en ARS: mezclar pesos y moneda extranjera sin convertir
+        // daría un número sin sentido. Las tenencias en otra moneda se muestran
+        // aparte, más abajo (saldosMonedaExtranjera).
+        $monedaArsId = DB::table('monedas')->where('codigo', 'ARS')->value('id');
+
+        // LEFT JOIN + moneda_id IS NULL: un movimiento sin cuenta (ej. pago con
+        // un cheque de cartera endosado) se cuenta como ARS por defecto, igual
+        // que antes de este fix — solo se excluyen las cuentas en otra moneda.
+        $porMes = DB::table('movimientos as m')
+            ->leftJoin('cuentas as c', 'c.id', '=', 'm.cuenta_id')
+            ->selectRaw("DATE_FORMAT(m.fecha, '%Y-%m') as mes, m.tipo, SUM(m.total) as total")
+            ->where('m.fecha', '>=', $hace12Meses)
+            ->where(function ($q) use ($monedaArsId) {
+                $q->whereNull('c.moneda_id')->orWhere('c.moneda_id', $monedaArsId);
+            })
+            ->groupBy('mes', 'm.tipo')
             ->get();
 
         $mesesLabels   = [];
@@ -54,8 +66,8 @@ class FinanzasDashboardController extends Controller
             ->orderByDesc('total')
             ->get();
 
-        // (c) Saldos por cuenta (ingresos - egresos de cada cuenta activa)
-        $saldosCuentas = Cuenta::with('sucursal')
+        // (c) Saldos por cuenta (ingresos - egresos de cada cuenta activa), con su moneda
+        $cuentasActivas = Cuenta::with(['sucursal', 'moneda'])
             ->where('activa', true)
             ->get()
             ->map(function ($cuenta) {
@@ -65,9 +77,29 @@ class FinanzasDashboardController extends Controller
                 return [
                     'nombre' => $cuenta->nombre . ' (' . ($cuenta->tipo === 'caja' ? 'Caja' : 'Banco') . ($cuenta->sucursal ? ' · ' . $cuenta->sucursal->nombre : '') . ')',
                     'saldo'  => round($ingresos - $egresos, 2),
+                    'moneda_codigo'  => optional($cuenta->moneda)->codigo ?? 'ARS',
+                    'moneda_simbolo' => optional($cuenta->moneda)->simbolo ?? '$',
+                ];
+            });
+
+        $saldosCuentas = $cuentasActivas
+            ->where('moneda_codigo', 'ARS')
+            ->sortByDesc('saldo')
+            ->values();
+
+        // Tenencias en moneda extranjera: no se pueden sumar entre sí (USD != USDT),
+        // se agrupan por moneda y se listan aparte del flujo de caja en pesos.
+        $saldosMonedaExtranjera = $cuentasActivas
+            ->where('moneda_codigo', '!=', 'ARS')
+            ->groupBy('moneda_codigo')
+            ->map(function ($cuentas, $codigo) {
+                return [
+                    'codigo'  => $codigo,
+                    'simbolo' => $cuentas->first()['moneda_simbolo'],
+                    'total'   => round($cuentas->sum('saldo'), 2),
+                    'cuentas' => $cuentas->values(),
                 ];
             })
-            ->sortByDesc('saldo')
             ->values();
 
         // (d) Cuentas por pagar
@@ -101,11 +133,15 @@ class FinanzasDashboardController extends Controller
             ->first();
         $cxcSaldo = round((float) $cxcTotales->cargos - (float) $cxcTotales->pagos, 2);
 
-        // (f) Resultado del mes actual (ingresos - egresos de tesorería)
-        $delMes = DB::table('movimientos')
-            ->selectRaw("COALESCE(SUM(CASE WHEN tipo = 'ingreso' THEN total ELSE 0 END), 0) as ingresos,
-                COALESCE(SUM(CASE WHEN tipo = 'egreso' THEN total ELSE 0 END), 0) as egresos")
-            ->where('fecha', '>=', $inicioMes)
+        // (f) Resultado del mes actual (ingresos - egresos de tesorería en ARS)
+        $delMes = DB::table('movimientos as m')
+            ->leftJoin('cuentas as c', 'c.id', '=', 'm.cuenta_id')
+            ->selectRaw("COALESCE(SUM(CASE WHEN m.tipo = 'ingreso' THEN m.total ELSE 0 END), 0) as ingresos,
+                COALESCE(SUM(CASE WHEN m.tipo = 'egreso' THEN m.total ELSE 0 END), 0) as egresos")
+            ->where('m.fecha', '>=', $inicioMes)
+            ->where(function ($q) use ($monedaArsId) {
+                $q->whereNull('c.moneda_id')->orWhere('c.moneda_id', $monedaArsId);
+            })
             ->first();
 
         $ingresosMes  = (float) $delMes->ingresos;
@@ -118,6 +154,7 @@ class FinanzasDashboardController extends Controller
             'serieEgresos'       => $serieEgresos,
             'gastosPorCategoria' => $gastosPorCategoria,
             'saldosCuentas'      => $saldosCuentas,
+            'saldosMonedaExtranjera' => $saldosMonedaExtranjera,
             'cxpTotal'           => $cxpTotal,
             'cxpVencidas'        => $cxpVencidas,
             'cxpProximas'        => $cxpProximas,

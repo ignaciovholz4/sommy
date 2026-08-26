@@ -33,6 +33,7 @@ class RoleController extends Controller
      */
     public function create()
     {
+        Gate::authorize('haveaccess','admin_role.create');
         $permissions = Permission::where('slug','like','%admin%')->get();
         $permission_caja = Permission::where('slug','like','%caja%')->get();
         $permission_almacen = Permission::where('slug','like','%almacen%')->get();
@@ -54,6 +55,7 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('haveaccess','admin_role.store');
         //return $request->all();
         $request->validate([
             'name'=>'required|max:50|unique:roles,name',
@@ -92,12 +94,13 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
+        Gate::authorize('haveaccess','admin_role.show');
         /**array de roles $array = [1,2,3,4,5,6]*/
         $permission_role = [];
         foreach ($role->permissions as $permission) {
             $permission_role[] = $permission->id;
         }
-        
+
 
         //return $permission_role;
         // return $role->permissions;
@@ -117,6 +120,7 @@ class RoleController extends Controller
     //model bilding en la function 
     public function edit(Role $role)
     {
+        Gate::authorize('haveaccess','admin_role.edit');
         /**array de roles $array = [1,2,3,4,5,6]*/
         $permission_role = [];
         foreach ($role->permissions as $permission) {
@@ -150,6 +154,7 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
+        Gate::authorize('haveaccess','admin_role.update');
         $request->validate([
             'name'=>'required|max:50|unique:roles,name,'.$role->id,
             'slug'=>'required|max:50|unique:roles,slug,'.$role->id,
@@ -178,14 +183,16 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
+        Gate::authorize('haveaccess','admin_role.destroy');
         $role->delete();
         return redirect()->route('role.index')->with('status_success','EL rol se elimino con exito');
     }
 
     public function downRol(Request $request)
     {
+        Gate::authorize('haveaccess','admin_role.destroy');
         try {
-            
+
             $where = $request->id;
 
             $role_user = DB::table('role_user')->where('role_id',$where)->first();

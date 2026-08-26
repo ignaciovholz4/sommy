@@ -53,6 +53,17 @@
         </a>
     </div>
 
+    @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
+    @if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
+
+    {{-- Chytapay: conexion OAuth2 + sincronizacion automatica de cobros pagados --}}
+    <div class="card-facturarg mb-4" id="chytapay-card">
+        <div class="card-header"><i class="fas fa-bolt me-2"></i> Chytapay — cobros automáticos</div>
+        <div class="card-body p-4" id="chytapay-body">
+            <div class="text-muted small">Cargando estado de la conexión...</div>
+        </div>
+    </div>
+
     {{-- Paso 1: subir archivo --}}
     <div class="card-facturarg mb-4" id="conc-card-upload">
         <div class="card-header"><i class="fas fa-file-upload me-2"></i> 1. Subir extracto de movimientos</div>
@@ -199,6 +210,15 @@
         },
         csrf: "{{ csrf_token() }}",
     };
+    window.CHYTAPAY_CONFIG = {
+        urls: {
+            estado: "{{ route('cuentas.chytapay.estado', $cuenta->id) }}",
+            conectar: "{{ route('cuentas.chytapay.conectar', $cuenta->id) }}",
+            desconectar: "{{ route('cuentas.chytapay.desconectar', $cuenta->id) }}",
+            sincronizar: "{{ route('cuentas.chytapay.sincronizar', $cuenta->id) }}",
+        },
+    };
 </script>
 <script src="{{ asset('js/funciones_cuenta/conciliacion.js') }}?v={{ filemtime(public_path('js/funciones_cuenta/conciliacion.js')) }}"></script>
+<script src="{{ asset('js/funciones_cuenta/chytapay.js') }}?v={{ filemtime(public_path('js/funciones_cuenta/chytapay.js')) }}"></script>
 @endsection

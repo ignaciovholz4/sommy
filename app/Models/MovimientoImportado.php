@@ -10,6 +10,8 @@ class MovimientoImportado extends Model
 
     protected $fillable = [
         'cuenta_id',
+        'origen',
+        'chytapay_payment_request_id',
         'archivo_nombre',
         'archivo_hash',
         'fecha',

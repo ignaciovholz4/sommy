@@ -406,6 +406,24 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                 </div>
+                <div class="col-12 chequeWrap" style="display:none;">
+                    <div class="row mt-1">
+                        <div class="col-md-6">
+                            <input type="text" name="cheque_numero[]" class="form-control" placeholder="Número de cheque" maxlength="60">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="cheque_banco[]" class="form-control" placeholder="Banco emisor" maxlength="120">
+                        </div>
+                    </div>
+                    <div class="row mt-1">
+                        <div class="col-md-6">
+                            <input type="date" name="cheque_fecha_cobro[]" class="form-control" title="Fecha de cobro">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="cheque_titular[]" class="form-control" placeholder="Quién lo dio (opcional)" maxlength="120">
+                        </div>
+                    </div>
+                </div>
             `;
 
             container.appendChild(row);
@@ -421,6 +439,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     row.querySelector(".aliasTerceroInput").value = "";
                     row.querySelector(".cuitTerceroInput").value = "";
                 }
+                row.querySelector(".chequeWrap").style.display = "none";
             });
 
             // Al elegir un alias conocido, autocompletar su CUIT
@@ -428,6 +447,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 const conocido = (window.aliasTercerosConocidos || []).find(a => a.alias === this.value.trim().toLowerCase());
                 const cuitInput = row.querySelector(".cuitTerceroInput");
                 if (conocido && conocido.cuit && !cuitInput.value) cuitInput.value = conocido.cuit;
+            });
+
+            // Cheque recibido: pedir número/banco/fecha de cobro
+            row.querySelector("select[name='medios[]']").addEventListener("change", function () {
+                row.querySelector(".chequeWrap").style.display = this.value === "cheque" ? "" : "none";
             });
 
             row.querySelector(".removeMedioPago").addEventListener("click", () => {

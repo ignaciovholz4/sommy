@@ -899,6 +899,18 @@ body.has-overlay-header .ec-header:not(.scrolled) .ec-logo .logo-blanco {
 .sommy-cart-remove:hover { background: #FBEDE6; color: #b4552d; }
 .sommy-cart-total-label { font-family: 'Poppins', sans-serif; font-weight: 500; color: var(--sm-navy); }
 .sommy-cart-total-value { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 17px; color: var(--sm-navy); }
+.sommy-badge-sinstock {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #FEF3C7;
+    color: #92400E;
+    white-space: nowrap;
+}
 .sommy-cart-empty { text-align: center; padding: 28px 0; }
 .sommy-cart-empty .icon {
     width: 64px;

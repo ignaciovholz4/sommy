@@ -1,33 +1,7 @@
 console.log("Starting")
-/********************SECTION END BUY******************************/
-const btnEndBuy = document.querySelector("#btnEndBuy");
-const divContentCartDetail = document.querySelector("#div-content-cart-detail");
+/******************** UN SOLO FORMULARIO, UN SOLO BOTON ******************************/
 const btnRegisterOrder = document.querySelector("#btnRegisterOrder");
-const btnKeepShopping = document.querySelector("#btnKeepShopping");
-const divContentSectionOrder = document.querySelector("#div-content-section-order");
 const divContentOrderGlobal = document.querySelector("#div-content-order-global");
-
-/***********BUTTONS ACCION FOR EACH SECTION*********** */
-const btnAddEmail = document.querySelector("#btnAddEmail");
-const btnAddIdentificacion = document.querySelector("#btnAddIdentificacion");
-const btnAddEntrega = document.querySelector("#btnAddEntrega");
-const btnAddEnvio = document.querySelector("#btnAddEnvio");
-const btnAddPago = document.querySelector("#btnAddPago");
-
-/*******CODE FOR SECTION********/
-const cardSectionEmail = document.querySelector("#card-section-email");
-const cardSectionIdentification = document.querySelector("#card-section-identification");
-const cardSectionEntrega = document.querySelector("#card-section-entrega");
-const cardSectionEnvio = document.querySelector("#card-section-envio");
-const cardSectionPago = document.querySelector("#card-section-pago");
-const cardSectionOrdenarPedido = document.querySelector("#card-section-ordenar-pedido");
-
-/*******BUTTONS FOR SECTION********/
-const btnSectionEmail = document.querySelector("#btnSectionEmail");
-const btnSectionIdentificacion = document.querySelector("#btnSectionIdentificacion");
-const btnSectionEntrega = document.querySelector("#btnSectionEntrega");
-const btnSectionEnvio = document.querySelector("#btnSectionEnvio");
-const btnSectionPago = document.querySelector("#btnSectionPago");
 
 /**********CODE FORM FOR SECTION****************/
 const formEmail = document.querySelector("#form-email");
@@ -48,8 +22,6 @@ const showEnvioPedido = document.querySelector("#showEnvioPedido");
 const showDescuentoPedido = document.querySelector("#showDescuentoPedido");
 const rowEnvioPedido = document.querySelector("#row-envio-pedido");
 const rowDescuentoPedido = document.querySelector("#row-descuento-pedido");
-/***************************** */
-const divShowEmail =  document.querySelector("#div-show-email");
 
 /********** NAME SHOW ********** */
 const nameCustomerCurrent = document.querySelector("#p-name-customer");
@@ -60,9 +32,9 @@ let dataOrderDetail = [];
 
 let listCartProdOrder = fnListCartProduct();
 document.addEventListener('DOMContentLoaded', function () {
-    console.log(listCartProdOrder.length);
-    if(listCartProdOrder.length === 0) btnEndBuy.disabled = true;//disabled button 
+    if(listCartProdOrder.length === 0) btnRegisterOrder.disabled = true;//disabled button
     fnShowCurrentCartProduct();//function for show list cart product
+    fnActualizarResumen();
 });
 
 /*********************UPDATE FOR VERSION 2************************ */
@@ -74,12 +46,14 @@ const fnShowCurrentCartProduct = () => {
     divShowProductCart.innerHTML = "";
 
     if(listCartProdOrder.length === 0){
-        btnEndBuy.disabled = true;
-        fnShowQuantityProduct(0); 
+        btnRegisterOrder.disabled = true;
+        fnShowQuantityProduct(0);
         showSubtotalPedido.textContent = fnFormatMoney(0);
         showTotalPedido.textContent = fnFormatMoney(0);
         return false;
     }
+
+    btnRegisterOrder.disabled = false;
 
     listCartProdOrder.forEach((product,index) => {
         let addRow = "";
@@ -117,6 +91,10 @@ const fnShowCurrentCartProduct = () => {
             ? `<img src="${product.image}" class="sommy-order-thumb" alt="">`
             : `<div class="sommy-order-thumb sommy-order-thumb--ph"><i class="fa-solid fa-feather" aria-hidden="true"></i></div>`;
 
+        const badgeSinStock = product.sinStock
+            ? `<span class="sommy-badge-sinstock"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Sin stock — a consultar</span>`
+            : "";
+
         divShowProductCart.innerHTML += `
             <div class="product-card p-3 shadow-sm">
                 <div class="row align-items-center">
@@ -126,6 +104,7 @@ const fnShowCurrentCartProduct = () => {
                             <div style="min-width:0;">
                                 <h6 class="mb-1">${product.name}</h6>
                                 ${addRow}
+                                ${badgeSinStock ? `<div class="mt-1">${badgeSinStock}</div>` : ""}
                             </div>
                         </div>
                     </div>
@@ -216,24 +195,20 @@ const fnDeleteProductOrder = (claveProductCart) => {
 } 
 
 const updateSumQuantity = (claveProduct) => {
-    console.log(claveProduct);
-    console.log(listCartProdOrder)
     const findProductIndex = listCartProdOrder.findIndex(item => item.claveCart === claveProduct);//find the product for update
     let currentCantProduct = Number(listCartProdOrder[findProductIndex].cant);
     let currentStockProduct = Number(listCartProdOrder[findProductIndex].stockProduct);
     let sumaCant = currentCantProduct + 1;
-    console.log(sumaCant);
-    const validateStock = fnCheckStockProduct(currentStockProduct, sumaCant);
-    console.log(validateStock);
-    if(validateStock === true) {//validate current stock
-        fnMessageToastrError("No hay suficiente stock para el producto","Error");
-        return false;
-    }
+    const sinStock = fnCheckStockProduct(currentStockProduct, sumaCant);// no bloquea: solo marca el item
     listCartProdOrder[findProductIndex].cant  += 1;
     listCartProdOrder[findProductIndex].total = Number(listCartProdOrder[findProductIndex].cant) * Number(listCartProdOrder[findProductIndex].priceSale);
-    console.log(listCartProdOrder);
+    listCartProdOrder[findProductIndex].sinStock = sinStock;
     fnSaveCartProduct(listCartProdOrder);// function for saving cart product updated quantity
-    fnMessageToastrSuccess("Se agregaron mas unidades","Exito!");
+    if (sinStock) {
+        fnMessageToastrWarning("Sin stock suficiente: queda a consultar por WhatsApp.","Sin stock");
+    } else {
+        fnMessageToastrSuccess("Se agregaron mas unidades","Exito!");
+    }
     fnShowCurrentCartProduct();//function for show list cart product updated
 }
 
@@ -249,28 +224,15 @@ const updateSubtractionQuantity = (claveProduct) => {
     }
     listCartProdOrder[findProductIndex].cant  -= 1;
     listCartProdOrder[findProductIndex].total = Number(listCartProdOrder[findProductIndex].cant) * Number(listCartProdOrder[findProductIndex].priceSale);
-    console.log(listCartProdOrder);
+    listCartProdOrder[findProductIndex].sinStock = fnCheckStockProduct(
+        Number(listCartProdOrder[findProductIndex].stockProduct),
+        Number(listCartProdOrder[findProductIndex].cant)
+    );
     fnSaveCartProduct(listCartProdOrder);// function for saving cart product updated quantity
     fnMessageToastrWarning("Menos 1 unidad","Exito!");
     fnShowCurrentCartProduct();//function for show list cart product updated
 }
 /*********************************************************************** */
-
-btnEndBuy.addEventListener("click", (e) => {
-    e.preventDefault();
-    console.log("jfglfdjglfjlg");
-    btnSectionIdentificacion.disabled = true;
-    btnSectionEntrega.disabled = true;
-    btnRegisterOrder.disabled = true;
-    /******************************** */
-    divContentCartDetail.style.display = "none";
-    btnEndBuy.style.display = "none";
-    btnKeepShopping.style.display = "none";
-    /******************************** */
-    btnRegisterOrder.style.display = "block";
-    divContentSectionOrder.style.display = "block";
-    /******************************** */
-});
 
 // Candado: garantiza que el pedido viaje UNA sola vez aunque haya doble click
 let pedidoEnviandose = false;
@@ -308,7 +270,6 @@ const fnRegistrarPedido = () => {
 
     pedidoEnviandose = true;
     btnRegisterOrder.disabled = true;
-    if (btnAddPago) { btnAddPago.disabled = true; }
     btnRegisterOrder.textContent = "Enviando pedido...";
 
     saveDataEcommerce(formDataEcommerce,'/Ecommercesaveorder').then((resp) => {
@@ -334,21 +295,24 @@ const fnRegistrarPedido = () => {
             fnMessageToastrError(resp.message,"Error");
             pedidoEnviandose = false;
             btnRegisterOrder.disabled = false;
-            if (btnAddPago) { btnAddPago.disabled = false; }
             btnRegisterOrder.textContent = "Realizar pedido";
         }
     }).catch(() => {
         fnMessageToastrError("No se pudo enviar el pedido. Revisá tu conexión e intentá de nuevo.","Error");
         pedidoEnviandose = false;
         btnRegisterOrder.disabled = false;
-        if (btnAddPago) { btnAddPago.disabled = false; }
         btnRegisterOrder.textContent = "Realizar pedido";
     });
 };
 
+// Único botón del checkout: valida los 5 grupos de datos de una sola vez y,
+// si está todo OK, registra el pedido (sin pasos intermedios).
 btnRegisterOrder.addEventListener("click", (e) => {
     e.preventDefault();
-    fnRegistrarPedido();
+    if (fnAddFormDataArrayForEachSection() === true) {
+        fnActualizarResumen();
+        fnRegistrarPedido();
+    }
 });
 
 const fnExecuteAfterRegisterOrder = (data) => {
@@ -378,260 +342,40 @@ const fnExecuteAfterRegisterOrder = (data) => {
     }
 }
 
-btnSectionEmail.addEventListener("click", (e) => {
-    e.preventDefault();
-    //cardSectionEmail.style.display = "none";
-    console.log(cardSectionEmail.style.display);
-    const iconEmail = document.querySelector('#icon-email');
-    if(cardSectionEmail.style.display === "none" || cardSectionEmail.style.display === ""){
-        cardSectionEmail.style.display = "block";
-        iconEmail.className = "";
-        iconEmail.className = 'fa fa-check-circle text-success';
-        console .log("card block")
-        //fa fa-check-circle text-success
-    }else{
-        cardSectionEmail.style.display = "none";
-        iconEmail.className = "";
-        iconEmail.className = 'fa-solid fa-pencil text-secondary';
-        console .log("card none")
-    }
-});
-
-btnSectionIdentificacion.addEventListener("click", (e) => {
-    e.preventDefault();
-    const iconIdentificacion = document.querySelector('#icon-identificacion');
-    if(cardSectionIdentification.style.display === "none" || cardSectionIdentification.style.display === ""){
-        cardSectionIdentification.style.display = "block";
-        iconIdentificacion.className = "";
-        iconIdentificacion.className = 'fa fa-check-circle text-success';
-    }else{
-        cardSectionIdentification.style.display = "none";
-        iconIdentificacion.className = "";
-        iconIdentificacion.className = 'fa-solid fa-pencil text-secondary';
-    }
-});
-
-btnSectionEntrega.addEventListener("click", (e) => {
-    e.preventDefault();
-    const iconEntrega = document.querySelector('#icon-entrega');
-    if(cardSectionEntrega.style.display === "none" || cardSectionEntrega.style.display === ""){
-        cardSectionEntrega.style.display = "block";
-        iconEntrega.className = "";
-        iconEntrega.className = 'fa fa-check-circle text-success';
-    }else{
-        cardSectionEntrega.style.display = "none";
-        iconEntrega.className = "";
-        iconEntrega.className = 'fa-solid fa-pencil text-secondary';
-    }
-});
-
-if (btnSectionEnvio) {
-    btnSectionEnvio.addEventListener("click", (e) => {
-        e.preventDefault();
-        const iconEnvio = document.querySelector('#icon-envio');
-        if(cardSectionEnvio.style.display === "none" || cardSectionEnvio.style.display === ""){
-            cardSectionEnvio.style.display = "block";
-            iconEnvio.className = 'fa fa-check-circle text-success';
-        }else{
-            cardSectionEnvio.style.display = "none";
-            iconEnvio.className = 'fa-solid fa-pencil text-secondary';
-        }
-    });
-}
-
-if (btnSectionPago) {
-    btnSectionPago.addEventListener("click", (e) => {
-        e.preventDefault();
-        const iconPago = document.querySelector('#icon-pago');
-        if(cardSectionPago.style.display === "none" || cardSectionPago.style.display === ""){
-            cardSectionPago.style.display = "block";
-            iconPago.className = 'fa fa-check-circle text-success';
-        }else{
-            cardSectionPago.style.display = "none";
-            iconPago.className = 'fa-solid fa-pencil text-secondary';
-        }
-    });
-}
-btnAddEmail.addEventListener("click", (e) => {
-    e.preventDefault();
-    console.log("validate email address");
-
-    const formDataEmail = new FormData(formEmail);
-    const formValues = Object.fromEntries(formDataEmail.entries());
-    console.log(formValues);
-    console.log(formValues.email);
-    let inputValueEmail = formValues.email;
-    if(inputValueEmail === ""){
-        fnMessageToastrError("No has ingresado un correo electronico","Error");
-        return false;
-    }
-
-    if(inputValueEmail !== ""){
-        console.log(fnValidateEmail(inputValueEmail)); 
-        let resultValidate = fnValidateEmail(inputValueEmail);
-        if(resultValidate === true){
-            btnAddEmail.disabled = true;
-            const formDataEcommerce = new FormData(); 
-            formDataEcommerce.append('email', inputValueEmail);
-            getDataEcommerce(formDataEcommerce,'/EcommerceFindEmailCustomer').then((resp) => {
-                console.log(resp);
-                if(resp.status === 1 && resp.exist === true){
-                    btnAddEmail.disabled = false;
-                    let dataCustomer = resp.dataCustomer;
-                    /********IDENTIFICACION************* */
-                    document.querySelector('#name').value = dataCustomer.nombre;
-                    document.querySelector('#materno').value = dataCustomer.materno;
-                    //document.querySelector('#paterno').value = dataCustomer.paterno;
-                    document.querySelector('#phone').value = dataCustomer.telefono;
-                    cardSectionIdentification.style.display = "block";
-                    /*************ENTREGA***************** */
-                    document.querySelector('#calle').value = dataCustomer.direccion;
-                    document.querySelector('#numberExterior').value = dataCustomer.number_exterior;
-                    document.querySelector('#numberInterior').value = dataCustomer.number_interior || '';
-                    document.querySelector('#localidad').value = dataCustomer.localidad || '';
-                    document.querySelector('#provincia').value = dataCustomer.provincia || '';
-                    document.querySelector('#codigoPostal').value = dataCustomer.codigo_postal || '';
-                    document.querySelector('#dniCuit').value = dataCustomer.dni_cuit || '';
-                    /************************************* */
-                    fnShowEmail(inputValueEmail);
-                    cardSectionEntrega.style.display = "block";
-                    fnMessageToastrWarning(resp.message, 'Verificar!')
-                    /*********************** */
-                    btnSectionIdentificacion.disabled = false;
-                    btnSectionEntrega.disabled = false;
-                }
-                if(resp.status === 1 && resp.exist === false){
-                    btnAddEmail.disabled = false;
-                    //let email = {email: inputValueEmail};
-                    //pedidoArray.push({nameSection: "emailSection", data: email});
-                    fnShowEmail(inputValueEmail);
-                    cardSectionIdentification.style.display = "block";
-                    console.log(pedidoArray);
-                    /*********************** */
-                    btnSectionIdentificacion.disabled = false;
-                }
-                if(resp.status === 0){
-                    btnAddEmail.disabled = false;
-                    alert(resp.message);
-                }
-
-            });
-            
-        }
-    }
-});
-
 const fnValidateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }
-fnShowEmail = (email) => {
-    divShowEmail.textContent = email;
+
+// Al salir del campo email (sin botón): si ya existe un cliente con ese correo,
+// completa el resto del formulario solo. No bloquea ni valida nada acá — la
+// validación completa pasa una sola vez, al hacer click en "Realizar pedido".
+const inputEmailCliente = document.querySelector('#inputEmailCliente');
+if (inputEmailCliente) {
+    inputEmailCliente.addEventListener('blur', () => {
+        const inputValueEmail = inputEmailCliente.value.trim();
+        if (!inputValueEmail || fnValidateEmail(inputValueEmail) !== true) return;
+
+        const formDataEcommerce = new FormData();
+        formDataEcommerce.append('email', inputValueEmail);
+        getDataEcommerce(formDataEcommerce, '/EcommerceFindEmailCustomer').then((resp) => {
+            if (resp.status === 1 && resp.exist === true) {
+                let dataCustomer = resp.dataCustomer;
+                document.querySelector('#name').value = dataCustomer.nombre || '';
+                document.querySelector('#materno').value = dataCustomer.materno || '';
+                document.querySelector('#phone').value = dataCustomer.telefono || '';
+                document.querySelector('#calle').value = dataCustomer.direccion || '';
+                document.querySelector('#numberExterior').value = dataCustomer.number_exterior || '';
+                document.querySelector('#numberInterior').value = dataCustomer.number_interior || '';
+                document.querySelector('#localidad').value = dataCustomer.localidad || '';
+                document.querySelector('#provincia').value = dataCustomer.provincia || '';
+                document.querySelector('#codigoPostal').value = dataCustomer.codigo_postal || '';
+                document.querySelector('#dniCuit').value = dataCustomer.dni_cuit || '';
+                fnMessageToastrWarning(resp.message, 'Verificar!');
+            }
+        });
+    });
 }
-
-btnAddIdentificacion.addEventListener("click", (e) => {
-    e.preventDefault();
-    const formDataIdentificacion = new FormData(formIdentificacion);
-    const formValues = Object.fromEntries(formDataIdentificacion.entries());
-    console.log(formValues);
-    let validateForm = 0;
-    for (const nameInput in formValues) {
-        if(formValues[`${nameInput}`] === ""){
-            console.log(nameInput);
-            if(nameInput == 'name') fnMessageToastrError("El campo nombre esta vacio","Error");
-            if(nameInput == 'materno') fnMessageToastrError("El campo apellido esta vacio","Error");
-            if(nameInput == 'phone') fnMessageToastrError("El campo telefono esta vacio","Error");
-            validateForm++;
-        }
-    }
-
-    console.log(formValues.phone)
-
-    console.log(validateForm);
-    if( validateForm !== 0){
-        fnMessageToastrError("Faltan datos por llenar en la seccion identificacion","Error");
-        return false;
-    }
-
-    if( validateForm === 0){
-        cardSectionEntrega.style.display = "block";
-        /*****************************/
-        btnSectionEntrega.disabled = false;
-    }
-
-});
-
-btnAddEntrega.addEventListener("click", (e) => {
-    e.preventDefault();
-    const formDataEntrega = new FormData(formEntrega);
-    const formValues = Object.fromEntries(formDataEntrega.entries());
-
-    const etiquetas = {
-        calle: "calle",
-        numberExterior: "número",
-        localidad: "localidad",
-        provincia: "provincia",
-        codigoPostal: "código postal",
-        dniCuit: "DNI/CUIT",
-    };
-
-    let validateForm = 0;
-    for (const nameInput in formValues) {
-        if(CAMPOS_ENTREGA_OPCIONALES.includes(nameInput)) continue;
-        if(formValues[`${nameInput}`] === ""){
-            fnMessageToastrError(`El campo ${etiquetas[nameInput] || nameInput} está vacío`,"Error");
-            validateForm++;
-        }
-    }
-
-    if( validateForm !== 0){
-        fnMessageToastrError("Faltan datos por llenar en la seccion de entrega","Error");
-        return false;
-    }
-
-    // Abrir sección de envío
-    cardSectionEnvio.style.display = "block";
-    btnSectionEnvio.disabled = false;
-});
-
-btnAddEnvio.addEventListener("click", (e) => {
-    e.preventDefault();
-
-    const zonasDisponibles = document.querySelectorAll('.radio-zona-envio');
-    if (zonasDisponibles.length > 0 && !document.querySelector('.radio-zona-envio:checked')) {
-        fnMessageToastrError("Seleccioná una opción de envío","Error");
-        return false;
-    }
-
-    fnActualizarResumen();
-    cardSectionPago.style.display = "block";
-    btnSectionPago.disabled = false;
-});
-
-btnAddPago.addEventListener("click", (e) => {
-    e.preventDefault();
-
-    if (!document.querySelector('.radio-metodo-pago:checked')) {
-        fnMessageToastrError("Seleccioná un método de pago","Error");
-        return false;
-    }
-
-    fnActualizarResumen();
-
-    if(fnAddFormDataArrayForEachSection() == true){
-        btnRegisterOrder.disabled = false;
-        /*********HIDDEN SECTIONS ORDER************** */
-        cardSectionEmail.style.display = "none";
-        cardSectionIdentification.style.display = "none";
-        cardSectionEntrega.style.display = "none";
-        cardSectionEnvio.style.display = "none";
-        cardSectionPago.style.display = "none";
-        /********************************************* */
-        // Un solo click: con los datos completos, el pedido se registra y
-        // se abre WhatsApp directamente (sin segundo botón de confirmación)
-        fnRegistrarPedido();
-    }
-});
 
 fnAddFormDataArrayForEachSection = () => {
     pedidoArray = []; // reset para evitar secciones duplicadas si el usuario edita y reconfirma
@@ -683,7 +427,12 @@ fnAddFormDataArrayForEachSection = () => {
     pedidoArray.push({nameSection: "entregaSection", data: {...entregaValues}});
 
     /*************SECCION ENVIO************************************* */
+    const zonasDisponibles = document.querySelectorAll('.radio-zona-envio');
     const zonaSeleccionada = document.querySelector('.radio-zona-envio:checked');
+    if (zonasDisponibles.length > 0 && !zonaSeleccionada) {
+        fnMessageToastrError("Seleccioná una opción de envío","Error");
+        return false;
+    }
     pedidoArray.push({
         nameSection: "envioSection",
         data: { zonaEnvioId: zonaSeleccionada ? zonaSeleccionada.value : null }
@@ -739,8 +488,14 @@ const fnGenerateMessageOrder = (orderc,orderDetaild) => {
     mensaje += `Total: $${orderc.total_amount}\n\n`;
     mensaje += `Detalles del Pedido:\n`;
 
+    const hayItemsSinStock = orderDetaild.some(d => Number(d.sin_stock) === 1);
+    if (hayItemsSinStock) {
+        mensaje += `⚠️ Hay productos sin stock disponible ahora mismo, marcados abajo. Se piden igual, quedan a consultar.\n\n`;
+    }
+
     orderDetaild.forEach((detail, index) => {
-        mensaje += `Producto ${index + 1}:\n`;
+        const sinStock = Number(detail.sin_stock) === 1;
+        mensaje += `Producto ${index + 1}${sinStock ? ' — ⚠️ SIN STOCK, A CONSULTAR' : ' — ✅ con stock, entrega inmediata'}:\n`;
         mensaje += `- Nombre: ${detail.producto_nombre}\n`;
         if(detail.variante_nombre){
             mensaje += `- Medida: ${detail.variante_nombre}\n`;

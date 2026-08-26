@@ -7,6 +7,7 @@ use App\Models\CajaApertura;
 use App\Models\Movimiento;
 use App\Models\Proveedor;
 use App\Models\ProveedorCcMovimiento;
+use App\Services\ChequeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -118,7 +119,7 @@ class CuentaCorrienteProveedorController extends Controller
      * + reimputación FIFO de las deudas.
      * La cuenta llega como "caja-{aperturaId}" o "banco-{cuentaId}".
      */
-    public function registrarPago(Request $request, $proveedorId)
+    public function registrarPago(Request $request, $proveedorId, ChequeService $chequeService)
     {
         Gate::authorize('haveaccess', 'finanzas.cxp.manage');
 
@@ -139,6 +140,21 @@ class CuentaCorrienteProveedorController extends Controller
             return response()->json(['estado' => 0, 'mensaje' => 'El monto supera el saldo adeudado ($' . number_format($saldo, 2, ',', '.') . ').']);
         }
 
+        // Endoso: se paga entregando un cheque de tercero que ya está en cartera.
+        $chequeEndosado = str_starts_with($request->cuenta, 'cheque-')
+            ? $chequeService->resolverEndoso($request->cuenta)
+            : null;
+        if (str_starts_with($request->cuenta, 'cheque-') && $request->cuenta !== 'cheque-nuevo' && !$chequeEndosado) {
+            return response()->json(['estado' => 0, 'mensaje' => 'Ese cheque ya no está disponible para entregar.']);
+        }
+        $esChequeNuevo = $request->cuenta === 'cheque-nuevo';
+        if ($esChequeNuevo && !$request->input('cheque_numero')) {
+            return response()->json(['estado' => 0, 'mensaje' => 'Indicá el número del cheque.']);
+        }
+        if ($chequeEndosado && abs((float) $chequeEndosado->monto - (float) $request->monto) > 0.01) {
+            return response()->json(['estado' => 0, 'mensaje' => 'El monto no coincide con el del cheque ($' . number_format($chequeEndosado->monto, 2, ',', '.') . ').']);
+        }
+
         DB::beginTransaction();
         try {
             $monto      = (float) $request->monto;
@@ -146,8 +162,11 @@ class CuentaCorrienteProveedorController extends Controller
             $aperturaId = null;
             $efectivo   = 0;
             $bancos     = 0;
+            $montoCheque = 0;
 
-            if (str_starts_with($request->cuenta, 'caja-')) {
+            if ($chequeEndosado || $esChequeNuevo) {
+                $montoCheque = $monto;
+            } elseif (str_starts_with($request->cuenta, 'caja-')) {
                 $aperturaId = (int) str_replace('caja-', '', $request->cuenta);
                 $apertura   = CajaApertura::findOrFail($aperturaId);
 
@@ -168,6 +187,8 @@ class CuentaCorrienteProveedorController extends Controller
                 return response()->json(['estado' => 0, 'mensaje' => 'Formato de cuenta inválido.']);
             }
 
+            $medio = ($chequeEndosado || $esChequeNuevo) ? 'cheque' : null;
+
             // Fila haber en la cuenta corriente del proveedor
             $ccMovimiento = ProveedorCcMovimiento::create([
                 'proveedor_id' => $proveedor->idproveedor,
@@ -184,18 +205,33 @@ class CuentaCorrienteProveedorController extends Controller
                 'caja_apertura_id'  => $aperturaId,
                 'fecha'             => now(),
                 'tipo'              => 'egreso',
+                'medio'             => $medio,
                 'cliente_proveedor' => $proveedor->nombre,
                 'comprobante'       => 'Pago CxP #' . $ccMovimiento->id,
-                'observaciones'     => $request->descripcion ?: 'Pago de cuenta corriente a proveedor',
+                'observaciones'     => ($request->descripcion ?: 'Pago de cuenta corriente a proveedor')
+                    . ($chequeEndosado ? ' — entregado cheque Nº ' . $chequeEndosado->numero : ''),
                 'efectivo'          => $efectivo,
                 'bancos'            => $bancos,
                 'tarjetas'          => 0,
+                'cheques'           => $montoCheque,
                 'total'             => $monto,
                 'referencia_type'   => ProveedorCcMovimiento::class,
                 'referencia_id'     => $ccMovimiento->id,
             ]);
 
             $ccMovimiento->update(['movimiento_id' => $movimiento->id]);
+
+            if ($chequeEndosado) {
+                $chequeService->entregar($chequeEndosado, $movimiento);
+            } elseif ($esChequeNuevo) {
+                $chequeService->registrarPropio([
+                    'numero'             => $request->input('cheque_numero'),
+                    'banco_emisor'       => $request->input('cheque_banco'),
+                    'contraparte_nombre' => $request->input('cheque_titular') ?: $proveedor->nombre,
+                    'monto'              => $monto,
+                    'fecha_cobro'        => $request->input('cheque_fecha_cobro') ?: now(),
+                ], $proveedor, $movimiento);
+            }
 
             // Imputación FIFO contra las deudas pendientes
             ProveedorCcMovimiento::reimputarFifo((int) $proveedor->idproveedor);

@@ -123,7 +123,30 @@
                         <option value="efectivo">Efectivo</option>
                         <option value="transferencia">Transferencia / MercadoPago</option>
                         <option value="tarjeta">Tarjeta</option>
+                        <option value="cheque">Cheque</option>
                     </select>
+                </div>
+                <div class="mb-3" id="pg-cheque-wrap" style="display:none;">
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Número de cheque</label>
+                            <input type="text" id="pg-cheque-numero" class="form-control" maxlength="60">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Banco emisor</label>
+                            <input type="text" id="pg-cheque-banco" class="form-control" maxlength="120">
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <label class="form-label">Fecha de cobro</label>
+                            <input type="date" id="pg-cheque-fecha" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Quién lo dio (opcional)</label>
+                            <input type="text" id="pg-cheque-titular" class="form-control" maxlength="120">
+                        </div>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Monto</label>
@@ -253,6 +276,10 @@
         if (conocido && conocido.cuit && !cuitInput.value) cuitInput.value = conocido.cuit;
     });
 
+    document.getElementById('pg-medio').addEventListener('change', function () {
+        document.getElementById('pg-cheque-wrap').style.display = this.value === 'cheque' ? '' : 'none';
+    });
+
     document.getElementById('btn-registrar-pago').addEventListener('click', function () {
         document.getElementById('pg-monto').value = pendienteActual > 0 ? pendienteActual.toFixed(2) : '';
         document.getElementById('pg-obs').value = '';
@@ -267,13 +294,23 @@
         if (destino.startsWith('tercero-') && !document.getElementById('pg-alias-tercero').value.trim()) {
             Swal.fire('Atención', 'Indicá el alias del tercero que recibió la plata.', 'warning'); return;
         }
+        const medio = document.getElementById('pg-medio').value;
+        if (medio === 'cheque' && !document.getElementById('pg-cheque-numero').value.trim()) {
+            Swal.fire('Atención', 'Indicá el número del cheque.', 'warning'); return;
+        }
 
         const formData = new FormData();
         formData.append('destino', destino);
-        formData.append('medio', document.getElementById('pg-medio').value);
+        formData.append('medio', medio);
         if (destino.startsWith('tercero-')) {
             formData.append('alias_tercero', document.getElementById('pg-alias-tercero').value.trim());
             formData.append('cuit_tercero', document.getElementById('pg-cuit-tercero').value.trim());
+        }
+        if (medio === 'cheque') {
+            formData.append('cheque_numero', document.getElementById('pg-cheque-numero').value.trim());
+            formData.append('cheque_banco', document.getElementById('pg-cheque-banco').value.trim());
+            formData.append('cheque_fecha_cobro', document.getElementById('pg-cheque-fecha').value);
+            formData.append('cheque_titular', document.getElementById('pg-cheque-titular').value.trim());
         }
         formData.append('monto', monto);
         formData.append('observaciones', document.getElementById('pg-obs').value);

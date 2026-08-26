@@ -217,6 +217,12 @@ function openPagoModalCompra(idcompra, sucursalId) {
             };
             document.querySelector("#mediosPagoContainer").innerHTML = "";
             document.querySelector("#monto_ingresado").innerText = "0";
+
+            return fetch("/finanzas/cheques/disponibles");
+        })
+        .then(res => res.json())
+        .then(data => {
+            window.chequesDisponibles = data.data || [];
         });
 
     $('#ModalPagoCompra').modal('show');
@@ -317,6 +323,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 options += `<option value="banco-${b.id}">${b.nombre} (Banco - ${b.moneda})</option>`;
             });
 
+            // 🔹 Cheques de terceros en cartera, para entregar (endosar) como pago
+            (window.chequesDisponibles || []).forEach(ch => {
+                options += `<option value="cheque-${ch.id}" data-monto="${ch.monto}">📝 Entregar — ${ch.label}</option>`;
+            });
+
             const row = document.createElement("div");
             row.classList.add("row", "mb-2");
             row.innerHTML = `
@@ -341,13 +352,58 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="col-md-1">
                     <button type="button" class="btn btn-danger removeMedioPago">X</button>
                 </div>
+                <div class="col-12 chequeWrap" style="display:none;">
+                    <div class="row mt-1">
+                        <div class="col-md-6">
+                            <input type="text" name="cheque_numero[]" class="form-control" placeholder="Número de cheque" maxlength="60">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="cheque_banco[]" class="form-control" placeholder="Banco emisor" maxlength="120">
+                        </div>
+                    </div>
+                    <div class="row mt-1">
+                        <div class="col-md-6">
+                            <input type="date" name="cheque_fecha_cobro[]" class="form-control" title="Fecha de cobro">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="cheque_titular[]" class="form-control" placeholder="A nombre de (opcional)" maxlength="120">
+                        </div>
+                    </div>
+                </div>
             `;
 
             container.appendChild(row);
 
-            // Default inteligente: caja → efectivo, banco → transferencia
-            row.querySelector("select[name='cajas[]']").addEventListener("change", function () {
-                row.querySelector("select[name='medios[]']").value = this.value.startsWith("caja-") ? "efectivo" : "transferencia";
+            const cajaSelect = row.querySelector("select[name='cajas[]']");
+            const medioSelect = row.querySelector("select[name='medios[]']");
+            const montoInput = row.querySelector(".montoInput");
+            const chequeWrap = row.querySelector(".chequeWrap");
+
+            function actualizarSegunCuenta() {
+                const esEndoso = cajaSelect.value.startsWith("cheque-");
+                if (esEndoso) {
+                    // No se deshabilita el <select>: un campo disabled no viaja en el FormData
+                    // y desalinearía los índices de cajas[]/medios[]/montos[]. El backend igual
+                    // fuerza medio=cheque para las filas de endoso sin importar este valor.
+                    medioSelect.value = "cheque";
+                    montoInput.value = cajaSelect.selectedOptions[0].dataset.monto || "";
+                    montoInput.readOnly = true;
+                    chequeWrap.style.display = "none"; // el cheque ya existe, no se cargan datos nuevos
+                } else {
+                    montoInput.readOnly = false;
+                    medioSelect.value = cajaSelect.value.startsWith("caja-") ? "efectivo" : "transferencia";
+                    chequeWrap.style.display = "none";
+                }
+                recalcularMontosCompra();
+            }
+
+            // Default inteligente: caja → efectivo, banco → transferencia; cheque-{id} → endoso
+            cajaSelect.addEventListener("change", actualizarSegunCuenta);
+
+            medioSelect.addEventListener("change", function () {
+                if (!cajaSelect.value.startsWith("cheque-")) {
+                    chequeWrap.style.display = this.value === "cheque" ? "" : "none";
+                }
             });
 
             row.querySelector(".removeMedioPago").addEventListener("click", () => {

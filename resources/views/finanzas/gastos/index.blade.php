@@ -180,11 +180,33 @@
                     <p class="mb-1"><strong id="pago_gasto_descripcion"></strong></p>
                     <p class="mb-3">Monto a pagar: <strong style="color:#b4552d;">$<span id="pago_gasto_monto"></span></strong></p>
                     <div class="form-group">
-                        <label>Cuenta de salida (cajas abiertas y bancos) *</label>
+                        <label>Cuenta de salida (cajas, bancos o cheques) *</label>
                         <select id="pago_gasto_cuenta" class="form-control" required>
                             <option value="">Cargando cuentas...</option>
                         </select>
                         <small class="text-muted">Si pagás desde una caja, tiene que estar abierta.</small>
+                    </div>
+                    <div id="campo-cheque-gasto" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Número de cheque *</label>
+                                <input type="text" id="pago_gasto_cheque_numero" class="form-control" maxlength="60">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Banco emisor</label>
+                                <input type="text" id="pago_gasto_cheque_banco" class="form-control" maxlength="120">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Fecha de cobro *</label>
+                                <input type="date" id="pago_gasto_cheque_fecha" class="form-control">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>A nombre de (opcional)</label>
+                                <input type="text" id="pago_gasto_cheque_titular" class="form-control" maxlength="120" placeholder="Proveedor por defecto">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -291,16 +313,31 @@ $(document).ready(function () {
     });
 
     // ── Pago ───────────────────────────────────────
+    $('#pago_gasto_cuenta').on('change', function () {
+        $('#campo-cheque-gasto').toggle(this.value === 'cheque-nuevo');
+    });
+
     $('#formPagoGasto').on('submit', function (e) {
         e.preventDefault();
         const id = $('#pago_gasto_id').val();
         const cuenta = $('#pago_gasto_cuenta').val();
         if (!cuenta) { toastr.warning('Seleccioná una cuenta.'); return; }
+        if (cuenta === 'cheque-nuevo' && !$('#pago_gasto_cheque_numero').val()) {
+            toastr.warning('Indicá el número del cheque.'); return;
+        }
+
+        const payload = { cuenta: cuenta };
+        if (cuenta === 'cheque-nuevo') {
+            payload.cheque_numero = $('#pago_gasto_cheque_numero').val();
+            payload.cheque_banco = $('#pago_gasto_cheque_banco').val();
+            payload.cheque_fecha_cobro = $('#pago_gasto_cheque_fecha').val();
+            payload.cheque_titular = $('#pago_gasto_cheque_titular').val();
+        }
 
         fetch(`${URL_FINANZAS}/gastos/${id}/registrar-pago`, {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': CSRF, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cuenta: cuenta })
+            body: JSON.stringify(payload)
         })
         .then(res => res.json())
         .then(data => {
@@ -424,9 +461,33 @@ function abrirModalPagoGasto(id) {
             $('#pago_gasto_id').val(g.id);
             $('#pago_gasto_descripcion').text(g.descripcion_pago);
             $('#pago_gasto_monto').text(g.monto_formateado);
-            cargarCuentasEnSelect('#pago_gasto_cuenta');
+            $('#campo-cheque-gasto').hide();
+            $('#pago_gasto_cheque_numero, #pago_gasto_cheque_banco, #pago_gasto_cheque_fecha, #pago_gasto_cheque_titular').val('');
+            cargarCuentasConChequesEnSelect('#pago_gasto_cuenta');
             $('#ModalPagoGasto').modal('show');
         });
+}
+
+// Cajas/bancos + cheques de terceros en cartera (para endosar), usado solo en modales de pago
+function cargarCuentasConChequesEnSelect(selector) {
+    $(selector).html('<option value="">Cargando cuentas...</option>');
+    Promise.all([
+        fetch("{{ url('cuentas-abiertas') }}").then(res => res.json()),
+        fetch(`${URL_FINANZAS}/cheques/disponibles`).then(res => res.json())
+    ]).then(([cuentas, cheques]) => {
+        let options = '<option value="">Seleccioná una cuenta</option>';
+        (cuentas.cajas || []).forEach(c => {
+            options += `<option value="caja-${c.id}">${c.nombre} (Caja · ${c.sucursal || ''} · ${c.moneda})</option>`;
+        });
+        (cuentas.bancos || []).forEach(b => {
+            options += `<option value="banco-${b.id}">${b.nombre} (Banco · ${b.sucursal || ''} · ${b.moneda})</option>`;
+        });
+        options += '<option value="cheque-nuevo">📝 Cheque propio (nuevo)</option>';
+        (cheques.data || []).forEach(ch => {
+            options += `<option value="cheque-${ch.id}">📝 Entregar — ${ch.label}</option>`;
+        });
+        $(selector).html(options);
+    }).catch(() => $(selector).html('<option value="">No se pudieron cargar las cuentas</option>'));
 }
 
 // Cajas abiertas + bancos de todas las sucursales (mismo endpoint que el pago de pedidos)

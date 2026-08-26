@@ -40,6 +40,11 @@ class Cuenta extends Model
         return $this->hasMany(CajaApertura::class, 'cuenta_id');
     }
 
+    public function chytapayConexion()
+    {
+        return $this->hasOne(ChytapayConexion::class, 'cuenta_id');
+    }
+
     // Helpers de tipo
     public function esCaja(): bool
     {

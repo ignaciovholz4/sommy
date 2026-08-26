@@ -25,7 +25,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        
+        Gate::authorize('haveaccess','admin_user.edit');
         $roles = Role::orderBy('name')->get();
         // return $roles;
         return view('admin.user.edit',compact('roles','user'));
@@ -33,6 +33,7 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        Gate::authorize('haveaccess','admin_user.update');
         $request->validate([
 
             'name'=>'required|max:50|unique:users,name,'.$user->id,
@@ -60,6 +61,7 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        Gate::authorize('haveaccess','admin_user.show');
         $roles = Role::orderBy('name')->get();
         // return $roles;
         return view('admin.user.view',compact('roles','user'));
@@ -75,6 +77,7 @@ class UserController extends Controller
 
     public function postRegister(Request $request)
     {
+        Gate::authorize('haveaccess','admin_user.store');
         try {
 
             DB::beginTransaction();
@@ -139,7 +142,7 @@ class UserController extends Controller
 
     public function updatepassword(Request $request)
     {
-        
+        Gate::authorize('haveaccess','admin_user.updatepassword');
         $rules = [
 
             'password'=>'required|min:8'
@@ -176,6 +179,7 @@ class UserController extends Controller
     }
 
     public function delete_user($id){
+        Gate::authorize('haveaccess','admin_user.destroy');
         $user = User::find($id);
         $user->estatus=0;
         if ($user->update()) {

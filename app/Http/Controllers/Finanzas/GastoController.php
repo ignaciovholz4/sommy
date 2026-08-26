@@ -9,6 +9,7 @@ use App\Models\GastoCategoria;
 use App\Models\Movimiento;
 use App\Models\Proveedor;
 use App\Models\Sucursal;
+use App\Services\ChequeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -201,7 +202,7 @@ class GastoController extends Controller
      * Registra el pago del gasto: crea el egreso en tesorería y marca el gasto como pagado.
      * La cuenta llega como "caja-{aperturaId}" o "banco-{cuentaId}".
      */
-    public function registrarPago(Request $request, $id)
+    public function registrarPago(Request $request, $id, ChequeService $chequeService)
     {
         Gate::authorize('haveaccess', 'finanzas.gastos.manage');
 
@@ -217,14 +218,35 @@ class GastoController extends Controller
             return response()->json(['estado' => 0, 'mensaje' => 'El gasto ya está pagado.']);
         }
 
+        // Endoso: se paga entregando un cheque de tercero que ya está en cartera.
+        $chequeEndosado = str_starts_with($request->cuenta, 'cheque-')
+            ? $chequeService->resolverEndoso($request->cuenta)
+            : null;
+        if (str_starts_with($request->cuenta, 'cheque-') && $request->cuenta !== 'cheque-nuevo' && !$chequeEndosado) {
+            return response()->json(['estado' => 0, 'mensaje' => 'Ese cheque ya no está disponible para entregar.']);
+        }
+        $esChequeNuevo = $request->cuenta === 'cheque-nuevo';
+        if ($esChequeNuevo && !$request->input('cheque_numero')) {
+            return response()->json(['estado' => 0, 'mensaje' => 'Indicá el número del cheque.']);
+        }
+
+        if ($chequeEndosado && abs((float) $chequeEndosado->monto - (float) $gasto->monto) > 0.01) {
+            return response()->json(['estado' => 0, 'mensaje' => 'El cheque es de $' . number_format($chequeEndosado->monto, 2, ',', '.') . ' y el gasto es de $' . number_format($gasto->monto, 2, ',', '.') . ': no coinciden (el gasto se paga completo).']);
+        }
+
+        $monto = $chequeEndosado ? (float) $chequeEndosado->monto : (float) $gasto->monto;
+
         DB::beginTransaction();
         try {
             $cuentaId   = null;
             $aperturaId = null;
             $efectivo   = 0;
             $bancos     = 0;
+            $montoCheque = 0;
 
-            if (str_starts_with($request->cuenta, 'caja-')) {
+            if ($chequeEndosado || $esChequeNuevo) {
+                $montoCheque = $monto;
+            } elseif (str_starts_with($request->cuenta, 'caja-')) {
                 $aperturaId = (int) str_replace('caja-', '', $request->cuenta);
                 $apertura   = CajaApertura::findOrFail($aperturaId);
 
@@ -235,28 +257,33 @@ class GastoController extends Controller
                 }
 
                 $cuentaId = $apertura->cuenta_id;
-                $efectivo = $gasto->monto;
+                $efectivo = $monto;
             } elseif (str_starts_with($request->cuenta, 'banco-')) {
                 $cuentaId = (int) str_replace('banco-', '', $request->cuenta);
-                $bancos   = $gasto->monto;
+                $bancos   = $monto;
             } else {
                 DB::rollBack();
 
                 return response()->json(['estado' => 0, 'mensaje' => 'Formato de cuenta inválido.']);
             }
 
+            $medio = ($chequeEndosado || $esChequeNuevo) ? 'cheque' : null;
+
             $movimiento = Movimiento::create([
                 'cuenta_id'         => $cuentaId,
                 'caja_apertura_id'  => $aperturaId,
                 'fecha'             => now(),
                 'tipo'              => 'egreso',
+                'medio'             => $medio,
                 'cliente_proveedor' => $gasto->proveedor->nombre ?? $gasto->descripcion,
                 'comprobante'       => 'Gasto #' . $gasto->id,
-                'observaciones'     => 'Pago de gasto: ' . $gasto->descripcion,
+                'observaciones'     => 'Pago de gasto: ' . $gasto->descripcion
+                    . ($chequeEndosado ? ' — entregado cheque Nº ' . $chequeEndosado->numero : ''),
                 'efectivo'          => $efectivo,
                 'bancos'            => $bancos,
                 'tarjetas'          => 0,
-                'total'             => $gasto->monto,
+                'cheques'           => $montoCheque,
+                'total'             => $monto,
                 'referencia_type'   => Gasto::class,
                 'referencia_id'     => $gasto->id,
             ]);
@@ -266,6 +293,18 @@ class GastoController extends Controller
                 'cuenta_id'     => $cuentaId,
                 'movimiento_id' => $movimiento->id,
             ]);
+
+            if ($chequeEndosado) {
+                $chequeService->entregar($chequeEndosado, $movimiento);
+            } elseif ($esChequeNuevo) {
+                $chequeService->registrarPropio([
+                    'numero'             => $request->input('cheque_numero'),
+                    'banco_emisor'       => $request->input('cheque_banco'),
+                    'contraparte_nombre' => $request->input('cheque_titular') ?: ($gasto->proveedor->nombre ?? $gasto->descripcion),
+                    'monto'              => $monto,
+                    'fecha_cobro'        => $request->input('cheque_fecha_cobro') ?: now(),
+                ], $gasto, $movimiento);
+            }
 
             DB::commit();
 

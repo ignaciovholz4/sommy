@@ -8,12 +8,20 @@ use App\Models\ClienteCuenta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Foundation\Auth\ThrottlesLogins;
 
 /**
  * Autenticación de compradores de la tienda (guard "cliente", tabla clientes).
  */
 class ClienteAuthController extends Controller
 {
+    use ThrottlesLogins;
+
+    public function username()
+    {
+        return 'email';
+    }
+
     private function datosLayout(): array
     {
         return [
@@ -41,16 +49,24 @@ class ClienteAuthController extends Controller
             'password.required' => 'Ingresá tu contraseña.',
         ]);
 
+        if ($this->hasTooManyLoginAttempts($request)) {
+            $seconds = $this->limiter()->availableIn($this->throttleKey($request));
+            return back()->withInput($request->only('email', 'next'))
+                ->withErrors(['email' => "Demasiados intentos. Volvé a intentar en {$seconds} segundos."]);
+        }
+
         // Solo clientes con cuenta creada (password definido)
         $cliente = ClienteCuenta::where('email', trim($request->email))
             ->whereNotNull('password')
             ->first();
 
         if (!$cliente || !Hash::check($request->password, $cliente->password)) {
+            $this->incrementLoginAttempts($request);
             return back()->withInput($request->only('email', 'next'))
                 ->withErrors(['email' => 'Correo o contraseña incorrectos. Si es tu primera compra, registrate.']);
         }
 
+        $this->clearLoginAttempts($request);
         Auth::guard('cliente')->login($cliente, true);
         $request->session()->regenerate();
 

@@ -430,6 +430,21 @@
                         <i class="fas fa-robot"></i> Cobranzas (IA)
                     </a>
                     @endcan
+                    @can('haveaccess','finanzas.cheques.index')
+                    <a href="{{ route('finanzas.cheques.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/cheques') ? 'dg-drop-active' : '' }}">
+                        <i class="fas fa-money-check-alt"></i> Cartera de Cheques
+                    </a>
+                    @endcan
+                    @can('haveaccess','finanzas.divisas.index')
+                    <a href="{{ route('finanzas.divisas.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/divisas') ? 'dg-drop-active' : '' }}">
+                        <i class="fas fa-exchange-alt"></i> Compra/Venta de Divisas
+                    </a>
+                    @endcan
+                    @can('haveaccess','finanzas.marketing.index')
+                    <a href="{{ route('finanzas.marketing.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/marketing') ? 'dg-drop-active' : '' }}">
+                        <i class="fab fa-facebook"></i> Meta / Google Ads
+                    </a>
+                    @endcan
                 </div>
             </li>
             @endcan

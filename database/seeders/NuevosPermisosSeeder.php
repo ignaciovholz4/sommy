@@ -33,6 +33,12 @@ class NuevosPermisosSeeder extends Seeder
             ['slug' => 'finanzas.cxp.index',      'name' => 'ver cuentas por pagar',                 'description' => 'Puede ver la cuenta corriente de proveedores'],
             ['slug' => 'finanzas.cxp.manage',     'name' => 'gestionar cuentas por pagar',           'description' => 'Puede registrar deudas y pagos a proveedores'],
             ['slug' => 'finanzas.dashboard',      'name' => 'ver tablero financiero',                'description' => 'Puede ver el tablero de flujo de caja y resultados'],
+            ['slug' => 'finanzas.chytapay.manage', 'name' => 'gestionar conexion con Chytapay',      'description' => 'Puede conectar/desconectar cuentas a Chytapay y sincronizar cobros'],
+            ['slug' => 'finanzas.cheques.index',  'name' => 'ver cartera de cheques',                'description' => 'Puede ver el listado de cheques propios y de terceros'],
+            ['slug' => 'finanzas.cheques.manage', 'name' => 'gestionar cartera de cheques',          'description' => 'Puede depositar, acreditar, rechazar y anular cheques'],
+            ['slug' => 'finanzas.divisas.index',  'name' => 'ver compra/venta de divisas',           'description' => 'Puede ver el historial de compra/venta de moneda extranjera'],
+            ['slug' => 'finanzas.divisas.manage', 'name' => 'gestionar compra/venta de divisas',     'description' => 'Puede registrar compras y ventas de moneda extranjera'],
+            ['slug' => 'finanzas.marketing.index', 'name' => 'ver panel de Meta/Google Ads',         'description' => 'Puede ver el gasto publicitario de Meta Ads y Google Ads'],
         ];
 
         $ids = [];

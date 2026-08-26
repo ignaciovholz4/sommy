@@ -66,6 +66,20 @@
         <div class="col-md-3 mb-2"><span class="text-muted small">Cheques:</span> <b>${{ number_format($totales['cheques'], 2, ',', '.') }}</b></div>
     </div>
 
+    @if($totalesPorMoneda->count() > 1)
+    <div class="row mb-4">
+        @foreach($totalesPorMoneda->where('moneda', '!=', 'ARS') as $t)
+        <div class="col-md-4 mb-3">
+            <div class="fin-card">
+                <div class="res-tot-label">Neto en {{ $t['moneda'] }}</div>
+                <div class="res-tot-valor {{ $t['neto'] < 0 ? 'rojo' : '' }}">{{ $t['simbolo'] }} {{ number_format($t['neto'], 2, ',', '.') }}</div>
+                <div class="small text-muted mt-1">Ingresos {{ $t['simbolo'] }}{{ number_format($t['ingresos'], 2, ',', '.') }} · Egresos {{ $t['simbolo'] }}{{ number_format($t['egresos'], 2, ',', '.') }}</div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
     <div class="fin-card">
         <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">Movimientos del período ({{ $movimientos->count() }})</h3>
         <div class="table-responsive">
@@ -74,6 +88,7 @@
                     <tr>
                         <th>Fecha</th>
                         <th>Cuenta</th>
+                        <th>Moneda</th>
                         <th>Tipo</th>
                         <th>Medio</th>
                         <th>Cliente/Proveedor</th>
@@ -86,6 +101,7 @@
                     <tr>
                         <td>{{ $m->fecha->format('d/m/Y H:i') }}</td>
                         <td>{{ optional($m->cuenta)->nombre ?: '—' }}</td>
+                        <td>{{ optional(optional($m->cuenta)->moneda)->codigo ?? 'ARS' }}</td>
                         <td>
                             <span class="badge {{ $m->tipo === 'ingreso' ? 'badge-success' : 'badge-danger' }}">
                                 {{ ucfirst($m->tipo) }}
@@ -95,11 +111,11 @@
                         <td>{{ $m->cliente_proveedor ?: '—' }}</td>
                         <td>{{ $m->comprobante ?: '—' }}</td>
                         <td class="text-end fw-bold {{ $m->tipo === 'ingreso' ? 'text-success' : 'text-danger' }}">
-                            {{ $m->tipo === 'ingreso' ? '+' : '−' }}${{ number_format($m->total, 2, ',', '.') }}
+                            {{ $m->tipo === 'ingreso' ? '+' : '−' }}{{ optional(optional($m->cuenta)->moneda)->simbolo ?? '$' }}{{ number_format($m->total, 2, ',', '.') }}
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">Sin movimientos en el período.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">Sin movimientos en el período.</td></tr>
                     @endforelse
                 </tbody>
             </table>

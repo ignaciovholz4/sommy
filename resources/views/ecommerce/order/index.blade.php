@@ -175,234 +175,187 @@
         <div class="container" id="div-content-order-global">
             <div class="row">
                 <div class="col-md-8">
-                    <div id="div-content-cart-detail">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header shadow-sm header-content-card">
-                                <strong>Lista de productos agregados</strong> 
-                            </div>
-                            <div class="">
-                                <div class="d-flex flex-column gap-3 show-product-added-cart">
-                                </div>
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header shadow-sm header-content-card">
+                            <strong>Lista de productos agregados</strong>
+                        </div>
+                        <div class="">
+                            <div class="d-flex flex-column gap-3 show-product-added-cart">
                             </div>
                         </div>
                     </div>
-                    <div id="div-content-section-order" style="display:none;">
-                        <div style="">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header border-0 shadow-sm header-content-card" style="">
-                                    <strong class="card-title">Email</strong>
-                                    <div class="card-tools">
-                                        <button type="button" class="btn btn-tool" id="btnSectionEmail" data-card-widget="collapse">
-                                            <i class="fa-solid fa-pencil text-secondary" id="icon-email" aria-hidden="true"></i>
-                                        </button>
-                                    </div><br>
-                                    <div id="div-show-email" class="form-text"></div>
-                                </div>
-                                <div class="card-body" id="card-section-email">
-                                    <form id="form-email">
-                                    <div class="mb-3">
-                                        <label for="exampleInputEmail1" class="form-label">Ingresa tu correo electronico</label>
-                                        <input type="email" class="form-control input-form" name="email" aria-describedby="emailHelp"
-                                               value="{{ Auth::guard('cliente')->check() ? Auth::guard('cliente')->user()->email : '' }}">
-                                        <div id="emailHelp" class="form-text">
-                                            @if(Auth::guard('cliente')->check())
-                                                Comprando con tu cuenta ({{ Auth::guard('cliente')->user()->email }}).
-                                            @else
-                                                Guardamos tu correo electronico para identificar tu perfil.
-                                            @endif
-                                        </div>
+                    <div id="div-content-section-order">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header border-0 shadow-sm header-content-card">
+                                <strong class="card-title">Tus datos</strong>
+                            </div>
+                            <div class="card-body" id="card-section-email">
+                                <form id="form-email">
+                                <div class="mb-0">
+                                    <label for="exampleInputEmail1" class="form-label">Correo electrónico</label>
+                                    <input type="email" class="form-control input-form" name="email" id="inputEmailCliente" aria-describedby="emailHelp"
+                                           value="{{ Auth::guard('cliente')->check() ? Auth::guard('cliente')->user()->email : '' }}">
+                                    <div id="emailHelp" class="form-text">
+                                        @if(Auth::guard('cliente')->check())
+                                            Comprando con tu cuenta ({{ Auth::guard('cliente')->user()->email }}).
+                                        @else
+                                            Si ya compraste antes con este correo, completamos tus datos solos.
+                                        @endif
                                     </div>
-                                    </form>
-                                    <button type="button" id="btnAddEmail" class="btn btn-primary">Continuar</button>
                                 </div>
+                                </form>
                             </div>
                         </div>
-                        <div style="margin-top:25px;">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header border-0 shadow-sm header-content-card">
-                                    <strong class="card-title">Identificacion</strong>
-                                    <div class="card-tools">
-                                        <button type="button" class="btn btn-tool" id="btnSectionIdentificacion" data-card-widget="collapse">
-                                            <i class="fa-solid fa-pencil text-secondary" id="icon-identificacion" aria-hidden="true"></i>
-                                        </button>
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header border-0 shadow-sm header-content-card">
+                                <strong class="card-title">Identificación</strong>
+                            </div>
+                            <div class="card-body" id="card-section-identification">
+                                {{-- Datos precargados de la cuenta del comprador --}}
+                                @php($cli = Auth::guard('cliente')->user())
+                                <form class="row g-3" id="form-identificacion" >
+                                    <div class="col-md-12">
+                                        <label for="inputEmail4" class="form-label">Nombre</label>
+                                        <input type="text" class="form-control input-form" name="name" id="name" required
+                                               value="{{ $cli->nombre ?? '' }}">
                                     </div>
-                                </div>
-                                <div class="card-body" id="card-section-identification">
-                                    {{-- Datos precargados de la cuenta del comprador --}}
-                                    @php($cli = Auth::guard('cliente')->user())
-                                    <form class="row g-3" id="form-identificacion" >
-                                        <div class="col-md-12">
-                                            <label for="inputEmail4" class="form-label">Nombre</label>
-                                            <input type="text" class="form-control input-form" name="name" id="name" required
-                                                   value="{{ $cli->nombre ?? '' }}">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="inputPassword4" class="form-label">Apellido</label>
-                                            <input type="text" class="form-control input-form" name="materno" id="materno" required
-                                                   value="{{ $cli->materno ?? '' }}">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="inputAddress" class="form-label">Telefono</label>
-                                            <input type="text" class="form-control input-form" name="phone" id="phone" placeholder="XXX XXX XXXX" required
-                                                   value="{{ $cli->telefono ?? '' }}">
-                                        </div>
-                                        <div class="col-12">
-                                            <button type="button" id="btnAddIdentificacion" class="btn btn-primary">Ir para la entrega</button>
-                                        </div>
-                                    </form>
-                                </div>
+                                    <div class="col-md-6">
+                                        <label for="inputPassword4" class="form-label">Apellido</label>
+                                        <input type="text" class="form-control input-form" name="materno" id="materno" required
+                                               value="{{ $cli->materno ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="inputAddress" class="form-label">Telefono</label>
+                                        <input type="text" class="form-control input-form" name="phone" id="phone" placeholder="XXX XXX XXXX" required
+                                               value="{{ $cli->telefono ?? '' }}">
+                                    </div>
+                                </form>
                             </div>
                         </div>
-                        <div style="margin-top:25px;">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header border-0 shadow-sm header-content-card">
-                                    <strong class="card-title">Entrega</strong>
-                                    <div class="card-tools">
-                                        <button type="button" class="btn btn-tool" id="btnSectionEntrega" data-card-widget="collapse">
-                                            <i class="fa-solid fa-pencil text-secondary" id="icon-entrega" aria-hidden="true"></i>
-                                        </button>
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header border-0 shadow-sm header-content-card">
+                                <strong class="card-title">Entrega</strong>
+                            </div>
+                            <div class="card-body" id="card-section-entrega">
+                                <form class="row g-3" id="form-entrega">
+                                    <div class="col-md-12">
+                                        <label for="calle" class="form-label">Calle</label>
+                                        <input type="text" class="form-control input-form" name="calle" id="calle"
+                                               value="{{ $cli->direccion ?? '' }}">
                                     </div>
-                                </div>
-                                <div class="card-body" id="card-section-entrega">
-                                    <form class="row g-3" id="form-entrega">
-                                        <div class="col-md-12">
-                                            <label for="calle" class="form-label">Calle</label>
-                                            <input type="text" class="form-control input-form" name="calle" id="calle"
-                                                   value="{{ $cli->direccion ?? '' }}">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="numberExterior" class="form-label">Numero</label>
-                                            <input type="number" min="0" class="form-control input-form" name="numberExterior" id="numberExterior"
-                                                   value="{{ $cli->number_exterior ?? '' }}">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="numberInterior" class="form-label">Piso / Depto <small class="text-muted">(opcional)</small></label>
-                                            <input type="text" class="form-control input-form" name="numberInterior" id="numberInterior" >
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="localidad" class="form-label">Localidad</label>
-                                            <input type="text" class="form-control input-form" name="localidad" id="localidad"
-                                                   value="{{ $cli->localidad ?? '' }}">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label for="provincia" class="form-label">Provincia</label>
-                                            <select class="form-control input-form" name="provincia" id="provincia">
-                                                <option value="">Seleccionar</option>
-                                                @foreach (['Buenos Aires','CABA','Catamarca','Chaco','Chubut','Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja','Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis','Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán'] as $prov)
-                                                    <option value="{{ $prov }}" {{ ($cli->provincia ?? '') === $prov ? 'selected' : '' }}>{{ $prov }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label for="codigoPostal" class="form-label">Código postal</label>
-                                            <input type="text" class="form-control input-form" name="codigoPostal" id="codigoPostal" maxlength="10"
-                                                   value="{{ $cli->codigo_postal ?? '' }}">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="dniCuit" class="form-label">DNI / CUIT</label>
-                                            <input type="text" class="form-control input-form" name="dniCuit" id="dniCuit" maxlength="13" placeholder="Para la factura"
-                                                   value="{{ $cli->dni_cuit ?? '' }}">
-                                        </div>
-                                        <div class="col-12">
-                                            <label for="infoAdicional" class="form-label">Informacion adicional <small class="text-muted">(opcional)</small></label>
-                                            <textarea class="form-control input-form" name="infoAdicional" id="infoAdicional" rows="3" placeholder="Referencias de la dirección, horarios, etc."></textarea>
-                                        </div>
-                                        <div class="col-12">
-                                            <button type="button" id="btnAddEntrega" class="btn btn-primary">Ir al envío</button>
-                                        </div>
-                                    </form>
-                                </div>
+                                    <div class="col-md-6">
+                                        <label for="numberExterior" class="form-label">Numero</label>
+                                        <input type="number" min="0" class="form-control input-form" name="numberExterior" id="numberExterior"
+                                               value="{{ $cli->number_exterior ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="numberInterior" class="form-label">Piso / Depto <small class="text-muted">(opcional)</small></label>
+                                        <input type="text" class="form-control input-form" name="numberInterior" id="numberInterior" >
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="localidad" class="form-label">Localidad</label>
+                                        <input type="text" class="form-control input-form" name="localidad" id="localidad"
+                                               value="{{ $cli->localidad ?? '' }}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="provincia" class="form-label">Provincia</label>
+                                        <select class="form-control input-form" name="provincia" id="provincia">
+                                            <option value="">Seleccionar</option>
+                                            @foreach (['Buenos Aires','CABA','Catamarca','Chaco','Chubut','Córdoba','Corrientes','Entre Ríos','Formosa','Jujuy','La Pampa','La Rioja','Mendoza','Misiones','Neuquén','Río Negro','Salta','San Juan','San Luis','Santa Cruz','Santa Fe','Santiago del Estero','Tierra del Fuego','Tucumán'] as $prov)
+                                                <option value="{{ $prov }}" {{ ($cli->provincia ?? '') === $prov ? 'selected' : '' }}>{{ $prov }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="codigoPostal" class="form-label">Código postal</label>
+                                        <input type="text" class="form-control input-form" name="codigoPostal" id="codigoPostal" maxlength="10"
+                                               value="{{ $cli->codigo_postal ?? '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="dniCuit" class="form-label">DNI / CUIT</label>
+                                        <input type="text" class="form-control input-form" name="dniCuit" id="dniCuit" maxlength="13" placeholder="Para la factura"
+                                               value="{{ $cli->dni_cuit ?? '' }}">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="infoAdicional" class="form-label">Informacion adicional <small class="text-muted">(opcional)</small></label>
+                                        <textarea class="form-control input-form" name="infoAdicional" id="infoAdicional" rows="3" placeholder="Referencias de la dirección, horarios, etc."></textarea>
+                                    </div>
+                                </form>
                             </div>
                         </div>
 
                         {{-- SECCIÓN ENVÍO --}}
-                        <div style="margin-top:25px;">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header border-0 shadow-sm header-content-card">
-                                    <strong class="card-title">Envío</strong>
-                                    <div class="card-tools">
-                                        <button type="button" class="btn btn-tool" id="btnSectionEnvio" data-card-widget="collapse">
-                                            <i class="fa-solid fa-pencil text-secondary" id="icon-envio" aria-hidden="true"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-body" id="card-section-envio">
-                                    <form id="form-envio">
-                                        @foreach ($zonasEnvio as $zona)
-                                            <div class="form-check mb-2">
-                                                <input class="form-check-input radio-zona-envio" type="radio" name="zonaEnvio"
-                                                       id="zona-{{ $zona->id }}" value="{{ $zona->id }}" data-costo="{{ $zona->costo }}">
-                                                <label class="form-check-label d-flex justify-content-between" for="zona-{{ $zona->id }}" style="width:100%;max-width:400px;">
-                                                    <span>{{ $zona->nombre }}</span>
-                                                    <strong>{{ $zona->costo > 0 ? format_money_global($zona->costo) : 'Gratis' }}</strong>
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                        @if($zonasEnvio->isEmpty())
-                                            <p class="text-muted">El envío se coordina luego de confirmar el pedido.</p>
-                                        @endif
-                                        <button type="button" id="btnAddEnvio" class="btn btn-primary mt-2">Ir al pago</button>
-                                    </form>
-                                </div>
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header border-0 shadow-sm header-content-card">
+                                <strong class="card-title">Envío</strong>
+                            </div>
+                            <div class="card-body" id="card-section-envio">
+                                <form id="form-envio">
+                                    @foreach ($zonasEnvio as $zona)
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input radio-zona-envio" type="radio" name="zonaEnvio"
+                                                   id="zona-{{ $zona->id }}" value="{{ $zona->id }}" data-costo="{{ $zona->costo }}"
+                                                   {{ $loop->first ? 'checked' : '' }}>
+                                            <label class="form-check-label d-flex justify-content-between" for="zona-{{ $zona->id }}" style="width:100%;max-width:400px;">
+                                                <span>{{ $zona->nombre }}</span>
+                                                <strong>{{ $zona->costo > 0 ? format_money_global($zona->costo) : 'Gratis' }}</strong>
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                    @if($zonasEnvio->isEmpty())
+                                        <p class="text-muted mb-0">El envío se coordina luego de confirmar el pedido.</p>
+                                    @endif
+                                </form>
                             </div>
                         </div>
 
                         {{-- SECCIÓN PAGO --}}
-                        <div style="margin-top:25px;">
-                            <div class="card border-0 shadow-sm">
-                                <div class="card-header border-0 shadow-sm header-content-card">
-                                    <strong class="card-title">Pago</strong>
-                                    <div class="card-tools">
-                                        <button type="button" class="btn btn-tool" id="btnSectionPago" data-card-widget="collapse">
-                                            <i class="fa-solid fa-pencil text-secondary" id="icon-pago" aria-hidden="true"></i>
-                                        </button>
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header border-0 shadow-sm header-content-card">
+                                <strong class="card-title">Pago</strong>
+                            </div>
+                            <div class="card-body" id="card-section-pago">
+                                <form id="form-pago">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-transferencia" value="transferencia" checked>
+                                        <label class="form-check-label" for="pago-transferencia">
+                                            <strong>Transferencia bancaria</strong>
+                                            @if(($configPago['descuento_transferencia'] ?? 0) > 0)
+                                                <span class="discount-badge ms-2">{{ rtrim(rtrim(number_format($configPago['descuento_transferencia'], 2), '0'), '.') }}% de descuento</span>
+                                            @endif
+                                        </label>
                                     </div>
-                                </div>
-                                <div class="card-body" id="card-section-pago">
-                                    <form id="form-pago">
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-transferencia" value="transferencia">
-                                            <label class="form-check-label" for="pago-transferencia">
-                                                <strong>Transferencia bancaria</strong>
-                                                @if(($configPago['descuento_transferencia'] ?? 0) > 0)
-                                                    <span class="discount-badge ms-2">{{ rtrim(rtrim(number_format($configPago['descuento_transferencia'], 2), '0'), '.') }}% de descuento</span>
-                                                @endif
-                                            </label>
-                                        </div>
-                                        <div id="datos-transferencia" class="ms-4 mb-3 p-3 bg-light rounded" style="display:none;">
-                                            <p class="mb-1"><strong>Datos para transferir:</strong></p>
-                                            @if(!empty($configPago['razon_social']))<p class="mb-1">Titular: {{ $configPago['razon_social'] }}</p>@endif
-                                            @if(!empty($configPago['cuit']))<p class="mb-1">CUIT: {{ $configPago['cuit'] }}</p>@endif
-                                            @if(!empty($configPago['cbu']))<p class="mb-1">CBU: {{ $configPago['cbu'] }}</p>@endif
-                                            @if(!empty($configPago['alias_cbu']))<p class="mb-1">Alias: <strong>{{ $configPago['alias_cbu'] }}</strong></p>@endif
-                                            <p class="mb-0 text-muted"><small>Al confirmar el pedido vas a recibir estos datos por email. Envianos el comprobante por WhatsApp.</small></p>
-                                        </div>
-                                        @if(!empty($configPago['mp_habilitado']))
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-mercadopago" value="mercadopago">
-                                            <label class="form-check-label" for="pago-mercadopago">
-                                                <strong>Mercado Pago</strong> <span class="text-muted">— tarjeta de crédito/débito, en cuotas</span>
-                                            </label>
-                                        </div>
-                                        @endif
+                                    <div id="datos-transferencia" class="ms-4 mb-3 p-3 bg-light rounded" style="display:none;">
+                                        <p class="mb-1"><strong>Datos para transferir:</strong></p>
+                                        @if(!empty($configPago['razon_social']))<p class="mb-1">Titular: {{ $configPago['razon_social'] }}</p>@endif
+                                        @if(!empty($configPago['cuit']))<p class="mb-1">CUIT: {{ $configPago['cuit'] }}</p>@endif
+                                        @if(!empty($configPago['cbu']))<p class="mb-1">CBU: {{ $configPago['cbu'] }}</p>@endif
+                                        @if(!empty($configPago['alias_cbu']))<p class="mb-1">Alias: <strong>{{ $configPago['alias_cbu'] }}</strong></p>@endif
+                                        <p class="mb-0 text-muted"><small>Al confirmar el pedido vas a recibir estos datos por email. Envianos el comprobante por WhatsApp.</small></p>
+                                    </div>
+                                    @if(!empty($configPago['mp_habilitado']))
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-mercadopago" value="mercadopago">
+                                        <label class="form-check-label" for="pago-mercadopago">
+                                            <strong>Mercado Pago</strong> <span class="text-muted">— tarjeta de crédito/débito, en cuotas</span>
+                                        </label>
+                                    </div>
+                                    @endif
 
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-tarjeta" value="tarjeta">
-                                            <label class="form-check-label" for="pago-tarjeta">
-                                                <strong>Tarjeta de débito o crédito</strong> <span class="text-muted">— coordinamos el cobro al confirmar</span>
-                                            </label>
-                                        </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-tarjeta" value="tarjeta">
+                                        <label class="form-check-label" for="pago-tarjeta">
+                                            <strong>Tarjeta de débito o crédito</strong> <span class="text-muted">— coordinamos el cobro al confirmar</span>
+                                        </label>
+                                    </div>
 
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-efectivo" value="efectivo">
-                                            <label class="form-check-label" for="pago-efectivo">
-                                                <strong>Efectivo</strong> <span class="text-muted">— al recibir el pedido o en el local</span>
-                                            </label>
-                                        </div>
-
-                                        <button type="button" id="btnAddPago" class="btn btn-primary mt-2">Confirmar datos del pedido</button>
-                                    </form>
-                                </div>
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-efectivo" value="efectivo">
+                                        <label class="form-check-label" for="pago-efectivo">
+                                            <strong>Efectivo</strong> <span class="text-muted">— al recibir el pedido o en el local</span>
+                                        </label>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -433,9 +386,8 @@
                                     <span class="fw-bold" id="showTotalPedido">$0.00</span>
                                 </div>
 
-                                <button class="btn btn-primary checkout-btn w-100 mb-3" id="btnEndBuy">Finalizar compra</button>
-                                <button class="btn btn-primary checkout-btn w-100 mb-3" id="btnRegisterOrder" style="display:none;">Realizar pedido</button>
-                                
+                                <button class="btn btn-primary checkout-btn w-100 mb-3" id="btnRegisterOrder">Realizar pedido</button>
+
                                 <div class="d-flex justify-content-center gap-2" id="btnKeepShopping">
                                     <i class="bi bi-shield-check text-success"></i>
                                     <a class="text-muted" href="{{url('/')}}" style="text-decoration:none;">Seguir comprando</a>

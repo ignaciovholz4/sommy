@@ -208,6 +208,7 @@ class ConciliacionController extends Controller
 
             return [
                 'id'          => $imp->id,
+                'origen'      => $imp->origen,
                 'fecha'       => $imp->fecha->format('d/m/Y'),
                 'tipo'        => $imp->tipo,
                 'monto'       => (float) $imp->monto,

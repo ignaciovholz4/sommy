@@ -183,17 +183,37 @@ class EcommerceorderController extends Controller
                 url('orders/order/' . $order->order_id), 'exito');
 
             // Detalles
+            // 🔒 sin_stock se recalcula acá, no se confía en lo que mande el navegador:
+            // permite que el cliente pida igual aunque no haya stock (queda "a consultar"),
+            // pero la marca de qué tiene/no tiene stock sale del stock real en este momento.
             foreach ($arrayDataOrder as $products) {
                 if($products['nameSection'] === 'products'){
                     foreach ($products['data'] as $rowProduct) {
+                        $combinacionId = ($rowProduct['tipoProductoId'] === 2 && isset($rowProduct['rowProdVariant']))
+                            ? $rowProduct['rowProdVariant']['idcombinacion']
+                            : null;
+
+                        if ($combinacionId) {
+                            $stockDisponible = (float) DB::table('sucursal_combinacion')
+                                ->where('combinacion_id', $combinacionId)
+                                ->where('activo', 1)
+                                ->sum('stock');
+                        } else {
+                            $stockDisponible = (float) DB::table('sucursal_articulo')
+                                ->where('articulo_id', $rowProduct['productId'])
+                                ->where('activo', 1)
+                                ->sum('stock');
+                        }
+
                         $orderDetail = new order_detail_ecommerce();
                         $orderDetail->order_ecommerce_id = $order->order_id;
                         $orderDetail->product_id = $rowProduct['productId'];
                         $orderDetail->quantity = $rowProduct['cant'];
                         $orderDetail->price = $rowProduct['display_price']; // precio efectivo
                         $orderDetail->total = $rowProduct['total'];
-                        if($rowProduct['tipoProductoId'] === 2 && isset($rowProduct['rowProdVariant'])){
-                            $orderDetail->producto_variacion_variante_id = $rowProduct['rowProdVariant']['idcombinacion'];
+                        $orderDetail->sin_stock = ((float) $rowProduct['cant']) > $stockDisponible;
+                        if($combinacionId){
+                            $orderDetail->producto_variacion_variante_id = $combinacionId;
                         }
                         $orderDetail->active = 1;
                         $orderDetail->save();

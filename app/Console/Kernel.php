@@ -45,6 +45,15 @@ class Kernel extends ConsoleKernel
 
         // Agente CEO: resumen ejecutivo diario dentro del panel (despues de las alertas de arriba)
         $schedule->command('ceo:resumen-diario')->dailyAt('09:00');
+
+        // Chytapay: trae cobros pagados hacia la conciliacion bancaria (solo si hay cuentas conectadas)
+        $schedule->command('chytapay:sincronizar-cobros')->everyFifteenMinutes();
+
+        // Cheques: avisa de cheques (propios y de terceros) vencidos o por vencer en 3 dias
+        $schedule->command('cheques:alertar-vencimientos')->dailyAt('08:15');
+
+        // Ads: gasto diario de Meta Ads y Google Ads (solo si hay claves cargadas)
+        $schedule->command('ads:sincronizar-gasto')->dailyAt('07:00');
     }
 
     /**

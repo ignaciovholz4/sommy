@@ -3,14 +3,22 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Foundation\Auth\ThrottlesLogins;
+use App\Http\Controllers\Concerns\RedirectsAfterStaffLogin;
 
 class ConnectController extends Controller
 {
+    use ThrottlesLogins, RedirectsAfterStaffLogin;
+
+    public function username()
+    {
+        return 'email';
+    }
+
     public function __construct(){
 
         $this->middleware('guest')->except(['getLogout']);
@@ -32,18 +40,6 @@ class ConnectController extends Controller
         return view("connect.login",["logo"=>$logo, "name"=>$name]);
     }
 
-    private function sendRedirectResponse(Request $request, string $url)
-    {
-        $request->session()->save();
-        $request->session()->reflash();
-
-        while (ob_get_level() > 0) {
-            ob_end_clean();
-        }
-
-        return (new Response('', 302))->header('Location', $url);
-    }
-
     public function postLogin(Request $request){
         $rules = [
             'email'=>'required|email',
@@ -62,45 +58,32 @@ class ConnectController extends Controller
             return back()->withErrors($validator)->with('message','Se ha producido un error')->with('typealert', 'danger');
         }
 
-        if (Auth::attempt(['email'=>$request->input('email'), 'password'=> $request->input('password')], true)) {
+        if ($this->hasTooManyLoginAttempts($request)) {
+            $seconds = $this->limiter()->availableIn($this->throttleKey($request));
+            $request->session()->flash('message', "Demasiados intentos de inicio de sesión. Volvé a intentar en {$seconds} segundos.");
+            $request->session()->flash('typealert', 'danger');
+            return $this->sendRedirectResponse($request, $request->getSchemeAndHttpHost() . '/login');
+        }
+
+        $remember = $request->boolean('remember');
+
+        if (Auth::attempt(['email'=>$request->input('email'), 'password'=> $request->input('password')], $remember)) {
+
+            $this->clearLoginAttempts($request);
+            $request->session()->regenerate();
 
             if(Auth::user()->estatus == 1){
-                if (!Auth::user()->hasVerifiedEmail()) {
+
+                if (Auth::user()->two_factor_confirmed_at) {
+                    $userId = Auth::user()->id;
                     Auth::logout();
-                    $request->session()->invalidate();
-                    $request->session()->regenerateToken();
-                    $request->session()->flash('message', 'Debe verificar su correo electrónico antes de continuar.');
-                    $request->session()->flash('typealert', 'warning');
-                    return $this->sendRedirectResponse($request, $request->getSchemeAndHttpHost() . '/email/verify');
+                    $request->session()->put('2fa.user_id', $userId);
+                    $request->session()->put('2fa.remember', $remember);
+                    $request->session()->put('2fa.expires', now()->addMinutes(5)->timestamp);
+                    return $this->sendRedirectResponse($request, $request->getSchemeAndHttpHost() . '/login/verificar-codigo');
                 }
 
-                $user = DB::table('users')
-                ->join('role_user', 'users.id', '=', 'role_user.user_id')
-                ->join('roles', 'roles.id', '=', 'role_user.role_id')
-                ->select('roles.full-access as access')
-                ->where('users.id', '=', Auth::user()->id)
-                ->get();
-
-                $count = count($user);
-                if ($count == 1) {
-                    $access = $user[0]->access;
-
-                    $base = $request->getSchemeAndHttpHost();
-                    $access = strtolower($access);
-                    if ($access === 'yes') {
-                        return $this->sendRedirectResponse($request, $base . '/dashboard');
-                    } else if ($access === 'no') {
-                        return $this->sendRedirectResponse($request, $base . '/userdashboard');
-                    }
-
-                } else {
-                    Auth::logout();
-                    $request->session()->invalidate();
-                    $request->session()->regenerateToken();
-                    $request->session()->flash('message', 'El usuario no tiene un Rol asignado');
-                    $request->session()->flash('typealert', 'danger');
-                    return $this->sendRedirectResponse($request, $request->getSchemeAndHttpHost() . '/login');
-                }
+                return $this->redirectAfterStaffLogin($request);
 
             } else {
                 Auth::logout();
@@ -111,6 +94,7 @@ class ConnectController extends Controller
                 return $this->sendRedirectResponse($request, $request->getSchemeAndHttpHost() . '/login');
             }
         } else {
+            $this->incrementLoginAttempts($request);
             $request->session()->flash('message', 'Correo electronico o contraseña errónea');
             $request->session()->flash('typealert', 'danger');
             return $this->sendRedirectResponse($request, $request->getSchemeAndHttpHost() . '/login');

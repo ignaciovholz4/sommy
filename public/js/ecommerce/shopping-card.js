@@ -169,7 +169,8 @@ const addShoppingCart = (product, variantData = null) => {
             stockProduct: productStock,
             display_price: effectivePrice,             // precio efectivo
             has_offer: product.has_offer || false,     // bandera de oferta
-            image: productImage                        // miniatura para carrito/checkout
+            image: productImage,                        // miniatura para carrito/checkout
+            sinStock: window.fnCheckStockProduct(productStock, currentCantProduct) // sin stock suficiente: se agrega igual, queda "a consultar"
         };
     }
 
@@ -195,7 +196,8 @@ const addShoppingCart = (product, variantData = null) => {
             stockProduct: productStock,
             display_price: comboPrice,                 // siempre el precio de la combinación
             has_offer: basePrice > comboPrice,         // oferta si el padre es más caro
-            image: productImage                        // miniatura para carrito/checkout
+            image: productImage,                        // miniatura para carrito/checkout
+            sinStock: window.fnCheckStockProduct(productStock, currentCantProduct) // sin stock suficiente: se agrega igual, queda "a consultar"
         };
     }
 
@@ -213,22 +215,21 @@ const addShoppingCart = (product, variantData = null) => {
 
     if(checkIfExistProduct){
         let sumaStock = Number(checkIfExistProduct.cant) + currentCantProduct;
-        const validateStock = window.fnCheckStockProduct(productStock, sumaStock);
-        if(validateStock === true){
-            window.fnMessageToastrError("No hay suficiente stock para el producto","Error");
-            return false;
-        }
         checkIfExistProduct.cant += currentCantProduct;
         checkIfExistProduct.total = checkIfExistProduct.cant * checkIfExistProduct.priceSale;
-        window.fnMessageToastrSuccess("Se agregaron más unidades","Éxito!");
-    }else{
-        const validateStock = window.fnCheckStockProduct(productStock, currentCantProduct);
-        if(validateStock === true){
-            window.fnMessageToastrError("No hay suficiente stock para el producto","Error");
-            return false;
+        checkIfExistProduct.sinStock = window.fnCheckStockProduct(productStock, sumaStock);
+        if(checkIfExistProduct.sinStock){
+            window.fnMessageToastrWarning("Se agregaron igual, sin stock suficiente: queda a consultar por WhatsApp.","Sin stock");
+        }else{
+            window.fnMessageToastrSuccess("Se agregaron más unidades","Éxito!");
         }
+    }else{
         getDataCardProduct.push(addProduct);
-        window.fnMessageToastrSuccess("Se agregó con éxito el producto al carrito","Éxito!");
+        if(addProduct.sinStock){
+            window.fnMessageToastrWarning("Lo agregamos igual, no hay stock suficiente: queda a consultar por WhatsApp.","Sin stock");
+        }else{
+            window.fnMessageToastrSuccess("Se agregó con éxito el producto al carrito","Éxito!");
+        }
     }
 
     window.fnSaveCartProduct(getDataCardProduct);
@@ -270,9 +271,10 @@ const fnAddCantProduct = (inputCant) => {
     }
 
     let newCant = Number(inputCant.value) + 1;
-    if(newCant > productStock){
-        window.fnMessageToastrError("No hay suficiente stock disponible","Error");
-        return;
+    // Se permite pedir más de lo que hay: al cruzar el stock disponible se avisa
+    // una sola vez (no en cada click), y el producto queda "a consultar" igual.
+    if(newCant > productStock && newCant - 1 <= productStock){
+        window.fnMessageToastrWarning("A partir de acá no hay stock suficiente: se puede pedir igual, queda a consultar.","Sin stock");
     }
 
     inputCant.value = newCant;

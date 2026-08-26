@@ -257,6 +257,10 @@
 
             <div class="dg-divider"></div>
 
+            <a href="{{ route('two-factor.settings') }}" class="dg-logout-btn" title="Seguridad de mi cuenta">
+                <i class="fas fa-shield-alt"></i>
+            </a>
+
             <a href="{{ url('/logout') }}" class="dg-logout-btn" title="Cerrar sesión">
                 <i class="fas fa-sign-out-alt"></i>
             </a>

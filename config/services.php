@@ -105,4 +105,45 @@ return [
         'api_key' => env('ANTHROPIC_API_KEY'),
     ],
 
+    // Chytapay: cobros por transferencia + conciliacion bancaria automatica.
+    // OAuth2 (Authorization Code) contra auth-api, cobros contra integration-api.
+    'chytapay' => [
+        'enabled' => env('CHYTAPAY_ENABLED', false),
+        'client_id' => env('CHYTAPAY_CLIENT_ID'),
+        'client_secret' => env('CHYTAPAY_CLIENT_SECRET'),
+        'redirect_uri' => env('CHYTAPAY_REDIRECT_URI'),
+        'auth_base_url' => env('CHYTAPAY_ENV', 'test') === 'prod'
+            ? 'https://auth-api.chytapay.com.ar'
+            : 'https://auth-api.test.chytapay.com.ar',
+        'api_base_url' => env('CHYTAPAY_ENV', 'test') === 'prod'
+            ? 'https://integration-api.chytapay.com.ar'
+            : 'https://integration-api.test.chytapay.com.ar',
+    ],
+
+    // Meta Ads (Marketing API): token con permiso ads_read sobre la cuenta
+    // publicitaria (distinto del token de WhatsApp/Graph de mensajeria).
+    'meta_ads' => [
+        'enabled' => env('META_ADS_ENABLED', false),
+        'access_token' => env('META_ADS_ACCESS_TOKEN'),
+        'ad_account_id' => env('META_ADS_AD_ACCOUNT_ID'),
+        'graph_version' => env('WHATSAPP_GRAPH_VERSION', 'v21.0'),
+        // Moneda de facturacion de la cuenta publicitaria (la que Meta ya usa para cobrar)
+        'moneda' => env('META_ADS_MONEDA', 'ARS'),
+    ],
+
+    // Google Ads API: requiere developer token aprobado por Google + OAuth2
+    // (client_id/secret de un proyecto de Google Cloud + refresh_token de la
+    // cuenta que administra el Google Ads).
+    'google_ads' => [
+        'enabled' => env('GOOGLE_ADS_ENABLED', false),
+        'developer_token' => env('GOOGLE_ADS_DEVELOPER_TOKEN'),
+        'client_id' => env('GOOGLE_ADS_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_ADS_CLIENT_SECRET'),
+        'refresh_token' => env('GOOGLE_ADS_REFRESH_TOKEN'),
+        'login_customer_id' => env('GOOGLE_ADS_LOGIN_CUSTOMER_ID'),
+        'customer_id' => env('GOOGLE_ADS_CUSTOMER_ID'),
+        'api_version' => env('GOOGLE_ADS_API_VERSION', 'v17'),
+        'moneda' => env('GOOGLE_ADS_MONEDA', 'ARS'),
+    ],
+
 ];

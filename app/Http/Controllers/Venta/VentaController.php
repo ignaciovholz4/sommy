@@ -15,6 +15,7 @@ use App\Models\Sucursal;
 use App\Models\PriceListItem;
 use App\Models\Revendedor;
 use App\Models\RevendedorComision;
+use App\Services\ChequeService;
 
 use App\Http\Controllers\StockController;
 
@@ -409,7 +410,7 @@ class VentaController extends Controller
         ]);
     }
 
-    public function registrarPago(Request $request, $idventa)
+    public function registrarPago(Request $request, $idventa, ChequeService $chequeService)
     {
         $request->validate([
             'cajas'   => 'required|array|min:1',
@@ -445,8 +446,6 @@ class VentaController extends Controller
                     $tarjetas   = 0;
                     $tercero    = null;
 
-                    $cheques = 0;
-
                     if (str_starts_with($cuentaRef, 'caja-')) {
                         $aperturaId = (int) str_replace('caja-', '', $cuentaRef);
                         $apertura   = CajaApertura::findOrFail($aperturaId);
@@ -476,18 +475,23 @@ class VentaController extends Controller
                     // los cheques son papeles (no efectivo del cierre) y las
                     // tarjetas liquidan aparte — así el corte de caja distingue.
                     $medio = $request->input("medios.$index") ?: null;
+                    $montoCheque = 0;
                     if ($medio) {
                         $efectivo = $bancos = $tarjetas = 0;
                         match (true) {
                             $medio === 'efectivo' => $efectivo = $monto,
                             in_array($medio, ['tarjeta_debito', 'tarjeta_credito']) => $tarjetas = $monto,
-                            $medio === 'cheque' => $cheques = $monto,
+                            $medio === 'cheque' => $montoCheque = $monto,
                             default => $bancos = $monto, // transferencia, mercadopago, otro
                         };
                     }
 
+                    if ($medio === 'cheque' && !$request->input("cheque_numero.$index")) {
+                        return response()->json(['success' => false, 'error' => 'Indicá el número del cheque.']);
+                    }
+
                     // 🔹 Un único create por iteración
-                    Movimiento::create([
+                    $mov = Movimiento::create([
                         'cuenta_id'        => $cuentaId,
                         'caja_apertura_id' => $aperturaId,
                         'fecha'            => now(),
@@ -502,9 +506,19 @@ class VentaController extends Controller
                         'efectivo'         => $efectivo,
                         'bancos'           => $bancos,
                         'tarjetas'         => $tarjetas,
-                        'cheques'          => $cheques,
+                        'cheques'          => $montoCheque,
                         'total'            => $monto,
                     ]);
+
+                    if ($medio === 'cheque') {
+                        $chequeService->registrarRecibido([
+                            'numero'             => $request->input("cheque_numero.$index"),
+                            'banco_emisor'       => $request->input("cheque_banco.$index"),
+                            'contraparte_nombre' => $request->input("cheque_titular.$index") ?: (optional($venta->cliente)->nombre ?? 'Cliente'),
+                            'monto'              => $monto,
+                            'fecha_cobro'        => $request->input("cheque_fecha_cobro.$index") ?: now(),
+                        ], $venta, $mov);
+                    }
                 }
             }
 

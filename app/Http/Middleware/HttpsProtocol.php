@@ -21,10 +21,16 @@ class HttpsProtocol
             return $next($request);
         }
 
-        // Only redirect GET/HEAD requests to HTTPS; POST/PUT/DELETE/etc pass through
-        // to avoid losing request body data. TrustProxies handles X-Forwarded-Proto.
-        if (!$request->secure() && $request->isMethod('GET')) {
-            return redirect()->secure($request->getRequestUri());
+        // TrustProxies handles X-Forwarded-Proto, so $request->secure() is reliable behind the LB.
+        if (!$request->secure()) {
+            // GET/HEAD can be redirected safely (no body to lose).
+            if ($request->isMethod('GET') || $request->isMethod('HEAD')) {
+                return redirect()->secure($request->getRequestUri());
+            }
+
+            // A POST/PUT/PATCH/DELETE over plain HTTP would send credentials/data
+            // unencrypted. Reject it instead of forwarding it in the clear.
+            abort(400, 'HTTPS is required.');
         }
 
         return $next($request);

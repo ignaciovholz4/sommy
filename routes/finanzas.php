@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\Finanzas\ChequeController;
 use App\Http\Controllers\Finanzas\CobranzaController;
 use App\Http\Controllers\Finanzas\CuentaCorrienteProveedorController;
 use App\Http\Controllers\Finanzas\EnvioController;
 use App\Http\Controllers\Finanzas\FinanzasDashboardController;
 use App\Http\Controllers\Finanzas\GastoCategoriaController;
 use App\Http\Controllers\Finanzas\GastoController;
+use App\Http\Controllers\Finanzas\MarketingController;
+use App\Http\Controllers\Finanzas\OperacionCambioController;
 use App\Http\Controllers\Finanzas\RendicionFleteroController;
 use App\Http\Controllers\Finanzas\ReposicionController;
 use App\Http\Controllers\Finanzas\ResumenController;
@@ -74,4 +77,24 @@ Route::middleware(['auth', 'verified'])->prefix('finanzas')->name('finanzas.')->
     Route::get('cobranzas', [CobranzaController::class, 'index'])->name('cobranzas.index');
     Route::post('cobranzas/{id}/aprobar', [CobranzaController::class, 'aprobarYEnviar'])->name('cobranzas.aprobar');
     Route::post('cobranzas/{id}/descartar', [CobranzaController::class, 'descartar'])->name('cobranzas.descartar');
+
+    // Cartera de cheques (propios y de terceros)
+    Route::get('cheques', [ChequeController::class, 'index'])->name('cheques.index');
+    Route::get('cheques/data', [ChequeController::class, 'data'])->name('cheques.data');
+    Route::get('cheques/disponibles', [ChequeController::class, 'disponibles'])->name('cheques.disponibles');
+    Route::post('cheques/{cheque}/depositar', [ChequeController::class, 'depositar'])->name('cheques.depositar');
+    Route::post('cheques/{cheque}/acreditar', [ChequeController::class, 'acreditar'])->name('cheques.acreditar');
+    Route::post('cheques/{cheque}/rechazar', [ChequeController::class, 'rechazar'])->name('cheques.rechazar');
+    Route::post('cheques/{cheque}/anular', [ChequeController::class, 'anular'])->name('cheques.anular');
+
+    // Compra/venta de moneda extranjera (USD, USDT) con costeo FIFO
+    Route::get('divisas', [OperacionCambioController::class, 'index'])->name('divisas.index');
+    Route::get('divisas/data', [OperacionCambioController::class, 'data'])->name('divisas.data');
+    Route::get('divisas/form-data', [OperacionCambioController::class, 'formData'])->name('divisas.form-data');
+    Route::post('divisas', [OperacionCambioController::class, 'store'])->name('divisas.store');
+
+    // Panel de gasto publicitario (Meta Ads / Google Ads)
+    Route::get('marketing', [MarketingController::class, 'index'])->name('marketing.index');
+    Route::get('marketing/data', [MarketingController::class, 'data'])->name('marketing.data');
+    Route::post('marketing/sincronizar', [MarketingController::class, 'sincronizarAhora'])->name('marketing.sincronizar');
 });

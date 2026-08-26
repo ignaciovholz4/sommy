@@ -27,6 +27,7 @@ use App\Http\Controllers\Cuentas\CuentasController;
 use App\Http\Controllers\Cuentas\CajaAperturaController;
 use App\Http\Controllers\Cuentas\MovimientoController;
 use App\Http\Controllers\Cuentas\ConciliacionController;
+use App\Http\Controllers\Cuentas\ChytapayConexionController;
 use App\Http\Controllers\PresupuestoController;
 use App\Http\Controllers\Venta\VentaController;
 use App\Http\Controllers\Venta\VentaController2;
@@ -132,6 +133,11 @@ Route::get('/login', 'ConnectController@index')->name('tenant.login');
 Route::post('/login','ConnectController@postLogin')->name('tenant.login.post');
 /**RUTA DE CERRAR CESION */
 Route::get('/logout', 'ConnectController@getLogout')->name('tenant.logout')->middleware('auth');
+
+/** VERIFICACION EN DOS PASOS (2FA) - segundo paso del login de staff (guard "guest" ya aplicado en el controller) */
+Route::get('/login/verificar-codigo', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'show'])->name('two-factor.challenge');
+Route::post('/login/verificar-codigo', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'verify'])->name('two-factor.verify');
+Route::get('/login/verificar-codigo/cancelar', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'cancel'])->name('two-factor.cancel');
 
 // GET routes referenced from Blade/Fortify (config/fortify.php has views=false, so framework does not register these).
 Route::middleware('guest')->group(function () {
@@ -249,6 +255,14 @@ Route::post('newuser', 'UserController@postRegister')->name('register')->middlew
 Route::post('updatepasssword', 'UserController@updatepassword')->name('updatepasssword')->middleware(['auth','verified']);
 Route::get('delete-users/{id}', 'UserController@delete_user')->name('delete-users')->middleware(['auth','verified']);
 Route::post('/downrol', 'RoleController@downRol')->name('downrol')->middleware(['auth','verified']);
+
+/** SEGURIDAD DE LA CUENTA: verificacion en dos pasos (2FA), opt-in por usuario */
+Route::middleware(['auth','verified'])->prefix('mi-perfil/seguridad')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Auth\TwoFactorSettingsController::class, 'show'])->name('two-factor.settings');
+    Route::post('/habilitar', [\App\Http\Controllers\Auth\TwoFactorSettingsController::class, 'enable'])->name('two-factor.enable');
+    Route::post('/confirmar', [\App\Http\Controllers\Auth\TwoFactorSettingsController::class, 'confirm'])->name('two-factor.confirm');
+    Route::post('/deshabilitar', [\App\Http\Controllers\Auth\TwoFactorSettingsController::class, 'disable'])->name('two-factor.disable');
+});
 //Route::post('savedevolucionproduct', 'Devolucion\DevolucionventaController@store')->name('savedevolucionproduct');
 
 /**RUTAS DE CATEGORIA */
@@ -687,6 +701,26 @@ Route::prefix('cuentas')->middleware(['auth','verified'])->group(function () {
 
     Route::post('{cuenta}/conciliacion/{importado}/descartar', [ConciliacionController::class, 'descartar'])
         ->name('cuentas.conciliacion.descartar');
+});
+
+Route::prefix('cuentas')->middleware(['auth','verified'])->group(function () {
+    // Chytapay: conexion OAuth2 por Cuenta y sincronizacion de cobros pagados
+    // hacia movimientos_bancarios_importados (feeder automatico de la conciliacion).
+    Route::get('{cuenta}/chytapay/estado', [ChytapayConexionController::class, 'estado'])
+        ->name('cuentas.chytapay.estado');
+
+    Route::post('{cuenta}/chytapay/conectar', [ChytapayConexionController::class, 'conectar'])
+        ->name('cuentas.chytapay.conectar');
+
+    Route::post('{cuenta}/chytapay/desconectar', [ChytapayConexionController::class, 'desconectar'])
+        ->name('cuentas.chytapay.desconectar');
+
+    Route::post('{cuenta}/chytapay/sincronizar', [ChytapayConexionController::class, 'sincronizarAhora'])
+        ->name('cuentas.chytapay.sincronizar');
+
+    // Redirect fijo (debe coincidir con CHYTAPAY_REDIRECT_URI y con lo registrado en el portal)
+    Route::get('chytapay/callback', [ChytapayConexionController::class, 'callback'])
+        ->name('cuentas.chytapay.callback');
 });
 
 /* PRESUPUESTO */

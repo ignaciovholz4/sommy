@@ -124,6 +124,37 @@
             @endif
         </div>
     </div>
+
+    @if($saldosMonedaExtranjera->isNotEmpty())
+    {{-- Fila 3: tenencias en moneda extranjera (no se suman con los pesos de arriba) --}}
+    <div class="fin-grid">
+        <div class="fin-card" style="grid-column: 1 / -1;">
+            <h3>Tenencias en moneda extranjera</h3>
+            <div style="overflow-x:auto;">
+                <table class="fin-tabla">
+                    <thead>
+                        <tr><th>Moneda</th><th>Cuenta</th><th class="der">Saldo</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach($saldosMonedaExtranjera as $grupo)
+                            @foreach($grupo['cuentas'] as $c)
+                            <tr>
+                                <td style="font-weight:500;">{{ $grupo['codigo'] }}</td>
+                                <td>{{ $c['nombre'] }}</td>
+                                <td class="der" style="font-weight:600;">{{ $grupo['simbolo'] }} {{ number_format($c['saldo'], 2, ',', '.') }}</td>
+                            </tr>
+                            @endforeach
+                            <tr>
+                                <td colspan="2" style="text-align:right;color:#6E7A96;font-size:12.5px;">Total {{ $grupo['codigo'] }}</td>
+                                <td class="der" style="font-weight:700;color:#1B2B5A;">{{ $grupo['simbolo'] }} {{ number_format($grupo['total'], 2, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 @endsection
 

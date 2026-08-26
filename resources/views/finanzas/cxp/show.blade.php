@@ -191,11 +191,33 @@
                         <input type="number" id="pago_cxp_monto" class="form-control" step="0.01" min="0.01" max="{{ max(0, $saldo) }}" required>
                     </div>
                     <div class="form-group">
-                        <label>Cuenta de salida (cajas abiertas y bancos) *</label>
+                        <label>Cuenta de salida (cajas, bancos o cheques) *</label>
                         <select id="pago_cxp_cuenta" class="form-control" required>
                             <option value="">Cargando cuentas...</option>
                         </select>
                         <small class="text-muted">Si pagás desde una caja, tiene que estar abierta.</small>
+                    </div>
+                    <div id="campo-cheque-cxp" style="display:none;">
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Número de cheque *</label>
+                                <input type="text" id="pago_cxp_cheque_numero" class="form-control" maxlength="60">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Banco emisor</label>
+                                <input type="text" id="pago_cxp_cheque_banco" class="form-control" maxlength="120">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label>Fecha de cobro *</label>
+                                <input type="date" id="pago_cxp_cheque_fecha" class="form-control">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>A nombre de (opcional)</label>
+                                <input type="text" id="pago_cxp_cheque_titular" class="form-control" maxlength="120" placeholder="{{ $proveedor->nombre }} por defecto">
+                            </div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Descripción</label>
@@ -269,8 +291,32 @@ const URL_PROV = "{{ url('finanzas/cxp/' . $proveedor->idproveedor) }}";
 const CSRF = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
 function abrirModalPagoCxp() {
-    cargarCuentasEnSelect('#pago_cxp_cuenta');
+    $('#campo-cheque-cxp').hide();
+    $('#pago_cxp_cheque_numero, #pago_cxp_cheque_banco, #pago_cxp_cheque_fecha, #pago_cxp_cheque_titular').val('');
+    cargarCuentasConChequesEnSelect('#pago_cxp_cuenta');
     $('#ModalPagoCxp').modal('show');
+}
+
+// Cajas/bancos + cheques de terceros en cartera (para endosar)
+function cargarCuentasConChequesEnSelect(selector) {
+    $(selector).html('<option value="">Cargando cuentas...</option>');
+    Promise.all([
+        fetch("{{ url('cuentas-abiertas') }}").then(res => res.json()),
+        fetch("{{ url('finanzas/cheques/disponibles') }}").then(res => res.json())
+    ]).then(([cuentas, cheques]) => {
+        let options = '<option value="">Seleccioná una cuenta</option>';
+        (cuentas.cajas || []).forEach(c => {
+            options += `<option value="caja-${c.id}">${c.nombre} (Caja · ${c.sucursal || ''} · ${c.moneda})</option>`;
+        });
+        (cuentas.bancos || []).forEach(b => {
+            options += `<option value="banco-${b.id}">${b.nombre} (Banco · ${b.sucursal || ''} · ${b.moneda})</option>`;
+        });
+        options += '<option value="cheque-nuevo">📝 Cheque propio (nuevo)</option>';
+        (cheques.data || []).forEach(ch => {
+            options += `<option value="cheque-${ch.id}" data-monto="${ch.monto}">📝 Entregar — ${ch.label}</option>`;
+        });
+        $(selector).html(options);
+    }).catch(() => $(selector).html('<option value="">No se pudieron cargar las cuentas</option>'));
 }
 
 function abrirModalAjusteCxp() {
@@ -284,19 +330,40 @@ $(document).ready(function () {
         $('#wrap_ajuste_vencimiento').toggle(this.value === 'debe');
     });
 
+    $('#pago_cxp_cuenta').on('change', function () {
+        $('#campo-cheque-cxp').toggle(this.value === 'cheque-nuevo');
+        const esEndoso = this.value.startsWith('cheque-') && this.value !== 'cheque-nuevo';
+        $('#pago_cxp_monto').prop('readonly', esEndoso);
+        if (esEndoso) {
+            const monto = this.selectedOptions[0].dataset.monto;
+            if (monto) $('#pago_cxp_monto').val(monto);
+        }
+    });
+
     $('#formPagoCxp').on('submit', function (e) {
         e.preventDefault();
         const cuenta = $('#pago_cxp_cuenta').val();
         if (!cuenta) { toastr.warning('Seleccioná una cuenta.'); return; }
+        if (cuenta === 'cheque-nuevo' && !$('#pago_cxp_cheque_numero').val()) {
+            toastr.warning('Indicá el número del cheque.'); return;
+        }
+
+        const payload = {
+            monto: $('#pago_cxp_monto').val(),
+            cuenta: cuenta,
+            descripcion: $('#pago_cxp_descripcion').val() || null
+        };
+        if (cuenta === 'cheque-nuevo') {
+            payload.cheque_numero = $('#pago_cxp_cheque_numero').val();
+            payload.cheque_banco = $('#pago_cxp_cheque_banco').val();
+            payload.cheque_fecha_cobro = $('#pago_cxp_cheque_fecha').val();
+            payload.cheque_titular = $('#pago_cxp_cheque_titular').val();
+        }
 
         fetch(`${URL_PROV}/registrar-pago`, {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': CSRF, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                monto: $('#pago_cxp_monto').val(),
-                cuenta: cuenta,
-                descripcion: $('#pago_cxp_descripcion').val() || null
-            })
+            body: JSON.stringify(payload)
         })
         .then(res => res.ok ? res.json() : res.json().then(j => Promise.reject(j)))
         .then(data => {

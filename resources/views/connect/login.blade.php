@@ -39,14 +39,14 @@
           </div>
         </div>
         <div class="row">
-          {{-- <div class="col-8">
+          <div class="col-12 mb-2">
             <div class="icheck-primary">
-              <input type="checkbox" id="remember">
+              <input type="checkbox" name="remember" id="remember" value="1">
               <label for="remember">
-                Remember Me
+                Mantener sesión iniciada
               </label>
             </div>
-          </div> --}}
+          </div>
           <!-- /.col -->
           <div class="container">
             {{-- <button type="submit" class="btn btn-primary btn-block">Sign In</button> --}}

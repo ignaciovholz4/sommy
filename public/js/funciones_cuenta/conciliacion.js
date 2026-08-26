@@ -219,9 +219,13 @@ $(function () {
             estadoCol = '<span class="mov-chip mov-chip-descartado">Descartado</span>';
         }
 
+        const origenChip = item.origen === 'chytapay'
+            ? ' <span class="mov-chip" style="background:#EDE9FE;color:#5B21B6"><i class="fas fa-bolt"></i> Chytapay</span>'
+            : '';
+
         return '<tr>' +
             '<td>' + esc(item.fecha) + '</td>' +
-            '<td>' + esc(item.descripcion) + '</td>' +
+            '<td>' + esc(item.descripcion) + origenChip + '</td>' +
             '<td>' + esc(item.referencia) + '</td>' +
             '<td>' + chipTipo + '</td>' +
             '<td class="text-end fw-bold">' + moneyFmt(item.monto) + '</td>' +

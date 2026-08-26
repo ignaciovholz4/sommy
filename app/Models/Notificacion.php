@@ -27,6 +27,7 @@ class Notificacion extends Model
         'stock'      => '⚠️',
         'reposicion' => '📦',
         'ceo'        => '🧭',
+        'cheque'     => '📝',
     ];
 
     /**

@@ -84,6 +84,10 @@ window.fnShowListCartProduct = () => {
       ? ` &middot; ${prod.rowProdVariant.combinacion}`
       : "";
 
+    const badgeSinStock = prod.sinStock
+      ? `<span class="sommy-badge-sinstock"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Sin stock — a consultar</span>`
+      : "";
+
     window.showShoppingCart.innerHTML +=
       `
         <li class="list-group-item px-0">
@@ -92,6 +96,7 @@ window.fnShowListCartProduct = () => {
             <div style="flex:1;min-width:0;">
               <div class="sommy-cart-name">${prod.name}</div>
               <div class="sommy-cart-meta">Cantidad: ${prod.cant}${variantInfo}</div>
+              ${badgeSinStock ? `<div class="mt-1">${badgeSinStock}</div>` : ""}
             </div>
             <div class="text-end">
               <div class="sommy-cart-price">${window.fnFormatMoney(prod.total)}</div>

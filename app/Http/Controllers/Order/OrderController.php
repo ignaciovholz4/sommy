@@ -14,6 +14,7 @@ use App\Models\ecommerce\order_stock_asignacion;
 
 use App\Models\CajaApertura;
 use App\Models\Movimiento;
+use App\Services\ChequeService;
 use App\Http\Controllers\StockController;
 
 class OrderController extends Controller
@@ -318,7 +319,7 @@ class OrderController extends Controller
                 'fecha'         => $m->fecha ? \Carbon\Carbon::parse($m->fecha)->format('d/m/Y H:i') : '—',
                 'cuenta'        => $m->cuenta->nombre ?? '—',
                 'tipo'          => $m->tipo,
-                'medio'         => $m->efectivo > 0 ? 'Efectivo' : ($m->tarjetas > 0 ? 'Tarjeta' : 'Banco/Transf.'),
+                'medio'         => $m->efectivo > 0 ? 'Efectivo' : ($m->tarjetas > 0 ? 'Tarjeta' : ($m->cheques > 0 ? 'Cheque' : 'Banco/Transf.')),
                 'observaciones' => $m->observaciones,
                 'adjunto_url'   => $m->adjunto_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($m->adjunto_path) : null,
                 'adjunto_nombre'=> $m->adjunto_nombre,
@@ -332,17 +333,19 @@ class OrderController extends Controller
      * Registra un pago (total o parcial) del pedido en la cuenta elegida.
      * Permite cobrar un mismo pedido repartido en varias cuentas/medios.
      */
-    public function registrarPago(Request $request, $id)
+    public function registrarPago(Request $request, $id, ChequeService $chequeService)
     {
         $request->validate([
             'destino'       => 'required|string',
-            'medio'         => 'required|in:efectivo,transferencia,tarjeta',
+            'medio'         => 'required|in:efectivo,transferencia,tarjeta,cheque',
             'monto'         => 'required|numeric|min:0.01',
             'observaciones' => 'nullable|string|max:255',
             'comprobante'   => 'nullable|file|mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx,txt|max:8192',
+            'cheque_numero' => 'required_if:medio,cheque|nullable|string|max:60',
         ], [
             'comprobante.mimes' => 'El archivo debe ser imagen, PDF, Word, Excel o TXT.',
             'comprobante.max'   => 'El archivo puede pesar como máximo 8 MB.',
+            'cheque_numero.required_if' => 'Indicá el número del cheque.',
         ]);
 
         $order = order_ecommerce::with('cliente')->findOrFail($id);
@@ -392,11 +395,12 @@ class OrderController extends Controller
             $adjuntoNombre = $request->file('comprobante')->getClientOriginalName();
         }
 
-        Movimiento::create([
+        $movimiento = Movimiento::create([
             'cuenta_id'         => $cuentaId,
             'caja_apertura_id'  => $aperturaId,
             'fecha'             => now(),
             'tipo'              => 'ingreso',
+            'medio'             => $request->medio,
             'cliente_proveedor' => optional($order->cliente)->nombre ?? 'Cliente ecommerce',
             'comprobante'       => 'Pedido #' . $order->order_id,
             'alias_tercero'     => $tercero['alias'] ?? null,
@@ -408,8 +412,19 @@ class OrderController extends Controller
             'efectivo'          => $request->medio === 'efectivo' ? $monto : 0,
             'bancos'            => $request->medio === 'transferencia' ? $monto : 0,
             'tarjetas'          => $request->medio === 'tarjeta' ? $monto : 0,
+            'cheques'           => $request->medio === 'cheque' ? $monto : 0,
             'total'             => $monto,
         ]);
+
+        if ($request->medio === 'cheque') {
+            $chequeService->registrarRecibido([
+                'numero'             => $request->input('cheque_numero'),
+                'banco_emisor'       => $request->input('cheque_banco'),
+                'contraparte_nombre' => $request->input('cheque_titular') ?: (optional($order->cliente)->nombre ?? 'Cliente'),
+                'monto'              => $monto,
+                'fecha_cobro'        => $request->input('cheque_fecha_cobro') ?: now(),
+            ], $order, $movimiento);
+        }
 
         return response()->json([
             'status'  => 1,

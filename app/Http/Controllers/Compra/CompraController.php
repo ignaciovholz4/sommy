@@ -17,6 +17,7 @@ use App\Models\ProveedorCcMovimiento;
 
 use App\Http\Controllers\StockController;
 use App\Models\CompraOcrExtraccion;
+use App\Services\ChequeService;
 use App\Services\Compras\ComprobanteOcrService;
 
 use Illuminate\Support\Facades\DB;
@@ -428,7 +429,7 @@ class CompraController extends Controller
         ]);
     }
 
-    public function registrarPago(Request $request, $idcompra)
+    public function registrarPago(Request $request, $idcompra, ChequeService $chequeService)
     {
         $request->validate([
             'cajas'   => 'required|array|min:1',
@@ -458,6 +459,18 @@ class CompraController extends Controller
 
             foreach ($request->cajas as $index => $cuentaRef) {
                 $monto = $request->montos[$index] ?? 0;
+
+                // Endoso: se paga entregando un cheque de tercero que ya está en cartera.
+                $chequeEndosado = str_starts_with($cuentaRef, 'cheque-')
+                    ? $chequeService->resolverEndoso($cuentaRef)
+                    : null;
+                if (str_starts_with($cuentaRef, 'cheque-') && !$chequeEndosado) {
+                    return response()->json(['success' => false, 'error' => 'Ese cheque ya no está disponible para entregar.']);
+                }
+                if ($chequeEndosado) {
+                    $monto = (float) $chequeEndosado->monto;
+                }
+
                 if ($monto > 0) {
                     $cuentaId   = null;
                     $aperturaId = null;
@@ -465,9 +478,12 @@ class CompraController extends Controller
                     $bancos     = 0;
                     $tarjetas   = 0;
 
-                    $cheques = 0;
+                    $montoCheque = 0;
 
-                    if (str_starts_with($cuentaRef, 'caja-')) {
+                    if ($chequeEndosado) {
+                        // Sin cuenta interna: el cheque sale de cartera, no de caja/banco.
+                        $montoCheque = $monto;
+                    } elseif (str_starts_with($cuentaRef, 'caja-')) {
                         $aperturaId = (int) str_replace('caja-', '', $cuentaRef);
                         $apertura   = CajaApertura::findOrFail($aperturaId);
 
@@ -484,19 +500,23 @@ class CompraController extends Controller
 
                     // El medio elegido define a qué columna va el monto (los cheques
                     // entregados no salen del efectivo del cierre de caja)
-                    $medio = $request->input("medios.$index") ?: null;
-                    if ($medio) {
+                    $medio = $chequeEndosado ? 'cheque' : ($request->input("medios.$index") ?: null);
+                    if ($medio && !$chequeEndosado) {
                         $efectivo = $bancos = $tarjetas = 0;
                         match (true) {
                             $medio === 'efectivo' => $efectivo = $monto,
                             in_array($medio, ['tarjeta_debito', 'tarjeta_credito']) => $tarjetas = $monto,
-                            $medio === 'cheque' => $cheques = $monto,
+                            $medio === 'cheque' => $montoCheque = $monto,
                             default => $bancos = $monto, // transferencia, mercadopago, otro
                         };
                     }
 
+                    if ($medio === 'cheque' && !$chequeEndosado && !$request->input("cheque_numero.$index")) {
+                        return response()->json(['success' => false, 'error' => 'Indicá el número del cheque.']);
+                    }
+
                     // 🔹 Un único create por iteración
-                    $movimientosCreados[] = Movimiento::create([
+                    $mov = Movimiento::create([
                         'cuenta_id'        => $cuentaId,
                         'caja_apertura_id' => $aperturaId,
                         'fecha'            => now(),
@@ -504,13 +524,28 @@ class CompraController extends Controller
                         'medio'            => $medio,
                         'cliente_proveedor'=> optional($compra->proveedor)->nombre ?? 'Proveedor',
                         'comprobante'      => $compra->num_folio,
-                        'observaciones'    => 'Pago de compra registrado' . ($medio ? ' (' . str_replace('_', ' ', $medio) . ')' : ''),
+                        'observaciones'    => 'Pago de compra registrado' . ($medio ? ' (' . str_replace('_', ' ', $medio) . ')' : '')
+                            . ($chequeEndosado ? ' — entregado cheque Nº ' . $chequeEndosado->numero : ''),
                         'efectivo'         => $efectivo,
                         'bancos'           => $bancos,
                         'tarjetas'         => $tarjetas,
-                        'cheques'          => $cheques,
+                        'cheques'          => $montoCheque,
                         'total'            => $monto,
                     ]);
+
+                    $movimientosCreados[] = $mov;
+
+                    if ($chequeEndosado) {
+                        $chequeService->entregar($chequeEndosado, $mov);
+                    } elseif ($medio === 'cheque') {
+                        $chequeService->registrarPropio([
+                            'numero'             => $request->input("cheque_numero.$index"),
+                            'banco_emisor'       => $request->input("cheque_banco.$index"),
+                            'contraparte_nombre' => $request->input("cheque_titular.$index") ?: (optional($compra->proveedor)->nombre ?? 'Proveedor'),
+                            'monto'              => $monto,
+                            'fecha_cobro'        => $request->input("cheque_fecha_cobro.$index") ?: now(),
+                        ], $compra, $mov);
+                    }
                 }
             }
 
