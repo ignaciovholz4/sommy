@@ -70,15 +70,28 @@
 
     .dg-mobile-burger {
         display: none;
+        position: relative;
         font-size: 18px;
-        color: rgba(255, 255, 255, 0.6);
+        color: rgba(224, 242, 254, 0.85);
         cursor: pointer;
         width: 40px;
         height: 40px;
         align-items: center;
         justify-content: center;
-        border-radius: 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(224, 242, 254, 0.25);
+        background: rgba(255, 255, 255, 0.04);
+        flex-shrink: 0;
     }
+    .dg-mobile-burger:hover,
+    .dg-mobile-burger.dg-burger-active { background: rgba(14, 165, 233, 0.2); border-color: #0EA5E9; color: #fff; }
+    .dg-burger-dot {
+        display: none;
+        position: absolute; top: -3px; right: -3px;
+        width: 11px; height: 11px; border-radius: 999px;
+        background: #F59E0B; border: 2px solid #1B2B5A;
+    }
+    .dg-burger-dot.dg-show { display: block; }
 
     .dg-tools-right {
         display: flex;
@@ -164,12 +177,59 @@
 
     @media (max-width: 992px) {
         .dg-mobile-burger { display: flex; }
-        .dg-header-top { padding: 0 1.5rem; }
-        .dg-logo-plate { margin-left: 20px; padding: 6px 0; }
+        .dg-header-top { padding: 0 1.2rem; }
+        .dg-top-container { justify-content: space-between; }
+        .dg-logo-plate { margin-left: 0; padding: 6px 0; }
         .dg-logo { height: 36px; }
-        .dg-tools-right { margin-right: 0; }
-        .dg-nav-item span { display: none; }
-        .dg-nav-item { display: none; }
+
+        /* El panel de accesos (campana, pedidos, envíos, hoy/mes, tienda, seguridad, salir)
+           se pliega en un desplegable que se abre con el botón hamburguesa. */
+        .dg-tools-right {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin: 0;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 3px;
+            background: #1B2B5A;
+            padding: 10px 14px 16px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, .28);
+            max-height: calc(100vh - 75px);
+            overflow-y: auto;
+        }
+        .dg-header-top.dg-tools-open .dg-tools-right { display: flex; }
+        .dg-tools-right .dg-nav-item {
+            width: 100%;
+            justify-content: flex-start;
+            border: none;
+            background: rgba(255, 255, 255, .05);
+            padding: 12px 14px;
+        }
+        .dg-tools-right .dg-nav-item span { display: inline; }
+        .dg-tools-right .dg-divider { display: none; }
+        .dg-tools-right .dg-store-btn,
+        .dg-tools-right .dg-logout-btn {
+            width: 100%;
+            height: auto;
+            justify-content: flex-start;
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        .dg-tools-right .dg-logout-btn { color: rgba(224, 242, 254, .85) !important; }
+
+        /* El desplegable de notificaciones se abre desde adentro del panel: lo anclamos
+           al viewport para no depender de la posición de .dg-tools-right (que scrollea). */
+        #dgNotifPanel {
+            position: fixed !important;
+            top: 80px !important;
+            left: 10px !important;
+            right: 10px !important;
+            width: auto !important;
+            max-width: none !important;
+        }
     }
 </style>
 
@@ -204,6 +264,11 @@
             .dg-res-sub { font-size:11px; color:#6E7A96; }
             @media (max-width: 992px) { .dg-buscador { display:none; } }
         </style>
+
+        <button type="button" class="dg-mobile-burger" id="dgMobileBurger" aria-label="Abrir accesos rápidos">
+            <i class="fas fa-ellipsis-v"></i>
+            <span class="dg-burger-dot" id="dgBurgerDot"></span>
+        </button>
 
         <div class="dg-tools-right">
             {{-- Campanita: centro de notificaciones del negocio --}}
@@ -269,6 +334,37 @@
 </header>
 
 <script>
+// Botón hamburguesa mobile: pliega/despliega el panel de accesos rápidos (campana, pedidos, envíos, etc.)
+(function () {
+    var burger = document.getElementById('dgMobileBurger');
+    var header = document.querySelector('.dg-header-top');
+    if (!burger || !header) return;
+
+    burger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        header.classList.toggle('dg-tools-open');
+        burger.classList.toggle('dg-burger-active');
+    });
+    document.addEventListener('click', function (e) {
+        if (header.classList.contains('dg-tools-open') && !header.contains(e.target)) {
+            header.classList.remove('dg-tools-open');
+            burger.classList.remove('dg-burger-active');
+        }
+    });
+
+    // Punto de aviso en la hamburguesa: se prende si hay algo pendiente en el panel plegado
+    window.actualizarBurgerDot = function () {
+        var dot = document.getElementById('dgBurgerDot');
+        if (!dot) return;
+        var badges = ['dgOrdersBadge', 'dgEnviosBadge', 'dgNotifBadge'];
+        var hayAlgo = badges.some(function (id) {
+            var el = document.getElementById(id);
+            return el && el.style.display !== 'none' && el.style.display !== '';
+        });
+        dot.classList.toggle('dg-show', hayAlgo);
+    };
+})();
+
 // Alerta de pedidos nuevos: badge en PEDIDOS + notificación al detectar un pedido entrante
 window.addEventListener('load', function () {
     var badge = document.getElementById('dgOrdersBadge');
@@ -287,6 +383,7 @@ window.addEventListener('load', function () {
                 } else {
                     badge.style.display = 'none';
                 }
+                if (window.actualizarBurgerDot) window.actualizarBurgerDot();
 
                 // Aviso de pedidos estancados (más de 48 hs en Pendiente), máximo una vez cada 6 horas
                 if (data.estancados > 0 && window.toastr) {
@@ -336,6 +433,7 @@ window.addEventListener('load', function () {
                 } else {
                     badgeEnvios.style.display = 'none';
                 }
+                if (window.actualizarBurgerDot) window.actualizarBurgerDot();
             })
             .catch(function () {});
     }
@@ -355,6 +453,7 @@ window.addEventListener('load', function () {
         } else {
             notifBadge.style.display = 'none';
         }
+        if (window.actualizarBurgerDot) window.actualizarBurgerDot();
         if (!data.ultimas.length) {
             notifLista.innerHTML = '<div style="padding:26px;text-align:center;color:#94A3B8;font-size:12.5px;">Sin novedades por ahora. 👌</div>';
             return;
