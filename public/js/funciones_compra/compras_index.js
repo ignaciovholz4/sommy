@@ -247,7 +247,7 @@ function recalcularMontosCompra() {
     const pendienteInicial = parseFloat(document.querySelector("#monto_pendiente").dataset.pendienteInicial) || 0;
     let pagado = 0;
 
-    document.querySelectorAll("#mediosPagoContainer .row").forEach(row => {
+    document.querySelectorAll("#mediosPagoContainer > .row").forEach(row => {
         pagado += montoArsDeFilaCompra(row);
     });
 
@@ -263,7 +263,7 @@ function validarMontos() {
     let cuentasValidas = true;
     let faltaCotizacion = false;
 
-    document.querySelectorAll("#mediosPagoContainer .row").forEach(row => {
+    document.querySelectorAll("#mediosPagoContainer > .row").forEach(row => {
         const cuentaSelect = row.querySelector("select[name='cajas[]']");
         const montoInput = row.querySelector("input[name='montos[]']");
         const monto = parseFloat(montoInput.value) || 0;
