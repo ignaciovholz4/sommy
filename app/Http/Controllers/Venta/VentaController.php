@@ -9,6 +9,7 @@ use App\Models\Cliente;
 use App\Models\Articulo;
 use App\Models\TipoComprobante;
 use App\Models\CajaApertura;
+use App\Models\Cuenta;
 use App\Models\Movimiento;
 use App\Models\Iva;
 use App\Models\Sucursal;
@@ -406,7 +407,8 @@ class VentaController extends Controller
         $venta = Venta::with(['movimientos.cuenta'])->findOrFail($idventa);
 
         $total = $venta->total_con_iva;
-        $ingresado = $venta->movimientos()->sum('total');
+        // Equivalente en ARS ya convertido, si algún cobro entró por una cuenta en moneda extranjera
+        $ingresado = $venta->movimientos()->sum('total_ars');
         $pendiente = $total - $ingresado;
 
         return response()->json([
@@ -416,14 +418,17 @@ class VentaController extends Controller
             'sucursal_id'     => $venta->sucursal_id,
             'movimientos'     => $venta->movimientos->map(function ($mov) {
                 return [
-                    'id'        => $mov->id,
-                    'cuenta'    => $mov->cuenta->nombre ?? null,
-                    'tipo'      => $mov->cuenta->tipo ?? null, // caja o banco
-                    'total'     => $mov->total,
-                    'efectivo'  => $mov->efectivo,
-                    'bancos'    => $mov->bancos,
-                    'tarjetas'  => $mov->tarjetas,
-                    'fecha'     => $mov->fecha->format('d/m/Y H:i'),
+                    'id'         => $mov->id,
+                    'cuenta'     => $mov->cuenta->nombre ?? null,
+                    'tipo'       => $mov->cuenta->tipo ?? null, // caja o banco
+                    'total'      => $mov->total,
+                    'moneda'     => $mov->cuenta->moneda->codigo ?? null,
+                    'cotizacion' => $mov->cotizacion,
+                    'total_ars'  => $mov->total_ars,
+                    'efectivo'   => $mov->efectivo,
+                    'bancos'     => $mov->bancos,
+                    'tarjetas'   => $mov->tarjetas,
+                    'fecha'      => $mov->fecha->format('d/m/Y H:i'),
                 ];
             }),
         ]);
@@ -447,13 +452,10 @@ class VentaController extends Controller
         DB::beginTransaction();
         try {
             $total     = $venta->total_con_iva;
-            $ingresado = $venta->movimientos()->sum('total');
+            $ingresado = $venta->movimientos()->sum('total_ars');
             $pendiente = $total - $ingresado;
 
-            $sumaNuevos = array_sum($request->input('montos', []));
-            if ($sumaNuevos > $pendiente) {
-                return response()->json(['success' => false, 'error' => 'El monto ingresado supera el pendiente.']);
-            }
+            $sumaArsNuevos = 0;
 
             foreach ($request->cajas as $index => $cuentaRef) {
                 $monto = $request->montos[$index] ?? 0;
@@ -509,6 +511,23 @@ class VentaController extends Controller
                         return response()->json(['success' => false, 'error' => 'Indicá el número del cheque.']);
                     }
 
+                    // Si la cuenta que recibe el cobro no es ARS (ej. una caja en
+                    // dólares), el monto ingresado está en esa moneda: se necesita la
+                    // cotización para saber cuánto de la deuda (siempre en ARS) cubre.
+                    $cotizacion = null;
+                    $totalArs   = $monto;
+                    if ($cuentaId) {
+                        $cuentaMoneda = optional(Cuenta::with('moneda')->find($cuentaId))->moneda?->codigo ?? 'ARS';
+                        if ($cuentaMoneda !== 'ARS') {
+                            $cotizacion = (float) ($request->input("cotizaciones.$index") ?: 0);
+                            if ($cotizacion <= 0) {
+                                return response()->json(['success' => false, 'error' => "Indicá la cotización del cobro en $cuentaMoneda."]);
+                            }
+                            $totalArs = round($monto * $cotizacion, 2);
+                        }
+                    }
+                    $sumaArsNuevos += $totalArs;
+
                     // 🔹 Un único create por iteración
                     $mov = Movimiento::create([
                         'cuenta_id'        => $cuentaId,
@@ -527,6 +546,8 @@ class VentaController extends Controller
                         'tarjetas'         => $tarjetas,
                         'cheques'          => $montoCheque,
                         'total'            => $monto,
+                        'cotizacion'       => $cotizacion,
+                        'total_ars'        => $totalArs,
                     ]);
 
                     if ($medio === 'cheque') {
@@ -541,7 +562,11 @@ class VentaController extends Controller
                 }
             }
 
-            $ingresadoFinal = $venta->movimientos()->sum('total');
+            if ($sumaArsNuevos > $pendiente + 0.01) {
+                return response()->json(['success' => false, 'error' => 'El monto ingresado supera el pendiente.']);
+            }
+
+            $ingresadoFinal = $venta->movimientos()->sum('total_ars');
             if ($ingresadoFinal >= $total) {
                 $venta->estado = 'cobrada';
                 $venta->save();

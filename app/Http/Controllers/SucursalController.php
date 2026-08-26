@@ -9,10 +9,33 @@ use App\Models\SucursalCombinacion;
 use App\Models\CajaApertura;
 use App\Models\Cuenta;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class SucursalController extends Controller
 {
+    /** Saldo actual de una caja (apertura activa: fondo inicial + neto de sus movimientos), en la moneda propia de la cuenta. */
+    private function saldoCaja($aperturaId, $fondoInicial): float
+    {
+        $neto = DB::table('movimientos')
+            ->where('caja_apertura_id', $aperturaId)
+            ->selectRaw("SUM(CASE WHEN tipo='ingreso' THEN total ELSE -total END) as neto")
+            ->value('neto') ?? 0;
+
+        return round((float) $fondoInicial + $neto, 2);
+    }
+
+    /** Saldo actual de un banco/cuenta (neto de todos sus movimientos), en la moneda propia de la cuenta. */
+    private function saldoCuenta($cuentaId): float
+    {
+        $neto = DB::table('movimientos')
+            ->where('cuenta_id', $cuentaId)
+            ->selectRaw("SUM(CASE WHEN tipo='ingreso' THEN total ELSE -total END) as neto")
+            ->value('neto') ?? 0;
+
+        return round($neto, 2);
+    }
+
     // ✅ Vista principal
     public function index()
     {
@@ -208,6 +231,7 @@ class SucursalController extends Controller
                 'tipo'           => 'caja',
                 'fecha_apertura' => $ap->fecha_apertura->format('d/m/Y H:i'),
                 'moneda'         => $ap->cuenta->moneda->codigo,
+                'saldo'          => $this->saldoCaja($ap->id, $ap->fondo_inicial),
             ];
         });
 
@@ -222,6 +246,7 @@ class SucursalController extends Controller
                     'nombre'    => $banco->nombre,
                     'tipo'      => 'banco',
                     'moneda'    => $banco->moneda->codigo,
+                    'saldo'     => $this->saldoCuenta($banco->id),
                 ];
             });
 
@@ -333,6 +358,7 @@ class SucursalController extends Controller
                 'tipo'           => 'caja',
                 'fecha_apertura' => $ap->fecha_apertura->format('d/m/Y H:i'),
                 'moneda'         => $ap->cuenta->moneda->codigo,
+                'saldo'          => $this->saldoCaja($ap->id, $ap->fondo_inicial),
             ];
         });
 
@@ -347,6 +373,7 @@ class SucursalController extends Controller
                     'nombre'    => $banco->nombre,
                     'tipo'      => 'banco',
                     'moneda'    => $banco->moneda->codigo,
+                    'saldo'     => $this->saldoCuenta($banco->id),
                 ];
             });
 

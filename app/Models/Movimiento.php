@@ -26,6 +26,8 @@ class Movimiento extends Model
         'tarjetas',
         'cheques',
         'total',
+        'cotizacion',
+        'total_ars',
         'referencia_type',
         'referencia_id',
     ];

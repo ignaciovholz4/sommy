@@ -9,6 +9,7 @@ use App\Models\Proveedor;
 use App\Models\Articulo;
 use App\Models\TipoComprobante;
 use App\Models\CajaApertura;
+use App\Models\Cuenta;
 use App\Models\Movimiento;
 use App\Models\Iva;
 use App\Models\Sucursal;
@@ -418,8 +419,9 @@ class CompraController extends Controller
 
         $total = $compra->total_con_iva;
 
-        // Sumamos todos los movimientos asociados a la compra
-        $pagado = $compra->movimientos()->sum('total');
+        // Sumamos todos los movimientos asociados a la compra (equivalente en ARS,
+        // ya convertido si algún pago salió de una cuenta en moneda extranjera)
+        $pagado = $compra->movimientos()->sum('total_ars');
         $pendiente = $total - $pagado;
 
         return response()->json([
@@ -429,14 +431,17 @@ class CompraController extends Controller
             'sucursal_id'     => $compra->sucursal_id,
             'movimientos'     => $compra->movimientos->map(function ($mov) {
                 return [
-                    'id'        => $mov->id,
-                    'cuenta'    => $mov->cuenta->nombre ?? null,
-                    'tipo'      => $mov->cuenta->tipo ?? null, // caja o banco
-                    'total'     => $mov->total,
-                    'efectivo'  => $mov->efectivo,
-                    'bancos'    => $mov->bancos,
-                    'tarjetas'  => $mov->tarjetas,
-                    'fecha'     => $mov->fecha instanceof \Carbon\Carbon
+                    'id'         => $mov->id,
+                    'cuenta'     => $mov->cuenta->nombre ?? null,
+                    'tipo'       => $mov->cuenta->tipo ?? null, // caja o banco
+                    'total'      => $mov->total,
+                    'moneda'     => $mov->cuenta->moneda->codigo ?? null,
+                    'cotizacion' => $mov->cotizacion,
+                    'total_ars'  => $mov->total_ars,
+                    'efectivo'   => $mov->efectivo,
+                    'bancos'     => $mov->bancos,
+                    'tarjetas'   => $mov->tarjetas,
+                    'fecha'      => $mov->fecha instanceof \Carbon\Carbon
                                     ? $mov->fecha->format('d/m/Y H:i')
                                     : $mov->fecha,
                 ];
@@ -462,15 +467,11 @@ class CompraController extends Controller
         DB::beginTransaction();
         try {
             $total     = $compra->total_con_iva;
-            $pagado    = $compra->movimientos()->sum('total');
+            $pagado    = $compra->movimientos()->sum('total_ars');
             $pendiente = $total - $pagado;
 
-            $sumaNuevos = array_sum($request->input('montos', []));
-            if ($sumaNuevos > $pendiente) {
-                return response()->json(['success' => false, 'error' => 'El monto ingresado supera el pendiente.']);
-            }
-
             $movimientosCreados = [];
+            $sumaArsNuevos = 0;
 
             foreach ($request->cajas as $index => $cuentaRef) {
                 $monto = $request->montos[$index] ?? 0;
@@ -492,6 +493,7 @@ class CompraController extends Controller
                     $efectivo   = 0;
                     $bancos     = 0;
                     $tarjetas   = 0;
+                    $tercero    = null;
 
                     $montoCheque = 0;
 
@@ -511,6 +513,16 @@ class CompraController extends Controller
                     } elseif (str_starts_with($cuentaRef, 'banco-')) {
                         $cuentaId = (int) str_replace('banco-', '', $cuentaRef);
                         $bancos   = $monto;
+                    } elseif (str_starts_with($cuentaRef, 'tercero-')) {
+                        // Pago al proveedor con la transferencia de un tercero (no sale de una caja/banco propio).
+                        $cuentaId = (int) str_replace('tercero-', '', $cuentaRef);
+                        $bancos   = $monto;
+                        $aliasTercero = trim((string) $request->input("alias_tercero.$index")) ?: null;
+                        $cuitTercero  = trim((string) $request->input("cuit_tercero.$index")) ?: null;
+                        if (!$aliasTercero) {
+                            return response()->json(['success' => false, 'error' => 'Indicá el alias del tercero que le transfirió al proveedor.']);
+                        }
+                        $tercero = ['alias' => $aliasTercero, 'cuit' => $cuitTercero];
                     }
 
                     // El medio elegido define a qué columna va el monto (los cheques
@@ -530,6 +542,23 @@ class CompraController extends Controller
                         return response()->json(['success' => false, 'error' => 'Indicá el número del cheque.']);
                     }
 
+                    // Si la cuenta de la que sale la plata no es ARS (ej. una caja en
+                    // dólares), el monto ingresado está en esa moneda: se necesita la
+                    // cotización para saber cuánto de la deuda (siempre en ARS) cubre.
+                    $cotizacion = null;
+                    $totalArs   = $monto;
+                    if (!$chequeEndosado && $cuentaId) {
+                        $cuentaMoneda = optional(Cuenta::with('moneda')->find($cuentaId))->moneda?->codigo ?? 'ARS';
+                        if ($cuentaMoneda !== 'ARS') {
+                            $cotizacion = (float) ($request->input("cotizaciones.$index") ?: 0);
+                            if ($cotizacion <= 0) {
+                                return response()->json(['success' => false, 'error' => "Indicá la cotización del pago en $cuentaMoneda."]);
+                            }
+                            $totalArs = round($monto * $cotizacion, 2);
+                        }
+                    }
+                    $sumaArsNuevos += $totalArs;
+
                     // 🔹 Un único create por iteración
                     $mov = Movimiento::create([
                         'cuenta_id'        => $cuentaId,
@@ -537,15 +566,20 @@ class CompraController extends Controller
                         'fecha'            => now(),
                         'tipo'             => 'egreso', // salida de dinero
                         'medio'            => $medio,
+                        'alias_tercero'    => $tercero['alias'] ?? null,
+                        'cuit_tercero'     => $tercero['cuit'] ?? null,
                         'cliente_proveedor'=> optional($compra->proveedor)->nombre ?? 'Proveedor',
                         'comprobante'      => $compra->num_folio,
                         'observaciones'    => 'Pago de compra registrado' . ($medio ? ' (' . str_replace('_', ' ', $medio) . ')' : '')
-                            . ($chequeEndosado ? ' — entregado cheque Nº ' . $chequeEndosado->numero : ''),
+                            . ($chequeEndosado ? ' — entregado cheque Nº ' . $chequeEndosado->numero : '')
+                            . ($tercero ? ' — transferido por el alias ' . $tercero['alias'] . ($tercero['cuit'] ? ' (CUIT ' . $tercero['cuit'] . ')' : '') : ''),
                         'efectivo'         => $efectivo,
                         'bancos'           => $bancos,
                         'tarjetas'         => $tarjetas,
                         'cheques'          => $montoCheque,
                         'total'            => $monto,
+                        'cotizacion'       => $cotizacion,
+                        'total_ars'        => $totalArs,
                     ]);
 
                     $movimientosCreados[] = $mov;
@@ -564,7 +598,11 @@ class CompraController extends Controller
                 }
             }
 
-            $pagadoFinal = $compra->movimientos()->sum('total');
+            if ($sumaArsNuevos > $pendiente + 0.01) {
+                return response()->json(['success' => false, 'error' => 'El monto ingresado supera el pendiente.']);
+            }
+
+            $pagadoFinal = $compra->movimientos()->sum('total_ars');
             if ($pagadoFinal >= $total) {
                 $compra->estado = 'pagada';
                 $compra->save();
@@ -589,7 +627,7 @@ class CompraController extends Controller
                             break;
                         }
 
-                        $montoHaber = min((float) $mov->total, $restante);
+                        $montoHaber = min((float) $mov->total_ars, $restante);
 
                         ProveedorCcMovimiento::create([
                             'proveedor_id'  => $compra->proveedor_id,

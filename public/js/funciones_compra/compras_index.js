@@ -213,7 +213,8 @@ function openPagoModalCompra(idcompra, sucursalId) {
         .then(data => {
             window.cuentasDisponibles = {
                 cajas: data.cajas || [],
-                bancos: data.bancos || []
+                bancos: data.bancos || [],
+                terceros: data.terceros || []
             };
             document.querySelector("#mediosPagoContainer").innerHTML = "";
             document.querySelector("#monto_ingresado").innerText = "0";
@@ -228,12 +229,24 @@ function openPagoModalCompra(idcompra, sucursalId) {
     $('#ModalPagoCompra').modal('show');
 }
 
+// Monto en ARS que aporta una fila: si la cuenta no es ARS, monto (en su moneda) * cotización.
+function montoArsDeFilaCompra(row) {
+    const monto = parseFloat(row.querySelector("input[name='montos[]']").value) || 0;
+    const cuentaSelect = row.querySelector("select[name='cajas[]']");
+    const moneda = cuentaSelect.selectedOptions[0]?.dataset.moneda;
+    if (moneda && moneda !== 'ARS') {
+        const cotizacion = parseFloat(row.querySelector("input[name='cotizaciones[]']").value) || 0;
+        return monto * cotizacion;
+    }
+    return monto;
+}
+
 function recalcularMontosCompra() {
     const pendienteInicial = parseFloat(document.querySelector("#monto_pendiente").dataset.pendienteInicial) || 0;
     let pagado = 0;
 
-    document.querySelectorAll("#mediosPagoContainer input[name='montos[]']").forEach(input => {
-        pagado += parseFloat(input.value) || 0;
+    document.querySelectorAll("#mediosPagoContainer .row").forEach(row => {
+        pagado += montoArsDeFilaCompra(row);
     });
 
     document.querySelector("#monto_ingresado").innerText = pagado.toFixed(2);
@@ -246,11 +259,13 @@ function validarMontos() {
     const pendienteInicial = parseFloat(document.querySelector("#monto_pendiente").dataset.pendienteInicial) || 0;
     let pagado = 0;
     let cuentasValidas = true;
+    let faltaCotizacion = false;
 
     document.querySelectorAll("#mediosPagoContainer .row").forEach(row => {
         const cuentaSelect = row.querySelector("select[name='cajas[]']");
         const montoInput = row.querySelector("input[name='montos[]']");
         const monto = parseFloat(montoInput.value) || 0;
+        const moneda = cuentaSelect.selectedOptions[0]?.dataset.moneda;
 
         if (!cuentaSelect.value) {
             cuentasValidas = false;
@@ -258,16 +273,24 @@ function validarMontos() {
         if (monto < 0.01) {
             cuentasValidas = false;
         }
+        if (moneda && moneda !== 'ARS' && !(parseFloat(row.querySelector("input[name='cotizaciones[]']").value) > 0)) {
+            faltaCotizacion = true;
+        }
 
-        pagado += monto;
+        pagado += montoArsDeFilaCompra(row);
     });
+
+    if (faltaCotizacion) {
+        alert("Indicá la cotización para el/los pago(s) en moneda extranjera.");
+        return false;
+    }
 
     if (!cuentasValidas) {
         alert("Debe seleccionar una cuenta y un monto válido (mínimo 0.01) para cada medio de pago.");
         return false;
     }
 
-    if (pagado > pendienteInicial) {
+    if (pagado > pendienteInicial + 0.01) {
         alert(`El monto ingresado (${pagado.toFixed(2)}) no puede superar el pendiente (${pendienteInicial.toFixed(2)}).`);
         return false;
     }
@@ -305,6 +328,26 @@ document.querySelector("#formPagoCompra").addEventListener("submit", function(e)
     });
 });
 
+// Alias/CUIT de terceros ya usados, para autocompletar (datalist compartido)
+function cargarAliasTercerosConocidosCompra() {
+    if (window.aliasTercerosConocidos) return;
+    window.aliasTercerosConocidos = [];
+    if (!document.getElementById("aliasTercerosConocidos")) {
+        const dl = document.createElement("datalist");
+        dl.id = "aliasTercerosConocidos";
+        document.body.appendChild(dl);
+    }
+    fetch('/cuentas/terceros/alias')
+        .then(r => r.json())
+        .then(d => {
+            window.aliasTercerosConocidos = d.alias || [];
+            const dl = document.getElementById("aliasTercerosConocidos");
+            dl.innerHTML = window.aliasTercerosConocidos
+                .map(a => `<option value="${a.alias}">${a.cuit ? 'CUIT ' + a.cuit : ''}</option>`).join("");
+        })
+        .catch(() => {});
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const addBtn = document.querySelector("#addMedioPagoBtnCompra");
     if (addBtn) {
@@ -313,14 +356,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
             let options = '<option value="">Seleccione una cuenta</option>';
 
-            // 🔹 Agregar cajas abiertas
+            // 🔹 Agregar cajas abiertas (con su saldo actual, en su propia moneda)
             window.cuentasDisponibles.cajas.forEach(c => {
-                options += `<option value="caja-${c.id}">${c.nombre} (Caja - ${c.moneda})</option>`;
+                options += `<option value="caja-${c.id}" data-moneda="${c.moneda}">${c.nombre} (Caja - ${c.moneda}) — ${c.saldo.toFixed(2)}</option>`;
             });
 
-            // 🔹 Agregar bancos
+            // 🔹 Agregar bancos (con saldo)
             window.cuentasDisponibles.bancos.forEach(b => {
-                options += `<option value="banco-${b.id}">${b.nombre} (Banco - ${b.moneda})</option>`;
+                options += `<option value="banco-${b.id}" data-moneda="${b.moneda}">${b.nombre} (Banco - ${b.moneda}) — ${b.saldo.toFixed(2)}</option>`;
+            });
+
+            // 🔹 Pago al proveedor con la transferencia de un tercero (no sale de una cuenta propia)
+            (window.cuentasDisponibles.terceros || []).forEach(t => {
+                options += `<option value="tercero-${t.id}" data-moneda="${t.moneda}">${t.nombre} (Terceros - ${t.moneda})</option>`;
             });
 
             // 🔹 Cheques de terceros en cartera, para entregar (endosar) como pago
@@ -352,6 +400,29 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="col-md-1">
                     <button type="button" class="btn btn-danger removeMedioPago">X</button>
                 </div>
+                <div class="col-12 cotizacionWrap" style="display:none;">
+                    <div class="row mt-1">
+                        <div class="col-md-6">
+                            <input type="number" name="cotizaciones[]" class="form-control cotizacionInput"
+                                placeholder="Cotización (1 unidad = $ ARS)" min="0" step="0.0001">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control totalArsPreview" readonly placeholder="≈ $ ARS">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 terceroWrap" style="display:none;">
+                    <div class="row mt-1">
+                        <div class="col-md-6">
+                            <input type="text" name="alias_tercero[]" class="form-control aliasTerceroInput"
+                                placeholder="Alias del tercero que le transfirió al proveedor" list="aliasTercerosConocidos" maxlength="60">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="cuit_tercero[]" class="form-control cuitTerceroInput"
+                                placeholder="CUIT del titular (opcional)" maxlength="20">
+                        </div>
+                    </div>
+                </div>
                 <div class="col-12 chequeWrap" style="display:none;">
                     <div class="row mt-1">
                         <div class="col-md-6">
@@ -373,14 +444,37 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
 
             container.appendChild(row);
+            cargarAliasTercerosConocidosCompra();
 
             const cajaSelect = row.querySelector("select[name='cajas[]']");
             const medioSelect = row.querySelector("select[name='medios[]']");
             const montoInput = row.querySelector(".montoInput");
             const chequeWrap = row.querySelector(".chequeWrap");
+            const terceroWrap = row.querySelector(".terceroWrap");
+            const cotizacionWrap = row.querySelector(".cotizacionWrap");
+            const cotizacionInput = row.querySelector(".cotizacionInput");
+            const totalArsPreview = row.querySelector(".totalArsPreview");
+
+            function actualizarPreviewArs() {
+                totalArsPreview.value = montoArsDeFilaCompra(row).toFixed(2);
+            }
 
             function actualizarSegunCuenta() {
                 const esEndoso = cajaSelect.value.startsWith("cheque-");
+                const esTercero = cajaSelect.value.startsWith("tercero-");
+                const moneda = cajaSelect.selectedOptions[0]?.dataset.moneda;
+
+                terceroWrap.style.display = esTercero ? "" : "none";
+                if (!esTercero) {
+                    row.querySelector(".aliasTerceroInput").value = "";
+                    row.querySelector(".cuitTerceroInput").value = "";
+                }
+
+                cotizacionWrap.style.display = (!esEndoso && moneda && moneda !== 'ARS') ? "" : "none";
+                if (esEndoso || !moneda || moneda === 'ARS') {
+                    cotizacionInput.value = "";
+                }
+
                 if (esEndoso) {
                     // No se deshabilita el <select>: un campo disabled no viaja en el FormData
                     // y desalinearía los índices de cajas[]/medios[]/montos[]. El backend igual
@@ -394,10 +488,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     medioSelect.value = cajaSelect.value.startsWith("caja-") ? "efectivo" : "transferencia";
                     chequeWrap.style.display = "none";
                 }
+                actualizarPreviewArs();
                 recalcularMontosCompra();
             }
 
-            // Default inteligente: caja → efectivo, banco → transferencia; cheque-{id} → endoso
+            // Default inteligente: caja → efectivo, banco/tercero → transferencia; cheque-{id} → endoso
             cajaSelect.addEventListener("change", actualizarSegunCuenta);
 
             medioSelect.addEventListener("change", function () {
@@ -406,12 +501,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
+            // Al elegir un alias conocido, autocompletar su CUIT
+            row.querySelector(".aliasTerceroInput").addEventListener("change", function () {
+                const conocido = (window.aliasTercerosConocidos || []).find(a => a.alias === this.value.trim().toLowerCase());
+                const cuitInput = row.querySelector(".cuitTerceroInput");
+                if (conocido && conocido.cuit && !cuitInput.value) cuitInput.value = conocido.cuit;
+            });
+
             row.querySelector(".removeMedioPago").addEventListener("click", () => {
                 row.remove();
                 recalcularMontosCompra();
             });
 
             row.querySelector(".montoInput").addEventListener("input", () => {
+                actualizarPreviewArs();
+                recalcularMontosCompra();
+            });
+
+            cotizacionInput.addEventListener("input", () => {
+                actualizarPreviewArs();
                 recalcularMontosCompra();
             });
 
