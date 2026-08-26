@@ -82,6 +82,50 @@ class MessengerService
     }
 
     /**
+     * Envia un adjunto (foto/video/audio) por URL publica. La Send API de Meta
+     * no permite adjunto + texto en un mismo mensaje: si hay caption, se manda
+     * como un sendText() aparte justo despues.
+     * Devuelve el message_id del adjunto.
+     */
+    public function sendMedia(string $recipientId, string $type, string $url, ?string $caption = null): string
+    {
+        $emisor = $this->usaApiInstagram() ? 'me' : $this->account->page_id;
+
+        // La Send API de Messenger/Instagram usa "file" en vez de "document"
+        $tipoAdjunto = $type === 'document' ? 'file' : $type;
+
+        $response = Http::withToken($this->token())
+            ->acceptJson()
+            ->post($this->baseUrl() . '/' . $emisor . '/messages', [
+                'recipient' => ['id' => $recipientId],
+                'messaging_type' => 'RESPONSE',
+                'message' => [
+                    'attachment' => [
+                        'type' => $tipoAdjunto,
+                        'payload' => ['url' => $url],
+                    ],
+                ],
+            ]);
+
+        if ($response->failed()) {
+            $error = $response->json('error') ?? ['message' => $response->body()];
+            throw new WhatsAppApiException(
+                $error['message'] ?? 'Error desconocido de Meta',
+                (string) ($error['code'] ?? $response->status()),
+                $error
+            );
+        }
+
+        $messageId = (string) $response->json('message_id');
+
+        if ($caption) {
+            $this->sendText($recipientId, $caption);
+        }
+
+        return $messageId;
+    }
+
+    /**
      * Nombre visible del contacto (best effort; puede fallar por permisos).
      */
     public function fetchProfileName(string $userId): ?string

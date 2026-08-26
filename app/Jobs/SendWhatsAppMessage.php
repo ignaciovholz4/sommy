@@ -45,10 +45,15 @@ class SendWhatsAppMessage implements ShouldQueue
         $conversation = $message->conversation;
 
         try {
-            // Messenger / Instagram: texto simple via Messenger Platform
+            // Messenger / Instagram via Messenger Platform
             if ($conversation->channel !== 'whatsapp') {
-                $mid = \App\Services\WhatsApp\MessengerService::forAccount($conversation->account)
-                    ->sendText($conversation->external_id, (string) $message->body);
+                $service = \App\Services\WhatsApp\MessengerService::forAccount($conversation->account);
+
+                if (in_array($message->type, ['image', 'video', 'audio', 'document']) && $message->media_path) {
+                    $mid = $service->sendMedia($conversation->external_id, $message->type, $message->media_path, $message->body ?: null);
+                } else {
+                    $mid = $service->sendText($conversation->external_id, (string) $message->body);
+                }
 
                 $message->update(['wa_message_id' => $mid ?: null, 'status' => 'sent']);
                 return;
@@ -80,7 +85,15 @@ class SendWhatsAppMessage implements ShouldQueue
 
             $service = WhatsAppService::forAccount($conversation->account);
 
-            if ($this->template) {
+            if (in_array($message->type, ['image', 'video', 'audio', 'document']) && $message->media_path) {
+                $payload = $service->buildMediaPayload(
+                    $conversation->phone_e164,
+                    $message->type,
+                    $message->media_path,
+                    $message->body ?: null,
+                    $message->payload['filename'] ?? null
+                );
+            } elseif ($this->template) {
                 $payload = $service->buildTemplatePayload(
                     $conversation->phone_e164,
                     $this->template['name'],

@@ -6,6 +6,7 @@ use App\Models\AiAgent;
 use App\Models\ArticuloConocimiento;
 use App\Models\WaConversation;
 use App\Models\Articulo;
+use App\Models\ProductoImagen;
 use Illuminate\Support\Str;
 
 /**
@@ -46,10 +47,6 @@ class InfoProducto
             ->orderBy('tipo')
             ->get();
 
-        if ($items->isEmpty()) {
-            return ['resultado' => 'Este producto no tiene ficha interna cargada. Respondé solo con la descripción del catálogo, sin inventar detalles.'];
-        }
-
         $textos = $items->filter(fn ($i) => $i->esTexto())->map(fn ($i) => [
             'tipo'      => ArticuloConocimiento::TIPOS[$i->tipo] ?? $i->tipo,
             'titulo'    => $i->titulo,
@@ -58,10 +55,25 @@ class InfoProducto
 
         // Material multimedia: el bot lo manda como adjunto real con enviar_material
         $archivos = $items->filter(fn ($i) => !$i->esTexto() && $i->archivo)->map(fn ($i) => [
-            'material_id' => $i->id,
+            'material_id' => (string) $i->id,
             'tipo'   => ArticuloConocimiento::TIPOS[$i->tipo] ?? $i->tipo,
             'titulo' => $i->titulo,
         ])->values();
+
+        // Fotos reales del catálogo de la tienda (además de lo cargado en Conocimiento)
+        $fotosCatalogo = ProductoImagen::where('producto_id', $id)
+            ->orderByDesc('principal')->orderBy('orden')
+            ->limit(4)->get()
+            ->map(fn ($img) => [
+                'material_id' => 'img:' . $img->id,
+                'tipo'   => 'Foto',
+                'titulo' => 'Foto del producto',
+            ])->values();
+        $archivos = $archivos->concat($fotosCatalogo)->values();
+
+        if ($textos->isEmpty() && $archivos->isEmpty()) {
+            return ['resultado' => 'Este producto no tiene ficha interna cargada. Respondé solo con la descripción del catálogo, sin inventar detalles.'];
+        }
 
         return [
             'producto'     => $articulo->nombre,

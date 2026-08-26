@@ -249,6 +249,7 @@ class AiAgentService
         $defs[] = Tools\CerrarConversacion::definition();
         $defs[] = Tools\EtiquetarConversacion::definition();
         $defs[] = Tools\AgendarCliente::definition();
+        $defs[] = Tools\ConsultarEnvio::definition();
 
         return $defs;
     }
@@ -268,11 +269,12 @@ class AiAgentService
                 'cerrar_conversacion' => new Tools\CerrarConversacion(),
                 'etiquetar_conversacion' => new Tools\EtiquetarConversacion(),
                 'agendar_cliente' => new Tools\AgendarCliente(),
+                'consultar_envio' => new Tools\ConsultarEnvio(),
                 default => null,
             };
 
             // Tools acompañantes que no figuran en tools_enabled del agente
-            $esAcompanante = in_array($toolCall['name'], ['cerrar_conversacion', 'etiquetar_conversacion', 'agendar_cliente'])
+            $esAcompanante = in_array($toolCall['name'], ['cerrar_conversacion', 'etiquetar_conversacion', 'agendar_cliente', 'consultar_envio'])
                 || (in_array($toolCall['name'], ['info_producto', 'enviar_material', 'ver_catalogo', 'guardar_faq']) && $agent->toolEnabled('buscar_productos'));
 
             if (!$tool || (!$agent->toolEnabled($toolCall['name']) && !$esAcompanante)) {
@@ -387,6 +389,10 @@ class AiAgentService
                 ->implode('; ');
             $estado = $draft->status === 'borrador' ? 'cotización en curso' : 'pedido pendiente de confirmación por un vendedor';
             $system .= "\n\nEstado actual: hay una {$estado} en esta conversación: {$detalle}. Total $" . number_format($draft->total, 2, ',', '.') . '.';
+        }
+
+        if ($conversation->messages()->where('direction', 'in')->count() <= 1) {
+            $system .= "\n\nEste es el PRIMER mensaje de este cliente en la conversación: abrí tu respuesta con un saludo de bienvenida cálido y natural (ej: \"Hola, ¿cómo andás? Bienvenido/a a Sommy Argentina\") antes de responder su consulta.";
         }
 
         $system .= "\n\nGestión de la conversación: cuando la consulta quede resuelta y el cliente se despida o no necesite nada más, usá la herramienta cerrar_conversacion (podés despedirte en el mismo turno). No la uses si quedó algo pendiente.";

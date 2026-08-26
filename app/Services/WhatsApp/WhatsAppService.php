@@ -102,6 +102,29 @@ class WhatsAppService
     }
 
     /**
+     * Payload de mensaje con adjunto (foto/video/audio/documento) por URL publica.
+     * Meta descarga el archivo de ese link, no hace falta subirlo antes.
+     */
+    public function buildMediaPayload(string $to, string $type, string $link, ?string $caption = null, ?string $filename = null): array
+    {
+        $media = ['link' => $link];
+
+        // La API de Meta no acepta "caption" en mensajes de audio
+        if ($caption && $type !== 'audio') {
+            $media['caption'] = $caption;
+        }
+        if ($type === 'document' && $filename) {
+            $media['filename'] = $filename;
+        }
+
+        return [
+            'to' => $to,
+            'type' => $type,
+            $type => $media,
+        ];
+    }
+
+    /**
      * Marca un mensaje entrante como leido (doble tilde azul del lado del cliente).
      */
     public function markAsRead(string $waMessageId): void

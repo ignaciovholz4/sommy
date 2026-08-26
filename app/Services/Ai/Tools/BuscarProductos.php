@@ -82,11 +82,7 @@ class BuscarProductos
                 'stock' => (int) $p->stock_total,
                 'descripcion' => Str::limit(strip_tags((string) $p->descripcion), 150),
                 // Primera foto de la ficha: mandarla con enviar_material al presentar
-                'foto_material_id' => DB::table('articulo_conocimiento')
-                    ->where('articulo_id', $p->idarticulo)
-                    ->where('tipo', 'imagen')->where('activo', 1)
-                    ->whereNotNull('archivo')
-                    ->orderBy('id')->value('id'),
+                'foto_material_id' => $this->fotoMaterialId($p->idarticulo),
                 // Variantes: medidas/colores con SU precio y SU stock (el precio real vive acá)
                 'variantes' => DB::table('producto_combinaciones as pc')
                     ->leftJoin('sucursal_combinacion as sc', function ($join) {
@@ -106,5 +102,30 @@ class BuscarProductos
             ])->all(),
             'nota' => 'IMPORTANTE: si un producto tiene "variantes", el precio REAL depende de la medida/color: NUNCA informes el precio base, siempre el de la variante puntual (o el rango). Preguntá la medida antes de dar precio. Cotizá con el combinacion_id de la variante elegida. Si tiene foto_material_id, mandá la foto con enviar_material al presentarlo.',
         ];
+    }
+
+    /**
+     * Primero busca en la base de conocimiento (articulo_conocimiento), y si el
+     * producto no tiene nada cargado ahí, cae a la foto real del catálogo de la
+     * tienda (producto_imagenes) — así funciona sin que el dueño cargue nada a mano.
+     */
+    private function fotoMaterialId(int $productoId): ?string
+    {
+        $conocimientoId = DB::table('articulo_conocimiento')
+            ->where('articulo_id', $productoId)
+            ->where('tipo', 'imagen')->where('activo', 1)
+            ->whereNotNull('archivo')
+            ->orderBy('id')->value('id');
+
+        if ($conocimientoId) {
+            return (string) $conocimientoId;
+        }
+
+        $imagenId = DB::table('producto_imagenes')
+            ->where('producto_id', $productoId)
+            ->orderByDesc('principal')->orderBy('orden')
+            ->value('id');
+
+        return $imagenId ? 'img:' . $imagenId : null;
     }
 }
