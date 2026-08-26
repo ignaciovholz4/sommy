@@ -69,6 +69,11 @@ class NuevosPermisosSeeder extends Seeder
             ['slug' => 'ventas.cc.movimiento',    'name' => 'registrar movimientos de cuenta corriente de clientes', 'description' => 'Puede registrar cargos/pagos en la cuenta corriente de un cliente'],
             // Notas recordatorias
             ['slug' => 'notas.index', 'name' => 'usar notas recordatorias',                          'description' => 'Puede ver, crear, tildar y borrar notas recordatorias (generales o pegadas a un cliente/proveedor/venta/compra)'],
+            // Inversores
+            ['slug' => 'inversores.index',      'name' => 'ver inversores',                          'description' => 'Puede ver la lista de inversores, su saldo y su historial de movimientos'],
+            ['slug' => 'inversores.crud',       'name' => 'crear/editar/eliminar inversores',        'description' => 'Puede dar de alta, editar y eliminar inversores'],
+            ['slug' => 'inversores.movimiento', 'name' => 'registrar aportes/retiros de inversores', 'description' => 'Puede registrar un aporte o retiro de un inversor'],
+            ['slug' => 'inversores.reparto',    'name' => 'repartir ganancias entre inversores',     'description' => 'Puede ejecutar un reparto de ganancias por % de participación entre todos los inversores activos'],
             // Gap preexistente: ConfiguracionController/IntegracionController exigen este slug pero nunca se habia sembrado
             ['slug' => 'configuracion.index', 'name' => 'ver configuración del sistema',            'description' => 'Puede ver la pantalla de Configuración e Integraciones'],
             ['slug' => 'configuracion.integraciones.guardar', 'name' => 'guardar integraciones',     'description' => 'Puede guardar claves de API en Integraciones'],

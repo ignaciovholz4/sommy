@@ -453,6 +453,11 @@
                         <i class="fas fa-exchange-alt"></i> Historial de Divisas
                     </a>
                     @endcan
+                    @can('haveaccess','inversores.index')
+                    <a href="{{ route('finanzas.inversores.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/inversores') ? 'dg-drop-active' : '' }}">
+                        <i class="fas fa-hand-holding-usd"></i> Inversores
+                    </a>
+                    @endcan
                     @can('haveaccess','finanzas.marketing.index')
                     <a href="{{ route('finanzas.marketing.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/marketing') ? 'dg-drop-active' : '' }}">
                         <i class="fab fa-facebook"></i> Meta / Google Ads

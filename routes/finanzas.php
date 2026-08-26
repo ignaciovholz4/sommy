@@ -7,6 +7,7 @@ use App\Http\Controllers\Finanzas\EnvioController;
 use App\Http\Controllers\Finanzas\FinanzasDashboardController;
 use App\Http\Controllers\Finanzas\GastoCategoriaController;
 use App\Http\Controllers\Finanzas\GastoController;
+use App\Http\Controllers\Finanzas\InversorController;
 use App\Http\Controllers\Finanzas\MarketingController;
 use App\Http\Controllers\Finanzas\OperacionCambioController;
 use App\Http\Controllers\Finanzas\RendicionFleteroController;
@@ -92,6 +93,15 @@ Route::middleware(['auth', 'verified'])->prefix('finanzas')->name('finanzas.')->
     Route::get('divisas/data', [OperacionCambioController::class, 'data'])->name('divisas.data');
     Route::get('divisas/form-data', [OperacionCambioController::class, 'formData'])->name('divisas.form-data');
     Route::post('divisas', [OperacionCambioController::class, 'store'])->name('divisas.store');
+
+    // Inversores: aportes, retiros y reparto de ganancias por % de participación
+    Route::get('inversores', [InversorController::class, 'index'])->name('inversores.index');
+    Route::post('inversores', [InversorController::class, 'store'])->name('inversores.store');
+    Route::get('inversores/{id}', [InversorController::class, 'ficha'])->name('inversores.ficha');
+    Route::post('inversores/{id}/update', [InversorController::class, 'update'])->name('inversores.update');
+    Route::delete('inversores/{id}', [InversorController::class, 'destroy'])->name('inversores.destroy');
+    Route::post('inversores/{id}/movimiento', [InversorController::class, 'registrarMovimiento'])->name('inversores.movimiento');
+    Route::post('inversores/reparto-ganancias', [InversorController::class, 'repartoGanancias'])->name('inversores.reparto');
 
     // Panel de gasto publicitario (Meta Ads / Google Ads)
     Route::get('marketing', [MarketingController::class, 'index'])->name('marketing.index');
