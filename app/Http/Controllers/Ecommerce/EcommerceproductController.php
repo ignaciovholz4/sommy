@@ -106,8 +106,11 @@ class EcommerceproductController extends Controller
 
         $producto = $productoConStock->producto;
 
-        // Galería (principal primero); fallback a productos.imagen si no hay filas
+        // Galería del artículo (principal primero); nunca fotos propias de una
+        // variante puntual, todas las medidas/colores comparten esta misma galería.
+        // Fallback a productos.imagen si no hay filas.
         $imagenesGaleria = ProductoImagen::where('producto_id', $producto->idarticulo)
+            ->whereNull('combinacion_id')
             ->orderByDesc('principal')
             ->orderBy('orden')
             ->get();
