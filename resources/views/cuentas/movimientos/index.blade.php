@@ -176,6 +176,16 @@
                     <i class="fas fa-check-double me-2"></i> Conciliación bancaria
                 </a>
             @endif
+            @if(optional($cuenta->moneda)->codigo && $cuenta->moneda->codigo !== 'ARS')
+                @can('haveaccess', 'finanzas.divisas.manage')
+                <button id="btnComprarDivisa" class="btn btn-outline-success fw-bold" data-tipo="compra">
+                    <i class="fas fa-plus me-2"></i> Comprar {{ $cuenta->moneda->codigo }}
+                </button>
+                <button id="btnVenderDivisa" class="btn btn-outline-danger fw-bold" data-tipo="venta">
+                    <i class="fas fa-minus me-2"></i> Vender {{ $cuenta->moneda->codigo }}
+                </button>
+                @endcan
+            @endif
             <button id="btnTransferencia" class="btn btn-facturarg-main btn-abrir-principal">
                 <i class="fas fa-exchange-alt me-2"></i> Transferencia
             </button>
@@ -186,6 +196,15 @@
             @endif
         </div>
     </div>
+
+    @can('haveaccess', 'finanzas.divisas.index')
+    @if(optional($cuenta->moneda)->codigo && $cuenta->moneda->codigo !== 'ARS')
+    <div class="alert alert-light border d-flex align-items-center justify-content-between flex-wrap" style="gap:8px" id="divisaDisponibleWrap" data-moneda-id="{{ $cuenta->moneda_id }}">
+        <span class="text-muted small"><i class="fas fa-coins me-1"></i> Disponible para vender: <b id="divisaDisponibleCantidad">—</b> {{ $cuenta->moneda->codigo }} (costo promedio ${{ '' }}<span id="divisaDisponibleCosto">—</span>)</span>
+        <a href="{{ url('finanzas/divisas') }}" class="small text-decoration-none">Ver historial completo de compra/venta →</a>
+    </div>
+    @endif
+    @endcan
 
     {{-- Saldo + resumen del mes --}}
     <div class="saldo-hero">
@@ -581,7 +600,59 @@
   </div>
 </div>
 
+{{-- Modal Comprar/Vender divisa (solo cuentas en moneda != ARS) --}}
+@can('haveaccess', 'finanzas.divisas.manage')
+@if(optional($cuenta->moneda)->codigo && $cuenta->moneda->codigo !== 'ARS')
+<div class="modal fade" id="modalDivisaCuenta" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formDivisaCuenta">
+        <div class="modal-header bg-light">
+          <h5 class="modal-title" id="divisaModalTitulo">Comprar {{ $cuenta->moneda->codigo }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="divisa_tipo" value="compra">
+          <input type="hidden" id="divisa_moneda_id" value="{{ $cuenta->moneda_id }}">
+          <input type="hidden" id="divisa_cuenta_moneda_id" value="{{ $cuenta->id }}">
+          <div class="mb-3">
+            <label class="form-label" id="divisa_label_cuenta_ars">Cuenta en pesos (de donde sale) *</label>
+            <select id="divisa_cuenta_ars_id" class="form-select" required>
+              <option value="">Cargando cuentas...</option>
+            </select>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label" id="divisa_label_monto">Monto en {{ $cuenta->moneda->codigo }} *</label>
+              <input type="number" id="divisa_monto_moneda" class="form-control" step="0.01" min="0.01" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Cotización (pesos por unidad) *</label>
+              <input type="number" id="divisa_cotizacion" class="form-control" step="0.0001" min="0.0001" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Total en pesos</label>
+            <input type="text" id="divisa_total_ars" class="form-control" readonly>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Observaciones</label>
+            <input type="text" id="divisa_observaciones" class="form-control" maxlength="255">
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endif
+@endcan
+
 @push('ScriptMovimientosCuenta')
+<script>window.URL_FINANZAS_BASE = "{{ url('finanzas') }}";</script>
 <script src="{{ asset('js/funciones_cuenta/movimientos.js') }}?v={{ filemtime(public_path('js/funciones_cuenta/movimientos.js')) }}"></script>
 @endpush
 

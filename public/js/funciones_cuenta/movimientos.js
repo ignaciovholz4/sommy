@@ -549,3 +549,100 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// ── Disponible de la divisa de esta cuenta (visible con o sin permiso de gestionar) ──
+document.addEventListener('DOMContentLoaded', function () {
+    const wrap = document.getElementById('divisaDisponibleWrap');
+    if (!wrap) return;
+
+    fetch(`${URL_FINANZAS_BASE}/divisas/form-data?moneda_id=${wrap.dataset.monedaId}`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('divisaDisponibleCantidad').textContent =
+                Number(data.disponible.cantidad).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+            document.getElementById('divisaDisponibleCosto').textContent =
+                Number(data.disponible.costo_promedio).toLocaleString('es-AR', { minimumFractionDigits: 2 });
+
+            // Si el modal de compra/venta existe (el usuario tiene permiso de gestionar),
+            // aprovechamos la misma respuesta para precargar el select de cuentas en pesos.
+            const selectCuentaArs = document.getElementById('divisa_cuenta_ars_id');
+            if (selectCuentaArs) {
+                const opts = (data.cuentas_ars || []).map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
+                selectCuentaArs.innerHTML = '<option value="">Seleccioná una cuenta</option>' + opts;
+            }
+        });
+});
+
+// ── Comprar/Vender divisa (solo si el usuario tiene permiso de gestionar) ──────────────
+document.addEventListener('DOMContentLoaded', function () {
+    const btnComprar = document.getElementById('btnComprarDivisa');
+    const btnVender = document.getElementById('btnVenderDivisa');
+    if (!btnComprar || !btnVender) return;
+
+    const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const monedaId = document.getElementById('divisa_moneda_id').value;
+    const monedaCodigo = document.getElementById('divisaModalTitulo').textContent.replace('Comprar ', '').trim();
+
+    function moneyFmt(n) {
+        return '$' + Number(n).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function abrirModal(tipo) {
+        document.getElementById('formDivisaCuenta').reset();
+        document.getElementById('divisa_tipo').value = tipo;
+        document.getElementById('divisaModalTitulo').textContent = (tipo === 'compra' ? 'Comprar ' : 'Vender ') + monedaCodigo;
+        document.getElementById('divisa_label_cuenta_ars').textContent = tipo === 'compra'
+            ? 'Cuenta en pesos (de donde sale) *' : 'Cuenta en pesos (a donde entra) *';
+        document.getElementById('divisa_label_monto').textContent = (tipo === 'compra' ? 'Monto a comprar en ' : 'Monto a vender en ') + monedaCodigo + ' *';
+        new bootstrap.Modal(document.getElementById('modalDivisaCuenta')).show();
+    }
+
+    btnComprar.addEventListener('click', () => abrirModal('compra'));
+    btnVender.addEventListener('click', () => abrirModal('venta'));
+
+    ['divisa_monto_moneda', 'divisa_cotizacion'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            const monto = parseFloat(document.getElementById('divisa_monto_moneda').value) || 0;
+            const cotizacion = parseFloat(document.getElementById('divisa_cotizacion').value) || 0;
+            document.getElementById('divisa_total_ars').value = moneyFmt(monto * cotizacion);
+        });
+    });
+
+    document.getElementById('formDivisaCuenta').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const payload = {
+            tipo: document.getElementById('divisa_tipo').value,
+            moneda_id: monedaId,
+            cuenta_ars_id: document.getElementById('divisa_cuenta_ars_id').value,
+            cuenta_moneda_id: document.getElementById('divisa_cuenta_moneda_id').value,
+            monto_moneda: document.getElementById('divisa_monto_moneda').value,
+            cotizacion: document.getElementById('divisa_cotizacion').value,
+            observaciones: document.getElementById('divisa_observaciones').value,
+        };
+
+        if (!payload.cuenta_ars_id) {
+            Swal.fire('Atención', 'Seleccioná la cuenta en pesos.', 'warning');
+            return;
+        }
+
+        fetch(`${URL_FINANZAS_BASE}/divisas`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.estado === 1) {
+                    let msg = data.mensaje;
+                    if (data.resultado !== null && data.resultado !== undefined) {
+                        msg += ' Resultado: ' + moneyFmt(data.resultado);
+                    }
+                    Swal.fire('Listo', msg, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.mensaje || 'No se pudo registrar la operación.', 'error');
+                }
+            })
+            .catch(() => Swal.fire('Error', 'Error de conexión al registrar la operación.', 'error'));
+    });
+});

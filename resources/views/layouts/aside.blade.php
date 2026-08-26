@@ -437,7 +437,7 @@
                     @endcan
                     @can('haveaccess','finanzas.divisas.index')
                     <a href="{{ route('finanzas.divisas.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/divisas') ? 'dg-drop-active' : '' }}">
-                        <i class="fas fa-exchange-alt"></i> Compra/Venta de Divisas
+                        <i class="fas fa-exchange-alt"></i> Historial de Divisas
                     </a>
                     @endcan
                     @can('haveaccess','finanzas.marketing.index')
