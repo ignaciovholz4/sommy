@@ -213,7 +213,11 @@ class VentaController extends Controller
      */
     public function list(Request $request)
     {
-        $ventas = Venta::with(['cliente', 'tipoComprobante', 'sucursal']);
+        $ventas = Venta::with(['cliente', 'tipoComprobante', 'sucursal'])
+            // Sin permiso "ver todas", cada vendedor solo ve sus propias ventas
+            ->when(!auth()->user()->havePermission('ventas.ver_todas'), fn ($q) => $q->where('user_id', auth()->id()))
+            // Aislamiento por sucursal: null = sin restriccion (ve todas)
+            ->when(auth()->user()->sucursalesPermitidas(), fn ($q, $sucursales) => $q->whereIn('sucursal_id', $sucursales));
 
         return DataTables::of($ventas)
             ->addColumn('cliente', fn($venta) => $venta->cliente->nombre.' '.$venta->cliente->paterno)

@@ -31,9 +31,14 @@ class GraphicsController extends Controller
         $desdeAnt = $desde->copy()->subDays($dias);
         $hastaAnt = $desde->copy()->subSecond();
 
+        // Aislamiento por sucursal: null = sin restriccion (ve todas). No aplica a pedidos
+        // web (order_ecommerce no tiene sucursal_id, la tienda online es unica para todo el negocio).
+        $sucursalesPermitidas = auth()->user()->sucursalesPermitidas();
+
         $ventasValidas = fn () => DB::table('ventas')
             ->where('estado', 'NOT LIKE', 'Cancel%')
-            ->where('estado', 'NOT LIKE', 'Anul%');
+            ->where('estado', 'NOT LIKE', 'Anul%')
+            ->when($sucursalesPermitidas, fn ($q, $s) => $q->whereIn('sucursal_id', $s));
 
         $pedidosWebQuery = fn () => DB::table('order_ecommerce')->where('active', 1)->where('status_order_id', '!=', 6);
 
@@ -54,10 +59,12 @@ class GraphicsController extends Controller
             ->join('productos as p', 'p.idarticulo', '=', 'dv.articulo_id')
             ->where('v.estado', 'NOT LIKE', 'Cancel%')
             ->whereBetween('v.fecha', [$desde, $hasta])
+            ->when($sucursalesPermitidas, fn ($q, $s) => $q->whereIn('v.sucursal_id', $s))
             ->selectRaw('COALESCE(SUM(dv.subtotal_con_iva),0) as venta, COALESCE(SUM(dv.cantidad * p.pcompra_con_iva),0) as costo')
             ->first();
         $margen    = (float) $margenRow->venta - (float) $margenRow->costo;
         $margenPct = $margenRow->venta > 0 ? ($margen / $margenRow->venta) * 100 : 0;
+        // Costo/margen quedan ocultos sin permiso explicito (ver mas abajo, antes del return)
 
         $compras = (float) DB::table('compras')
             ->where('estado', 'NOT LIKE', 'Cancel%')
@@ -69,12 +76,15 @@ class GraphicsController extends Controller
             return (($actual - $anterior) / abs($anterior)) * 100;
         };
 
+        // Costos/margenes ocultos sin permiso explicito (confidencialidad)
+        $puedeVerCostos = auth()->user()->havePermission('productos.ver_costos');
+
         $kpis = [
             'facturacion' => ['valor' => $fact,    'delta' => $delta($fact, $factAnt)],
             'ventas'      => ['valor' => $nVentas, 'delta' => $delta($nVentas, $nVentasAnt)],
             'ticket'      => ['valor' => $ticket,  'delta' => $delta($ticket, $ticketAnt)],
             'pedidosWeb'  => ['valor' => $pedidosWeb, 'delta' => $delta($pedidosWeb, $pedidosWebAnt), 'pendientes' => $pedidosWebPendientes],
-            'margen'      => ['valor' => $margen,  'pct' => $margenPct],
+            'margen'      => $puedeVerCostos ? ['valor' => $margen, 'pct' => $margenPct] : null,
             'compras'     => ['valor' => $compras],
         ];
 
@@ -137,7 +147,8 @@ class GraphicsController extends Controller
             ->join('ventas as v', 'v.idventa', '=', 'dv.venta_id')
             ->join('productos as p', 'p.idarticulo', '=', 'dv.articulo_id')
             ->where('v.estado', 'NOT LIKE', 'Cancel%')
-            ->whereBetween('v.fecha', [$desde, $hasta]);
+            ->whereBetween('v.fecha', [$desde, $hasta])
+            ->when($sucursalesPermitidas, fn ($q, $s) => $q->whereIn('v.sucursal_id', $s));
 
         $topProductos = $detalleBase()
             ->groupBy('p.idarticulo', 'p.nombre')

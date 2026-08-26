@@ -21,8 +21,9 @@ class InventarioController extends Controller
 
         // Usamos el modelo Articulo que apunta a la tabla productos
         $productos = Articulo::where('estado', '=', 'Activo')->get();
+        $puedeVerCostos = auth()->user()->havePermission('productos.ver_costos');
 
-        return view('almacen.inventory.index', ['productos' => $productos]);
+        return view('almacen.inventory.index', ['productos' => $productos, 'puedeVerCostos' => $puedeVerCostos]);
     }
 
     /**
@@ -49,27 +50,31 @@ class InventarioController extends Controller
             ->selectRaw('p.idarticulo, COALESCE(ss.stock, 0) + COALESCE(sv.stock, 0) as stock_total')
             ->pluck('stock_total', 'idarticulo');
 
+        $puedeVerCostos = auth()->user()->havePermission('productos.ver_costos');
+
         $productos = Articulo::where('estado', '=', 'Activo')
             ->get()
-            ->map(function ($articulo) use ($stockPorArticulo) {
+            ->map(function ($articulo) use ($stockPorArticulo, $puedeVerCostos) {
                 $margenPct = $articulo->pcompra_sin_iva > 0
                     ? round((($articulo->pventa_sin_iva - $articulo->pcompra_sin_iva) / $articulo->pcompra_sin_iva) * 100)
                     : null;
 
-                return [
+                return array_merge([
                     'Codigo' => $articulo->codigo,
                     'Nombre' => $articulo->nombre,
                     'Descripcion' => $articulo->descripcion,
                     'Stock' => (float) ($stockPorArticulo[$articulo->idarticulo] ?? 0),
+                ], $puedeVerCostos ? [
                     'Precio compra sin IVA' => $articulo->pcompra_sin_iva,
-                    'Precio venta sin IVA' => $articulo->pventa_sin_iva,
                     'Margen %' => $margenPct,
+                ] : [], [
+                    'Precio venta sin IVA' => $articulo->pventa_sin_iva,
                     'Tipo producto' => $articulo->tipo_producto_id == 1 ? 'Simple' : 'Personalizado',
                     'Pesable' => $articulo->articulo_pesable_balanza ? 'Sí' : 'No',
                     'IVA compra' => optional($articulo->ivaCompra)->tipo_iva ?? '',
                     'IVA venta' => optional($articulo->ivaVenta)->tipo_iva ?? '',
                     'Estado' => $articulo->estado,
-                ];
+                ]);
             });
 
         $pdf = PDF::loadView("almacen.inventory.pdfinventory", ["productos" => $productos]);

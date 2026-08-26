@@ -54,6 +54,9 @@ class Kernel extends ConsoleKernel
 
         // Ads: gasto diario de Meta Ads y Google Ads (solo si hay claves cargadas)
         $schedule->command('ads:sincronizar-gasto')->dailyAt('07:00');
+
+        // Auditoria: purga logs viejos para que la tabla no crezca sin limite
+        $schedule->command('auditoria:limpiar')->monthly();
     }
 
     /**

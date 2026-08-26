@@ -532,6 +532,11 @@
                         <i class="fas fa-shield-alt"></i> Roles y Permisos
                     </a>
                     @endcan
+                    @can('haveaccess','admin.auditoria.index')
+                    <a href="{{ url('admin/auditoria') }}" class="dg-drop-item {{ Str::startsWith($resp,'admin/auditoria') ? 'dg-drop-active' : '' }}">
+                        <i class="fas fa-user-secret"></i> Auditoría
+                    </a>
+                    @endcan
                     <div class="dg-drop-sep"></div>
                     <div class="dg-drop-label">Ayuda</div>
                     <a href="{{ url('procesos') }}" class="dg-drop-item {{ Str::startsWith($resp,'procesos') ? 'dg-drop-active' : '' }}">

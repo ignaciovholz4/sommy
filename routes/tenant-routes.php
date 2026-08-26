@@ -256,6 +256,10 @@ Route::post('updatepasssword', 'UserController@updatepassword')->name('updatepas
 Route::get('delete-users/{id}', 'UserController@delete_user')->name('delete-users')->middleware(['auth','verified']);
 Route::post('/downrol', 'RoleController@downRol')->name('downrol')->middleware(['auth','verified']);
 
+/** AUDITORIA */
+Route::get('admin/auditoria', 'Admin\AuditoriaController@index')->name('auditoria.index')->middleware(['auth','verified']);
+Route::get('admin/auditoria/data', 'Admin\AuditoriaController@data')->name('auditoria.data')->middleware(['auth','verified']);
+
 /** SEGURIDAD DE LA CUENTA: verificacion en dos pasos (2FA), opt-in por usuario */
 Route::middleware(['auth','verified'])->prefix('mi-perfil/seguridad')->group(function () {
     Route::get('/', [\App\Http\Controllers\Auth\TwoFactorSettingsController::class, 'show'])->name('two-factor.settings');

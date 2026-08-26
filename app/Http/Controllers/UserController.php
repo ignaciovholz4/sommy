@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
+use App\Models\Sucursal;
+use App\Permission\Models\Permission;
 use App\Permission\Models\Role;
+use App\Permission\Models\UserPermission;
 use App\User;
 use Response;
 use Illuminate\Support\Facades\Hash;
@@ -27,8 +30,16 @@ class UserController extends Controller
     {
         Gate::authorize('haveaccess','admin_user.edit');
         $roles = Role::orderBy('name')->get();
-        // return $roles;
-        return view('admin.user.edit',compact('roles','user'));
+        $sucursales = Sucursal::orderBy('nombre')->get();
+        $sucursalesAsignadas = $user->sucursales()->pluck('sucursales.id')->all();
+
+        $permisosPorModulo = Permission::orderBy('slug')->get()->groupBy(function ($p) {
+            return str_contains($p->slug, '.') ? explode('.', $p->slug)[0] : 'general';
+        });
+        $overridesActuales = $user->permissionOverrides()->pluck('tipo', 'permission_id');
+        $modulosSensibles = ['finanzas', 'admin'];
+
+        return view('admin.user.edit', compact('roles', 'user', 'sucursales', 'sucursalesAsignadas', 'permisosPorModulo', 'overridesActuales', 'modulosSensibles'));
     }
 
     public function update(Request $request, User $user)
@@ -38,7 +49,7 @@ class UserController extends Controller
 
             'name'=>'required|max:50|unique:users,name,'.$user->id,
             'email'=>'required|max:50|unique:users,email,'.$user->id,
-            
+
         ]);
 
         $rol = e($request->input('roles'));
@@ -48,13 +59,28 @@ class UserController extends Controller
             return back()->with('status_success','Necesitas selecionar un rol para el usuario');
         }
         // dd($request->all());
-        $user->update($request->all());
+        $user->update($request->only(['name', 'email']));
         // $user = new User;
         // $user->name = e($request->input('name'));
         // $user->email = e($request->input('email'));
         // $user->password = Hash::make($request->input('password'));
-        
+
         $user->roles()->sync($request->get('roles'));
+
+        // Sucursales explicitas: sin ninguna tildada, el usuario sigue viendo todas
+        $user->sucursales()->sync($request->input('sucursales', []));
+
+        // Overrides de permiso por persona: solo se guardan las filas distintas de "por rol"
+        $overrides = [];
+        foreach ((array) $request->input('permiso', []) as $permissionId => $valor) {
+            if (in_array($valor, ['otorgado', 'denegado'], true)) {
+                $overrides[(int) $permissionId] = $valor;
+            }
+        }
+        UserPermission::where('user_id', $user->id)->delete();
+        foreach ($overrides as $permissionId => $tipo) {
+            UserPermission::create(['user_id' => $user->id, 'permission_id' => $permissionId, 'tipo' => $tipo]);
+        }
 
         return redirect()->route('user.index')->with('status_success', 'Datos actualizados correctamente');
     }

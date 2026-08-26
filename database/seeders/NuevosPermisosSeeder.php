@@ -39,6 +39,13 @@ class NuevosPermisosSeeder extends Seeder
             ['slug' => 'finanzas.divisas.index',  'name' => 'ver compra/venta de divisas',           'description' => 'Puede ver el historial de compra/venta de moneda extranjera'],
             ['slug' => 'finanzas.divisas.manage', 'name' => 'gestionar compra/venta de divisas',     'description' => 'Puede registrar compras y ventas de moneda extranjera'],
             ['slug' => 'finanzas.marketing.index', 'name' => 'ver panel de Meta/Google Ads',         'description' => 'Puede ver el gasto publicitario de Meta Ads y Google Ads'],
+            // Seguridad y confidencialidad
+            ['slug' => 'admin.auditoria.index',   'name' => 'ver auditoría del sistema',             'description' => 'Puede ver el log de acciones de todos los usuarios (quién hizo qué, cuándo)'],
+            ['slug' => 'ventas.ver_todas',        'name' => 'ver ventas de todos los vendedores',    'description' => 'Sin este permiso, un vendedor solo ve sus propias ventas'],
+            ['slug' => 'productos.ver_costos',    'name' => 'ver costos y márgenes de productos',    'description' => 'Sin este permiso, no se muestran costos ni márgenes en listados e informes'],
+            // Gap preexistente: GraphicsController exige este slug pero nunca se habia sembrado
+            // (solo los roles full-access podian abrir Informes hasta ahora)
+            ['slug' => 'reporte.index',           'name' => 'ver informes del negocio',              'description' => 'Puede ver el tablero de Informes (ventas, productos, clientes, stock, finanzas)'],
         ];
 
         $ids = [];

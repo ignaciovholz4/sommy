@@ -151,8 +151,12 @@
             </div>
             <div class="ceo-kpi">
                 <div class="k-label">Margen bruto (est.)</div>
+                @if($kpis['margen'])
                 <div class="k-value">{{ $money($kpis['margen']['valor']) }}</div>
                 <span class="k-delta {{ $kpis['margen']['pct'] >= 30 ? 'up' : 'flat' }}">{{ number_format($kpis['margen']['pct'], 1, ',', '.') }}% sobre venta</span>
+                @else
+                <div class="k-value text-muted" style="font-size:.95rem">Sin acceso</div>
+                @endif
             </div>
             <div class="ceo-kpi">
                 <div class="k-label">Compras</div>

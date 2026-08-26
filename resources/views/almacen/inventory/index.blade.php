@@ -15,8 +15,10 @@
                         <th>Descripción</th>
                         <th>Tipo</th>
                         <th>Pesable</th>
+                        @if($puedeVerCostos)
                         <th>Precio compra s/IVA</th>
                         <th>Precio compra c/IVA</th>
+                        @endif
                         <th>Precio venta s/IVA</th>
                         <th>Precio venta c/IVA</th>
                         <th>IVA compra</th>
@@ -32,8 +34,10 @@
                             <td>{{ $prod->descripcion }}</td>
                             <td>{{ $prod->tipo_producto_id == 1 ? 'Simple' : 'Personalizado' }}</td>
                             <td>{{ $prod->articulo_pesable_balanza ? 'Sí' : 'No' }}</td>
+                            @if($puedeVerCostos)
                             <td>${{ number_format($prod->pcompra_sin_iva, 2) }}</td>
                             <td>${{ number_format($prod->pcompra_con_iva, 2) }}</td>
+                            @endif
                             <td>${{ number_format($prod->pventa_sin_iva, 2) }}</td>
                             <td>${{ number_format($prod->pventa_con_iva, 2) }}</td>
                             <td>{{ optional($prod->ivaCompra)->tipo_iva ?? '' }}</td>
