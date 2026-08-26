@@ -121,7 +121,7 @@ class CuentaCorrienteProveedorController extends Controller
      */
     public function registrarPago(Request $request, $proveedorId, ChequeService $chequeService)
     {
-        Gate::authorize('haveaccess', 'finanzas.cxp.manage');
+        Gate::authorize('haveaccess', 'finanzas.cxp.pagar');
 
         $request->validate([
             'monto'       => 'required|numeric|min:0.01',
@@ -251,7 +251,7 @@ class CuentaCorrienteProveedorController extends Controller
      */
     public function registrarAjuste(Request $request, $proveedorId)
     {
-        Gate::authorize('haveaccess', 'finanzas.cxp.manage');
+        Gate::authorize('haveaccess', 'finanzas.cxp.ajustar');
 
         $request->validate([
             'tipo'              => 'required|in:debe,haber',

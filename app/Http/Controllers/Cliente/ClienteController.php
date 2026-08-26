@@ -302,7 +302,7 @@ class ClienteController extends Controller
      */
     public function quickCreateCustomer(Request $request)
     {
-        Gate::authorize('haveaccess','ventas_cliente.index');
+        Gate::authorize('haveaccess','ventas_cliente.quick_create');
         
         // Alta rápida: solo el nombre es obligatorio, el resto se completa después
         $request->validate([

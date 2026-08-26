@@ -288,7 +288,7 @@ class EnvioBoardController extends Controller
      */
     public function etapa(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'finanzas.envios.manage');
+        Gate::authorize('haveaccess', 'finanzas.envios.estado');
 
         $request->validate(['accion' => 'required|in:despachar,transito,entregar,fallido']);
 

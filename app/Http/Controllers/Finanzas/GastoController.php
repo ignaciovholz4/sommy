@@ -123,7 +123,7 @@ class GastoController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('haveaccess', 'finanzas.gastos.manage');
+        Gate::authorize('haveaccess', 'finanzas.gastos.crud');
 
         $data = $this->validarGasto($request);
 
@@ -157,7 +157,7 @@ class GastoController extends Controller
 
     public function update(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'finanzas.gastos.manage');
+        Gate::authorize('haveaccess', 'finanzas.gastos.crud');
 
         $gasto = Gasto::findOrFail($id);
 
@@ -181,7 +181,7 @@ class GastoController extends Controller
 
     public function destroy($id)
     {
-        Gate::authorize('haveaccess', 'finanzas.gastos.manage');
+        Gate::authorize('haveaccess', 'finanzas.gastos.crud');
 
         $gasto = Gasto::findOrFail($id);
 
@@ -204,7 +204,7 @@ class GastoController extends Controller
      */
     public function registrarPago(Request $request, $id, ChequeService $chequeService)
     {
-        Gate::authorize('haveaccess', 'finanzas.gastos.manage');
+        Gate::authorize('haveaccess', 'finanzas.gastos.pagar');
 
         $request->validate([
             'cuenta' => 'required|string',

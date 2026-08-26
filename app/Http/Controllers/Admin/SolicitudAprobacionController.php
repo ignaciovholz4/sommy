@@ -53,7 +53,7 @@ class SolicitudAprobacionController extends Controller
 
     public function aprobar(Solicitud $solicitud, SolicitudAprobacionService $solicitudes)
     {
-        Gate::authorize('haveaccess', 'admin.solicitudes.manage');
+        Gate::authorize('haveaccess', 'admin.solicitudes.aprobar');
 
         try {
             $solicitudes->aprobar($solicitud, Auth::id());
@@ -66,7 +66,7 @@ class SolicitudAprobacionController extends Controller
 
     public function rechazar(Request $request, Solicitud $solicitud, SolicitudAprobacionService $solicitudes)
     {
-        Gate::authorize('haveaccess', 'admin.solicitudes.manage');
+        Gate::authorize('haveaccess', 'admin.solicitudes.rechazar');
 
         try {
             $solicitudes->rechazar($solicitud, Auth::id(), $request->input('motivo'));

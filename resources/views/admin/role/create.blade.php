@@ -138,26 +138,25 @@
             <div class="permissions-grid">
                 
                 @php
-                    $secciones = [
-                        ['titulo' => 'Menú Principal', 'data' => $permissions, 'icon' => 'fa-home'],
-                        ['titulo' => 'Caja y Finanzas', 'data' => $permission_caja, 'icon' => 'fa-cash-register'],
-                        ['titulo' => 'Almacén e Inventario', 'data' => $permission_almacen, 'icon' => 'fa-boxes'],
-                        ['titulo' => 'Compras', 'data' => $permission_compras, 'icon' => 'fa-shopping-cart'],
-                        ['titulo' => 'Ventas', 'data' => $permission_ventas, 'icon' => 'fa-tag'],
-                        ['titulo' => 'Devoluciones', 'data' => $permission_devolucion, 'icon' => 'fa-undo'],
-                        ['titulo' => 'Reportes', 'data' => $permission_reports, 'icon' => 'fa-chart-line'],
-                        ['titulo' => 'Configuración', 'data' => $permission_configuracion, 'icon' => 'fa-cogs'],
-                        ['titulo' => 'Cotizaciones', 'data' => $permission_cotizaciones, 'icon' => 'fa-file-invoice-dollar'],
+                    // Título/ícono lindo para los módulos conocidos; los nuevos que vayan apareciendo
+                    // (nuevo prefijo de slug) caen en el fallback sin que haga falta tocar esta vista.
+                    $iconosModulo = [
+                        'admin' => 'fa-user-shield', 'caja' => 'fa-cash-register', 'almacen' => 'fa-boxes',
+                        'compras' => 'fa-shopping-cart', 'compras_proveedor' => 'fa-truck', 'ventas' => 'fa-tag',
+                        'ventas_cliente' => 'fa-users', 'devolucion' => 'fa-undo', 'reporte' => 'fa-chart-line',
+                        'reportes' => 'fa-chart-pie', 'configuracion' => 'fa-cogs', 'cotizaciones' => 'fa-file-invoice-dollar',
+                        'finanzas' => 'fa-wallet', 'whatsapp' => 'fa-brands fa-whatsapp', 'agents' => 'fa-robot',
+                        'general' => 'fa-ellipsis-h',
                     ];
                 @endphp
 
-                @foreach($secciones as $seccion)
+                @foreach($permisosPorModulo as $modulo => $permisos)
                 <div class="card-facturarg permission-card">
                     <div class="permission-title">
-                        <i class="fas {{$seccion['icon']}} me-2 text-info"></i> {{$seccion['titulo']}}
+                        <i class="fas {{ $iconosModulo[$modulo] ?? 'fa-puzzle-piece' }} me-2 text-info"></i> {{ ucfirst($modulo) }}
                     </div>
                     <div class="card-body">
-                        @foreach($seccion['data'] as $p)
+                        @foreach($permisos as $p)
                         <div class="custom-control custom-checkbox custom-check-container">
                             <input type="checkbox" class="custom-control-input" id="p_{{$p->id}}" value="{{$p->id}}" name="permission[]"
                                 @if(is_array(old('permission')) && in_array("$p->id", old('permission'))) checked @endif>

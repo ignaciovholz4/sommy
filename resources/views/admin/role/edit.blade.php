@@ -67,198 +67,37 @@
         </div>
     </div>
 </section>
+@php
+    $modulosPorFila = $permisosPorModulo->chunk(3);
+@endphp
+@foreach($modulosPorFila as $fila)
 <section style="margin-top:-1%;">
     <div class="card-group">
+        @foreach($fila as $modulo => $permisos)
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Menu principal</h5>
-                @foreach($permissions as $permission)
+                <h5 class="card-title">Módulo {{ ucfirst($modulo) }}</h5>
+                @foreach($permisos as $permission)
                 <div class="custom-control custom-checkbox">
                     <input type="checkbox" class="custom-control-input" id="permission_{{$permission->id}}" value="{{$permission->id}}" name="permission[]"
                     @if(is_array(old('permission')) && in_array("$permission->id", old('permission')))
                         checked
                     @elseif(is_array($permission_role) && in_array("$permission->id", $permission_role))
-                        checked    
-                    @endif
-                    >
-                    <label class="custom-control-label" for="permission_{{$permission->id}}">{{$permission->id}}-{{$permission->name}} <em> ( {{$permission->description}} )</em></label>
-                </div>
-                @endforeach
-            </div>
-            <div class="card-footer">
-            <small class="text-muted">Roles y permisos</small>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Menu caja</h5>
-                @foreach($permission_caja as $caja)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="permission_{{$caja->id}}" value="{{$caja->id}}" name="permission[]"
-                    @if(is_array(old('permission')) && in_array("$caja->id", old('permission')))
                         checked
-                    @elseif(is_array($permission_role) && in_array("$caja->id", $permission_role))
-                        checked    
                     @endif
                     >
-                    <label class="custom-control-label" for="permission_{{$caja->id}}">{{$caja->id}}-{{$caja->name}} <em> ( {{$caja->description}} )</em></label>
+                    <label class="custom-control-label" for="permission_{{$permission->id}}">{{$permission->name}} <em> ( {{$permission->description}} )</em></label>
                 </div>
                 @endforeach
             </div>
             <div class="card-footer">
-            <small class="text-muted">Roles y permisos</small>
+            <small class="text-muted">{{ $permisos->count() }} permiso(s)</small>
             </div>
         </div>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Menu almacen</h5>
-                @foreach($permission_almacen as $almacen)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="permission_{{$almacen->id}}" value="{{$almacen->id}}" name="permission[]"
-                    @if(is_array(old('permission')) && in_array("$almacen->id", old('permission')))
-                        checked
-                    @elseif(is_array($permission_role) && in_array("$almacen->id", $permission_role))
-                        checked    
-                    @endif
-                    >
-                    <label class="custom-control-label" for="permission_{{$almacen->id}}">{{$almacen->id}}-{{$almacen->name}} <em> ( {{$almacen->description}} )</em></label>
-                </div>
-                @endforeach
-            </div>
-            <div class="card-footer">
-            <small class="text-muted">Roles y permisos</small>
-            </div>
-        </div>
+        @endforeach
     </div>
 </section>
-<section class="margin">
-    <div class="card-group">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Menu compras</h5>
-                @foreach($permission_compras as $compras)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="permission_{{$compras->id}}" value="{{$compras->id}}" name="permission[]"
-                    @if(is_array(old('permission')) && in_array("$compras->id", old('permission')))
-                        checked
-                    @elseif(is_array($permission_role) && in_array("$compras->id", $permission_role))
-                        checked    
-                    @endif
-                    >
-                    <label class="custom-control-label" for="permission_{{$compras->id}}">{{$compras->id}}-{{$compras->name}} <em> ( {{$compras->description}} )</em></label>
-                </div>
-                @endforeach
-            </div>
-            <div class="card-footer">
-            <small class="text-muted">Roles y permisos</small>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Menu ventas</h5>
-                @foreach($permission_ventas as $venta)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="permission_{{$venta->id}}" value="{{$venta->id}}" name="permission[]"
-                    @if(is_array(old('permission')) && in_array("$venta->id", old('permission')))
-                        checked
-                    @elseif(is_array($permission_role) && in_array("$venta->id", $permission_role))
-                        checked    
-                    @endif
-                    >
-                    <label class="custom-control-label" for="permission_{{$venta->id}}">{{$venta->id}}-{{$venta->name}} <em> ( {{$venta->description}} )</em></label>
-                </div>
-                @endforeach
-            </div>
-            <div class="card-footer">
-            <small class="text-muted">Roles y permisos</small>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Menu devolucion</h5>
-                @foreach($permission_devolucion as $devolucion)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="permission_{{$devolucion->id}}" value="{{$devolucion->id}}" name="permission[]"
-                    @if(is_array(old('permission')) && in_array("$devolucion->id", old('permission')))
-                        checked
-                    @elseif(is_array($permission_role) && in_array("$devolucion->id", $permission_role))
-                        checked    
-                    @endif
-                    >
-                    <label class="custom-control-label" for="permission_{{$devolucion->id}}">{{$devolucion->id}}-{{$devolucion->name}} <em> ( {{$devolucion->description}} )</em></label>
-                </div>
-                @endforeach
-            </div>
-            <div class="card-footer">
-            <small class="text-muted">Roles y permisos</small>
-            </div>
-        </div>
-    </div>
-</section>
-<section class="margin">
-    <div class="card-group">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Menu de reportes</h5><br>
-                @foreach($permission_reports as $reports)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="permission_{{$reports->id}}" value="{{$reports->id}}" name="permission[]"
-                    @if(is_array(old('permission')) && in_array("$reports->id", old('permission')))
-                        checked
-                    @elseif(is_array($permission_role) && in_array("$reports->id", $permission_role))
-                        checked    
-                    @endif
-                    >
-                    <label class="custom-control-label" for="permission_{{$reports->id}}">{{$reports->id}}-{{$reports->name}} <em> ( {{$reports->description}} )</em></label>
-                </div>
-                @endforeach
-            </div>
-            <div class="card-footer">
-            <small class="text-muted">Roles y permisos</small>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Menu de configuracion</h5><br>
-                @foreach($permission_configuracion as $conf)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="permission_{{$conf->id}}" value="{{$conf->id}}" name="permission[]"
-                    @if(is_array(old('permission')) && in_array("$conf->id", old('permission')))
-                        checked
-                    @elseif(is_array($permission_role) && in_array("$conf->id", $permission_role))
-                        checked    
-                    @endif
-                    >
-                    <label class="custom-control-label" for="permission_{{$conf->id}}">{{$conf->id}}-{{$conf->name}} <em> ( {{$conf->description}} )</em></label>
-                </div>
-                @endforeach
-            </div>
-            <div class="card-footer">
-            <small class="text-muted">Roles y permisos</small>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Menu de configuracion</h5><br>
-                @foreach($permission_cotizaciones as $cot)
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="permission_{{$cot->id}}" value="{{$cot->id}}" name="permission[]"
-                    @if(is_array(old('permission')) && in_array("$cot->id", old('permission')))
-                        checked
-                    @elseif(is_array($permission_role) && in_array("$cot->id", $permission_role))
-                        checked    
-                    @endif
-                    >
-                    <label class="custom-control-label" for="permission_{{$cot->id}}">{{$cot->id}}-{{$cot->name}} <em> ( {{$cot->description}} )</em></label>
-                </div>
-                @endforeach
-            </div>
-            <div class="card-footer">
-            <small class="text-muted">Roles y permisos</small>
-            </div>
-        </div>
-    </div>
-</section>
+@endforeach
 <section class="margin">
     <div class="container margin">
         <div class="card">

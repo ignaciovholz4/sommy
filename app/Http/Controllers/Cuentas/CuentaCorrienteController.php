@@ -97,7 +97,7 @@ class CuentaCorrienteController extends Controller
 
     public function storeMovimiento(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'ventas.index');
+        Gate::authorize('haveaccess', 'ventas.cc.movimiento');
 
         $request->validate([
             'tipo'       => 'required|in:cargo,pago',

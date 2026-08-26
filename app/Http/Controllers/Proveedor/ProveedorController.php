@@ -242,7 +242,7 @@ class ProveedorController extends Controller
      */
     public function quickCreateSupplier(Request $request)
     {
-        Gate::authorize('haveaccess','compras_proveedor.index');
+        Gate::authorize('haveaccess','compras_proveedor.quick_create');
         
         // Alta rápida: solo el nombre es obligatorio, el resto se completa después
         $request->validate([

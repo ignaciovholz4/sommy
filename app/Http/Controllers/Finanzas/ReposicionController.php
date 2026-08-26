@@ -12,7 +12,7 @@ class ReposicionController extends Controller
 {
     public function generarAhora(SugerenciaReposicionService $service)
     {
-        Gate::authorize('haveaccess', 'compras.reposicion.manage');
+        Gate::authorize('haveaccess', 'compras.reposicion.generar');
 
         $resultado = $service->generar();
 
@@ -35,7 +35,7 @@ class ReposicionController extends Controller
 
     public function guardarAjustes(Request $request)
     {
-        Gate::authorize('haveaccess', 'compras.reposicion.manage');
+        Gate::authorize('haveaccess', 'compras.reposicion.ajustar');
 
         $data = $request->validate([
             'dias_cobertura_objetivo' => 'required|integer|min:1|max:365',

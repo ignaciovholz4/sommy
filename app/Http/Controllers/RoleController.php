@@ -34,17 +34,10 @@ class RoleController extends Controller
     public function create()
     {
         Gate::authorize('haveaccess','admin_role.create');
-        $permissions = Permission::where('slug','like','%admin%')->get();
-        $permission_caja = Permission::where('slug','like','%caja%')->get();
-        $permission_almacen = Permission::where('slug','like','%almacen%')->get();
-        $permission_compras = Permission::where('slug','like','%compras%')->get();
-        $permission_ventas= Permission::where('slug','like','%ventas%')->get();
-        $permission_devolucion= Permission::where('slug','like','%devolucion%')->get();
-        $permission_reports= Permission::where('slug','like','%reporte%')->get();
-        $permission_configuracion = Permission::where('slug','like','%configuracion%')->get();
-        $permission_cotizaciones = Permission::where('slug','like','%cotizaciones%')->get();
-        //dd($permission_configuracion);
-        return view('admin.role.create',compact('permissions','permission_caja','permission_almacen','permission_compras','permission_ventas','permission_devolucion','permission_reports','permission_configuracion','permission_cotizaciones'));
+        $permisosPorModulo = Permission::orderBy('slug')->get()->groupBy(function ($p) {
+            return str_contains($p->slug, '.') ? explode('.', $p->slug)[0] : 'general';
+        });
+        return view('admin.role.create',compact('permisosPorModulo'));
     }
 
     /**
@@ -129,18 +122,10 @@ class RoleController extends Controller
         
         //return $permission_role;
         // return $role->permissions;
-        //$permissions = Permission::get();
-        $permissions = Permission::where('slug','like','%admin%')->get();
-        $permission_caja = Permission::where('slug','like','%caja%')->get();
-        $permission_almacen = Permission::where('slug','like','%almacen%')->get();
-        $permission_compras = Permission::where('slug','like','%compras%')->get();
-        $permission_ventas= Permission::where('slug','like','%ventas%')->get();
-        $permission_devolucion= Permission::where('slug','like','%devolucion%')->get();
-        $permission_reports= Permission::where('slug','like','%reporte%')->get();
-        $permission_configuracion = Permission::where('slug','like','%configuracion%')->get();
-        $permission_cotizaciones = Permission::where('slug','like','%cotizaciones%')->get();
-        //dd($permissions);
-        return view('admin.role.edit',compact('permissions','permission_caja','permission_almacen','permission_compras','permission_ventas','permission_devolucion','role','permission_role','permission_reports','permission_configuracion','permission_cotizaciones'));
+        $permisosPorModulo = Permission::orderBy('slug')->get()->groupBy(function ($p) {
+            return str_contains($p->slug, '.') ? explode('.', $p->slug)[0] : 'general';
+        });
+        return view('admin.role.edit',compact('permisosPorModulo','role','permission_role'));
         //$role = Role::findOrFail($id);
         //return $role;
     }

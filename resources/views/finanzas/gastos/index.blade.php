@@ -7,8 +7,10 @@
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3" style="gap:10px;">
         <h4 class="mb-0" style="color:#1B2B5A;font-weight:600;"><i class="fas fa-receipt" style="color:#2563EB;"></i> Gastos</h4>
         <div>
-            @can('haveaccess', 'finanzas.gastos.manage')
+            @can('haveaccess', 'finanzas.gastos.categorias')
             <button class="btn btn-outline-secondary" onclick="abrirModalCategorias()"><i class="fas fa-tags"></i> Categorías</button>
+            @endcan
+            @can('haveaccess', 'finanzas.gastos.crud')
             <button class="btn btn-primary" onclick="nuevoGasto()"><i class="fas fa-plus"></i> Nuevo gasto</button>
             @endcan
         </div>

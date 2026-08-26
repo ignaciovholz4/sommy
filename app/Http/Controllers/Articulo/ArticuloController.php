@@ -1005,7 +1005,7 @@ class ArticuloController extends Controller
      */
     public function processBulkUpload(Request $request)
     {
-        Gate::authorize('haveaccess','almacen_articulo.index');
+        Gate::authorize('haveaccess','almacen_articulo.bulk_upload');
         
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:10240', // 10MB max
@@ -1107,7 +1107,7 @@ class ArticuloController extends Controller
      */
     public function quickCreateCategory(Request $request)
     {
-        Gate::authorize('haveaccess','almacen_articulo.index');
+        Gate::authorize('haveaccess','almacen_articulo.quick_create');
         
         $request->validate([
             'nombre' => 'required|string|max:100|unique:categorias,nombre',
@@ -1147,7 +1147,7 @@ class ArticuloController extends Controller
      */
     public function quickCreateMarca(Request $request)
     {
-        Gate::authorize('haveaccess','almacen_articulo.index');
+        Gate::authorize('haveaccess','almacen_articulo.quick_create');
 
         $request->validate([
             'nombre' => 'required|string|max:100|unique:marcas,nombre',
@@ -1186,7 +1186,7 @@ class ArticuloController extends Controller
      */
     public function quickCreateUnidad(Request $request)
     {
-        Gate::authorize('haveaccess','almacen_articulo.index');
+        Gate::authorize('haveaccess','almacen_articulo.quick_create');
 
         $request->validate([
             'nombre' => 'required|string|max:100|unique:unidades,nombre',

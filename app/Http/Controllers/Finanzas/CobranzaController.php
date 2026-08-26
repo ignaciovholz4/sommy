@@ -37,7 +37,7 @@ class CobranzaController extends Controller
 
     public function aprobarYEnviar($id, OutboundConversationService $outbound)
     {
-        Gate::authorize('haveaccess', 'finanzas.cobranzas.send');
+        Gate::authorize('haveaccess', 'finanzas.cobranzas.aprobar');
 
         $recordatorio = CobranzaRecordatorio::with(['cliente', 'template'])->findOrFail($id);
 
@@ -100,7 +100,7 @@ class CobranzaController extends Controller
 
     public function descartar($id)
     {
-        Gate::authorize('haveaccess', 'finanzas.cobranzas.send');
+        Gate::authorize('haveaccess', 'finanzas.cobranzas.descartar');
 
         $recordatorio = CobranzaRecordatorio::findOrFail($id);
 

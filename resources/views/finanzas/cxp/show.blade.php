@@ -57,12 +57,14 @@
                 · Plazo: {{ $proveedor->condicion_pago_dias > 0 ? $proveedor->condicion_pago_dias . ' días' : 'contado' }}
             </div>
         </div>
-        @can('haveaccess', 'finanzas.cxp.manage')
         <div class="cpd-acciones">
+            @can('haveaccess', 'finanzas.cxp.pagar')
             <button class="cpd-btn pagar" onclick="abrirModalPagoCxp()" {{ $saldo <= 0 ? 'disabled' : '' }}><i class="fas fa-hand-holding-usd"></i> Registrar pago</button>
+            @endcan
+            @can('haveaccess', 'finanzas.cxp.ajustar')
             <button class="cpd-btn ajuste" onclick="abrirModalAjusteCxp()"><i class="fas fa-sliders-h"></i> Ajuste manual</button>
+            @endcan
         </div>
-        @endcan
     </div>
 
     {{-- Resumen --}}

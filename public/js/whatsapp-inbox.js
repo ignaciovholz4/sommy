@@ -368,9 +368,10 @@
             var badge = d.status === 'pendiente_confirmacion'
                 ? '<span class="badge badge-warning">por confirmar</span>'
                 : '<span class="badge badge-secondary">cotizando</span>';
-            var actions = (d.status === 'pendiente_confirmacion' && C.canConfirm)
-                ? '<div class="mt-1"><button class="btn btn-xs btn-success btn-sm py-0 draft-confirm" data-id="' + d.id + '">✔ Confirmar</button> ' +
-                  '<button class="btn btn-xs btn-outline-danger btn-sm py-0 draft-reject" data-id="' + d.id + '">✗ Rechazar</button></div>'
+            var botonConfirmar = C.canConfirm ? '<button class="btn btn-xs btn-success btn-sm py-0 draft-confirm" data-id="' + d.id + '">✔ Confirmar</button> ' : '';
+            var botonRechazar = C.canReject ? '<button class="btn btn-xs btn-outline-danger btn-sm py-0 draft-reject" data-id="' + d.id + '">✗ Rechazar</button>' : '';
+            var actions = (d.status === 'pendiente_confirmacion' && (C.canConfirm || C.canReject))
+                ? '<div class="mt-1">' + botonConfirmar + botonRechazar + '</div>'
                 : '';
             $c.append('<div class="wa-draft-card">' + badge + '<div>' + items + '</div><strong>Total: $' + Number(d.total).toLocaleString('es-AR') + '</strong>' + actions + '</div>');
         });

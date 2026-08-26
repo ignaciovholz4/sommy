@@ -115,7 +115,7 @@ class IntegracionController extends Controller
 
     public function guardar(Request $request)
     {
-        Gate::authorize('haveaccess', 'configuracion.index');
+        Gate::authorize('haveaccess', 'configuracion.integraciones.guardar');
 
         $permitidas = collect(self::grupos())->flatMap(fn ($g) => array_column($g['campos'], null, 'env'));
 

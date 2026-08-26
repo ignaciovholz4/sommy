@@ -25,7 +25,7 @@ class AiAgentController extends Controller
 
     public function create()
     {
-        Gate::authorize('haveaccess', 'agents.manage');
+        Gate::authorize('haveaccess', 'agents.crud');
 
         return view('whatsapp.agents.form', [
             'agent' => new AiAgent([
@@ -43,7 +43,7 @@ class AiAgentController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('haveaccess', 'agents.manage');
+        Gate::authorize('haveaccess', 'agents.crud');
 
         $data = $this->validated($request);
         AiAgent::create($data);
@@ -54,7 +54,7 @@ class AiAgentController extends Controller
 
     public function edit($id)
     {
-        Gate::authorize('haveaccess', 'agents.manage');
+        Gate::authorize('haveaccess', 'agents.crud');
 
         return view('whatsapp.agents.form', [
             'agent' => AiAgent::findOrFail($id),
@@ -64,7 +64,7 @@ class AiAgentController extends Controller
 
     public function update(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'agents.manage');
+        Gate::authorize('haveaccess', 'agents.crud');
 
         $agent = AiAgent::findOrFail($id);
         $agent->update($this->validated($request));
@@ -75,7 +75,7 @@ class AiAgentController extends Controller
 
     public function toggle($id)
     {
-        Gate::authorize('haveaccess', 'agents.manage');
+        Gate::authorize('haveaccess', 'agents.toggle');
 
         $agent = AiAgent::findOrFail($id);
         $agent->update(['activo' => !$agent->activo]);
@@ -85,7 +85,7 @@ class AiAgentController extends Controller
 
     public function destroy($id)
     {
-        Gate::authorize('haveaccess', 'agents.manage');
+        Gate::authorize('haveaccess', 'agents.crud');
 
         AiAgent::findOrFail($id)->delete();
 

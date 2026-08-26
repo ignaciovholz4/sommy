@@ -134,7 +134,7 @@ class EnvioController extends Controller
      */
     public function store(Request $request)
     {
-        Gate::authorize('haveaccess', 'finanzas.envios.manage');
+        Gate::authorize('haveaccess', 'finanzas.envios.store');
 
         $request->validate([
             'tipo'                   => 'required|in:venta,compra,venta_manual',
@@ -221,7 +221,7 @@ class EnvioController extends Controller
 
     public function update(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'finanzas.envios.manage');
+        Gate::authorize('haveaccess', 'finanzas.envios.update');
 
         $envio = Envio::findOrFail($id);
 
@@ -261,7 +261,7 @@ class EnvioController extends Controller
      */
     public function setEstado(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'finanzas.envios.manage');
+        Gate::authorize('haveaccess', 'finanzas.envios.estado');
 
         $request->validate([
             'estado' => 'required|in:pendiente,despachado,en_transito,entregado,fallido',
@@ -288,7 +288,7 @@ class EnvioController extends Controller
 
     public function destroy($id)
     {
-        Gate::authorize('haveaccess', 'finanzas.envios.manage');
+        Gate::authorize('haveaccess', 'finanzas.envios.destroy');
 
         $envio = Envio::with('gasto')->findOrFail($id);
 

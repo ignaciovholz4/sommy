@@ -19,7 +19,7 @@ class RendicionFleteroController extends Controller
 {
     public function rendir(Request $request, Transportista $transportista)
     {
-        Gate::authorize('haveaccess', 'finanzas.transportistas.manage');
+        Gate::authorize('haveaccess', 'finanzas.transportistas.rendir');
 
         $request->validate([
             'destino' => 'required|string',

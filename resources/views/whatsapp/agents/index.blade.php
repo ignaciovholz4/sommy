@@ -7,7 +7,7 @@
     <h4 class="mb-0"><i class="fas fa-robot text-primary"></i> Agentes de venta IA</h4>
     <div>
         <a href="{{ route('whatsapp.inbox') }}" class="btn btn-sm btn-outline-secondary"><i class="fab fa-whatsapp"></i> Bandeja</a>
-        @can('haveaccess','agents.manage')
+        @can('haveaccess','agents.crud')
         <a href="{{ route('whatsapp.agents.create') }}" class="btn btn-sm btn-primary"><i class="fas fa-plus"></i> Nuevo agente</a>
         @endcan
     </div>
@@ -59,7 +59,7 @@
                         @endif
                     </td>
                     <td class="text-center">
-                        @can('haveaccess','agents.manage')
+                        @can('haveaccess','agents.toggle')
                         <button class="btn btn-sm {{ $agent->activo ? 'btn-success' : 'btn-outline-secondary' }} toggle-agent" data-id="{{ $agent->id }}">
                             {{ $agent->activo ? 'Activo' : 'Apagado' }}
                         </button>
@@ -69,7 +69,7 @@
                     </td>
                     <td class="text-right">
                         <a href="{{ route('whatsapp.agents.runs', $agent->id) }}" class="btn btn-sm btn-outline-info" title="Log de ejecuciones"><i class="fas fa-list"></i></a>
-                        @can('haveaccess','agents.manage')
+                        @can('haveaccess','agents.crud')
                         <a href="{{ route('whatsapp.agents.edit', $agent->id) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
                         @endcan
                     </td>

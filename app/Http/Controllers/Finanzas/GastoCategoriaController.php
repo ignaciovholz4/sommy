@@ -36,7 +36,7 @@ class GastoCategoriaController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('haveaccess', 'finanzas.gastos.manage');
+        Gate::authorize('haveaccess', 'finanzas.gastos.categorias');
 
         $request->validate([
             'nombre'   => 'required|string|max:120',
@@ -56,7 +56,7 @@ class GastoCategoriaController extends Controller
 
     public function update(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'finanzas.gastos.manage');
+        Gate::authorize('haveaccess', 'finanzas.gastos.categorias');
 
         $categoria = GastoCategoria::findOrFail($id);
 
@@ -80,7 +80,7 @@ class GastoCategoriaController extends Controller
 
     public function destroy($id)
     {
-        Gate::authorize('haveaccess', 'finanzas.gastos.manage');
+        Gate::authorize('haveaccess', 'finanzas.gastos.categorias');
 
         $categoria = GastoCategoria::withCount(['gastos', 'hijas'])->findOrFail($id);
 

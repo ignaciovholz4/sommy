@@ -28,7 +28,7 @@ class ReportesChatController extends Controller
 
     public function crearSesion()
     {
-        Gate::authorize('haveaccess', 'reportes.chat.index');
+        Gate::authorize('haveaccess', 'reportes.chat.usar');
 
         $sesion = ReporteChatSesion::create(['user_id' => auth()->id()]);
 
@@ -55,7 +55,7 @@ class ReportesChatController extends Controller
 
     public function enviar(Request $request, $sesionId)
     {
-        Gate::authorize('haveaccess', 'reportes.chat.index');
+        Gate::authorize('haveaccess', 'reportes.chat.usar');
 
         $request->validate(['pregunta' => 'required|string|max:1000']);
 

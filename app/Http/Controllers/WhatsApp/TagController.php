@@ -11,7 +11,7 @@ class TagController extends Controller
 {
     public function store(Request $request)
     {
-        Gate::authorize('haveaccess', 'whatsapp.index');
+        Gate::authorize('haveaccess', 'whatsapp.tags.store');
 
         $request->validate([
             'nombre' => 'required|string|max:60|unique:wa_tags,nombre',
@@ -28,7 +28,7 @@ class TagController extends Controller
 
     public function destroy($id)
     {
-        Gate::authorize('haveaccess', 'whatsapp.assign');
+        Gate::authorize('haveaccess', 'whatsapp.tags.destroy');
 
         WaTag::findOrFail($id)->delete();
 

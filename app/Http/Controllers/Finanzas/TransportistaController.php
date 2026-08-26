@@ -13,14 +13,14 @@ class TransportistaController extends Controller
 {
     public function index()
     {
-        Gate::authorize('haveaccess', 'finanzas.transportistas.manage');
+        Gate::authorize('haveaccess', 'finanzas.transportistas.crud');
 
         return view('finanzas.transportistas.index');
     }
 
     public function list(Request $request)
     {
-        Gate::authorize('haveaccess', 'finanzas.transportistas.manage');
+        Gate::authorize('haveaccess', 'finanzas.transportistas.crud');
 
         $transportistas = Transportista::withCount('envios');
 
@@ -64,7 +64,7 @@ class TransportistaController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('haveaccess', 'finanzas.transportistas.manage');
+        Gate::authorize('haveaccess', 'finanzas.transportistas.crud');
 
         $data = $this->validarTransportista($request);
         $data['activo'] = true;
@@ -76,7 +76,7 @@ class TransportistaController extends Controller
 
     public function update(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'finanzas.transportistas.manage');
+        Gate::authorize('haveaccess', 'finanzas.transportistas.crud');
 
         $transportista = Transportista::findOrFail($id);
 
@@ -90,7 +90,7 @@ class TransportistaController extends Controller
 
     public function destroy($id)
     {
-        Gate::authorize('haveaccess', 'finanzas.transportistas.manage');
+        Gate::authorize('haveaccess', 'finanzas.transportistas.crud');
 
         $transportista = Transportista::withCount('envios')->findOrFail($id);
 

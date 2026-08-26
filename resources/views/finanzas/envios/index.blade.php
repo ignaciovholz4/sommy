@@ -6,7 +6,7 @@
 <div class="container-fluid" style="padding: 18px 10px;">
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3" style="gap:10px;">
         <h4 class="mb-0" style="color:#1B2B5A;font-weight:600;"><i class="fas fa-shipping-fast" style="color:#2563EB;"></i> Envíos y Fletes</h4>
-        @can('haveaccess', 'finanzas.envios.manage')
+        @can('haveaccess', 'finanzas.envios.store')
         <button class="btn btn-primary" onclick="nuevoEnvio()"><i class="fas fa-plus"></i> Nuevo envío</button>
         @endcan
     </div>

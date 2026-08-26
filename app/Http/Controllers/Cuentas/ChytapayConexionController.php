@@ -29,7 +29,7 @@ class ChytapayConexionController extends Controller
 
     public function conectar(Cuenta $cuenta)
     {
-        Gate::authorize('haveaccess', 'finanzas.chytapay.manage');
+        Gate::authorize('haveaccess', 'finanzas.chytapay.conectar');
 
         if (!$this->auth->habilitado()) {
             return response()->json(['estado' => 0, 'mensaje' => 'Chytapay no esta configurado (revisar .env).'], 422);
@@ -65,7 +65,7 @@ class ChytapayConexionController extends Controller
 
     public function desconectar(Cuenta $cuenta)
     {
-        Gate::authorize('haveaccess', 'finanzas.chytapay.manage');
+        Gate::authorize('haveaccess', 'finanzas.chytapay.desconectar');
 
         $cuenta->chytapayConexion()->delete();
 
@@ -74,7 +74,7 @@ class ChytapayConexionController extends Controller
 
     public function sincronizarAhora(Cuenta $cuenta)
     {
-        Gate::authorize('haveaccess', 'finanzas.chytapay.manage');
+        Gate::authorize('haveaccess', 'finanzas.chytapay.sincronizar');
 
         $conexion = $cuenta->chytapayConexion;
         if (!$conexion) {

@@ -245,7 +245,7 @@ class ConversationController extends Controller
      */
     public function note(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'whatsapp.index');
+        Gate::authorize('haveaccess', 'whatsapp.note');
 
         $request->validate(['body' => 'required|string|max:2000']);
 
@@ -283,7 +283,7 @@ class ConversationController extends Controller
 
     public function setStatus(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'whatsapp.index');
+        Gate::authorize('haveaccess', 'whatsapp.set_status');
 
         $request->validate(['status' => 'required|in:nueva,en_atencion,esperando_cliente,cerrada']);
 
@@ -298,7 +298,7 @@ class ConversationController extends Controller
      */
     public function toggleMode(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'whatsapp.index');
+        Gate::authorize('haveaccess', 'whatsapp.toggle_mode');
 
         $request->validate(['mode' => 'required|in:bot,humano']);
 
@@ -313,7 +313,7 @@ class ConversationController extends Controller
      */
     public function linkCliente(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'whatsapp.index');
+        Gate::authorize('haveaccess', 'whatsapp.link_cliente');
 
         $conversation = WaConversation::findOrFail($id);
 
@@ -362,7 +362,7 @@ class ConversationController extends Controller
 
     public function toggleTag(Request $request, $id)
     {
-        Gate::authorize('haveaccess', 'whatsapp.index');
+        Gate::authorize('haveaccess', 'whatsapp.tag');
 
         $request->validate(['tag_id' => 'required|integer|exists:wa_tags,id']);
 

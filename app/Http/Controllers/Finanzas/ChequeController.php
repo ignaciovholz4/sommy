@@ -75,7 +75,7 @@ class ChequeController extends Controller
 
     public function depositar(Request $request, Cheque $cheque)
     {
-        Gate::authorize('haveaccess', 'finanzas.cheques.manage');
+        Gate::authorize('haveaccess', 'finanzas.cheques.depositar');
 
         $request->validate(['cuenta_id' => 'required|exists:cuentas,id']);
 
@@ -90,7 +90,7 @@ class ChequeController extends Controller
 
     public function acreditar(Cheque $cheque)
     {
-        Gate::authorize('haveaccess', 'finanzas.cheques.manage');
+        Gate::authorize('haveaccess', 'finanzas.cheques.acreditar');
 
         if (!in_array($cheque->estado, ['en_cartera', 'depositado'])) {
             return response()->json(['estado' => 0, 'mensaje' => 'Este cheque no está en un estado que se pueda acreditar.'], 422);
@@ -103,7 +103,7 @@ class ChequeController extends Controller
 
     public function rechazar(Request $request, Cheque $cheque, SolicitudAprobacionService $solicitudes)
     {
-        Gate::authorize('haveaccess', 'finanzas.cheques.manage');
+        Gate::authorize('haveaccess', 'finanzas.cheques.rechazar');
 
         if (in_array($cheque->estado, ['rechazado', 'anulado', 'entregado'])) {
             return response()->json(['estado' => 0, 'mensaje' => 'Este cheque ya no se puede rechazar.'], 422);
@@ -138,7 +138,7 @@ class ChequeController extends Controller
 
     public function anular(Cheque $cheque, SolicitudAprobacionService $solicitudes)
     {
-        Gate::authorize('haveaccess', 'finanzas.cheques.manage');
+        Gate::authorize('haveaccess', 'finanzas.cheques.anular');
 
         if (in_array($cheque->estado, ['entregado', 'acreditado'])) {
             return response()->json(['estado' => 0, 'mensaje' => 'Un cheque entregado o acreditado no se puede anular.'], 422);

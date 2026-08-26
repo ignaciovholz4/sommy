@@ -275,7 +275,8 @@ window.WA_CONFIG = {
     base: "{{ url('whatsapp') }}",
     csrf: "{{ csrf_token() }}",
     userId: {{ auth()->id() }},
-    canConfirm: {{ auth()->user()->can('haveaccess','whatsapp.confirm_order') ? 'true' : 'false' }}
+    canConfirm: {{ auth()->user()->can('haveaccess','whatsapp.orders.confirm') ? 'true' : 'false' }},
+    canReject: {{ auth()->user()->can('haveaccess','whatsapp.orders.reject') ? 'true' : 'false' }}
 };
 </script>
 <script src="{{ asset('js/whatsapp-inbox.js') }}?v={{ filemtime(public_path('js/whatsapp-inbox.js')) }}"></script>

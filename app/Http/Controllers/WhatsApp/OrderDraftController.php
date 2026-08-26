@@ -44,7 +44,7 @@ class OrderDraftController extends Controller
 
     public function confirm(Request $request, $id, OrderDraftService $service)
     {
-        Gate::authorize('haveaccess', 'whatsapp.confirm_order');
+        Gate::authorize('haveaccess', 'whatsapp.orders.confirm');
 
         $draft = WaOrderDraft::with('conversation')->findOrFail($id);
 
@@ -73,7 +73,7 @@ class OrderDraftController extends Controller
 
     public function reject(Request $request, $id, OrderDraftService $service)
     {
-        Gate::authorize('haveaccess', 'whatsapp.confirm_order');
+        Gate::authorize('haveaccess', 'whatsapp.orders.reject');
 
         $draft = WaOrderDraft::findOrFail($id);
         $service->reject($draft, Auth::id(), $request->input('motivo'));

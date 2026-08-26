@@ -62,7 +62,7 @@ class MarketingController extends Controller
 
     public function sincronizarAhora(MetaAdsService $meta, GoogleAdsService $google)
     {
-        Gate::authorize('haveaccess', 'finanzas.marketing.index');
+        Gate::authorize('haveaccess', 'finanzas.marketing.sincronizar');
 
         if (!$meta->habilitado() && !$google->habilitado()) {
             return response()->json(['estado' => 0, 'mensaje' => 'Todavía no hay claves de Meta Ads ni Google Ads cargadas.'], 422);
