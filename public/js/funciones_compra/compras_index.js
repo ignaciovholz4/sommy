@@ -99,6 +99,8 @@ function confirmarCuentaCompra(idcompra, cuentaId) {
 
 // Función para mostrar detalle de compra en modal
 function getDetailCompra(id) {
+    if (typeof notasPanelSetEntidad === 'function') notasPanelSetEntidad('notasPanelCompraModal', 'compra', id);
+
     fetch(`/compras/${id}/detail`)
         .then(res => res.json())
         .then(data => {

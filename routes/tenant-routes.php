@@ -266,6 +266,13 @@ Route::get('admin/solicitudes/data', 'Admin\SolicitudAprobacionController@data')
 Route::post('admin/solicitudes/{solicitud}/aprobar', 'Admin\SolicitudAprobacionController@aprobar')->name('solicitudes.aprobar')->middleware(['auth','verified']);
 Route::post('admin/solicitudes/{solicitud}/rechazar', 'Admin\SolicitudAprobacionController@rechazar')->name('solicitudes.rechazar')->middleware(['auth','verified']);
 
+/** NOTAS RECORDATORIAS */
+Route::get('notas', 'NotaController@index')->name('notas.index')->middleware(['auth','verified']);
+Route::get('notas/lista', 'NotaController@lista')->name('notas.lista')->middleware(['auth','verified']);
+Route::post('notas', 'NotaController@store')->name('notas.store')->middleware(['auth','verified']);
+Route::post('notas/{id}/completar', 'NotaController@completar')->name('notas.completar')->middleware(['auth','verified']);
+Route::delete('notas/{id}', 'NotaController@destroy')->name('notas.destroy')->middleware(['auth','verified']);
+
 /** SEGURIDAD DE LA CUENTA: verificacion en dos pasos (2FA), opt-in por usuario */
 Route::middleware(['auth','verified'])->prefix('mi-perfil/seguridad')->group(function () {
     Route::get('/', [\App\Http\Controllers\Auth\TwoFactorSettingsController::class, 'show'])->name('two-factor.settings');

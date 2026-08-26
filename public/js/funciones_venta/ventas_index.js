@@ -99,6 +99,8 @@ function confirmarCuentaVenta(idventa, cuentaId) {
 
 // Función para mostrar detalle de venta en modal
 function getDetailVenta(id) {
+    if (typeof notasPanelSetEntidad === 'function') notasPanelSetEntidad('notasPanelVentaModal', 'venta', id);
+
     fetch(`/ventas/${id}/detail`)
         .then(res => res.json())
         .then(data => {

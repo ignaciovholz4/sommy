@@ -384,6 +384,11 @@
                         <label style="color:var(--facturarg-blue);font-weight:700;font-size:0.85rem;"><i class="fas fa-undo"></i> Devoluciones / cambios</label>
                         <div id="details_v_devoluciones" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:10px 14px;font-size:13px;color:#9A3412;"></div>
                     </div>
+
+                    {{-- Notas de esta venta: el panel es fijo, JS le setea el id al abrir el modal --}}
+                    <div style="margin-top:12px;text-align:left;">
+                        @include('notas._panel', ['panelId' => 'notasPanelVentaModal', 'tipo' => 'venta', 'id' => null])
+                    </div>
                 </div>
             </div>
           </div>

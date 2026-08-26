@@ -124,5 +124,9 @@
             </tbody>
         </table>
     </div>
+
+    <div class="fx-card" style="padding:16px;">
+        @include('notas._panel', ['tipo' => 'cliente', 'id' => $cliente->idcliente])
+    </div>
 </div>
 @endsection

@@ -67,6 +67,8 @@ class NuevosPermisosSeeder extends Seeder
             ['slug' => 'compras_proveedor.quick_create', 'name' => 'alta rápida de proveedores',     'description' => 'Puede crear un proveedor rápido desde Compras'],
             ['slug' => 'ventas_cliente.quick_create', 'name' => 'alta rápida de clientes',           'description' => 'Puede crear un cliente rápido desde Ventas'],
             ['slug' => 'ventas.cc.movimiento',    'name' => 'registrar movimientos de cuenta corriente de clientes', 'description' => 'Puede registrar cargos/pagos en la cuenta corriente de un cliente'],
+            // Notas recordatorias
+            ['slug' => 'notas.index', 'name' => 'usar notas recordatorias',                          'description' => 'Puede ver, crear, tildar y borrar notas recordatorias (generales o pegadas a un cliente/proveedor/venta/compra)'],
             // Gap preexistente: ConfiguracionController/IntegracionController exigen este slug pero nunca se habia sembrado
             ['slug' => 'configuracion.index', 'name' => 'ver configuración del sistema',            'description' => 'Puede ver la pantalla de Configuración e Integraciones'],
             ['slug' => 'configuracion.integraciones.guardar', 'name' => 'guardar integraciones',     'description' => 'Puede guardar claves de API en Integraciones'],

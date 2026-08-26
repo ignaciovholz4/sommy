@@ -15,6 +15,14 @@
     $solicitudesPendientes = auth()->check() && auth()->user()->havePermission('admin.solicitudes.index')
         ? \App\Models\Solicitud::where('estado', 'pendiente')->count()
         : 0;
+
+    // Badge de notas recordatorias vencidas (con fecha ya pasada y sin completar)
+    $notasPendientesVencidas = auth()->check() && auth()->user()->havePermission('notas.index')
+        ? \App\Models\Nota::where('completada', false)
+            ->whereNotNull('fecha_recordatorio')
+            ->whereDate('fecha_recordatorio', '<', now()->toDateString())
+            ->count()
+        : 0;
 @endphp
 
 <style>
@@ -547,6 +555,14 @@
                         <i class="fas fa-hand-paper"></i> Solicitudes de Aprobación
                         @if($solicitudesPendientes > 0)
                             <span class="badge bg-warning text-dark ms-auto">{{ $solicitudesPendientes }}</span>
+                        @endif
+                    </a>
+                    @endcan
+                    @can('haveaccess','notas.index')
+                    <a href="{{ url('notas') }}" class="dg-drop-item {{ Str::startsWith($resp,'notas') ? 'dg-drop-active' : '' }}">
+                        <i class="fas fa-sticky-note"></i> Notas Recordatorias
+                        @if($notasPendientesVencidas > 0)
+                            <span class="badge bg-danger ms-auto">{{ $notasPendientesVencidas }}</span>
                         @endif
                     </a>
                     @endcan
