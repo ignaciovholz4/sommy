@@ -11,14 +11,31 @@
     .res-tabs a { border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600; text-decoration: none; margin-right: 8px; }
     .res-tabs a.activo { background: #1B2B5A; color: #fff; }
     .res-tabs a:not(.activo) { background: #F1F4F9; color: #47536F; }
+    .res-print-titulo { display: none; }
+    @media print {
+        header, nav, .res-tabs, .btn-imprimir-resumen, .btn { display: none !important; }
+        .res-print-titulo { display: block; }
+        .fin-card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+        body { background: #fff; }
+        a { text-decoration: none; color: inherit; }
+    }
 </style>
 
 <div class="container-fluid" style="padding: 18px 10px;">
+    <div class="res-print-titulo mb-3">
+        <h3 style="color:#1B2B5A;font-weight:700;">Sommy — Resumen {{ $periodo === 'mes' ? 'del mes' : 'del día' }}</h3>
+        <p>{{ $desde->format('d/m/Y') }} @if($periodo === 'mes') al {{ $hasta->format('d/m/Y') }} @endif</p>
+    </div>
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3" style="gap:10px;">
         <h4 class="mb-0" style="color:#1B2B5A;font-weight:600;"><i class="fas fa-clipboard-list" style="color:#2563EB;"></i> Resumen de movimientos</h4>
-        <div class="res-tabs">
-            <a href="{{ url('finanzas/resumen?periodo=hoy') }}" class="{{ $periodo === 'hoy' ? 'activo' : '' }}">Hoy</a>
-            <a href="{{ url('finanzas/resumen?periodo=mes') }}" class="{{ $periodo === 'mes' ? 'activo' : '' }}">Este mes</a>
+        <div class="d-flex align-items-center flex-wrap" style="gap:10px;">
+            <div class="res-tabs">
+                <a href="{{ url('finanzas/resumen?periodo=hoy') }}" class="{{ $periodo === 'hoy' ? 'activo' : '' }}">Hoy</a>
+                <a href="{{ url('finanzas/resumen?periodo=mes') }}" class="{{ $periodo === 'mes' ? 'activo' : '' }}">Este mes</a>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm btn-imprimir-resumen" onclick="window.print()">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
         </div>
     </div>
     <p class="text-muted small">{{ $desde->format('d/m/Y') }} @if($periodo === 'mes') al {{ $hasta->format('d/m/Y') }} @endif</p>
@@ -80,8 +97,43 @@
     </div>
     @endif
 
+    <div class="fin-card mb-4">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:4px;">Actividad del período ({{ $actividad->count() }})</h3>
+        <p class="text-muted small mb-3">Todo lo que se cargó en el período — compras, ventas, pedidos, gastos y devoluciones — tenga o no pago registrado todavía.</p>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Tipo</th>
+                        <th>Documento</th>
+                        <th>Cliente/Proveedor</th>
+                        <th>Estado</th>
+                        <th class="text-end">Monto</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($actividad as $a)
+                    <tr>
+                        <td>{{ $a['fecha']->format('d/m/Y H:i') }}</td>
+                        <td><i class="fas {{ $a['icono'] }}" style="color:#2563EB;"></i> {{ $a['tipo'] }}</td>
+                        <td>{{ $a['titulo'] }}</td>
+                        <td>{{ $a['subtitulo'] }}</td>
+                        <td><span class="badge badge-{{ $a['estadoColor'] }}">{{ $a['estado'] }}</span></td>
+                        <td class="text-end fw-bold">${{ number_format($a['monto'], 2, ',', '.') }}</td>
+                        <td class="text-end"><a href="{{ $a['link'] }}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="7" class="text-center text-muted py-4">Sin actividad en el período.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="fin-card">
-        <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">Movimientos del período ({{ $movimientos->count() }})</h3>
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">Movimientos de caja/banco del período ({{ $movimientos->count() }})</h3>
         <div class="table-responsive">
             <table class="table table-sm table-striped">
                 <thead>
@@ -116,6 +168,45 @@
                     </tr>
                     @empty
                     <tr><td colspan="8" class="text-center text-muted py-4">Sin movimientos en el período.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="fin-card mt-4">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">Comprobantes del período ({{ $comprobantes->count() }})</h3>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Origen</th>
+                        <th>Archivo</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($comprobantes as $c)
+                    <tr>
+                        <td>{{ $c['fecha']->format('d/m/Y H:i') }}</td>
+                        <td><a href="{{ $c['link'] }}">{{ $c['titulo'] }}</a></td>
+                        <td>{{ $c['archivo'] }}</td>
+                        <td>
+                            @if($c['es_imagen'])
+                                <a href="{{ $c['url'] }}" target="_blank" title="{{ $c['archivo'] }}">
+                                    <img src="{{ $c['url'] }}" alt="{{ $c['archivo'] }}"
+                                         style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6">
+                                </a>
+                            @else
+                                <a href="{{ $c['url'] }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-file-pdf text-danger"></i> Ver
+                                </a>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="4" class="text-center text-muted py-4">Sin comprobantes en el período.</td></tr>
                     @endforelse
                 </tbody>
             </table>
