@@ -121,6 +121,7 @@
         <button class="ceo-tab" data-pane="clientes"><i class="fas fa-users"></i> Clientes y cuentas</button>
         <button class="ceo-tab" data-pane="stock"><i class="fas fa-boxes"></i> Stock</button>
         <button class="ceo-tab" data-pane="finanzas"><i class="fas fa-sack-dollar"></i> Finanzas</button>
+        <button class="ceo-tab" data-pane="equipo"><i class="fas fa-user-tie"></i> Equipo</button>
     </div>
 
     {{-- ═══ PESTAÑA RESUMEN ═══ --}}
@@ -225,11 +226,21 @@
 
     {{-- ═══ PESTAÑA CLIENTES Y CUENTAS ═══ --}}
     <div class="ceo-pane" id="pane-clientes">
-        <div class="ceo-kpis" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="ceo-kpis" style="grid-template-columns: repeat(5, 1fr);">
             <div class="ceo-kpi">
                 <div class="k-label">Clientes registrados</div>
                 <div class="k-value">{{ $clientesTotal }}</div>
                 <span class="k-delta flat">{{ $clientesConCuenta }} con cuenta online</span>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Clientes nuevos</div>
+                <div class="k-value" style="color:#0d8a4f;">{{ $clientesNuevos }}</div>
+                <span class="k-delta flat">primera compra en el período</span>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Clientes recurrentes</div>
+                <div class="k-value">{{ $clientesRecurrentes }}</div>
+                <span class="k-delta flat">de {{ $clientesActivosPeriodo }} activos en el período</span>
             </div>
             <div class="ceo-kpi">
                 <div class="k-label">Deuda de clientes (CC)</div>
@@ -279,7 +290,7 @@
 
     {{-- ═══ PESTAÑA STOCK ═══ --}}
     <div class="ceo-pane" id="pane-stock">
-        <div class="ceo-kpis" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="ceo-kpis" style="grid-template-columns: repeat(5, 1fr);">
             <div class="ceo-kpi">
                 <div class="k-label">Unidades en stock</div>
                 <div class="k-value">{{ number_format($inv->unidades, 0, ',', '.') }}</div>
@@ -291,6 +302,15 @@
             <div class="ceo-kpi">
                 <div class="k-label">Valor a precio de venta</div>
                 <div class="k-value">{{ $money($inv->valor_venta) }}</div>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Productos sin stock</div>
+                <div class="k-value" style="color:{{ $productosSinStock > 0 ? '#b4552d' : '#0d8a4f' }};">{{ $productosSinStock }}</div>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Sin ventas en el período</div>
+                <div class="k-value">{{ $productosSinMovimiento }}</div>
+                <span class="k-delta flat">productos estancados</span>
             </div>
         </div>
 
@@ -352,6 +372,11 @@
                 <div class="k-label">Devoluciones del período</div>
                 <div class="k-value" style="color:{{ $devolucionesPeriodo->monto > 0 ? '#b4552d' : '#0d8a4f' }};">{{ $money($devolucionesPeriodo->monto) }}</div>
                 <span class="k-delta flat">{{ $devolucionesPeriodo->cantidad }} devolución(es)</span>
+            </div>
+            <div class="ceo-kpi">
+                <div class="k-label">Resultado divisas del período</div>
+                <div class="k-value" style="color:{{ $resultadoDivisasPeriodo >= 0 ? '#0d8a4f' : '#b4552d' }};">{{ $money($resultadoDivisasPeriodo) }}</div>
+                <a class="ceo-link" href="{{ route('finanzas.divisas.index') }}">Ver historial →</a>
             </div>
         </div>
 
@@ -430,6 +455,83 @@
             </div>
         </div>
         @endif
+    </div>
+
+    {{-- ═══ PESTAÑA EQUIPO ═══ --}}
+    <div class="ceo-pane" id="pane-equipo">
+        <div class="ceo-grid-2">
+            <div class="ceo-panel">
+                <h3>Vendedores — ventas del período</h3>
+                @if($rankingVendedores->isEmpty())
+                    <div class="empty">Sin ventas con vendedor asignado en el período.</div>
+                @else
+                    <ul class="ceo-list">
+                        @foreach($rankingVendedores as $rv)
+                        <li>
+                            <span class="n">{{ $loop->iteration }}. {{ $rv->name }}</span>
+                            <span class="v">{{ $rv->ventas }} venta(s) · {{ $money($rv->facturado) }} · tk. {{ $money($rv->ticket_promedio) }}</span>
+                        </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+            <div class="ceo-panel">
+                <h3>Revendedores — comisiones del período</h3>
+                @if($rankingRevendedores->isEmpty())
+                    <div class="empty">Sin ventas de revendedores en el período.</div>
+                @else
+                    <ul class="ceo-list">
+                        @foreach($rankingRevendedores as $rr)
+                        <li>
+                            <span class="n">{{ $rr->nombre }}</span>
+                            <span class="v">{{ $rr->ventas }} venta(s) · {{ $money($rr->facturado) }}<br>
+                                <small>comisión {{ $money($rr->comision) }} ({{ $money($rr->comision_pagada) }} pagada, {{ $money($rr->comision_pendiente) }} pendiente)</small>
+                            </span>
+                        </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        </div>
+
+        <div class="ceo-grid-2">
+            <div class="ceo-panel">
+                <h3>Atención de WhatsApp — mensajes enviados</h3>
+                @if($atencionHumana->isEmpty() && $atencionIA->isEmpty())
+                    <div class="empty">Sin mensajes enviados en el período.</div>
+                @else
+                    <ul class="ceo-list">
+                        @foreach($atencionHumana as $ah)
+                        <li>
+                            <span class="n"><i class="fas fa-user"></i> {{ $ah->name }}</span>
+                            <span class="v">{{ $ah->mensajes }} mensaje(s) · {{ $ah->conversaciones }} conversación(es)</span>
+                        </li>
+                        @endforeach
+                        @foreach($atencionIA as $ai)
+                        <li>
+                            <span class="n"><i class="fas fa-robot"></i> {{ $ai->nombre }} (IA)</span>
+                            <span class="v">{{ $ai->mensajes }} mensaje(s) · {{ $ai->conversaciones }} conversación(es)</span>
+                        </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+            <div class="ceo-panel">
+                <h3>Conversaciones de WhatsApp por estado</h3>
+                @if($conversacionesPorEstado->isEmpty())
+                    <div class="empty">Sin conversaciones iniciadas en el período.</div>
+                @else
+                    <ul class="ceo-list">
+                        @foreach($conversacionesPorEstado as $ce)
+                        <li>
+                            <span class="n">{{ \App\Models\WaConversation::STATUSES[$ce->status] ?? ucfirst($ce->status) }}</span>
+                            <span class="v">{{ $ce->cantidad }}</span>
+                        </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        </div>
     </div>
 </div>
 @endsection

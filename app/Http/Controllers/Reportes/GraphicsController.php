@@ -175,6 +175,18 @@ class GraphicsController extends Controller
         $clientesTotal     = (int) DB::table('clientes')->count();
         $clientesConCuenta = (int) DB::table('clientes')->whereNotNull('password')->count();
 
+        // Nuevo = su primera compra (histórica) cayó dentro del período; el resto de
+        // los que compraron en el período son recurrentes (ya habían comprado antes).
+        $clientesNuevos = $ventasValidas()
+            ->select('cliente_id')
+            ->groupBy('cliente_id')
+            ->havingRaw('MIN(fecha) BETWEEN ? AND ?', [$desde, $hasta])
+            ->get()->count();
+        $clientesActivosPeriodo = (int) $ventasValidas()
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->distinct()->count('cliente_id');
+        $clientesRecurrentes = max(0, $clientesActivosPeriodo - $clientesNuevos);
+
         $topClientes = DB::table('ventas as v')
             ->join('clientes as c', 'c.idcliente', '=', 'v.cliente_id')
             ->where('v.estado', 'NOT LIKE', 'Cancel%')
@@ -221,6 +233,26 @@ class GraphicsController extends Controller
             ->groupBy('c.idcategoria', 'c.nombre')
             ->selectRaw('c.nombre, COALESCE(SUM(sa.stock),0) as unidades, COALESCE(SUM(sa.stock * p.pventa_con_iva),0) as valor')
             ->orderByDesc('valor')->get();
+
+        // Sin stock (foto actual) y sin movimiento de ventas en el período (estancados)
+        $productosSinStock = DB::table('sucursal_articulo as sa')
+            ->join('productos as p', 'p.idarticulo', '=', 'sa.articulo_id')
+            ->where('sa.activo', 1)->where('p.estado', 'Activo')
+            ->groupBy('p.idarticulo')
+            ->havingRaw('SUM(sa.stock) <= 0')
+            ->count();
+
+        $productosSinMovimiento = DB::table('productos as p')
+            ->where('p.estado', 'Activo')
+            ->whereNotExists(function ($q) use ($desde, $hasta) {
+                $q->select(DB::raw(1))
+                    ->from('detalle_ventas as dv')
+                    ->join('ventas as v', 'v.idventa', '=', 'dv.venta_id')
+                    ->whereColumn('dv.articulo_id', 'p.idarticulo')
+                    ->where('v.estado', 'NOT LIKE', 'Cancel%')
+                    ->whereBetween('v.fecha', [$desde, $hasta]);
+            })
+            ->count();
 
         // ── Finanzas: tesorería, gastos, devoluciones, deudas (período) ──
         $ingresosPeriodo = (float) DB::table('movimientos')->where('tipo', 'ingreso')
@@ -271,6 +303,12 @@ class GraphicsController extends Controller
         $cxpVencidoTotal  = (float) $cxpVencidas->sum('monto');
         $cxpProximasTotal = (float) $cxpProximas->sum('monto');
 
+        // Resultado realizado de compra/venta de moneda extranjera en el período
+        $resultadoDivisasPeriodo = (float) DB::table('operaciones_cambio')
+            ->where('tipo', 'venta')
+            ->whereBetween('fecha', [$desde, $hasta])
+            ->sum('resultado');
+
         // Comparación de precios de proveedores por categoría (últimos 12 meses,
         // no se limita al período del filtro para tener volumen suficiente de compras)
         $comparativaProveedores = DB::table('detalle_compras as dc')
@@ -289,14 +327,61 @@ class GraphicsController extends Controller
             ->filter(fn ($grupo) => $grupo->pluck('proveedor')->unique()->count() > 1)
             ->values();
 
+        // ── Equipo: vendedores, revendedores y atención por WhatsApp (período) ──
+        $rankingVendedores = $ventasValidas()
+            ->join('users as u', 'u.id', '=', 'ventas.user_id')
+            ->whereBetween('ventas.fecha', [$desde, $hasta])
+            ->groupBy('u.id', 'u.name')
+            ->selectRaw('u.name, COUNT(*) as ventas, SUM(ventas.total_con_iva) as facturado')
+            ->orderByDesc('facturado')->get()
+            ->map(function ($r) {
+                $r->ticket_promedio = $r->ventas > 0 ? $r->facturado / $r->ventas : 0;
+                return $r;
+            });
+
+        $rankingRevendedores = DB::table('revendedor_comisiones as rc')
+            ->join('revendedores as r', 'r.id', '=', 'rc.revendedor_id')
+            ->whereBetween('rc.created_at', [$desde, $hasta])
+            ->groupBy('r.id', 'r.nombre')
+            ->selectRaw("r.nombre, COUNT(*) as ventas, COALESCE(SUM(rc.monto_venta),0) as facturado,
+                COALESCE(SUM(rc.comision),0) as comision,
+                COALESCE(SUM(CASE WHEN rc.estado = 'pagada' THEN rc.comision ELSE 0 END),0) as comision_pagada,
+                COALESCE(SUM(CASE WHEN rc.estado != 'pagada' THEN rc.comision ELSE 0 END),0) as comision_pendiente")
+            ->orderByDesc('facturado')->get();
+
+        // Mensajes salientes por quien los mandó: personas del equipo y agentes IA por separado
+        $atencionHumana = DB::table('wa_messages as m')
+            ->join('users as u', 'u.id', '=', 'm.sent_by_user_id')
+            ->where('m.direction', 'out')
+            ->whereBetween('m.created_at', [$desde, $hasta])
+            ->groupBy('u.id', 'u.name')
+            ->selectRaw('u.name, COUNT(*) as mensajes, COUNT(DISTINCT m.conversation_id) as conversaciones')
+            ->orderByDesc('mensajes')->get();
+
+        $atencionIA = DB::table('wa_messages as m')
+            ->join('ai_agents as a', 'a.id', '=', 'm.sent_by_agent_id')
+            ->where('m.direction', 'out')
+            ->whereBetween('m.created_at', [$desde, $hasta])
+            ->groupBy('a.id', 'a.nombre')
+            ->selectRaw('a.nombre, COUNT(*) as mensajes, COUNT(DISTINCT m.conversation_id) as conversaciones')
+            ->orderByDesc('mensajes')->get();
+
+        $conversacionesPorEstado = DB::table('wa_conversations')
+            ->whereBetween('created_at', [$desde, $hasta])
+            ->groupBy('status')
+            ->selectRaw('status, COUNT(*) as cantidad')
+            ->get();
+
         return view('report.graph.index', compact(
             'desde', 'hasta', 'dias', 'kpis',
             'labelsEvolucion', 'serieVentas', 'serieWeb', 'serieIngresos', 'serieEgresos', 'pedidosPorCanal',
             'topProductos', 'mixCategorias', 'mixPlazas',
             'clientesTotal', 'clientesConCuenta', 'topClientes', 'deudaCC', 'topDeudores',
-            'inv', 'stockCritico', 'stockPorCategoria',
+            'clientesNuevos', 'clientesRecurrentes', 'clientesActivosPeriodo',
+            'inv', 'stockCritico', 'stockPorCategoria', 'productosSinStock', 'productosSinMovimiento',
             'ingresosPeriodo', 'egresosPeriodo', 'resultadoPeriodo', 'saldoTotalCuentas',
-            'gastosPeriodo', 'gastosPorCategoriaPeriodo', 'devolucionesPeriodo',
+            'gastosPeriodo', 'gastosPorCategoriaPeriodo', 'devolucionesPeriodo', 'resultadoDivisasPeriodo',
+            'rankingVendedores', 'rankingRevendedores', 'atencionHumana', 'atencionIA', 'conversacionesPorEstado',
             'cxpVencidas', 'cxpProximas', 'cxpVencidoTotal', 'cxpProximasTotal',
             'comparativaProveedores'
         ));
