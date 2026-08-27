@@ -302,9 +302,7 @@ function renderCombinacionesTable(combinaciones, precios = []) {
         function actualizarVentaVariante() {
             const compra = parseFloat(inputCompra.value) || 0;
             const margen = parseFloat(inputMargen.value) || 0;
-            if (compra > 0) {
-                inputVenta.value = (compra * (1 + margen / 100)).toFixed(2);
-            }
+            inputVenta.value = (compra * (1 + margen / 100)).toFixed(2);
         }
 
         function actualizarMargenVariante() {
@@ -395,16 +393,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
       let preciosPrevios = [];
 
-      // ✅ Si existen combinaciones previas (modo editar), intentamos mantener precios
-      if (window.combinacionesFinales && window.preciosCombinaciones) {
+      // ✅ Si existen combinaciones previas (modo editar), intentamos mantener precios.
+      // Se leen los valores ACTUALES de la tabla (lo que se ve en pantalla, incluidos
+      // cambios sin guardar todavía), no los que vinieron del server al cargar la página.
+      if (window.combinacionesFinales) {
+          const filasActuales = document.querySelectorAll("#combinaciones-table tbody tr");
+          const preciosActuales = window.combinacionesFinales.map((comb, i) => {
+              const fila = filasActuales[i];
+              if (!fila) return null;
+              return {
+                  idcombinacion: fila.dataset.idcombinacion || null,
+                  sku: fila.querySelector(".sku-variante")?.value || "",
+                  pcompra_variante: fila.querySelector(".pcompra-variante")?.value || "",
+                  pventa_variante: fila.querySelector(".pventa-variante")?.value || "",
+                  imagen_url: fila.querySelector(".preview-imagen-variante")?.src || null,
+              };
+          });
+
           nuevasCombinaciones.forEach((comb, index) => {
               const matchIndex = window.combinacionesFinales.findIndex(oldComb =>
                   JSON.stringify(oldComb) === JSON.stringify(comb)
               );
 
-              if (matchIndex !== -1) {
-                  // ✅ Mantener precios existentes
-                  preciosPrevios[index] = window.preciosCombinaciones[matchIndex];
+              if (matchIndex !== -1 && preciosActuales[matchIndex]) {
+                  // ✅ Mantener precios existentes (los que están en pantalla ahora mismo)
+                  preciosPrevios[index] = preciosActuales[matchIndex];
               } else {
                   // ✅ Nueva combinación → precios vacíos
                   preciosPrevios[index] = {

@@ -20,7 +20,7 @@
 
 @endsection
 @section('scripts')
-    <script src="{{ asset('js/funciones_articulo/create_articulo.js') }}"></script>
+    <script src="{{ asset('js/funciones_articulo/create_articulo.js') }}?v={{ filemtime(public_path('js/funciones_articulo/create_articulo.js')) }}"></script>
 
     @php
         // ✅ Atributos confirmados
