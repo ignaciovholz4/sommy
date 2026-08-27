@@ -83,8 +83,10 @@ class BuscarProductos
                 'descripcion' => Str::limit(strip_tags((string) $p->descripcion), 150),
                 // Link a la ficha pública del producto en la tienda online: incluirlo siempre al presentar
                 'link' => $p->slug ? route('ecommerce.producto', $p->slug) : null,
-                // Primera foto de la ficha: mandarla con enviar_material al presentar
-                'foto_material_id' => $this->fotoMaterialId($p->idarticulo),
+                // Foto y video de la ficha (el de mayor prioridad cargada en Conocimiento):
+                // mandarlos con enviar_material al presentar el producto
+                'foto_material_id' => $this->materialId($p->idarticulo, 'imagen'),
+                'video_material_id' => $this->materialId($p->idarticulo, 'video'),
                 // Variantes: medidas/colores con SU precio y SU stock (el precio real vive acá)
                 'variantes' => DB::table('producto_combinaciones as pc')
                     ->leftJoin('sucursal_combinacion as sc', function ($join) {
@@ -102,25 +104,32 @@ class BuscarProductos
                         'stock' => (int) $v->stock,
                     ])->all(),
             ])->all(),
-            'nota' => 'IMPORTANTE: si un producto tiene "variantes", el precio REAL depende de la medida/color: NUNCA informes el precio base, siempre el de la variante puntual (o el rango). Preguntá la medida antes de dar precio. Cotizá con el combinacion_id de la variante elegida. Si tiene foto_material_id, mandá la foto con enviar_material al presentarlo. Si tiene "link", incluilo SIEMPRE en el mensaje al presentar el producto (ej: "Miralo acá: {link}"), así el cliente puede verlo y comprarlo online.',
+            'nota' => 'IMPORTANTE: si un producto tiene "variantes", el precio REAL depende de la medida/color: NUNCA informes el precio base, siempre el de la variante puntual (o el rango). Preguntá la medida antes de dar precio. Cotizá con el combinacion_id de la variante elegida. Cuando presentes un producto (sobre todo si mostraste varias opciones), mandá SIEMPRE su foto con enviar_material usando foto_material_id, y si tiene video_material_id mandá también el video: cada colchón se acompaña con su foto y su video si existe. Si el cliente preguntó por un tipo o categoría completa (espuma, resortes, todos los colchones), mostrale TODOS los productos que te devolvió esta búsqueda, no elijas vos un subconjunto. Si tiene "link", incluilo SIEMPRE en el mensaje al presentar el producto (ej: "Miralo acá: {link}"), así el cliente puede verlo y comprarlo online.',
         ];
     }
 
     /**
-     * Primero busca en la base de conocimiento (articulo_conocimiento), y si el
-     * producto no tiene nada cargado ahí, cae a la foto real del catálogo de la
-     * tienda (producto_imagenes) — así funciona sin que el dueño cargue nada a mano.
+     * Primero busca en la base de conocimiento (articulo_conocimiento, el de
+     * mayor prioridad cargada), y si el producto no tiene nada cargado ahí,
+     * cae a la foto principal real del catálogo de la tienda (producto_imagenes)
+     * — así funciona sin que el dueño cargue nada a mano. Para video no hay
+     * fallback: solo existe si se cargó en Conocimiento.
      */
-    private function fotoMaterialId(int $productoId): ?string
+    private function materialId(int $productoId, string $tipo): ?string
     {
         $conocimientoId = DB::table('articulo_conocimiento')
             ->where('articulo_id', $productoId)
-            ->where('tipo', 'imagen')->where('activo', 1)
+            ->where('tipo', $tipo)->where('activo', 1)
             ->whereNotNull('archivo')
-            ->orderBy('id')->value('id');
+            ->orderByDesc('prioridad')->orderBy('id')
+            ->value('id');
 
         if ($conocimientoId) {
             return (string) $conocimientoId;
+        }
+
+        if ($tipo !== 'imagen') {
+            return null;
         }
 
         $imagenId = DB::table('producto_imagenes')

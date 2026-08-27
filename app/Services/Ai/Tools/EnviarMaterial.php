@@ -21,7 +21,7 @@ class EnviarMaterial
     {
         return [
             'name' => 'enviar_material',
-            'description' => 'Envía al cliente una foto, video, audio o documento como adjunto real (no un link). Usá el material_id que devuelve buscar_productos (foto_material_id) o info_producto. Podés agregar un mensaje corto que acompañe el archivo.',
+            'description' => 'Envía al cliente una foto, video, audio o documento como adjunto real (no un link). Usá el material_id que devuelve buscar_productos (foto_material_id, video_material_id) o info_producto. Al presentar un producto mandá siempre su foto, y su video también si tiene. Podés agregar un mensaje corto que acompañe el archivo.',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [

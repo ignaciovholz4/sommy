@@ -44,6 +44,7 @@ class InfoProducto
 
         $items = ArticuloConocimiento::where('articulo_id', $id)
             ->where('activo', true)
+            ->orderByDesc('prioridad')
             ->orderBy('tipo')
             ->get();
 

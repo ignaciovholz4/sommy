@@ -20,6 +20,7 @@ class ConocimientoController extends Controller
         $articulo = Articulo::findOrFail($id);
 
         $items = ArticuloConocimiento::where('articulo_id', $id)
+            ->orderByDesc('prioridad')
             ->orderByDesc('id')
             ->get();
 
@@ -38,12 +39,14 @@ class ConocimientoController extends Controller
         $request->validate([
             'titulo'    => 'required|string|max:150',
             'contenido' => 'nullable|string|max:8000',
+            'prioridad' => 'nullable|integer|min:0|max:10',
         ]);
 
         $item->titulo = trim($request->titulo);
         if ($item->esTexto()) {
             $item->contenido = trim((string) $request->contenido);
         }
+        $item->prioridad = (int) $request->input('prioridad', $item->prioridad);
         $item->save();
 
         return response()->json(['estado' => 1]);
@@ -68,6 +71,7 @@ class ConocimientoController extends Controller
             'titulo'    => 'required|string|max:150',
             'contenido' => 'required_if:tipo,' . implode(',', ArticuloConocimiento::TIPOS_TEXTO) . '|nullable|string|max:8000',
             'archivo'   => 'required_if:tipo,imagen,video,audio,documento|nullable|file|max:51200|mimes:jpg,jpeg,png,webp,mp4,mov,webm,mp3,wav,ogg,m4a,pdf',
+            'prioridad' => 'nullable|integer|min:0|max:10',
         ], [
             'titulo.required'       => 'Poné un título.',
             'contenido.required_if' => 'Escribí el contenido.',
@@ -92,6 +96,7 @@ class ConocimientoController extends Controller
             'archivo'     => $ruta,
             'mime'        => $mime,
             'activo'      => true,
+            'prioridad'   => (int) $request->input('prioridad', 0),
         ]);
 
         return back()->with('con_ok', 'Se agregó "' . $request->titulo . '" al conocimiento del producto.');

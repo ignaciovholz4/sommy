@@ -52,6 +52,21 @@ class AiAgentService
             return;
         }
 
+        // Pedido armado y enviado desde el checkout del ecommerce (mensaje con
+        // el resumen ya cargado en el sistema): no es una consulta a vender, es
+        // una confirmación de compra. El bot NO vende ni recota: solo agradece
+        // y pasa directo a un asesor humano para coordinar cobro/entrega.
+        if ($this->esPedidoConfirmadoDelEcommerce($inbound->body ?? '')) {
+            $this->escalate(
+                $conversation,
+                $agent,
+                'Pedido ya armado y confirmado desde el ecommerce: pasa directo a un asesor.',
+                true,
+                '¡Buenísimo! 🎉 Ya recibimos tu pedido y estamos recontentos con tu compra. En un ratito un asesor se pone en contacto con vos para coordinar todo ✅'
+            );
+            return;
+        }
+
         // Guardas: agente apagado, fuera de horario, tope de gasto o demasiados turnos sin humano
         if (!$agent->activo || !$agent->isWithinSchedule() || $agent->overBudget()
             || $this->botTurnsWithoutHuman($conversation) >= $agent->max_turnos_sin_humano) {
@@ -368,30 +383,6 @@ class AiAgentService
             $system .= "\n\nDatos del cliente (del sistema): nombre " . trim($cliente->nombre . ' ' . ($cliente->paterno ?? ''))
                 . ($cliente->localidad ? ", localidad {$cliente->localidad}" : '')
                 . ($cliente->direccion ? ", dirección registrada: {$cliente->direccion}" : '') . '.';
-
-            // Historial de compras: para reconocerlo como cliente y asesorar mejor.
-            // OJO: es contexto tuyo — el ESTADO de pedidos en curso NUNCA se informa.
-            $compras = collect();
-            $ventas = \Illuminate\Support\Facades\DB::table('ventas')
-                ->join('detalle_ventas as dv', 'dv.venta_id', '=', 'ventas.idventa')
-                ->join('productos as p', 'p.idarticulo', '=', 'dv.articulo_id')
-                ->where('ventas.cliente_id', $cliente->idcliente)
-                ->where('ventas.estado', '!=', 'anulada')
-                ->orderByDesc('ventas.fecha')->limit(5)
-                ->get(['p.nombre', 'ventas.fecha']);
-            $pedidos = \Illuminate\Support\Facades\DB::table('order_ecommerce as o')
-                ->join('order_detail_ecommerce as od', 'od.order_ecommerce_id', '=', 'o.order_id')
-                ->join('productos as p', 'p.idarticulo', '=', 'od.product_id')
-                ->where('o.cliente_id', $cliente->idcliente)
-                ->orderByDesc('o.order_date')->limit(5)
-                ->get(['p.nombre', 'o.order_date as fecha']);
-            $compras = $ventas->concat($pedidos)->sortByDesc('fecha')->take(5);
-
-            if ($compras->isNotEmpty()) {
-                $lineas = $compras->map(fn ($c) => $c->nombre . ' (' . \Carbon\Carbon::parse($c->fecha)->format('m/Y') . ')')->unique()->implode('; ');
-                $system .= "\nEs un cliente que YA NOS COMPRÓ. Últimas compras: {$lineas}. "
-                    . 'Saludalo como cliente conocido y, si viene al caso, preguntale cómo le fue con lo que compró.';
-            }
         } elseif ($conversation->profile_name) {
             $system .= "\n\nEl cliente aparece en WhatsApp como \"{$conversation->profile_name}\" (todavía no está registrado en el sistema).";
         }
@@ -494,12 +485,12 @@ class AiAgentService
      * Pasa la conversacion a modo humano y la deja como "nueva" para que
      * aparezca sin asignar en la bandeja.
      */
-    protected function escalate(WaConversation $conversation, ?AiAgent $agent, string $motivo, bool $sendFallback = true): void
+    protected function escalate(WaConversation $conversation, ?AiAgent $agent, string $motivo, bool $sendFallback = true, ?string $mensajeCliente = null): void
     {
         // Siempre le llega algo al cliente cuando se deriva — nunca lo dejamos
         // en silencio esperando a que "alguien" le escriba en algún momento.
         if ($sendFallback && $agent && $conversation->isSessionOpen()) {
-            $mensaje = $agent->mensaje_derivacion ?: 'Ya te paso con un compañero para ayudarte con esto 🙌';
+            $mensaje = $mensajeCliente ?? ($agent->mensaje_derivacion ?: 'Ya te paso con un compañero para ayudarte con esto 🙌');
             $this->reply($conversation, $agent, $mensaje);
         }
 
@@ -526,6 +517,16 @@ class AiAgentService
             'is_internal_note' => true,
             'sent_by_agent_id' => $agent->id ?? null,
         ]);
+    }
+
+    /**
+     * El checkout del ecommerce arma un mensaje de WhatsApp con el resumen del
+     * pedido ya cargado (ver public/js/ecommerce/order-shopping-card.js). Se
+     * detecta por su formato fijo, no por interpretación del modelo.
+     */
+    protected function esPedidoConfirmadoDelEcommerce(string $texto): bool
+    {
+        return (bool) preg_match('/Pedido ID:\s*\d+/u', $texto) && str_contains($texto, 'Detalles del Pedido');
     }
 
     /**

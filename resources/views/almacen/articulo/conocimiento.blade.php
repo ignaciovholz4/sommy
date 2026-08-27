@@ -118,6 +118,10 @@
                     <div class="con-aviso">Imágenes, videos (mp4/mov/webm), audios (mp3/wav/ogg/m4a) o PDF. Hasta 50 MB.</div>
                 </div>
 
+                <label>Prioridad para el bot</label>
+                <input type="number" name="prioridad" min="0" max="10" value="0">
+                <div class="con-aviso">De 0 a 10. El bot usa primero lo de mayor prioridad — marcá con un número alto la foto principal o el video que querés que mande primero cuando presente el producto.</div>
+
                 <button type="submit" class="con-btn"><i class="fas fa-save"></i> Guardar</button>
                 <div class="con-aviso"><i class="fas fa-cloud"></i> Se guarda en el almacenamiento del sistema (respaldado con el servidor; configurable a nube S3 con CONOCIMIENTO_DISK).</div>
             </form>
@@ -133,6 +137,9 @@
                     <i class="fas {{ ['instrucciones' => 'fa-list-ol', 'caracteristicas' => 'fa-cogs', 'faq' => 'fa-question-circle', 'nota' => 'fa-sticky-note', 'imagen' => 'fa-image', 'video' => 'fa-video', 'audio' => 'fa-microphone', 'documento' => 'fa-file-pdf'][$item->tipo] ?? 'fa-file' }}"></i>
                     <span class="con-item-titulo">{{ $item->titulo }}</span>
                     <span class="tipo">{{ $tipos[$item->tipo] ?? $item->tipo }}</span>
+                    @if($item->prioridad > 0)
+                        <span class="tipo" style="background:#DCFCE7;color:#166534;" title="Prioridad para el bot">★ {{ $item->prioridad }}</span>
+                    @endif
                 </div>
                 @if($item->contenido)
                     <div class="cuerpo con-item-contenido">{{ $item->contenido }}</div>
@@ -142,6 +149,8 @@
                     @if($item->esTexto())
                         <textarea class="form-control con-edit-contenido" rows="5" maxlength="8000">{{ $item->contenido }}</textarea>
                     @endif
+                    <label style="margin-top:6px;">Prioridad para el bot (0 a 10)</label>
+                    <input type="number" class="form-control con-edit-prioridad" min="0" max="10" value="{{ $item->prioridad }}">
                     <div style="display:flex;gap:6px;margin-top:8px;">
                         <button type="button" class="btn btn-sm btn-primary" onclick="conGuardarEdicion({{ $item->id }}, this)"><i class="fas fa-save"></i> Guardar</button>
                         <button type="button" class="btn btn-sm btn-secondary" onclick="conEditar({{ $item->id }})">Cancelar</button>
@@ -205,12 +214,14 @@ function conGuardarEdicion(id, btn) {
     const item = document.getElementById('con-item-' + id);
     const titulo = item.querySelector('.con-edit-titulo').value.trim();
     const contenidoEl = item.querySelector('.con-edit-contenido');
+    const prioridadEl = item.querySelector('.con-edit-prioridad');
     if (!titulo) { alert('El título no puede quedar vacío.'); return; }
     btn.disabled = true;
 
     const datos = new FormData();
     datos.append('titulo', titulo);
     if (contenidoEl) datos.append('contenido', contenidoEl.value);
+    if (prioridadEl) datos.append('prioridad', prioridadEl.value);
 
     fetch('{{ url('articulo/conocimiento') }}/' + id + '/editar', {
         method: 'POST',

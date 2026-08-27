@@ -26,9 +26,9 @@ class ArticuloConocimiento extends Model
 
     public const TIPOS_TEXTO = ['instrucciones', 'caracteristicas', 'faq', 'nota'];
 
-    protected $fillable = ['articulo_id', 'tipo', 'titulo', 'contenido', 'archivo', 'mime', 'activo'];
+    protected $fillable = ['articulo_id', 'tipo', 'titulo', 'contenido', 'archivo', 'mime', 'activo', 'prioridad'];
 
-    protected $casts = ['activo' => 'boolean'];
+    protected $casts = ['activo' => 'boolean', 'prioridad' => 'integer'];
 
     public function articulo()
     {
