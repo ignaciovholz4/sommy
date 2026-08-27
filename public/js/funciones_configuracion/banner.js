@@ -13,6 +13,24 @@ const nombre = document.getElementById("name");
 
 const imageInputMovil = document.querySelector("#movilfile");
 const previewContainerMovil = document.getElementById('previewContainerMovil');
+const bannerTipo = document.querySelector("#bannerTipo");
+const hintDesktop = document.querySelector("#hintDesktop");
+const hintMovil = document.querySelector("#hintMovil");
+
+function actualizarTipoBanner() {
+    const esVideo = bannerTipo.value === 'video';
+    imageInput.setAttribute('accept', esVideo ? 'video/*' : 'image/*');
+    imageInputMovil.setAttribute('accept', esVideo ? 'video/*' : 'image/*');
+    hintDesktop.textContent = esVideo
+        ? 'Video para escritorio (mp4, mov, webm u ogg)'
+        : 'Tamaño recomendado: 1366px 517px (Imagen Horizontal)';
+    hintMovil.textContent = esVideo
+        ? 'Video para móvil (opcional: si no lo cargás, se usa el mismo de escritorio)'
+        : 'Tamaño recomendado para movil: 1410px 1780px  (Imagen Vertical)';
+    previewContainer.innerHTML = '';
+    previewContainerMovil.innerHTML = '';
+}
+bannerTipo.addEventListener('change', actualizarTipoBanner);
 
 $(document).ready( function () {
     $.ajaxSetup({
@@ -32,6 +50,7 @@ $(document).ready( function () {
            columns: [
                    { data: 'banner_id', name: 'banner_id'},
                    { data: 'name', name: 'name' },
+                   { data: 'tipo', name: 'tipo' },
                    { data: 'name_image', name: 'name_image' },
                    { data: 'name_image_movil', name: 'name_image_movil' },
                    {data: 'action', name:'action'}
@@ -64,6 +83,8 @@ btnshowmodalbanner.addEventListener('click', (e) =>{
     previewContainer.innerHTML = "";
     previewContainerMovil.innerHTML = "";
     bannerId.value = 0;
+    bannerTipo.value = 'imagen';
+    actualizarTipoBanner();
     bannerLabel.textContent = 'Agregar nuevo banner';
     const myModalsavebanner = new bootstrap.Modal(idmodalbannercategory);
     myModalsavebanner.show();
@@ -76,10 +97,11 @@ btnsavebanner.addEventListener("click",(e) => {
     console.log(imageInputMovil);
 
     const formData = new FormData();
-    formData.append("imagen", fileBanner); // Get the selected file
+    if (fileBanner) formData.append("imagen", fileBanner); // Get the selected file
     formData.append("name", nombre.value);
+    formData.append("tipo", bannerTipo.value);
     formData.append("bannerId", bannerId.value);
-    formData.append("imageMovil", fileBannerMovil);
+    if (fileBannerMovil) formData.append("imageMovil", fileBannerMovil);
 
     console.log(imageInput.files[0]);
     console.log(fileBannerMovil);
@@ -123,6 +145,18 @@ let saveprintErrorMsg = (msg) => {
   const MIN_WIDTH = 1366;//1239;
   const MIN_HEIGHT = 517//467;
   const file = this.files[0];
+  if (bannerTipo.value === 'video') {
+    previewContainer.innerHTML = '';
+    if (file) {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(file);
+      video.className = 'img-thumbnail';
+      video.style.maxWidth = '100%';
+      video.controls = true;
+      previewContainer.appendChild(video);
+    }
+    return;
+  }
   if (file) {
     if (file.type.startsWith('image/')) {
       const img = new Image();
@@ -165,6 +199,18 @@ imageInputMovil.addEventListener('change', function () {
   const MIN_HEIGHT = 1780//
   const file = this.files[0];
   console.log(file);
+  if (bannerTipo.value === 'video') {
+    previewContainerMovil.innerHTML = '';
+    if (file) {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(file);
+      video.className = 'img-thumbnail';
+      video.style.maxWidth = '100%';
+      video.controls = true;
+      previewContainerMovil.appendChild(video);
+    }
+    return;
+  }
   if (file) {
     if (file.type.startsWith('image/')) {
       const img = new Image();
@@ -209,25 +255,27 @@ const edit_banner = (id) => {
     let dataRow = resp.data[0];
     bannerId.value = dataRow.banner_id;
     nombre.value = dataRow.name;
+    bannerTipo.value = dataRow.tipo || 'imagen';
+    actualizarTipoBanner();
+
+    const esVideo = bannerTipo.value === 'video';
     previewContainer.innerHTML = '';
-    const img = document.createElement('img');
-    img.src = `../imagenes/banner/${dataRow.name_image}`; // Set the image source
-    img.alt = 'imagen seleccionada';
-    img.className = 'img-thumbnail'; // Add Bootstrap 5 class
-    img.style.maxWidth = '100%'; // Make sure it fits within the container
-    img.style.height = 'auto';
-    // Append the image to the preview container
-    previewContainer.appendChild(img);
+    const elDesktop = document.createElement(esVideo ? 'video' : 'img');
+    elDesktop.src = `../imagenes/banner/${dataRow.name_image}`;
+    elDesktop.className = 'img-thumbnail';
+    elDesktop.style.maxWidth = '100%';
+    elDesktop.style.height = 'auto';
+    if (esVideo) elDesktop.controls = true; else { elDesktop.alt = 'imagen seleccionada'; }
+    previewContainer.appendChild(elDesktop);
     /*********************************************** */
     previewContainerMovil.innerHTML = '';
-    const imgMovil = document.createElement('img');
-    imgMovil.src = `../imagenes/banner/${dataRow.name_image_movil}`; // Set the image source
-    imgMovil.alt = 'imagen seleccionada';
-    imgMovil.className = 'img-thumbnail'; // Add Bootstrap 5 class
-    imgMovil.style.maxWidth = '100%'; // Make sure it fits within the container
-    imgMovil.style.height = 'auto';
-    // Append the image to the preview container
-    previewContainerMovil.appendChild(imgMovil);
+    const elMovil = document.createElement(esVideo ? 'video' : 'img');
+    elMovil.src = `../imagenes/banner/${dataRow.name_image_movil}`;
+    elMovil.className = 'img-thumbnail';
+    elMovil.style.maxWidth = '100%';
+    elMovil.style.height = 'auto';
+    if (esVideo) elMovil.controls = true; else { elMovil.alt = 'imagen seleccionada'; }
+    previewContainerMovil.appendChild(elMovil);
 
     const myModalShow = new bootstrap.Modal(idmodalbannercategory);
     myModalShow.show();

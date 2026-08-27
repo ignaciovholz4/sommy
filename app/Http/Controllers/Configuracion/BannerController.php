@@ -39,20 +39,35 @@ class BannerController extends Controller
     {
         try {
 
-            if((int)$request->bannerId === 0){
-                $rules = [
-                    'name' => 'required',
-                    'imagen' => 'required|image',
-                    'imageMovil' => 'required|image'
-                ];
+            $tipo = $request->input('tipo') === 'video' ? 'video' : 'imagen';
 
-                $messages = [
-                    'name.required'=>'El nombre es requerido',
-                    'imagen.required'=>'La imagen es requerida',
-                    'imagen.image' => 'Debe de agregar una imagen para escritorio',
-                    'imageMovil.required'=>'La imagen para movil es requerida',
-                    'imageMovil.image' => 'Debe de agregar una imagen para movil',
-                ];
+            if((int)$request->bannerId === 0){
+                if ($tipo === 'video') {
+                    $rules = [
+                        'name' => 'required',
+                        'imagen' => 'required|mimes:mp4,mov,webm,ogg|max:51200',
+                        'imageMovil' => 'nullable|mimes:mp4,mov,webm,ogg|max:51200',
+                    ];
+                    $messages = [
+                        'name.required'=>'El nombre es requerido',
+                        'imagen.required'=>'El video es requerido',
+                        'imagen.mimes' => 'El archivo debe ser un video (mp4, mov, webm u ogg)',
+                        'imageMovil.mimes' => 'El video para móvil debe ser mp4, mov, webm u ogg',
+                    ];
+                } else {
+                    $rules = [
+                        'name' => 'required',
+                        'imagen' => 'required|image',
+                        'imageMovil' => 'required|image'
+                    ];
+                    $messages = [
+                        'name.required'=>'El nombre es requerido',
+                        'imagen.required'=>'La imagen es requerida',
+                        'imagen.image' => 'Debe de agregar una imagen para escritorio',
+                        'imageMovil.required'=>'La imagen para movil es requerida',
+                        'imageMovil.image' => 'Debe de agregar una imagen para movil',
+                    ];
+                }
             }else{
                 $rules = [
                     'name' => 'required',
@@ -76,12 +91,18 @@ class BannerController extends Controller
             if((int)$request->bannerId === 0){//for new
                 $banner = new Banner();
                 $banner->name = $request->name;
+                $banner->tipo = $tipo;
                 $files = $request->file('imagen');
                 $filesMovil = $request->file('imageMovil');
+                // El video para móvil es opcional (a diferencia de la imagen): si no
+                // se sube, se usa el mismo video de escritorio para ambos.
+                if ($tipo === 'video' && !$filesMovil) {
+                    $filesMovil = $files;
+                }
                 if ($files && $filesMovil) {
                     $destinationPath = public_path('/imagenes/banner');
                     $nameImagen = trim($files->getClientOriginalName());
-                    $nameImagenMovil = trim($filesMovil->getClientOriginalName());
+                    $nameImagenMovil = $filesMovil === $files ? $nameImagen : trim($filesMovil->getClientOriginalName());
                     $countNameImage = DB::table('banner_ecommerce')
                     ->where('status', true)
                     ->where(function($query) use ($nameImagen, $nameImagenMovil) {
@@ -98,13 +119,17 @@ class BannerController extends Controller
                     if($countNameImage > 0){
                         return response()->json([
                             'status'=> 0,
-                            'message' => (array) "Ya existe una imagen con el mismo nombre.",
+                            'message' => (array) "Ya existe un archivo con el mismo nombre.",
                         ]);
                     }
                     $files->move($destinationPath, $nameImagen);
                     $banner->name_image = $nameImagen;
-                    $filesMovil->move($destinationPath, $nameImagenMovil);
-                    $banner->name_image_movil = $nameImagenMovil;
+                    if ($filesMovil === $files) {
+                        $banner->name_image_movil = $nameImagen;
+                    } else {
+                        $filesMovil->move($destinationPath, $nameImagenMovil);
+                        $banner->name_image_movil = $nameImagenMovil;
+                    }
                 }
                 $banner->save();
                 $message = 'Se guardo con exito el banner';

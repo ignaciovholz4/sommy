@@ -1425,11 +1425,13 @@ class ArticuloController extends Controller
                 if (!$file || !$file->isValid()) {
                     continue;
                 }
+                $esVideo = str_starts_with((string) $file->getMimeType(), 'video/');
                 $nombre = hash('crc32b', uniqid('', true)) . time() . '.' . strtolower($file->getClientOriginalExtension());
                 $file->move($dir, $nombre);
 
                 ProductoImagen::create([
                     'producto_id' => $productoId,
+                    'tipo'        => $esVideo ? 'video' : 'imagen',
                     'path'        => 'imagenes/images_ecommerce/articulo-' . $productoId . '/' . $nombre,
                     'orden'       => ++$orden,
                     'principal'   => false,

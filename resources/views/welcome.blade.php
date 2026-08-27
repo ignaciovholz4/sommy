@@ -74,8 +74,13 @@
             <div class="carousel-inner">
                 @foreach ($getDataBanner as $banner)
                   <div class="carousel-item c-item {{ $loop->first ? 'active' : '' }}">
-                      <img src="{{asset('imagenes/banner/'.$banner->name_image)}}" class="d-block w-100 c-img desktop-img" alt="...">
-                      <img src="{{asset('imagenes/banner/'.$banner->name_image_movil)}}" class="d-block w-100 c-img mobile-img" alt="...">
+                      @if(($banner->tipo ?? 'imagen') === 'video')
+                          <video class="d-block w-100 c-img desktop-img" src="{{asset('imagenes/banner/'.$banner->name_image)}}" autoplay muted loop playsinline></video>
+                          <video class="d-block w-100 c-img mobile-img" src="{{asset('imagenes/banner/'.$banner->name_image_movil)}}" autoplay muted loop playsinline></video>
+                      @else
+                          <img src="{{asset('imagenes/banner/'.$banner->name_image)}}" class="d-block w-100 c-img desktop-img" alt="...">
+                          <img src="{{asset('imagenes/banner/'.$banner->name_image_movil)}}" class="d-block w-100 c-img mobile-img" alt="...">
+                      @endif
                   </div>
                 @endforeach
             </div>

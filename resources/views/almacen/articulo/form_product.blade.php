@@ -390,11 +390,11 @@
                 </div>
                 <div class="col-sm-12" id="div-content-images-ecommerce">
                     <div class="form-group">
-                        <label>Galería de imágenes <small class="text-muted">(hasta 8 fotos: corte interior, tela, ambiente, etc.)</small></label>
+                        <label>Galería de fotos y videos <small class="text-muted">(hasta 8 archivos: corte interior, tela, ambiente, un video del producto, etc.)</small></label>
                         @if(!isset($product->idarticulo))
-                            <input type="file" name="imageInput[]" id="galeriaInput" class="form-control" accept="image/*" multiple>
+                            <input type="file" name="imageInput[]" id="galeriaInput" class="form-control" accept="image/*,video/*" multiple>
                         @else
-                            <input type="file" name="updateImage[]" id="galeriaInput" class="form-control" accept="image/*" multiple>
+                            <input type="file" name="updateImage[]" id="galeriaInput" class="form-control" accept="image/*,video/*" multiple>
                         @endif
                     </div>
                     <input type="hidden" name="imagenes_eliminar" id="imagenes_eliminar" value="">
@@ -402,10 +402,15 @@
                     <div id="galeria-previews" class="d-flex flex-wrap gap-2 mt-2">
                         @foreach ($imagenesGaleria ?? [] as $img)
                             <div class="galeria-item text-center border rounded p-1" data-id="{{ $img->id }}" style="width:120px;">
-                                <img src="{{ asset($img->path) }}" class="img-thumbnail" style="width:100px;height:100px;object-fit:cover;">
+                                @if($img->tipo === 'video')
+                                    <video src="{{ asset($img->path) }}" class="img-thumbnail" style="width:100px;height:100px;object-fit:cover;" muted></video>
+                                    <div class="small text-muted"><i class="fas fa-video"></i> Video</div>
+                                @else
+                                    <img src="{{ asset($img->path) }}" class="img-thumbnail" style="width:100px;height:100px;object-fit:cover;">
+                                @endif
                                 <div class="d-flex justify-content-center align-items-center gap-1 mt-1">
                                     <input type="number" class="form-control form-control-sm galeria-orden" value="{{ $img->orden }}" min="0" style="width:55px;" title="Orden">
-                                    <button type="button" class="btn btn-sm btn-danger galeria-eliminar" title="Eliminar imagen"><i class="fas fa-trash"></i></button>
+                                    <button type="button" class="btn btn-sm btn-danger galeria-eliminar" title="Eliminar"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
                         @endforeach

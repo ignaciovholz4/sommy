@@ -25,6 +25,33 @@
         .galeria-thumbs img:hover {
             border-color: #212529;
         }
+        .galeria-thumb-video {
+            position: relative;
+            display: block;
+            width: 64px;
+            height: 64px;
+            border-radius: 6px;
+            border: 2px solid transparent;
+            overflow: hidden;
+            transition: border-color .2s;
+        }
+        .galeria-thumb-video:hover { border-color: #212529; }
+        .galeria-thumb-video video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+        .galeria-thumb-video i {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 22px;
+            text-shadow: 0 1px 4px rgba(0,0,0,.6);
+            pointer-events: none;
+        }
         .tabla-especificaciones th {
             width: 45%;
             font-weight: 600;
@@ -155,10 +182,18 @@
                         @if($imagenesGaleria->count() > 1)
                             <div class="galeria-thumbs" id="galeriaThumbs">
                                 @foreach ($imagenesGaleria as $idx => $img)
-                                    <img src="{{ asset($img->path) }}"
-                                         alt="{{ $img->alt ?? $getProd[0]->nombre }}"
-                                         class="{{ $idx === 0 ? 'active' : '' }}"
-                                         onclick="cambiarImagenGaleria(this)">
+                                    @if($img->tipo === 'video')
+                                        {{-- Los videos no reemplazan la imagen principal: se abren en el lightbox --}}
+                                        <a href="{{ asset($img->path) }}" data-fancybox="gallery" data-type="video" class="galeria-thumb-video" title="Ver video">
+                                            <video src="{{ asset($img->path) }}" muted preload="metadata"></video>
+                                            <i class="fa-solid fa-circle-play"></i>
+                                        </a>
+                                    @else
+                                        <img src="{{ asset($img->path) }}"
+                                             alt="{{ $img->alt ?? $getProd[0]->nombre }}"
+                                             class="{{ $idx === 0 ? 'active' : '' }}"
+                                             onclick="cambiarImagenGaleria(this)">
+                                    @endif
                                 @endforeach
                             </div>
                         @endif

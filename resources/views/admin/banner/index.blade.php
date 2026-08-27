@@ -10,6 +10,7 @@
                     <thead>
                         <th>#</th>
                         <th>Nombre</th>
+                        <th>Tipo</th>
                         <th>Nombre imagen</th>
                         <th>Nombre imagen movil</th>
                         <th>Acciones</th>

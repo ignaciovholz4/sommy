@@ -33,7 +33,18 @@
               </div>
             	<input type="text" id="name" name="name" class="form-control style-input" placeholder="Nombre">
             </div>
-            <span>Tamaño recomendado:	1366px 517px (Imagen Horizontal)</span><br>
+            <div class="input-group mb-3">
+              <div class="input-group-append">
+                  <div class="input-group-text style-icon-fas">
+                      <i class="fas fa-photo-video"></i>
+                  </div>
+              </div>
+              <select id="bannerTipo" name="tipo" class="form-control style-input">
+                <option value="imagen">Imagen</option>
+                <option value="video">Video</option>
+              </select>
+            </div>
+            <span id="hintDesktop">Tamaño recomendado:	1366px 517px (Imagen Horizontal)</span><br>
             <div class="input-group mb-3">
               <input type="file" id="file" name="file" class="form-control" accept="image/*">
               <div class="input-group-append">
@@ -42,11 +53,11 @@
                   </div>
               </div>
             </div>
-            <p class="text-muted mt-3">La vista previa de la imagen aparecerá aquí...</p>
+            <p class="text-muted mt-3">La vista previa aparecerá aquí...</p>
             <div id="previewContainer" class="mt-3 mb-2">
             </div>
             <hr>
-            <span>Tamaño recomendado para movil: 1410px 1780px  (Imagen Vertical)</span><br>
+            <span id="hintMovil">Tamaño recomendado para movil: 1410px 1780px  (Imagen Vertical)</span><br>
             <div class="input-group mb-3">
               <input type="file" id="movilfile" name="movilfile" class="form-control" accept="image/*">
               <div class="input-group-append">
@@ -55,7 +66,7 @@
                   </div>
               </div>
             </div>
-            <p class="text-muted mt-3">La vista previa de la imagen aparecerá aquí...</p>
+            <p class="text-muted mt-3">La vista previa aparecerá aquí...</p>
             <div id="previewContainerMovil" class="mt-3 mb-2">
             </div>
              @include('custom.validate_save_form_ajax')
