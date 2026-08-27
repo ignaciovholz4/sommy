@@ -39,44 +39,25 @@ class BannerController extends Controller
     {
         try {
 
-            $tipo = $request->input('tipo') === 'video' ? 'video' : 'imagen';
+            $esNuevo = (int) $request->bannerId === 0;
 
-            if((int)$request->bannerId === 0){
-                if ($tipo === 'video') {
-                    $rules = [
-                        'name' => 'required',
-                        'imagen' => 'required|mimes:mp4,mov,webm,ogg|max:51200',
-                        'imageMovil' => 'nullable|mimes:mp4,mov,webm,ogg|max:51200',
-                    ];
-                    $messages = [
-                        'name.required'=>'El nombre es requerido',
-                        'imagen.required'=>'El video es requerido',
-                        'imagen.mimes' => 'El archivo debe ser un video (mp4, mov, webm u ogg)',
-                        'imageMovil.mimes' => 'El video para móvil debe ser mp4, mov, webm u ogg',
-                    ];
-                } else {
-                    $rules = [
-                        'name' => 'required',
-                        'imagen' => 'required|image',
-                        'imageMovil' => 'required|image'
-                    ];
-                    $messages = [
-                        'name.required'=>'El nombre es requerido',
-                        'imagen.required'=>'La imagen es requerida',
-                        'imagen.image' => 'Debe de agregar una imagen para escritorio',
-                        'imageMovil.required'=>'La imagen para movil es requerida',
-                        'imageMovil.image' => 'Debe de agregar una imagen para movil',
-                    ];
-                }
-            }else{
-                $rules = [
-                    'name' => 'required',
-                ];
+            $rules = [
+                'name' => 'required',
+                'titulo' => 'nullable|string|max:120',
+                'subtitulo' => 'nullable|string|max:200',
+                'boton_texto' => 'nullable|string|max:40',
+                'boton_url' => 'nullable|string|max:255',
+                'orden' => 'nullable|integer',
+                'imagen' => ($esNuevo ? 'required' : 'nullable') . '|image|max:5120',
+                'imageMovil' => 'nullable|image|max:5120',
+            ];
 
-                $messages = [
-                    'name.required'=>'El nombre es requerido',
-                ];
-            }
+            $messages = [
+                'name.required' => 'El nombre es requerido',
+                'imagen.required' => 'La imagen es requerida',
+                'imagen.image' => 'Debe de agregar una imagen para escritorio',
+                'imageMovil.image' => 'Debe de agregar una imagen para móvil',
+            ];
 
             $validator = Validator::make($request->all(), $rules, $messages);
 
@@ -87,103 +68,69 @@ class BannerController extends Controller
                 ]);
             }
 
+            $destinationPath = public_path('/imagenes/banner');
             $message = "";
-            if((int)$request->bannerId === 0){//for new
+
+            $datosContenido = [
+                'name' => $request->name,
+                'tipo' => 'imagen',
+                'titulo' => $request->titulo ?: null,
+                'subtitulo' => $request->subtitulo ?: null,
+                'boton_texto' => $request->boton_texto ?: null,
+                'boton_url' => $request->boton_url ?: null,
+                'orden' => $request->orden ?: 0,
+            ];
+
+            if ($esNuevo) {
                 $banner = new Banner();
-                $banner->name = $request->name;
-                $banner->tipo = $tipo;
+                $banner->fill($datosContenido);
+
                 $files = $request->file('imagen');
                 $filesMovil = $request->file('imageMovil');
-                // El video para móvil es opcional (a diferencia de la imagen): si no
-                // se sube, se usa el mismo video de escritorio para ambos.
-                if ($tipo === 'video' && !$filesMovil) {
-                    $filesMovil = $files;
-                }
-                if ($files && $filesMovil) {
-                    $destinationPath = public_path('/imagenes/banner');
-                    $nameImagen = trim($files->getClientOriginalName());
-                    $nameImagenMovil = $filesMovil === $files ? $nameImagen : trim($filesMovil->getClientOriginalName());
-                    $countNameImage = DB::table('banner_ecommerce')
-                    ->where('status', true)
-                    ->where(function($query) use ($nameImagen, $nameImagenMovil) {
-                        $query->where('name_image', $nameImagen)
-                            ->orWhere('name_image_movil', $nameImagenMovil);
-                    })
-                    ->count();
-                    /*$countNameImage =  DB::table('banner_ecommerce')
-                    ->where([
-                        ['status', '=', true],
-                        ['name_image', '=', $nameImagen],
-                    ])->count();*/
 
-                    if($countNameImage > 0){
-                        return response()->json([
-                            'status'=> 0,
-                            'message' => (array) "Ya existe un archivo con el mismo nombre.",
-                        ]);
-                    }
-                    $files->move($destinationPath, $nameImagen);
-                    $banner->name_image = $nameImagen;
-                    if ($filesMovil === $files) {
-                        $banner->name_image_movil = $nameImagen;
-                    } else {
-                        $filesMovil->move($destinationPath, $nameImagenMovil);
-                        $banner->name_image_movil = $nameImagenMovil;
-                    }
+                $nameImagen = $files->hashName();
+                $files->move($destinationPath, $nameImagen);
+                $banner->name_image = $nameImagen;
+
+                if ($filesMovil) {
+                    $nameImagenMovil = $filesMovil->hashName();
+                    $filesMovil->move($destinationPath, $nameImagenMovil);
+                    $banner->name_image_movil = $nameImagenMovil;
+                } else {
+                    // Sin imagen móvil propia: se reutiliza la de escritorio.
+                    $banner->name_image_movil = $nameImagen;
                 }
+
                 $banner->save();
-                $message = 'Se guardo con exito el banner';
-            }
-            if((int)$request->bannerId > 0){//for update
-                $getBanner = Banner::where('banner_id', (int)$request->bannerId)->first();
-                if($getBanner){
-                    $destinationPath = public_path('/imagenes/banner');
+                $message = 'Se guardó con éxito el banner';
+            } else {
+                $getBanner = Banner::where('banner_id', (int) $request->bannerId)->first();
+                if ($getBanner) {
+                    $getBanner->fill($datosContenido);
+
                     $files = $request->file('imagen');
                     $filesMovil = $request->file('imageMovil');
-                    if ($files && $files !== null) {
-                        $nameImagen = trim($files->getClientOriginalName());
-                        $countNameImage =  DB::table('banner_ecommerce')
-                        ->where([
-                            ['status', '=', true],
-                            ['name_image', '=', $nameImagen],
-                        ])->count();
 
-                        if($countNameImage > 0){
-                            return response()->json([
-                                'status'=> 0,
-                                'message' => (array) "Ya existe una imagen para desktop con el mismo nombre.",
-                            ]);
+                    if ($files) {
+                        if (File::exists(public_path('/imagenes/banner/' . $getBanner->name_image))) {
+                            File::delete(public_path('/imagenes/banner/' . $getBanner->name_image));
                         }
-
-                        if (File::exists(public_path('/imagenes/banner/'.$getBanner->name_image))) {
-                            File::delete(public_path('/imagenes/banner/'.$getBanner->name_image));
-                        }
+                        $nameImagen = $files->hashName();
                         $files->move($destinationPath, $nameImagen);
                         $getBanner->name_image = $nameImagen;
                     }
-                    if ($filesMovil && $filesMovil !== null) {
-                        $nameImagenMovil = trim($filesMovil->getClientOriginalName());
-                        $countNameImage =  DB::table('banner_ecommerce')
-                        ->where([
-                            ['status', '=', true],
-                            ['name_image_movil', '=', $nameImagenMovil],
-                        ])->count();
 
-                        if($countNameImage > 0){
-                            return response()->json([
-                                'status'=> 0,
-                                'message' => (array) "Ya existe una imagen para movil con el mismo nombre.",
-                            ]);
+                    if ($filesMovil) {
+                        if (File::exists(public_path('/imagenes/banner/' . $getBanner->name_image_movil))) {
+                            File::delete(public_path('/imagenes/banner/' . $getBanner->name_image_movil));
                         }
-
-                        if (File::exists(public_path('/imagenes/banner/'.$getBanner->name_image_movil))) {
-                            File::delete(public_path('/imagenes/banner/'.$getBanner->name_image_movil));
-                        }
+                        $nameImagenMovil = $filesMovil->hashName();
                         $filesMovil->move($destinationPath, $nameImagenMovil);
                         $getBanner->name_image_movil = $nameImagenMovil;
                     }
-                    $getBanner->update();
-                    $message = 'Se actualizo con exito el banner';
+
+                    $getBanner->save();
+                    $message = 'Se actualizó con éxito el banner';
                 }
             }
 
@@ -205,7 +152,7 @@ class BannerController extends Controller
      */
     public function show()
     {
-        $data = DB::table('banner_ecommerce')->where('status','=',1)->get();
+        $data = DB::table('banner_ecommerce')->where('status','=',1)->orderBy('orden')->orderBy('banner_id')->get();
 
         return DataTables::of($data)
         ->addColumn('action', function($data){
@@ -225,7 +172,7 @@ class BannerController extends Controller
     {
         try {
 
-            $getByIdBanner = DB::table('banner_ecommerce as be')->where('banner_id','=', $request->id)->get();
+            $getByIdBanner = DB::table('banner_ecommerce')->where('banner_id','=', $request->id)->get();
 
             return response()->json([
                 'id' => $request->id,
@@ -253,14 +200,17 @@ class BannerController extends Controller
             $message = "";
             $idbanner = $request->bannerId;
             $banner = Banner::where('banner_id', (int)$request->bannerId)->first();
-            //$banner = Banner::where('banner_id', $request->bannerId)->update(['status' => 0]);
             if($banner){
-                if(File::exists(public_path('/imagenes/banner/'.$banner->name_image))) {
+                if (File::exists(public_path('/imagenes/banner/'.$banner->name_image))) {
                     File::delete(public_path('/imagenes/banner/'.$banner->name_image));
-                    $banner->status=0;
-                    $banner->update();
-                    $message = "Se elimino el banner con exito";
                 }
+                if ($banner->name_image_movil && $banner->name_image_movil !== $banner->name_image
+                    && File::exists(public_path('/imagenes/banner/'.$banner->name_image_movil))) {
+                    File::delete(public_path('/imagenes/banner/'.$banner->name_image_movil));
+                }
+                $banner->status = 0;
+                $banner->save();
+                $message = "Se eliminó el banner con éxito";
             }
 
             return response()->json([

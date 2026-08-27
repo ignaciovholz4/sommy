@@ -75,7 +75,7 @@ class EcommerceController extends Controller
             return $prod;
         });
 
-        $getDataBanner = DB::table('banner_ecommerce as be')->where('status','=', 1)->get();
+        $getDataBanner = DB::table('banner_ecommerce as be')->where('status','=', 1)->orderBy('orden')->orderBy('banner_id')->get();
         $getDataCategory = ShareController::getAllCategory();
         $getCategoryLimit = ShareController::getLimitCategory();
         $arrayEmpresa = ShareController::getEmpresaImage();

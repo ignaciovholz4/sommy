@@ -82,8 +82,8 @@ Route::get('/Ecommerceproduct/{id}', function ($id) {
     return redirect('/producto/' . $producto->slug, 301);
 });
 
-// El checkout exige cuenta de comprador (registro en la primera compra)
-Route::get('/Ecommerceorder', [EcommerceorderController::class, 'show'])->middleware('auth.cliente');
+// El checkout exige cuenta de comprador (registro en la primera compra) y correo verificado
+Route::get('/Ecommerceorder', [EcommerceorderController::class, 'show'])->middleware(['auth.cliente', 'cliente.verified']);
 
 /** CUENTAS DE COMPRADORES (guard cliente) */
 Route::get('/cuenta/login', [\App\Http\Controllers\Ecommerce\ClienteAuthController::class, 'showLogin'])->name('cliente.login');
@@ -92,6 +92,34 @@ Route::get('/cuenta/registro', [\App\Http\Controllers\Ecommerce\ClienteAuthContr
 Route::post('/cuenta/registro', [\App\Http\Controllers\Ecommerce\ClienteAuthController::class, 'register'])->name('cliente.registro.post');
 Route::get('/cuenta/salir', [\App\Http\Controllers\Ecommerce\ClienteAuthController::class, 'logout'])->name('cliente.logout');
 Route::get('/cuenta/pedidos', [\App\Http\Controllers\Ecommerce\ClientePedidosController::class, 'index'])->name('cliente.pedidos')->middleware('auth.cliente');
+
+/** Verificación de correo del comprador (guard cliente) — ruta propia porque
+ * "verification.verify"/"verification.notice" ya las usa el panel de admin (guard web) */
+Route::get('/cuenta/verificar-email', function () {
+    return view('ecommerce.account.verificar-email', [
+        'getCategoryLimit' => \App\Http\Controllers\Ecommerce\ShareController::getLimitCategory(),
+        'arrayEmpresa'     => \App\Http\Controllers\Ecommerce\ShareController::getEmpresaImage(),
+    ]);
+})->middleware('auth.cliente')->name('cliente.verification.notice');
+
+Route::get('/cuenta/verificar-email/{id}/{hash}', function (\Illuminate\Http\Request $request) {
+    $cliente = \Illuminate\Support\Facades\Auth::guard('cliente')->user();
+    if (!$cliente || (int) $cliente->getKey() !== (int) $request->route('id')) {
+        abort(403);
+    }
+    if (!hash_equals((string) $request->route('hash'), sha1($cliente->getEmailForVerification()))) {
+        abort(403);
+    }
+    if (!$cliente->hasVerifiedEmail()) {
+        $cliente->markEmailAsVerified();
+    }
+    return redirect('/Ecommerceorder')->with('email_verificado', true);
+})->middleware(['auth.cliente', 'signed'])->name('cliente.verification.verify');
+
+Route::post('/cuenta/verificar-email/reenviar', function () {
+    \Illuminate\Support\Facades\Auth::guard('cliente')->user()?->sendEmailVerificationNotification();
+    return back()->with('reenviado', true);
+})->middleware(['auth.cliente', 'throttle:6,1'])->name('cliente.verification.send');
 
 /** PROGRAMA DE REVENDEDORES (público: se registran, reciben link y QR, nada más) */
 Route::get('/revendedores', [\App\Http\Controllers\Ecommerce\RevendedorPublicController::class, 'landing'])->name('revendedores.landing');
@@ -108,7 +136,7 @@ Route::get('/arrepentimiento', [\App\Http\Controllers\Ecommerce\LegalController:
 Route::post('/arrepentimiento', [\App\Http\Controllers\Ecommerce\LegalController::class, 'arrepentimientoStore'])->name('legal.arrepentimiento.post');
 Route::get('/feed/productos.xml', [\App\Http\Controllers\Ecommerce\FeedController::class, 'productos'])->name('feed.productos');
 Route::get('/cuenta/pedidos/{id}', [\App\Http\Controllers\Ecommerce\ClientePedidosController::class, 'show'])->name('cliente.pedido')->middleware('auth.cliente');
-Route::post('/Ecommercesaveorder', [EcommerceorderController::class, 'store']);
+Route::post('/Ecommercesaveorder', [EcommerceorderController::class, 'store'])->middleware(['auth.cliente', 'cliente.verified']);
 Route::post('/EcommerceFindEmailCustomer', [EcommerceorderController::class, 'validateEmaiLIfExist']);
 
 // Pagos online (MercadoPago) + página de agradecimiento

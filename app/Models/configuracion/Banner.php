@@ -21,5 +21,10 @@ class Banner extends Model
         'name_image',
         'name_image_movil',
         'description',
+        'titulo',
+        'subtitulo',
+        'boton_texto',
+        'boton_url',
+        'orden',
     ];
 }

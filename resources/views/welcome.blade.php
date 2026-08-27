@@ -1,101 +1,80 @@
 @extends('ecommerce.layouts.main-ecommerce')
 @section('contentEcommerce')
     <style>
-      .mobile-img { display: none !important; }
-      .c-item { height: 480px !important; }
-      .c-img { height: 100% !important; object-fit: cover !important; }
-      @media (max-width: 768px) {
-        .c-itemm { height: 280px !important; }
-        .desktop-img { display: none !important; }
-        .mobile-img { display: block !important; }
-      }
       .category-item{
         box-shadow: rgba(0, 0, 0, 0.05) 0px 0px 0px 1px, rgb(209, 213, 219) 0px 0px 0px 1px inset !important;
       }
     </style>
 
-    @section('bodyClass', $getDataBanner->isEmpty() ? 'has-overlay-header' : '')
-
-    <!--START SECION CAROUSELL-->
+    <!--START SECCION BANNER-->
     @if($getDataBanner->isEmpty())
-    {{-- Hero Sommy con video de fondo (plantilla C: velo degradé + titular blanco) --}}
-    <section class="sommy-hero-video">
-        {{-- Video de marca: horizontal en desktop, vertical en mobile (loop) --}}
-        <video class="sommy-hero-bg" id="sommy-hero-video" autoplay muted loop playsinline
-               poster="{{ asset('imagenes/marca/sommy-hero-poster-h.jpg') }}"
-               aria-hidden="true" tabindex="-1"></video>
-        <script>
-        (function () {
-            var v = document.getElementById('sommy-hero-video');
-            if (!v) return;
-            var mobile = window.matchMedia('(max-width: 767px)').matches;
-            v.poster = mobile
-                ? '{{ asset('imagenes/marca/sommy-hero-poster-v.jpg') }}'
-                : '{{ asset('imagenes/marca/sommy-hero-poster-h.jpg') }}';
-            var s = document.createElement('source');
-            s.src = mobile
-                ? '{{ asset('imagenes/marca/sommy-hero-vertical.mp4') }}'
-                : '{{ asset('imagenes/marca/sommy-hero-horizontal.mp4') }}';
-            s.type = 'video/mp4';
-            v.appendChild(s);
-            v.load();
-            if (v.play) { v.play().catch(function () {}); }
-        })();
-        </script>
-        <div class="sommy-hero-veil"></div>
-        {{-- Magia flotando en el ambiente --}}
-        {{-- Solo aparición por fundido: la rotación va inline para que AOS no la pise --}}
-        <img src="{{ asset('imagenes/marca/sommy-magia-rulo.png') }}" alt="" class="sommy-magia-deco sommy-magia-deco--1" aria-hidden="true" style="transform:rotate(-12deg);" data-aos="fade" data-aos-delay="500" data-aos-duration="1400">
-        <img src="{{ asset('imagenes/marca/sommy-magia-onda.png') }}" alt="" class="sommy-magia-deco sommy-magia-deco--2" aria-hidden="true" style="transform:scaleX(-1) rotate(8deg);" data-aos="fade" data-aos-delay="700" data-aos-duration="1400">
-        <div class="sommy-hero-video-inner">
-            <h1 data-aos="fade-up">Dormí liviano.<br>Despertá mejor.</h1>
-            <p class="sub" data-aos="fade-up" data-aos-delay="150">Distribuimos colchones directo de fabrica, y tenemos todo lo que tu habitación necesita: colchones, almohadas, sommiers y sabanas para que cada noche sea especial.</p>
-            <div class="btn-row" data-aos="fade-up" data-aos-delay="300">
-                <a href="#productos" class="btn-sommy-light">Ver productos</a>
-                @if(!empty($arrayEmpresa['phone']))
-                <a href="https://wa.me/{{ preg_replace('/\D/', '', $arrayEmpresa['whatsapp']) }}" target="_blank" rel="noopener noreferrer" class="btn-sommy-whatsapp">
-                    <i class="fa-brands fa-whatsapp"></i> Asesorate
-                </a>
-                @endif
+    {{-- Portada por defecto: se reemplaza en cuanto se carga un banner desde /banner --}}
+    <section class="sommy-hero">
+        <div class="sommy-hero-inner">
+            <div>
+                <h1 data-aos="fade-up">Dormí liviano.<br>Despertá mejor.</h1>
+                <p class="sub" data-aos="fade-up" data-aos-delay="150">Distribuimos colchones directo de fabrica, y tenemos todo lo que tu habitación necesita: colchones, almohadas, sommiers y sabanas para que cada noche sea especial.</p>
+                <div class="btn-row" data-aos="fade-up" data-aos-delay="300">
+                    <a href="#productos" class="btn-sommy-dark">Ver productos</a>
+                    @if(!empty($arrayEmpresa['phone']))
+                    <a href="https://wa.me/{{ preg_replace('/\D/', '', $arrayEmpresa['whatsapp']) }}" target="_blank" rel="noopener noreferrer" class="btn-sommy-whatsapp">
+                        <i class="fa-brands fa-whatsapp"></i> Asesorate
+                    </a>
+                    @endif
+                </div>
+                <p class="sommy-hero-admin-tip">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Esta es la portada por defecto. Cargá una imagen y un texto propio desde <a href="{{ route('banner.index') }}">Banners</a>.
+                </p>
+            </div>
+            <div class="sommy-hero-illus">
+                <img src="{{ asset('imagenes/marca/sommy-logo-magia.png') }}" alt="Sommy">
             </div>
         </div>
     </section>
     @else
-    <section>
-        <div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-indicators">
-                @foreach ($getDataBanner as $labelSlide)
-                  <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="{{$loop->index}}"
-                          class="{{ $loop->first ? 'active' : '' }}"
-                          aria-current="{{ $loop->first ? 'true' : 'false' }}"
-                          aria-label="Slide {{$loop->index}}"></button>
-                @endforeach
-            </div>
+    <section class="sommy-banner-section">
+        <div id="heroBannerCarousel" class="carousel slide sommy-banner" data-bs-ride="carousel" data-bs-interval="6000">
             <div class="carousel-inner">
                 @foreach ($getDataBanner as $banner)
-                  <div class="carousel-item c-item {{ $loop->first ? 'active' : '' }}">
-                      @if(($banner->tipo ?? 'imagen') === 'video')
-                          <video class="d-block w-100 c-img desktop-img" src="{{asset('imagenes/banner/'.$banner->name_image)}}" autoplay muted loop playsinline></video>
-                          <video class="d-block w-100 c-img mobile-img" src="{{asset('imagenes/banner/'.$banner->name_image_movil)}}" autoplay muted loop playsinline></video>
-                      @else
-                          <img src="{{asset('imagenes/banner/'.$banner->name_image)}}" class="d-block w-100 c-img desktop-img" alt="...">
-                          <img src="{{asset('imagenes/banner/'.$banner->name_image_movil)}}" class="d-block w-100 c-img mobile-img" alt="...">
-                      @endif
+                  <div class="carousel-item sommy-banner-slide {{ $loop->first ? 'active' : '' }}">
+                      <div class="sommy-banner-media">
+                          <img src="{{ asset('imagenes/banner/'.$banner->name_image) }}" class="sommy-banner-img desktop-img" alt="{{ $banner->titulo ?: 'Sommy' }}">
+                          <img src="{{ asset('imagenes/banner/'.($banner->name_image_movil ?: $banner->name_image)) }}" class="sommy-banner-img mobile-img" alt="{{ $banner->titulo ?: 'Sommy' }}">
+                      </div>
+                      <div class="sommy-banner-copy">
+                          @if($banner->titulo) <h2>{{ $banner->titulo }}</h2> @endif
+                          @if($banner->subtitulo) <p class="sub">{{ $banner->subtitulo }}</p> @endif
+                          @if($banner->boton_texto)
+                          <a href="{{ $banner->boton_url ?: '#productos' }}" class="btn-sommy-dark">{{ $banner->boton_texto }}</a>
+                          @endif
+                      </div>
                   </div>
                 @endforeach
             </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+
+            @if($getDataBanner->count() > 1)
+            <div class="carousel-indicators sommy-banner-indicators">
+                @foreach ($getDataBanner as $banner)
+                  <button type="button" data-bs-target="#heroBannerCarousel" data-bs-slide-to="{{ $loop->index }}"
+                          class="{{ $loop->first ? 'active' : '' }}"
+                          aria-current="{{ $loop->first ? 'true' : 'false' }}"
+                          aria-label="Slide {{ $loop->iteration }}"></button>
+                @endforeach
+            </div>
+            <button class="carousel-control-prev sommy-banner-nav" type="button" data-bs-target="#heroBannerCarousel" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
+                <span class="visually-hidden">Anterior</span>
             </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+            <button class="carousel-control-next sommy-banner-nav" type="button" data-bs-target="#heroBannerCarousel" data-bs-slide="next">
                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
+                <span class="visually-hidden">Siguiente</span>
             </button>
+            @endif
         </div>
     </section>
     @endif
-    <!--END SECION CAROUSELL-->
+    <!--END SECCION BANNER-->
 
     <!--START MARCAS QUE TRABAJAMOS-->
     {{-- Logos ficticios de referencia: reemplazar por los logos reales de las marcas --}}
@@ -105,12 +84,10 @@
         <div class="sommy-marcas">
           <div class="sommy-marcas-track">
             @for ($rep = 0; $rep < 2; $rep++)
-            <span class="sommy-marca-logo sommy-marca-logo--serif"><i class="fa-solid fa-feather"></i><span class="n">Dream<em>Flex</em></span></span>
-            <span class="sommy-marca-logo sommy-marca-logo--caps"><i class="fa-solid fa-moon"></i><span class="n">NubeAzul</span></span>
-            <span class="sommy-marca-logo"><i class="fa-solid fa-bed"></i><span class="n">Serena<em>Rest</em></span></span>
-            <span class="sommy-marca-logo sommy-marca-logo--serif"><i class="fa-solid fa-star"></i><span class="n">Morfeo</span></span>
-            <span class="sommy-marca-logo sommy-marca-logo--caps"><i class="fa-solid fa-cloud"></i><span class="n">PlumaSoft</span></span>
-            <span class="sommy-marca-logo"><i class="fa-solid fa-spa"></i><span class="n">Alta<em>Cama</em></span></span>
+            <span class="sommy-marca-logo sommy-marca-logo--serif"><i class="fa-solid fa-feather"></i><span class="n">Colchones</span></span>
+            <span class="sommy-marca-logo sommy-marca-logo--caps"><i class="fa-solid fa-moon"></i><span class="n">Sommiers</span></span>
+            <span class="sommy-marca-logo"><i class="fa-solid fa-bed"></i><span class="n">Almohadas</span></span>
+            <span class="sommy-marca-logo sommy-marca-logo--serif"><i class="fa-solid fa-star"></i><span class="n">Sabanas</span></span>
             @endfor
           </div>
         </div>

@@ -10,7 +10,8 @@
                     <thead>
                         <th>#</th>
                         <th>Nombre</th>
-                        <th>Tipo</th>
+                        <th>Título</th>
+                        <th>Orden</th>
                         <th>Nombre imagen</th>
                         <th>Nombre imagen movil</th>
                         <th>Acciones</th>
@@ -29,5 +30,5 @@
 </div>
 @endsection
 @section('scripts')
-<script src="{{asset('js/funciones_configuracion/banner.js')}}"></script>    
+<script src="{{asset('js/funciones_configuracion/banner.js')}}?v={{ filemtime(public_path('js/funciones_configuracion/banner.js')) }}"></script>
 @endsection

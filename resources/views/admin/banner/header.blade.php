@@ -31,20 +31,50 @@
                       <i class="fas fa-file-signature"></i>
                   </div>
               </div>
-            	<input type="text" id="name" name="name" class="form-control style-input" placeholder="Nombre">
+            	<input type="text" id="name" name="name" class="form-control style-input" placeholder="Nombre interno (no se ve en la web)">
             </div>
             <div class="input-group mb-3">
               <div class="input-group-append">
                   <div class="input-group-text style-icon-fas">
-                      <i class="fas fa-photo-video"></i>
+                      <i class="fas fa-heading"></i>
                   </div>
               </div>
-              <select id="bannerTipo" name="tipo" class="form-control style-input">
-                <option value="imagen">Imagen</option>
-                <option value="video">Video</option>
-              </select>
+              <input type="text" id="bannerTitulo" name="titulo" class="form-control style-input" placeholder="Título (ej: 5% extra en toda la tienda)" maxlength="120">
             </div>
-            <span id="hintDesktop">Tamaño recomendado:	1366px 517px (Imagen Horizontal)</span><br>
+            <div class="input-group mb-3">
+              <div class="input-group-append">
+                  <div class="input-group-text style-icon-fas">
+                      <i class="fas fa-align-left"></i>
+                  </div>
+              </div>
+              <input type="text" id="bannerSubtitulo" name="subtitulo" class="form-control style-input" placeholder="Subtítulo (opcional)" maxlength="200">
+            </div>
+            <div class="input-group mb-3">
+              <div class="input-group-append">
+                  <div class="input-group-text style-icon-fas">
+                      <i class="fas fa-hand-pointer"></i>
+                  </div>
+              </div>
+              <input type="text" id="bannerBotonTexto" name="boton_texto" class="form-control style-input" placeholder="Texto del botón (ej: Ver ofertas)" maxlength="40">
+            </div>
+            <div class="input-group mb-3">
+              <div class="input-group-append">
+                  <div class="input-group-text style-icon-fas">
+                      <i class="fas fa-link"></i>
+                  </div>
+              </div>
+              <input type="text" id="bannerBotonUrl" name="boton_url" class="form-control style-input" placeholder="Link del botón (ej: /productos)">
+            </div>
+            <div class="input-group mb-3">
+              <div class="input-group-append">
+                  <div class="input-group-text style-icon-fas">
+                      <i class="fas fa-sort-numeric-down"></i>
+                  </div>
+              </div>
+              <input type="number" id="bannerOrden" name="orden" class="form-control style-input" placeholder="Orden (0 = primero)" min="0">
+            </div>
+            <hr>
+            <span id="hintDesktop">Imagen para escritorio. Tamaño recomendado: 1200px x 900px o similar (mínimo 800x600)</span><br>
             <div class="input-group mb-3">
               <input type="file" id="file" name="file" class="form-control" accept="image/*">
               <div class="input-group-append">
@@ -57,7 +87,7 @@
             <div id="previewContainer" class="mt-3 mb-2">
             </div>
             <hr>
-            <span id="hintMovil">Tamaño recomendado para movil: 1410px 1780px  (Imagen Vertical)</span><br>
+            <span id="hintMovil">Imagen para móvil (opcional: si no la cargás, se usa la de escritorio). Tamaño recomendado: 1000px x 1000px o similar (mínimo 700x700)</span><br>
             <div class="input-group mb-3">
               <input type="file" id="movilfile" name="movilfile" class="form-control" accept="image/*">
               <div class="input-group-append">
