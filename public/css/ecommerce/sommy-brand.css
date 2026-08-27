@@ -538,6 +538,9 @@ p { line-height: 1.7; }
     position: relative;
     overflow: hidden;
 }
+/* Banner sin título/subtítulo/botón (el texto ya viene en la imagen): la
+   imagen ocupa todo el ancho en vez de dejar la mitad derecha en blanco. */
+.sommy-banner-slide--full .sommy-banner-media { flex-basis: 100%; max-width: 100%; }
 .sommy-banner-img {
     width: 100%;
     height: 100%;
@@ -629,8 +632,16 @@ p { line-height: 1.7; }
 }
 .sommy-banner-admin-tip a { color: var(--sm-blue); }
 @media (max-width: 768px) {
-    .sommy-banner-slide { flex-direction: column; min-height: 0; }
-    .sommy-banner-media { flex-basis: auto; max-width: 100%; height: 480px; }
+    /* Mobile: se apila en bloque (no flex-row) y la imagen se muestra completa,
+       a su alto natural — nada de recorte ni de una altura fija que deje un
+       hueco en blanco si la imagen subida es más baja de lo esperado. */
+    .sommy-banner-slide.active,
+    .sommy-banner-slide.carousel-item-next,
+    .sommy-banner-slide.carousel-item-prev {
+        display: block;
+    }
+    .sommy-banner-media { max-width: 100%; height: auto; }
+    .sommy-banner-img { height: auto; object-fit: initial; }
     /* Mobile: se ve la imagen vertical, la horizontal de escritorio queda oculta */
     .sommy-banner-media .desktop-img { display: none; }
     .sommy-banner-media .mobile-img { display: block; }

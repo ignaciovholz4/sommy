@@ -167,7 +167,7 @@ imageInput.addEventListener('change', function () {
 /**************************************************** */
 imageInputMovil.addEventListener('change', function () {
   const MIN_WIDTH = 700;
-  const MIN_HEIGHT = 950;
+  const MIN_HEIGHT = 350;
   const file = this.files[0];
   if (file) {
     if (file.type.startsWith('image/')) {

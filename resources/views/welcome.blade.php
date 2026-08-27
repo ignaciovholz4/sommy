@@ -32,11 +32,12 @@
         <div id="heroBannerCarousel" class="carousel slide sommy-banner" data-bs-ride="carousel" data-bs-interval="6000">
             <div class="carousel-inner">
                 @foreach ($getDataBanner as $banner)
-                  <div class="carousel-item sommy-banner-slide {{ $loop->first ? 'active' : '' }}">
+                  <div class="carousel-item sommy-banner-slide {{ $loop->first ? 'active' : '' }} {{ ($banner->titulo || $banner->subtitulo || $banner->boton_texto) ? '' : 'sommy-banner-slide--full' }}">
                       <div class="sommy-banner-media">
                           <img src="{{ asset('imagenes/banner/'.$banner->name_image) }}" class="sommy-banner-img desktop-img" alt="{{ $banner->titulo ?: 'Sommy' }}">
                           <img src="{{ asset('imagenes/banner/'.($banner->name_image_movil ?: $banner->name_image)) }}" class="sommy-banner-img mobile-img" alt="{{ $banner->titulo ?: 'Sommy' }}">
                       </div>
+                      @if($banner->titulo || $banner->subtitulo || $banner->boton_texto)
                       <div class="sommy-banner-copy">
                           @if($banner->titulo) <h2>{{ $banner->titulo }}</h2> @endif
                           @if($banner->subtitulo) <p class="sub">{{ $banner->subtitulo }}</p> @endif
@@ -44,6 +45,7 @@
                           <a href="{{ $banner->boton_url ?: '#productos' }}" class="btn-sommy-dark">{{ $banner->boton_texto }}</a>
                           @endif
                       </div>
+                      @endif
                   </div>
                 @endforeach
             </div>

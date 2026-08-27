@@ -87,7 +87,7 @@
             <div id="previewContainer" class="mt-3 mb-2">
             </div>
             <hr>
-            <span id="hintMovil">Imagen vertical, solo se ve en celular (opcional: si no la cargás, se usa la de escritorio recortada, se ve peor). Usá algo cercano a 1080px x 1500px (mínimo 700x950).</span><br>
+            <span id="hintMovil">Imagen para celular (opcional: si no la cargás, se usa la de escritorio recortada, se ve peor). Se muestra completa, sin recortar — cualquier proporción funciona, pero se ve mejor si es más alta que ancha (vertical). Mínimo 700x350.</span><br>
             <div class="input-group mb-3">
               <input type="file" id="movilfile" name="movilfile" class="form-control" accept="image/*">
               <div class="input-group-append">
