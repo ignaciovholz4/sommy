@@ -96,7 +96,6 @@ class Cotizar
 
         return [
             'cotizacion_id' => $draft->id,
-            'nota' => 'VERIFICÁ: estos items y este total son los REALES que va a llevar el pedido. El resumen que le mandes al cliente se copia EXACTAMENTE de acá (producto, medida, precio, total). Si algo no coincide con lo que venías hablando (producto o medida distintos), corregí la cotización ANTES de resumir.',
             'items' => array_map(fn ($i) => [
                 'producto' => $i['descripcion'],
                 'cantidad' => $i['cantidad'],
@@ -104,7 +103,7 @@ class Cotizar
                 'subtotal' => round($i['cantidad'] * $i['precio_unitario'], 2),
             ], $items),
             'total' => $draft->total,
-            'nota' => 'Presentale este total al cliente. Si acepta, pedile dirección de entrega y usá crear_pedido.',
+            'nota' => 'VERIFICÁ: estos items y este total son los REALES que va a llevar el pedido. El resumen que le mandes al cliente se copia EXACTAMENTE de acá (producto, medida, precio, total) — nunca redondees ni recalcules. Si algo no coincide con lo que venías hablando (producto o medida distintos), corregí la cotización ANTES de resumir. Si el cliente acepta, pedile dirección de entrega y usá crear_pedido.',
         ];
     }
 }

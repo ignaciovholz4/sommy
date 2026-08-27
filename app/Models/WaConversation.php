@@ -11,7 +11,7 @@ class WaConversation extends Model
 
     protected $fillable = [
         'wa_account_id', 'channel', 'external_id', 'cliente_id', 'phone_e164', 'profile_name',
-        'status', 'assigned_user_id', 'ai_agent_id', 'mode',
+        'status', 'assigned_user_id', 'ai_agent_id', 'mode', 'contexto_venta',
         'last_inbound_at', 'last_message_at', 'last_message_preview', 'unread_count',
     ];
 
@@ -24,6 +24,7 @@ class WaConversation extends Model
     protected $casts = [
         'last_inbound_at' => 'datetime',
         'last_message_at' => 'datetime',
+        'contexto_venta' => 'array',
     ];
 
     public const STATUSES = [

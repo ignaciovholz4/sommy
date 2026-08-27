@@ -80,7 +80,7 @@ class InfoProducto
             'link'         => $articulo->slug ? route('ecommerce.producto', $articulo->slug) : null,
             'conocimiento' => $textos,
             'material'     => $archivos,
-            'nota'         => 'Esta información es la ficha oficial interna: usala como fuente de verdad. Para mostrarle al cliente una foto/video/audio del material, usá la herramienta enviar_material con el material_id: le llega como adjunto de WhatsApp. Si hay "link", incluilo en tu mensaje para que el cliente pueda verlo y comprarlo online.',
+            'nota'         => 'Esta ficha es SOLO para características, ventajas, diferencias y notas comerciales del producto (usala como fuente de verdad para eso). Si algún texto de acá menciona un precio, stock, promoción o costo de envío, IGNORALO: esos datos son dinámicos y cambian — solo son válidos los que te devuelven buscar_productos/consultar_stock/cotizar/consultar_envio en este mismo turno. Para mostrarle al cliente una foto/video/audio del material, usá la herramienta enviar_material con el material_id: le llega como adjunto de WhatsApp. Si hay "link", incluilo en tu mensaje para que el cliente pueda verlo y comprarlo online.',
         ];
     }
 }

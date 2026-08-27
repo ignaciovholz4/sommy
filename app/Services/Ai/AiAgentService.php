@@ -94,8 +94,10 @@ class AiAgentService
         $promptTokens = 0;
         $completionTokens = 0;
         $toolLog = [];
+        $montosConocidos = [];
 
         $correccionesPrecio = 0;
+        $finalizado = false;
 
         for ($i = 1; $i <= self::MAX_ITERATIONS; $i++) {
             $response = $client->chat($system, $messages, $tools, $agent->model, $agent->temperature);
@@ -105,23 +107,25 @@ class AiAgentService
             if (!$response->hasToolCalls()) {
                 $texto = (string) $response->text;
 
-                // GUARDA anti-precios-inventados: si la respuesta menciona plata
-                // y en este turno no consultó el catálogo, se la rebota y se la
-                // obliga a verificar con herramientas antes de responder.
-                $mencionaPrecio = preg_match('/\$\s?[\d]{2}[\d\.\,]{2,}/u', $texto);
-                $consultoCatalogo = collect($toolLog)->pluck('tool')
-                    ->intersect(['buscar_productos', 'ver_catalogo', 'info_producto', 'cotizar'])->isNotEmpty();
+                // GUARDA anti-precios-inventados/recalculados: cada monto que
+                // menciona tiene que coincidir con un valor que YA devolvió
+                // alguna herramienta en esta conversación — no alcanza con
+                // "consultó el catálogo en algún momento", tiene que ser el
+                // número real, para evitar que repita de memoria o recalcule.
+                $montosTexto = $this->extraerMontos($texto);
+                $montoInventado = collect($montosTexto)->first(fn ($m) => !$this->coincideConMontoConocido($m, $montosConocidos));
 
-                if ($mencionaPrecio && !$consultoCatalogo && $correccionesPrecio < 2) {
+                if ($montoInventado !== null && $correccionesPrecio < 2) {
                     $correccionesPrecio++;
                     $messages[] = ['role' => 'assistant', 'content' => $texto];
-                    $messages[] = ['role' => 'system', 'content' => 'CORRECCIÓN OBLIGATORIA: tu respuesta menciona precios pero NO consultaste el catálogo en este turno. Está PROHIBIDO informar montos sin verificarlos con buscar_productos/ver_catalogo. Consultá las herramientas AHORA y reescribí la respuesta solo con precios reales del sistema.'];
+                    $messages[] = ['role' => 'system', 'content' => "CORRECCIÓN OBLIGATORIA: mencionaste \${$montoInventado} pero ese valor no coincide con ningún precio/total real que te haya devuelto una herramienta en esta conversación. Está PROHIBIDO inventar o recalcular montos. Volvé a consultar buscar_productos/cotizar y repetí EXACTAMENTE el número que te devuelven, sin modificarlo."];
                     continue;
                 }
-                if ($mencionaPrecio && !$consultoCatalogo) {
+                if ($montoInventado !== null) {
                     // No obedeció tras 2 correcciones: mejor derivar que mentir
-                    $this->escalate($conversation, $agent, 'Guarda de precios: el agente insistió en informar montos sin verificar el catálogo');
+                    $this->escalate($conversation, $agent, 'Guarda de precios: el agente insistió en informar un monto que no coincide con el sistema');
                     $run->status = 'escalated';
+                    $finalizado = true;
                     break;
                 }
 
@@ -137,6 +141,7 @@ class AiAgentService
                         $run->status = 'escalated';
                     }
                 }
+                $finalizado = true;
                 break;
             }
 
@@ -152,10 +157,7 @@ class AiAgentService
 
                 if ($toolCall['name'] === 'derivar_a_humano') {
                     $motivo = $toolCall['arguments']['motivo'] ?? 'El agente decidió derivar';
-                    if ($agent->mensaje_derivacion) {
-                        $this->reply($conversation, $agent, $agent->mensaje_derivacion);
-                    }
-                    $this->escalate($conversation, $agent, $motivo, false);
+                    $this->escalate($conversation, $agent, $motivo, true);
                     $run->status = 'escalated';
                     $escalated = true;
                     break;
@@ -165,6 +167,9 @@ class AiAgentService
                 // Registrar si la tool falló: las etiquetas automáticas solo se
                 // ponen sobre acciones que realmente funcionaron
                 $toolLog[count($toolLog) - 1]['error'] = isset($result['error']);
+                if (!isset($result['error'])) {
+                    array_push($montosConocidos, ...$this->extraerMontos($result));
+                }
                 $messages[] = [
                     'role' => 'tool',
                     'tool_call_id' => $toolCall['id'],
@@ -174,8 +179,17 @@ class AiAgentService
             }
 
             if ($escalated) {
+                $finalizado = true;
                 break;
             }
+        }
+
+        // Se agotaron las iteraciones sin llegar a una respuesta ni a una
+        // derivación: mejor que quede en manos de un humano a dejar al
+        // cliente sin respuesta (el bug de "se quedó callado" era esto).
+        if (!$finalizado) {
+            $this->escalate($conversation, $agent, 'Se agotaron los intentos del agente sin generar una respuesta final', true);
+            $run->status = 'escalated';
         }
 
         $run->fill([
@@ -250,6 +264,7 @@ class AiAgentService
         $defs[] = Tools\EtiquetarConversacion::definition();
         $defs[] = Tools\AgendarCliente::definition();
         $defs[] = Tools\ConsultarEnvio::definition();
+        $defs[] = Tools\ActualizarContexto::definition();
 
         return $defs;
     }
@@ -270,11 +285,12 @@ class AiAgentService
                 'etiquetar_conversacion' => new Tools\EtiquetarConversacion(),
                 'agendar_cliente' => new Tools\AgendarCliente(),
                 'consultar_envio' => new Tools\ConsultarEnvio(),
+                'actualizar_contexto' => new Tools\ActualizarContexto(),
                 default => null,
             };
 
             // Tools acompañantes que no figuran en tools_enabled del agente
-            $esAcompanante = in_array($toolCall['name'], ['cerrar_conversacion', 'etiquetar_conversacion', 'agendar_cliente', 'consultar_envio'])
+            $esAcompanante = in_array($toolCall['name'], ['cerrar_conversacion', 'etiquetar_conversacion', 'agendar_cliente', 'consultar_envio', 'actualizar_contexto'])
                 || (in_array($toolCall['name'], ['info_producto', 'enviar_material', 'ver_catalogo', 'guardar_faq']) && $agent->toolEnabled('buscar_productos'));
 
             if (!$tool || (!$agent->toolEnabled($toolCall['name']) && !$esAcompanante)) {
@@ -395,6 +411,26 @@ class AiAgentService
             $system .= "\n\nEste es el PRIMER mensaje de este cliente en la conversación: abrí tu respuesta con un saludo de bienvenida cálido y natural (ej: \"Hola, ¿cómo andás? Bienvenido/a a Sommy Argentina\") antes de responder su consulta.";
         }
 
+        // "Memoria" de venta (medida, tipo, producto de interés, etapa): la
+        // guarda actualizar_contexto. Se repite acá en cada turno para que el
+        // bot no vuelva a preguntar algo que el cliente ya contó.
+        $contexto = $conversation->contexto_venta ?? [];
+        if (!empty($contexto)) {
+            $partes = [];
+            if (!empty($contexto['medida'])) $partes[] = "medida {$contexto['medida']}";
+            if (!empty($contexto['tipo_colchon'])) $partes[] = "tipo {$contexto['tipo_colchon']}";
+            if (!empty($contexto['producto_interes_nombre'])) $partes[] = "le interesó {$contexto['producto_interes_nombre']}";
+            if (!empty($contexto['etapa'])) $partes[] = "etapa: {$contexto['etapa']}";
+
+            if ($partes) {
+                $system .= "\n\nYa sabés esto de este cliente (NO se lo vuelvas a preguntar): " . implode(', ', $partes) . '.';
+            }
+
+            if (($contexto['etapa'] ?? null) === 'intencion_compra') {
+                $system .= ' El cliente ya mostró intención de compra: dejá de recomendar productos nuevos y pasá directo a confirmar precio/stock reales y pedir los datos de entrega para cerrar el pedido.';
+            }
+        }
+
         $system .= "\n\nGestión de la conversación: cuando la consulta quede resuelta y el cliente se despida o no necesite nada más, usá la herramienta cerrar_conversacion (podés despedirte en el mismo turno). No la uses si quedó algo pendiente.";
 
         $system .= "\n\nFecha y hora actual: " . now()->format('d/m/Y H:i') . ' (Argentina).';
@@ -460,19 +496,97 @@ class AiAgentService
      */
     protected function escalate(WaConversation $conversation, ?AiAgent $agent, string $motivo, bool $sendFallback = true): void
     {
-        if ($sendFallback && $agent && $agent->mensaje_derivacion && $conversation->isSessionOpen()) {
-            $this->reply($conversation, $agent, $agent->mensaje_derivacion);
+        // Siempre le llega algo al cliente cuando se deriva — nunca lo dejamos
+        // en silencio esperando a que "alguien" le escriba en algún momento.
+        if ($sendFallback && $agent && $conversation->isSessionOpen()) {
+            $mensaje = $agent->mensaje_derivacion ?: 'Ya te paso con un compañero para ayudarte con esto 🙌';
+            $this->reply($conversation, $agent, $mensaje);
         }
 
         $conversation->update(['mode' => 'humano', 'status' => 'nueva']);
 
+        // Si hay un pedido/cotización en curso, se marca como prioritario:
+        // que un vendedor lo vea antes de que se enfríe la venta.
+        $draft = $conversation->orderDrafts()->whereIn('status', ['borrador', 'pendiente_confirmacion'])->latest('id')->first();
+        $notaInterna = '🤖→👤 Derivado a humano: ' . $motivo;
+        if ($draft && $draft->total > 0) {
+            $notaInterna .= ' — Hay un pedido en curso por $' . number_format($draft->total, 2, ',', '.') . '.';
+            try {
+                $tag = \App\Models\WaTag::firstOrCreate(['nombre' => 'pedido esperando confirmación'], ['color' => '#dc3545']);
+                $conversation->tags()->syncWithoutDetaching([$tag->id]);
+            } catch (\Throwable $e) {
+                Log::warning('No se pudo marcar la conversación con pedido pendiente', ['error' => $e->getMessage()]);
+            }
+        }
+
         $conversation->messages()->create([
             'direction' => 'out',
             'type' => 'text',
-            'body' => '🤖→👤 Derivado a humano: ' . $motivo,
+            'body' => $notaInterna,
             'is_internal_note' => true,
             'sent_by_agent_id' => $agent->id ?? null,
         ]);
+    }
+
+    /**
+     * Extrae montos en pesos para verificar que lo que dice el bot coincide
+     * con lo que devolvió el sistema. Sirve tanto sobre un texto (busca
+     * patrones "$123.456") como sobre el resultado (array) de una herramienta
+     * (junta los valores numéricos de sus campos de precio/costo/total).
+     */
+    protected function extraerMontos($data): array
+    {
+        if (is_string($data)) {
+            preg_match_all('/\$\s?(\d{2}[\d.,]{2,})/u', $data, $matches);
+
+            return collect($matches[1] ?? [])
+                ->map(fn ($m) => $this->normalizarMonto($m))
+                ->values()->all();
+        }
+
+        if (!is_array($data)) {
+            return [];
+        }
+
+        $montos = [];
+        $clavesMonto = ['precio', 'precio_lista', 'precio_unitario', 'total', 'costo', 'monto', 'subtotal', 'pventa_con_iva', 'pventa_variante'];
+        array_walk_recursive($data, function ($valor, $clave) use (&$montos, $clavesMonto) {
+            if (is_numeric($valor) && in_array($clave, $clavesMonto, true)) {
+                $montos[] = (int) round((float) $valor);
+            }
+        });
+
+        return $montos;
+    }
+
+    /**
+     * Un monto es válido si es (aprox) igual a uno conocido, o a la SUMA de
+     * dos conocidos (ej: colchón + envío) — así no se marca como "inventado"
+     * un total legítimo que el bot arma sumando dos valores reales.
+     */
+    protected function coincideConMontoConocido(int $monto, array $conocidos): bool
+    {
+        foreach ($conocidos as $a) {
+            if (abs($a - $monto) <= 1) {
+                return true;
+            }
+            foreach ($conocidos as $b) {
+                if (abs(($a + $b) - $monto) <= 1) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    protected function normalizarMonto(string $monto): int
+    {
+        // Formato AR: "." separa miles, "," separa decimales
+        $limpio = str_replace('.', '', $monto);
+        $limpio = str_replace(',', '.', $limpio);
+
+        return (int) round((float) $limpio);
     }
 
     protected function estimateCost(string $model, int $promptTokens, int $completionTokens): float
