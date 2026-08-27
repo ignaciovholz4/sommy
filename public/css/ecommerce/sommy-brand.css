@@ -516,14 +516,21 @@ p { line-height: 1.7; }
 }
 .sommy-banner { position: relative; max-width: 1320px; margin: 0 auto; }
 .sommy-banner .carousel-inner { border-radius: var(--ec-radius); }
+/* Solo el slide activo (o el que está entrando/saliendo durante la transición)
+   pasa a mostrarse: si "display" se pisa para TODOS los .carousel-item, Bootstrap
+   ya no puede ocultar los inactivos y quedan todos apilados uno debajo del otro. */
 .sommy-banner-slide {
-    display: flex;
-    align-items: stretch;
-    min-height: 480px;
+    min-height: 380px;
     background: #fff;
     border-radius: var(--ec-radius);
     overflow: hidden;
     box-shadow: var(--sm-shadow);
+}
+.sommy-banner-slide.active,
+.sommy-banner-slide.carousel-item-next,
+.sommy-banner-slide.carousel-item-prev {
+    display: flex;
+    align-items: stretch;
 }
 .sommy-banner-media {
     flex: 0 0 54%;

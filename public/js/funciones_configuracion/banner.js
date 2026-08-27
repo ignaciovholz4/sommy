@@ -125,8 +125,8 @@ let saveprintErrorMsg = (msg) => {
 }
 
 imageInput.addEventListener('change', function () {
-  const MIN_WIDTH = 800;
-  const MIN_HEIGHT = 600;
+  const MIN_WIDTH = 900;
+  const MIN_HEIGHT = 475;
   const file = this.files[0];
   if (file) {
     if (file.type.startsWith('image/')) {
@@ -167,7 +167,7 @@ imageInput.addEventListener('change', function () {
 /**************************************************** */
 imageInputMovil.addEventListener('change', function () {
   const MIN_WIDTH = 700;
-  const MIN_HEIGHT = 700;
+  const MIN_HEIGHT = 350;
   const file = this.files[0];
   if (file) {
     if (file.type.startsWith('image/')) {
