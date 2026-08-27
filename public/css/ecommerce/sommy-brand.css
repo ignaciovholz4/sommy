@@ -331,17 +331,9 @@ p { line-height: 1.7; }
 }
 .product-item:hover { box-shadow: var(--sm-shadow); }
 
-/* Imagen de producto más contenida en mobile */
-@media (max-width: 575px) {
-    .product-item figure img.tab-image,
-    .product-item figure img {
-        max-height: 190px;
-        width: auto;
-        max-width: 100%;
-        object-fit: contain;
-        margin: 0 auto;
-        display: block;
-    }
+/* Imagen de producto: ocupa todo el cuadrado, fondo blanco, también en mobile */
+.product-item figure {
+    background: #fff;
 }
 
 /* ── Checkout: tarjetas serenas ───────────────────────────────── */
