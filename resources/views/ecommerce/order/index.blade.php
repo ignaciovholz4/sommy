@@ -173,6 +173,9 @@
 <section class="py-5 section-content-order" style="">
   <div class="container-fluid">
         <div class="container" id="div-content-order-global">
+            @if(session('email_verificado'))
+                <div class="alert alert-success" style="border-radius:12px;">✅ Correo confirmado. Ya podés finalizar tu compra.</div>
+            @endif
             <div class="row">
                 <div class="col-md-8">
                     <div class="card border-0 shadow-sm mb-4">
@@ -194,7 +197,8 @@
                                 <div class="mb-0">
                                     <label for="exampleInputEmail1" class="form-label">Correo electrónico</label>
                                     <input type="email" class="form-control input-form" name="email" id="inputEmailCliente" aria-describedby="emailHelp"
-                                           value="{{ Auth::guard('cliente')->check() ? Auth::guard('cliente')->user()->email : '' }}">
+                                           value="{{ Auth::guard('cliente')->check() ? Auth::guard('cliente')->user()->email : '' }}"
+                                           @if(Auth::guard('cliente')->check()) readonly @endif>
                                     <div id="emailHelp" class="form-text">
                                         @if(Auth::guard('cliente')->check())
                                             Comprando con tu cuenta ({{ Auth::guard('cliente')->user()->email }}).

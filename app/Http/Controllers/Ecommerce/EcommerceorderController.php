@@ -16,6 +16,7 @@ use App\Models\ZonaEnvio;
 use App\Mail\OrderConfirmationMailable;
 use App\Services\MercadoPagoService;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -94,6 +95,12 @@ class EcommerceorderController extends Controller
                     }
                 }
             }
+
+            // 🔒 El comprador SIEMPRE es la cuenta logueada con correo verificado
+            // (ya lo exige el middleware de la ruta): se ignora cualquier email
+            // que venga en el POST, para que no se pueda finalizar la compra a
+            // nombre de otro correo sin verificar con solo editar el request.
+            $emailCustomer = Auth::guard('cliente')->user()->email;
 
             // 🔒 Costo de envío SIEMPRE server-side (el carrito localStorage no es confiable)
             $costoEnvio = 0;

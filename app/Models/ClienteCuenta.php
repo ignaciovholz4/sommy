@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
  * Cuenta de comprador de la tienda online.
  * Usa la misma tabla `clientes` del sistema: un cliente con password puede iniciar sesión.
+ * Tiene que verificar el correo antes de poder finalizar una compra (ver EnsureClienteVerified).
  */
-class ClienteCuenta extends Authenticatable
+class ClienteCuenta extends Authenticatable implements MustVerifyEmailContract
 {
     use Notifiable;
 
@@ -23,4 +25,11 @@ class ClienteCuenta extends Authenticatable
     ];
 
     protected $hidden = ['password', 'remember_token'];
+
+    protected $casts = ['email_verified_at' => 'datetime'];
+
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new \App\Notifications\VerifyClienteEmail());
+    }
 }
