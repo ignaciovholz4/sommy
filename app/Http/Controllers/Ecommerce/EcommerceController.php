@@ -30,9 +30,20 @@ class EcommerceController extends Controller
         $getDataProd->transform(function ($prod) {
             $producto = $prod->producto;
 
+            // Con variantes el precio real es por medida/color, no el precio
+            // base del producto (que ni se usa): se muestra "Desde $" con la
+            // variante más barata que tenga precio cargado.
+            $prod->precio_desde = false;
+            if ($producto->tipo_producto_id == 2) {
+                $minVariante = $producto->combinaciones->where('pventa_variante', '>', 0)->min('pventa_variante');
+                if ($minVariante) {
+                    $prod->precio_desde = true;
+                }
+            }
+
             // precio base
-            $basePrice = $producto->pventa_con_iva;
-            
+            $basePrice = $prod->precio_desde ? $minVariante : $producto->pventa_con_iva;
+
             $displayPrice = $basePrice;
             // precio efectivo con listas
             // $displayPrice = $this->priceListService->getEffectiveSalePrice(
@@ -59,6 +70,7 @@ class EcommerceController extends Controller
 
             $prod->has_offer = $hasOffer;
             $prod->display_price = $displayPrice;
+            $prod->precio_base = $basePrice;
 
             return $prod;
         });

@@ -45,6 +45,9 @@
                     <h3>{{ $product->producto->nombre }}</h3>
                   </div>
 
+                  @if($product->precio_desde)
+                    <span class="d-block" style="font-size:11px;color:#64748b;">Desde</span>
+                  @endif
                   <span class="price">{{ format_money_global($product->display_price) }}</span>
 
                   <div class="text-center">

@@ -95,9 +95,12 @@
             @endphp
             <span class="qty">{{ implode(' · ', $miniSpecs) }}</span><span class="rating"></span>
 
-            @if($product->has_offer && $product->display_price < $product->producto->pventa_con_iva)
+            @if($product->precio_desde)
+              <span class="d-block" style="font-size:11px;color:#64748b;">Desde</span>
+            @endif
+            @if($product->has_offer && $product->display_price < $product->precio_base)
               <div class="price-container">
-                <span class="price original-price text-muted text-decoration-line-through">{{ format_money_global($product->producto->pventa_con_iva) }}</span>
+                <span class="price original-price text-muted text-decoration-line-through">{{ format_money_global($product->precio_base) }}</span>
                 <span class="price effective-price fw-bold">{{ format_money_global($product->display_price) }}</span>
               </div>
             @else

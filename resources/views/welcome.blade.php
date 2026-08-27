@@ -222,6 +222,9 @@
                           </div>
 
                           <div class="text-center mb-2">
+                            @if($product->precio_desde)
+                                <span class="d-block" style="font-size:11px;color:#64748b;">Desde</span>
+                            @endif
                             <span class="fw-bold">${{ number_format($product->display_price, 2, ',', '.') }}</span>
                           </div>
 

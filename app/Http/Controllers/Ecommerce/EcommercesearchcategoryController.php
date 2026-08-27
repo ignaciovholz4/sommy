@@ -49,9 +49,21 @@ class EcommercesearchcategoryController extends Controller
 
         $paginado->setCollection(
             $paginado->getCollection()->map(function ($articulo) use ($conStock) {
+                // Con variantes el precio real es por medida/color, no el precio
+                // base del producto: se muestra "Desde $" con la más barata.
+                $precioDesde = false;
+                $precioBase = $articulo->pventa_con_iva;
+                if ($articulo->tipo_producto_id == 2) {
+                    $minVariante = $articulo->combinaciones->where('pventa_variante', '>', 0)->min('pventa_variante');
+                    if ($minVariante) {
+                        $precioDesde = true;
+                        $precioBase = $minVariante;
+                    }
+                }
+
                 $basePrice = $this->priceListService->getEffectiveSalePrice(
                     $articulo->idarticulo,
-                    $articulo->pventa_con_iva
+                    $precioBase
                 );
 
                 $displayPrice = $basePrice;
@@ -60,7 +72,7 @@ class EcommercesearchcategoryController extends Controller
                 if ($articulo->descuento > 0) {
                     $hasOffer = true;
                     $displayPrice = $basePrice - ($basePrice * ($articulo->descuento / 100));
-                } elseif ($basePrice < $articulo->pventa_con_iva) {
+                } elseif ($basePrice < $precioBase) {
                     $hasOffer = true;
                 }
 
@@ -69,6 +81,8 @@ class EcommercesearchcategoryController extends Controller
                 $obj->total_stock = $conStock->get($articulo->idarticulo)->total_stock ?? 0;
                 $obj->has_offer = $hasOffer;
                 $obj->display_price = $displayPrice;
+                $obj->precio_desde = $precioDesde;
+                $obj->precio_base = $basePrice;
 
                 return $obj;
             })
