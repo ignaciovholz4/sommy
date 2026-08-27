@@ -329,8 +329,8 @@ class ArticuloController extends Controller
             ->addColumn('producto', function ($a) use ($fotos) {
                 $ruta = $fotos->get($a->idarticulo) ?: ($a->imagen ? 'imagenes/articulos/'.$a->imagen : null);
                 $foto = $ruta
-                    ? '<img src="'.asset($ruta).'" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0;flex-shrink:0;">'
-                    : '<div style="width:44px;height:44px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-image text-muted"></i></div>';
+                    ? '<img src="'.asset($ruta).'" alt="" style="width:76px;height:76px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;flex-shrink:0;">'
+                    : '<div style="width:76px;height:76px;border-radius:10px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-image text-muted" style="font-size:1.4rem;"></i></div>';
 
                 $sub = implode(' · ', array_filter([$a->codigo, $a->categoria, $a->marca]));
                 $chip = $a->tipo_producto_id == 2
