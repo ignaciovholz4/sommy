@@ -126,6 +126,9 @@ function anularPedido(id) {
  * Detalle del pedido en modal
  */
 function getDetailPedido(id) {
+    if (typeof adjuntosPanelSetEntidad === 'function') adjuntosPanelSetEntidad('adjuntosPanelPedidoModal', 'pedido_compra', id);
+    if (typeof notasPanelSetEntidad === 'function') notasPanelSetEntidad('notasPanelPedidoModal', 'pedido_compra', id);
+
     fetch(`/compras/pedidos/${id}/detail`)
         .then(res => res.json())
         .then(data => {

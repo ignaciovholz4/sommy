@@ -64,5 +64,9 @@
             Eliminar
         </button>
     </form>
+
+    <div class="mt-4" style="max-width:500px;">
+        @include('adjuntos._panel', ['tipo' => 'presupuesto', 'id' => $presupuesto->idpresupuesto])
+    </div>
 </div>
 @endsection

@@ -412,6 +412,8 @@ function postDevolucion(url, payload, reintentarConCuenta) {
 
 /* ── Detalle de una devolución registrada ── */
 function getDetailDevolucion(iddevolucion) {
+    if (typeof adjuntosPanelSetEntidad === 'function') adjuntosPanelSetEntidad('adjuntosPanelDevolucionModal', 'devolucion', iddevolucion);
+
     fetch(`/devoluciones/detalle/${iddevolucion}`)
         .then(res => res.json())
         .then(data => {

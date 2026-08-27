@@ -134,6 +134,7 @@
                         <label>Notas</label>
                         <textarea id="envio_notas" class="form-control" rows="2" placeholder="Horario de entrega, piso, indicaciones..."></textarea>
                     </div>
+                    @include('adjuntos._panel', ['panelId' => 'adjuntosPanelEnvioModal', 'tipo' => 'envio', 'id' => null])
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
@@ -242,6 +243,7 @@ function nuevoEnvio() {
     $('.campos-alta-envio').show();
     $('#envio_tipo').val('venta').trigger('change');
     $('#tituloModalEnvio').text('Nuevo envío');
+    if (typeof adjuntosPanelSetEntidad === 'function') adjuntosPanelSetEntidad('adjuntosPanelEnvioModal', 'envio', null);
     $('#ModalEnvio').modal('show');
 }
 
@@ -258,6 +260,7 @@ function editarEnvio(btn) {
     $('#envio_tracking').val(e.tracking || '');
     $('#envio_notas').val(e.notas || '');
     $('#tituloModalEnvio').text('Editar envío #' + e.id);
+    if (typeof adjuntosPanelSetEntidad === 'function') adjuntosPanelSetEntidad('adjuntosPanelEnvioModal', 'envio', e.id);
     $('#ModalEnvio').modal('show');
 }
 

@@ -229,6 +229,10 @@
                   <tbody id="dev_stock"></tbody>
                 </table>
             </div>
+
+            <div class="mt-3">
+                @include('adjuntos._panel', ['panelId' => 'adjuntosPanelDevolucionModal', 'tipo' => 'devolucion', 'id' => null])
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar Detalle</button>

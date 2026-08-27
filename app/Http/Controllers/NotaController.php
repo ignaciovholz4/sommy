@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use App\Models\Compra;
 use App\Models\Nota;
+use App\Models\PedidoCompra;
 use App\Models\Proveedor;
 use App\Models\Venta;
 use Illuminate\Http\Request;
@@ -13,9 +14,10 @@ use Illuminate\Support\Facades\Gate;
 
 /**
  * Notas recordatorias: sueltas (tablero general) o pegadas a un
- * cliente/proveedor/venta/compra. No usa morphTo de Eloquent porque esos
- * modelos tienen primary keys no estándar (idcliente, idventa, etc.) —
- * el mapeo tipo -> modelo/label se resuelve a mano en $this->tipos().
+ * cliente/proveedor/venta/compra/pedido de compra. No usa morphTo de
+ * Eloquent porque esos modelos tienen primary keys no estándar (idcliente,
+ * idventa, etc.) — el mapeo tipo -> modelo/label se resuelve a mano en
+ * $this->tipos().
  */
 class NotaController extends Controller
 {
@@ -23,10 +25,11 @@ class NotaController extends Controller
     private function tipos(): array
     {
         return [
-            'cliente'   => [Cliente::class, 'idcliente', fn ($c) => trim(collect([$c->nombre, $c->paterno, $c->materno])->filter()->implode(' '))],
-            'proveedor' => [Proveedor::class, 'idproveedor', fn ($p) => $p->nombre],
-            'venta'     => [Venta::class, 'idventa', fn ($v) => 'Venta #' . ($v->num_folio ?: $v->idventa)],
-            'compra'    => [Compra::class, 'idcompra', fn ($c) => 'Compra #' . ($c->num_folio ?: $c->idcompra)],
+            'cliente'       => [Cliente::class, 'idcliente', fn ($c) => trim(collect([$c->nombre, $c->paterno, $c->materno])->filter()->implode(' '))],
+            'proveedor'     => [Proveedor::class, 'idproveedor', fn ($p) => $p->nombre],
+            'venta'         => [Venta::class, 'idventa', fn ($v) => 'Venta #' . ($v->num_folio ?: $v->idventa)],
+            'compra'        => [Compra::class, 'idcompra', fn ($c) => 'Compra #' . ($c->num_folio ?: $c->idcompra)],
+            'pedido_compra' => [PedidoCompra::class, 'id', fn ($p) => 'Pedido #' . ($p->num_folio ?? $p->id)],
         ];
     }
 
@@ -90,7 +93,7 @@ class NotaController extends Controller
         $request->validate([
             'contenido'           => 'required|string|max:2000',
             'fecha_recordatorio'  => 'nullable|date',
-            'tipo'                => 'nullable|string|in:cliente,proveedor,venta,compra',
+            'tipo'                => 'nullable|string|in:cliente,proveedor,venta,compra,pedido_compra',
             'id'                  => 'nullable|integer',
         ], [
             'contenido.required' => 'Escribí el contenido de la nota.',

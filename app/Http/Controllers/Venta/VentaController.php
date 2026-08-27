@@ -364,11 +364,11 @@ class VentaController extends Controller
         $venta = Venta::findOrFail($idventa);
 
         $request->validate([
-            'archivo' => 'required|file|mimes:jpg,jpeg,png,webp,pdf|max:10240',
+            'archivo' => 'required|file|max:20480',
             'nota'    => 'nullable|string|max:200',
         ], [
-            'archivo.required' => 'Elegí la foto o el PDF del comprobante.',
-            'archivo.mimes'    => 'Solo imágenes (JPG, PNG, WEBP) o PDF.',
+            'archivo.required' => 'Elegí el archivo del comprobante.',
+            'archivo.max'      => 'El archivo no puede pesar más de 20 MB.',
         ]);
 
         $dir = public_path('imagenes/ventas/comprobantes');

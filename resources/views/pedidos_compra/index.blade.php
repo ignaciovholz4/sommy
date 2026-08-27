@@ -227,6 +227,14 @@
                     <h6 class="fw-bold"><i class="fas fa-paperclip me-1"></i> Comprobantes adjuntos</h6>
                     <div id="pedido_adjuntos" class="d-flex flex-wrap" style="gap:10px"></div>
                 </div>
+
+                <div class="mt-3">
+                    @include('adjuntos._panel', ['panelId' => 'adjuntosPanelPedidoModal', 'tipo' => 'pedido_compra', 'id' => null])
+                </div>
+
+                <div class="mt-3">
+                    @include('notas._panel', ['panelId' => 'notasPanelPedidoModal', 'tipo' => 'pedido_compra', 'id' => null])
+                </div>
             </div>
         </div>
     </div>
