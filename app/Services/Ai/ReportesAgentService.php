@@ -11,6 +11,7 @@ use App\Services\Ai\ReportesTools\DeudoresQueryTool;
 use App\Services\Ai\ReportesTools\DevolucionesQueryTool;
 use App\Services\Ai\ReportesTools\GastosQueryTool;
 use App\Services\Ai\ReportesTools\MargenQueryTool;
+use App\Services\Ai\ReportesTools\NotasQueryTool;
 use App\Services\Ai\ReportesTools\StockQueryTool;
 use App\Services\Ai\ReportesTools\TesoreriaQueryTool;
 use App\Services\Ai\ReportesTools\VentasQueryTool;
@@ -125,6 +126,7 @@ class ReportesAgentService
             TesoreriaQueryTool::definition(),
             CuentasPorPagarQueryTool::definition(),
             DevolucionesQueryTool::definition(),
+            NotasQueryTool::definition(),
         ];
     }
 
@@ -141,6 +143,7 @@ class ReportesAgentService
                 'consultar_tesoreria' => new TesoreriaQueryTool(),
                 'consultar_cuentas_por_pagar' => new CuentasPorPagarQueryTool(),
                 'consultar_devoluciones' => new DevolucionesQueryTool(),
+                'consultar_notas' => new NotasQueryTool(),
                 default => null,
             };
 
