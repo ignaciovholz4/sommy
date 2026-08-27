@@ -74,7 +74,7 @@
               <input type="number" id="bannerOrden" name="orden" class="form-control style-input" placeholder="Orden (0 = primero)" min="0">
             </div>
             <hr>
-            <span id="hintDesktop">Imagen para escritorio. Se recorta para llenar un rectángulo apaisado: usá algo cercano a 1400px x 740px (mínimo 900x475).</span><br>
+            <span id="hintDesktop">Imagen horizontal, solo se ve en escritorio. Se recorta para llenar un rectángulo apaisado: usá algo cercano a 1400px x 740px (mínimo 900x475).</span><br>
             <div class="input-group mb-3">
               <input type="file" id="file" name="file" class="form-control" accept="image/*">
               <div class="input-group-append">
@@ -87,7 +87,7 @@
             <div id="previewContainer" class="mt-3 mb-2">
             </div>
             <hr>
-            <span id="hintMovil">Imagen para móvil (opcional: si no la cargás, se usa la de escritorio, recortada). Se recorta para llenar una franja ancha y baja: usá algo cercano a 1000px x 500px (mínimo 700x350).</span><br>
+            <span id="hintMovil">Imagen vertical, solo se ve en celular (opcional: si no la cargás, se usa la de escritorio recortada, se ve peor). Usá algo cercano a 1080px x 1500px (mínimo 700x950).</span><br>
             <div class="input-group mb-3">
               <input type="file" id="movilfile" name="movilfile" class="form-control" accept="image/*">
               <div class="input-group-append">

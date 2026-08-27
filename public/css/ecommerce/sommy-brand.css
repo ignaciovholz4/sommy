@@ -544,6 +544,8 @@ p { line-height: 1.7; }
     object-fit: cover;
     display: block;
 }
+/* Escritorio: se ve la imagen horizontal; la vertical de mobile queda oculta */
+.sommy-banner-media .mobile-img { display: none; }
 .sommy-banner-copy {
     flex: 1;
     display: flex;
@@ -628,7 +630,10 @@ p { line-height: 1.7; }
 .sommy-banner-admin-tip a { color: var(--sm-blue); }
 @media (max-width: 768px) {
     .sommy-banner-slide { flex-direction: column; min-height: 0; }
-    .sommy-banner-media { flex-basis: auto; max-width: 100%; height: 280px; }
+    .sommy-banner-media { flex-basis: auto; max-width: 100%; height: 480px; }
+    /* Mobile: se ve la imagen vertical, la horizontal de escritorio queda oculta */
+    .sommy-banner-media .desktop-img { display: none; }
+    .sommy-banner-media .mobile-img { display: block; }
     .sommy-banner-copy { padding: 28px 24px; text-align: center; }
     .btn-sommy-dark { align-self: center; }
     .sommy-banner-indicators { position: static; width: 100%; margin-top: 14px; }
