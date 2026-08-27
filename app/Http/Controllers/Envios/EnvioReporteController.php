@@ -55,7 +55,7 @@ class EnvioReporteController extends Controller
                 : collect();
 
             $total = $e->order_ecommerce_id ? (float) optional($e->orden)->total_amount : (float) optional($e->venta)->total_con_iva;
-            $pagado = (float) $movimientos->sum('total');
+            $pagado = (float) $movimientos->sum('total_ars');
 
             $entrega = $entregas->get($e->id);
 

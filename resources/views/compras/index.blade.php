@@ -243,14 +243,20 @@
                 @if(optional($c->proveedor)->cuit)<div class="dato"><i class="fas fa-id-card"></i> CUIT {{ $c->proveedor->cuit }}</div>@endif
                 <div class="dato"><i class="fas fa-calendar"></i> {{ \Carbon\Carbon::parse($c->fecha)->format('d/m/Y') }}</div>
                 @if($d['compSuc'])<div class="dato"><i class="fas fa-file-alt"></i> {{ $d['compSuc'] }}</div>@endif
-                @php $pagadoC = (float) $c->movimientos->sum('total'); @endphp
+                @php $pagadoC = (float) $c->movimientos->sum('total_ars'); @endphp
                 @if($pagadoC > 0.009)
                     <div class="monto" style="color:#0d8a4f;">${{ number_format($pagadoC, 2, ',', '.') }} <span style="color:#6E7A96;font-weight:400;font-size:12px;">de ${{ number_format($c->total_con_iva, 2, ',', '.') }}</span></div>
                     <div style="color:#b4552d;font-weight:700;font-size:13px;">Faltan ${{ number_format($c->total_con_iva - $pagadoC, 2, ',', '.') }}</div>
                     <div class="vc-plata" style="margin-top:5px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:7px 10px;font-size:12px;color:#166534;">
                         <b style="display:block;"><i class="fas fa-piggy-bank"></i> Pagado desde</b>
                         @foreach($c->movimientos as $m)
-                            {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}: ${{ number_format($m->total, 0, ',', '.') }}<br>
+                            @php $cod = optional(optional($m->cuenta)->moneda)->codigo ?: 'ARS'; @endphp
+                            {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}:
+                            @if($cod !== 'ARS')
+                                {{ $cod }} {{ number_format($m->total, 0, ',', '.') }} (≈ ${{ number_format($m->total_ars, 0, ',', '.') }})<br>
+                            @else
+                                ${{ number_format($m->total, 0, ',', '.') }}<br>
+                            @endif
                         @endforeach
                     </div>
                 @else
@@ -289,8 +295,13 @@
                 <div class="vc-plata">
                     <b><i class="fas fa-piggy-bank"></i> De dónde salió la plata</b>
                     @foreach($c->movimientos as $m)
+                        @php $cod = optional(optional($m->cuenta)->moneda)->codigo ?: 'ARS'; @endphp
                         {{ optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta' }}:
-                        ${{ number_format($m->total, 2, ',', '.') }}<br>
+                        @if($cod !== 'ARS')
+                            {{ $cod }} {{ number_format($m->total, 2, ',', '.') }} (≈ ${{ number_format($m->total_ars, 2, ',', '.') }})<br>
+                        @else
+                            ${{ number_format($m->total, 2, ',', '.') }}<br>
+                        @endif
                     @endforeach
                 </div>
                 @endif

@@ -148,6 +148,42 @@ class FinanzasDashboardController extends Controller
         $egresosMes   = (float) $delMes->egresos;
         $resultadoMes = round($ingresosMes - $egresosMes, 2);
 
+        // (g) Resultado en moneda extranjera: mismo criterio (ingresos - egresos de
+        // tesorería) que el de arriba, pero sin convertir, ya que estos montos ya
+        // están en su moneda nativa. "Acumulado" es el histórico completo (no solo
+        // el mes) porque lo que se busca es cuánto se viene ganando/gastando en esa
+        // moneda desde que se empezó a operar con ella, no solo este mes.
+        $resultadoExtranjero = function ($desde = null) {
+            $q = DB::table('movimientos as m')
+                ->join('cuentas as c', 'c.id', '=', 'm.cuenta_id')
+                ->join('monedas as mo', 'mo.id', '=', 'c.moneda_id')
+                ->where('mo.codigo', '!=', 'ARS');
+            if ($desde) {
+                $q->where('m.fecha', '>=', $desde);
+            }
+            return $q->groupBy('mo.codigo', 'mo.simbolo')
+                ->selectRaw("mo.codigo, mo.simbolo,
+                    COALESCE(SUM(CASE WHEN m.tipo = 'ingreso' THEN m.total ELSE 0 END), 0) as ingresos,
+                    COALESCE(SUM(CASE WHEN m.tipo = 'egreso' THEN m.total ELSE 0 END), 0) as egresos")
+                ->get()
+                ->keyBy('codigo');
+        };
+
+        $extranjeroMes  = $resultadoExtranjero($inicioMes);
+        $extranjeroTodo = $resultadoExtranjero();
+
+        $resultadoExtranjeroMonedas = $extranjeroTodo->map(function ($r, $codigo) use ($extranjeroMes) {
+            $mes = $extranjeroMes->get($codigo);
+            return [
+                'codigo'            => $r->codigo,
+                'simbolo'           => $r->simbolo,
+                'ingresos_mes'      => round((float) ($mes->ingresos ?? 0), 2),
+                'egresos_mes'       => round((float) ($mes->egresos ?? 0), 2),
+                'resultado_mes'     => round((float) ($mes->ingresos ?? 0) - (float) ($mes->egresos ?? 0), 2),
+                'resultado_total'   => round((float) $r->ingresos - (float) $r->egresos, 2),
+            ];
+        })->values();
+
         return view('finanzas.dashboard', [
             'mesesLabels'        => $mesesLabels,
             'serieIngresos'      => $serieIngresos,
@@ -164,6 +200,7 @@ class FinanzasDashboardController extends Controller
             'ingresosMes'        => $ingresosMes,
             'egresosMes'         => $egresosMes,
             'resultadoMes'       => $resultadoMes,
+            'resultadoExtranjeroMonedas' => $resultadoExtranjeroMonedas,
         ]);
     }
 }

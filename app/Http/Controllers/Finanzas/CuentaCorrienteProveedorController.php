@@ -105,7 +105,7 @@ class CuentaCorrienteProveedorController extends Controller
             ->whereNotIn('idcompra', ProveedorCcMovimiento::where('proveedor_id', $proveedorId)->whereNotNull('compra_id')->pluck('compra_id'))
             ->orderByDesc('fecha')->get()
             ->map(function ($c) {
-                $c->pagado = (float) $c->movimientos->sum('total');
+                $c->pagado = (float) $c->movimientos->sum('total_ars');
                 $c->pendiente = max((float) $c->total_con_iva - $c->pagado, 0);
                 return $c;
             });

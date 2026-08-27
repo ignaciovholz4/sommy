@@ -122,8 +122,10 @@ class AdminController extends Controller
         $presupuestosPendientes = DB::table('presupuestos')->whereIn('estado', ['borrador', 'confirmado'])->count();
         $presupuestosMonto      = DB::table('presupuestos')->whereIn('estado', ['borrador', 'confirmado'])->sum('total_con_iva');
 
+        // total_ars: monto ya convertido a pesos (para cuentas en USD, total * cotizacion).
+        // Sumar "total" a secas mezclaría dólares y pesos como si fueran la misma moneda.
         $flujoCaja  = DB::table('movimientos')->whereDate('fecha', $date_now)
-            ->selectRaw("tipo, ROUND(SUM(efectivo),2) as ef, ROUND(SUM(bancos),2) as bco, ROUND(SUM(tarjetas),2) as tar, ROUND(SUM(total),2) as total")
+            ->selectRaw("tipo, ROUND(SUM(efectivo),2) as ef, ROUND(SUM(bancos),2) as bco, ROUND(SUM(tarjetas),2) as tar, ROUND(SUM(total_ars),2) as total")
             ->groupBy('tipo')->get()->keyBy('tipo');
         $ingresoHoy   = $flujoCaja->get('ingreso');
         $egresoHoy    = $flujoCaja->get('egreso');
@@ -132,12 +134,12 @@ class AdminController extends Controller
         // Pendientes globales (A cobrar / A pagar)
         $ventas = Venta::with('movimientos')->where('estado', '!=', 'anulada')->get();
         $totalVentas      = $ventas->sum('total_con_iva');
-        $ingresadoVentas  = $ventas->sum(fn($v) => $v->movimientos->sum('total'));
+        $ingresadoVentas  = $ventas->sum(fn($v) => $v->movimientos->sum('total_ars'));
         $pendienteVentas  = $totalVentas - $ingresadoVentas;
 
         $compras = Compra::with('movimientos')->where('estado', '!=', 'anulada')->get();
         $totalCompras     = $compras->sum('total_con_iva');
-        $pagadoCompras    = $compras->sum(fn($c) => $c->movimientos->sum('total'));
+        $pagadoCompras    = $compras->sum(fn($c) => $c->movimientos->sum('total_ars'));
         $pendienteCompras = $totalCompras - $pagadoCompras;
 
         return view('admin.admin.index', [

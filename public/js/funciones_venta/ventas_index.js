@@ -157,7 +157,10 @@ function getDetailVenta(id) {
             pagosCont.innerHTML = "";
             if (data.pagos && data.pagos.length > 0) {
                 data.pagos.forEach(p => {
-                    pagosCont.innerHTML += `<b>${p.cuenta}</b>: $${p.monto} <span style="color:#6E7A96;">(${p.fecha})</span><br>`;
+                    const montoTxt = p.moneda && p.moneda !== 'ARS'
+                        ? `${p.moneda} ${p.monto} <span style="color:#6E7A96;">(≈ $${p.monto_ars} ARS)</span>`
+                        : `$${p.monto}`;
+                    pagosCont.innerHTML += `<b>${p.cuenta}</b>: ${montoTxt} <span style="color:#6E7A96;">(${p.fecha})</span><br>`;
                 });
                 pagosWrap.style.display = "";
             } else {

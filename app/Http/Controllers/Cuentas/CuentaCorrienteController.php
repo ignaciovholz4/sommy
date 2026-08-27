@@ -86,7 +86,7 @@ class CuentaCorrienteController extends Controller
             ->where('estado', 'a cobrar')
             ->orderByDesc('fecha')->get()
             ->map(function ($v) {
-                $v->cobrado = (float) $v->movimientos->sum('total');
+                $v->cobrado = (float) $v->movimientos->sum('total_ars');
                 $v->pendiente = max((float) $v->total_con_iva - $v->cobrado, 0);
                 return $v;
             });

@@ -35,7 +35,7 @@ class CompraController extends Controller
     public function index()
     {
         // Tablero por estados (mismo patrón que el de ventas): a pagar / pagadas / anuladas
-        $base = fn () => Compra::with(['proveedor', 'tipoComprobante', 'sucursal', 'movimientos', 'adjuntos']);
+        $base = fn () => Compra::with(['proveedor', 'tipoComprobante', 'sucursal', 'movimientos.cuenta.moneda', 'adjuntos']);
 
         $aPagar = $base()->where('estado', 'a pagar')
             ->orderByDesc('fecha')->orderByDesc('idcompra')
@@ -356,16 +356,24 @@ class CompraController extends Controller
             'detalles.priceList',
             'tipoComprobante',
             'adjuntos',
-            'movimientos.cuenta'
+            'movimientos.cuenta.moneda'
         ])->findOrFail($idcompra);
 
-        // Pagos realizados: a qué caja/banco fue cada uno, y cuánto falta
-        $pagado = (float) $compra->movimientos->sum('total');
-        $pagos = $compra->movimientos->map(fn ($m) => [
-            'fecha'  => \Carbon\Carbon::parse($m->fecha)->format('d/m/Y H:i'),
-            'cuenta' => optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta',
-            'monto'  => number_format($m->total, 2, ',', '.'),
-        ])->values();
+        // Pagos realizados: a qué caja/banco fue cada uno, y cuánto falta.
+        // total_ars es el monto ya convertido a pesos (para cuentas en USD, total * cotizacion);
+        // sumar total crudo mezclaría dólares y pesos como si fueran la misma moneda.
+        $pagado = (float) $compra->movimientos->sum('total_ars');
+        $pagos = $compra->movimientos->map(function ($m) {
+            $moneda = optional($m->cuenta)->moneda;
+            $codigo = $moneda->codigo ?? 'ARS';
+            return [
+                'fecha'  => \Carbon\Carbon::parse($m->fecha)->format('d/m/Y H:i'),
+                'cuenta' => optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta',
+                'monto'  => number_format($m->total, 2, ',', '.'),
+                'moneda' => $codigo,
+                'monto_ars' => $codigo !== 'ARS' ? number_format($m->total_ars, 2, ',', '.') : null,
+            ];
+        })->values();
 
         $detalles = $compra->detalles->map(function($d) {
             return [

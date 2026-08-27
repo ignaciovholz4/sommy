@@ -287,16 +287,24 @@ class VentaController extends Controller
             'detalles.combinacion',
             'detalles.priceList',
             'tipoComprobante',
-            'movimientos.cuenta'
+            'movimientos.cuenta.moneda'
         ])->findOrFail($idventa);
 
-        // Cobros recibidos: a qué caja/banco entró cada uno, y cuánto falta
-        $cobrado = (float) $venta->movimientos->sum('total');
-        $pagos = $venta->movimientos->map(fn ($m) => [
-            'fecha'  => \Carbon\Carbon::parse($m->fecha)->format('d/m/Y H:i'),
-            'cuenta' => optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta',
-            'monto'  => number_format($m->total, 2, ',', '.'),
-        ])->values();
+        // Cobros recibidos: a qué caja/banco entró cada uno, y cuánto falta.
+        // total_ars ya viene convertido a pesos (para cuentas en USD, total * cotizacion);
+        // sumar total crudo mezclaría dólares y pesos como si fueran la misma moneda.
+        $cobrado = (float) $venta->movimientos->sum('total_ars');
+        $pagos = $venta->movimientos->map(function ($m) {
+            $moneda = optional($m->cuenta)->moneda;
+            $codigo = $moneda->codigo ?? 'ARS';
+            return [
+                'fecha'  => \Carbon\Carbon::parse($m->fecha)->format('d/m/Y H:i'),
+                'cuenta' => optional($m->cuenta ?? optional($m->cajaApertura)->cuenta)->nombre ?: 'Cuenta',
+                'monto'  => number_format($m->total, 2, ',', '.'),
+                'moneda' => $codigo,
+                'monto_ars' => $codigo !== 'ARS' ? number_format($m->total_ars, 2, ',', '.') : null,
+            ];
+        })->values();
 
         $detalles = $venta->detalles->map(function($d) {
             return [
