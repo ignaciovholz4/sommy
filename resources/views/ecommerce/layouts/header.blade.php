@@ -344,6 +344,7 @@
         </div>
         <ul id="list-shopping-cart" class="list-group list-group-flush mb-3"></ul>
         <div id="div-content-button-finish"></div>
+        <div id="cart-related-products"></div>
     </div>
 </div>
 

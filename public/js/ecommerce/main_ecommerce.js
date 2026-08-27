@@ -7,6 +7,7 @@ window.showQuantityHeaderProductsAdded = document.querySelector('.show-total-hea
 window.divShowEmptyCart = document.querySelector('#div-show-empty-cart') || null;
 window.showShoppingCart = document.querySelector('#list-shopping-cart') || null;
 window.divContentButtonFinish = document.querySelector('#div-content-button-finish') || null;
+window.cartRelatedProductsContainer = document.querySelector('#cart-related-products') || null;
 /***************************************************************/
 
 /**************** INICIALIZACIONES DE VISTA ********************/
@@ -126,6 +127,7 @@ window.fnShowListCartProduct = () => {
     `;
 
   window.fnShowQuantityProduct(quantityProduct);
+  window.fnShowRelatedProducts();
 };
 
 window.fnShowQuantityProduct = (quantity) => {
@@ -147,7 +149,115 @@ window.fnShowContentCartEmpty = () => {
         <p class="hint">Todavía no agregaste productos.</p>
       </div>
     `;
+
+  if (window.cartRelatedProductsContainer) {
+    window.cartRelatedProductsContainer.innerHTML = '';
+  }
 };
+
+/**************** PRODUCTOS RELACIONADOS EN EL CARRITO ***********/
+window.fnShowRelatedProducts = () => {
+  if (!window.cartRelatedProductsContainer) return;
+
+  const cart = window.fnListCartProduct();
+  if (cart.length === 0) {
+    window.cartRelatedProductsContainer.innerHTML = '';
+    return;
+  }
+
+  const ids = [...new Set(cart.map(prod => prod.productId))];
+
+  fetch(`/Ecommercerelacionados?ids=${ids.join(',')}`)
+    .then(res => res.json())
+    .then(data => {
+      const productos = data.productos || [];
+      if (productos.length === 0) {
+        window.cartRelatedProductsContainer.innerHTML = '';
+        return;
+      }
+
+      const esc = (str) => String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+
+      const cards = productos.map(p => {
+        const desdeLabel = p.precio_desde ? `<div class="sommy-related-desde">Desde</div>` : '';
+        const thumb = p.imagen
+          ? `<img src="${esc(p.imagen)}" alt="" class="sommy-related-thumb">`
+          : `<div class="sommy-related-thumb sommy-related-thumb--ph"><i class="fa-solid fa-feather" aria-hidden="true"></i></div>`;
+
+        // Solo se agrega directo si es producto simple (sin variantes) y tiene stock.
+        const puedeAgregarDirecto = p.tipo_producto_id === 1 && p.stock > 0;
+        const boton = puedeAgregarDirecto
+          ? `<button type="button" class="sommy-related-add" data-related-id="${p.id}">Agregar</button>`
+          : `<a href="/producto/${esc(p.slug)}" class="sommy-related-add sommy-related-add--link">Ver producto</a>`;
+
+        return `
+          <div class="sommy-related-card">
+            ${thumb}
+            <div class="sommy-related-info">
+              <div class="sommy-related-name">${esc(p.nombre)}</div>
+              ${desdeLabel}
+              <div class="sommy-related-price">${window.fnFormatMoney(p.precio)}</div>
+            </div>
+            ${boton}
+          </div>
+        `;
+      }).join('');
+
+      window.cartRelatedProductsContainer.innerHTML = `
+        <div class="sommy-related-wrap">
+          <div class="sommy-related-title">También te puede interesar</div>
+          ${cards}
+        </div>
+      `;
+
+      window.cartRelatedProductsContainer.querySelectorAll('.sommy-related-add[data-related-id]').forEach(btn => {
+        const producto = productos.find(p => String(p.id) === btn.getAttribute('data-related-id'));
+        if (producto) {
+          btn.addEventListener('click', () => window.fnAddRelatedToCart(producto));
+        }
+      });
+    })
+    .catch(() => {
+      window.cartRelatedProductsContainer.innerHTML = '';
+    });
+};
+
+// Agrega un producto simple (sin variantes) recomendado desde el carrito
+window.fnAddRelatedToCart = (product) => {
+  const cart = window.fnListCartProduct();
+  const claveCart = String(product.id);
+  const existente = cart.find(prod => prod.claveCart === claveCart);
+
+  if (existente) {
+    existente.cant += 1;
+    existente.total = existente.cant * existente.priceSale;
+    existente.sinStock = window.fnCheckStockProduct(product.stock, existente.cant);
+  } else {
+    cart.push({
+      claveCart: claveCart,
+      name: product.nombre,
+      productId: product.id,
+      original_price: product.precio,
+      priceSale: product.precio,
+      cant: 1,
+      total: product.precio,
+      rowProdVariant: null,
+      tipoProductoId: 1,
+      stockProduct: product.stock,
+      display_price: product.precio,
+      has_offer: product.has_offer || false,
+      image: product.imagen,
+      sinStock: window.fnCheckStockProduct(product.stock, 1)
+    });
+  }
+
+  window.fnSaveCartProduct(cart);
+  window.fnShowListCartProduct();
+  window.fnMessageToastrSuccess("Se agregó con éxito el producto al carrito", "Éxito!");
+};
+/***************************************************************/
 
 window.fnDeleteProd = (product) => {
   const list = window.fnListCartProduct().filter(item => item.claveCart !== product.claveCart);

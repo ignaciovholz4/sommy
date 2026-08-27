@@ -131,6 +131,81 @@ class EcommerceproductController extends Controller
     }
 
     /**
+     * Productos relacionados a recomendar para agregar al carrito, dado un
+     * listado de ids de productos que ya están en el carrito (localStorage).
+     * GET /Ecommercerelacionados?ids=1,2,3
+     */
+    public function relacionados(Request $request)
+    {
+        $idsCarrito = collect(explode(',', (string) $request->query('ids', '')))
+            ->map(fn ($v) => (int) trim($v))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($idsCarrito->isEmpty()) {
+            return response()->json(['productos' => []]);
+        }
+
+        $stockController = new StockController();
+        $conStock = $stockController->getProductosConStock()->keyBy('producto_id');
+
+        $idsRelacionados = DB::table('producto_relacionados')
+            ->whereIn('idarticulo', $idsCarrito)
+            ->pluck('relacionado_id')
+            ->unique()
+            ->diff($idsCarrito)
+            ->values();
+
+        if ($idsRelacionados->isEmpty()) {
+            return response()->json(['productos' => []]);
+        }
+
+        $productos = Articulo::whereIn('idarticulo', $idsRelacionados)
+            ->where('estado', 'Activo')
+            ->whereIn('idarticulo', $conStock->keys())
+            ->with(['imagenes' => fn ($q) => $q->whereNull('combinacion_id')->orderByDesc('principal')->orderBy('orden')])
+            ->limit(8)
+            ->get()
+            ->map(function ($p) use ($conStock) {
+                $precioDesde = false;
+                $precio = $p->pventa_con_iva;
+
+                if ($p->tipo_producto_id == 2) {
+                    $minVariante = $p->combinaciones()->where('pventa_variante', '>', 0)->min('pventa_variante');
+                    if ($minVariante) {
+                        $precioDesde = true;
+                        $precio = $minVariante;
+                    }
+                }
+
+                $displayPrice = $precio;
+                $hasOffer = false;
+                if ($p->descuento > 0) {
+                    $hasOffer = true;
+                    $displayPrice = $precio - ($precio * ($p->descuento / 100));
+                }
+
+                $foto = $p->imagenes->first();
+
+                return [
+                    'id' => $p->idarticulo,
+                    'nombre' => $p->nombre,
+                    'slug' => $p->slug,
+                    'precio' => (float) $displayPrice,
+                    'precio_desde' => $precioDesde,
+                    'has_offer' => $hasOffer,
+                    'imagen' => $foto ? asset($foto->path) : ($p->imagen ? asset('imagenes/articulos/' . $p->imagen) : null),
+                    'tipo_producto_id' => (int) $p->tipo_producto_id,
+                    'stock' => (int) ($conStock->get($p->idarticulo)->total_stock ?? 0),
+                ];
+            })
+            ->values();
+
+        return response()->json(['productos' => $productos]);
+    }
+
+    /**
      * Tabla de especificaciones del colchón (etiqueta => valor legible), solo campos cargados.
      */
     private function armarEspecificaciones($producto): array

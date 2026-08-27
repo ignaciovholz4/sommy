@@ -930,6 +930,81 @@ body.has-overlay-header .ec-header:not(.scrolled) .ec-logo .logo-blanco {
     margin: 0;
 }
 
+/* ── Productos relacionados (offcanvas del carrito) ──────────── */
+.sommy-related-wrap {
+    border-top: 1px solid var(--sm-border);
+    padding-top: 16px;
+    margin-top: 8px;
+}
+.sommy-related-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--sm-navy);
+    margin-bottom: 10px;
+}
+.sommy-related-card {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--sm-border);
+}
+.sommy-related-card:last-child { border-bottom: none; }
+.sommy-related-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid var(--sm-border);
+    background: #fff;
+    flex-shrink: 0;
+}
+.sommy-related-thumb--ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sm-navy);
+    font-size: 15px;
+}
+.sommy-related-info { flex: 1; min-width: 0; }
+.sommy-related-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--sm-navy);
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+.sommy-related-desde {
+    font-size: 10.5px;
+    color: var(--sm-text-3);
+}
+.sommy-related-price {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 13.5px;
+    color: var(--sm-navy);
+}
+.sommy-related-add {
+    border: 1px solid var(--sm-navy);
+    background: transparent;
+    color: var(--sm-navy);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s, color .15s;
+}
+.sommy-related-add:hover { background: var(--sm-navy); color: #fff; }
+.sommy-related-add--link { text-align: center; }
+
 /* Miniatura en el checkout */
 .sommy-order-thumb {
     width: 64px;

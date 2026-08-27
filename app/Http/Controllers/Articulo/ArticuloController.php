@@ -234,6 +234,9 @@ class ArticuloController extends Controller
                 $this->autogenerarSkusCombinaciones($articulo->idarticulo);
             }
 
+            // ✅ GUARDAR PRODUCTOS RELACIONADOS
+            $this->sincronizarRelacionados($articulo->idarticulo, (array) $request->input('relacionados', []));
+
             DB::commit();
 
             return response()->json([
@@ -268,6 +271,7 @@ class ArticuloController extends Controller
         $tipoProducto = DB::table('tipo_producto')->where('status', '=', 1)->get();
         $iva          = DB::table('iva')->get();
         $proveedores  = DB::table('proveedores')->where('estado', '!=', 'Inactivo')->orderBy('nombre')->get();
+        $productosDisponibles = Articulo::where('estado', 'Activo')->orderBy('nombre')->get(['idarticulo', 'nombre']);
 
         /******************************* */
         $getVariacion = null;
@@ -285,6 +289,8 @@ class ArticuloController extends Controller
             'tiposColchon' => Articulo::TIPOS_COLCHON,
             'firmezas'     => Articulo::FIRMEZAS,
             'plazasOpts'   => Articulo::PLAZAS,
+            'productosDisponibles' => $productosDisponibles,
+            'relacionadosIds' => [],
         ]);
     }
 
@@ -700,6 +706,8 @@ class ArticuloController extends Controller
                 $this->autogenerarSkusCombinaciones($articulo->idarticulo);
             }
 
+            // ✅ GUARDAR PRODUCTOS RELACIONADOS
+            $this->sincronizarRelacionados($articulo->idarticulo, (array) $request->input('relacionados', []));
 
             DB::commit();
 
@@ -996,6 +1004,16 @@ class ArticuloController extends Controller
 
         $proveedores = DB::table('proveedores')->where('estado', '!=', 'Inactivo')->orderBy('nombre')->get();
 
+        $productosDisponibles = Articulo::where('estado', 'Activo')
+            ->where('idarticulo', '!=', $id)
+            ->orderBy('nombre')
+            ->get(['idarticulo', 'nombre']);
+
+        $relacionadosIds = DB::table('producto_relacionados')
+            ->where('idarticulo', $id)
+            ->pluck('relacionado_id')
+            ->all();
+
         return view('almacen.articulo.edit', [
             'imagenesGaleria' => $imagenesGaleria,
             'product'      => $product,
@@ -1012,6 +1030,8 @@ class ArticuloController extends Controller
             'tiposColchon' => Articulo::TIPOS_COLCHON,
             'firmezas'     => Articulo::FIRMEZAS,
             'plazasOpts'   => Articulo::PLAZAS,
+            'productosDisponibles' => $productosDisponibles,
+            'relacionadosIds' => $relacionadosIds,
         ]);
     }
     /**
@@ -1527,6 +1547,29 @@ class ArticuloController extends Controller
             ->each(function ($comb) {
                 $comb->update(['sku' => 'V' . str_pad($comb->idcombinacion, 12, '0', STR_PAD_LEFT)]);
             });
+    }
+
+    // ✅ Productos relacionados: la relación es simétrica (si A recomienda B, B también recomienda A)
+    private function sincronizarRelacionados(int $articuloId, array $ids): void
+    {
+        $ids = collect($ids)
+            ->map(fn ($v) => (int) $v)
+            ->filter(fn ($v) => $v > 0 && $v !== $articuloId)
+            ->unique()
+            ->values();
+
+        DB::table('producto_relacionados')
+            ->where('idarticulo', $articuloId)
+            ->orWhere('relacionado_id', $articuloId)
+            ->delete();
+
+        $now = now();
+        foreach ($ids as $rid) {
+            DB::table('producto_relacionados')->insert([
+                ['idarticulo' => $articuloId, 'relacionado_id' => $rid, 'created_at' => $now, 'updated_at' => $now],
+                ['idarticulo' => $rid, 'relacionado_id' => $articuloId, 'created_at' => $now, 'updated_at' => $now],
+            ]);
+        }
     }
 
 }

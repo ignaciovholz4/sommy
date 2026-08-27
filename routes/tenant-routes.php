@@ -68,6 +68,7 @@ Route::get('/producto/{slug}', [EcommerceproductController::class, 'showBySlug']
 Route::get('/categoria/{slug}', [EcommercecategoryController::class, 'showBySlug'])->name('ecommerce.categoria');
 Route::get('/productos', [EcommercecategoryController::class, 'todos'])->name('ecommerce.catalogo');
 Route::get('/buscar', [EcommercesearchcategoryController::class, 'index'])->name('ecommerce.buscar');
+Route::get('/Ecommercerelacionados', [EcommerceproductController::class, 'relacionados'])->name('ecommerce.relacionados');
 
 // Rutas viejas por ID → redirect 301 a la URL con slug
 Route::get('/Ecommercecategory/{id}', function ($id) {

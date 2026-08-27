@@ -147,4 +147,10 @@ class Articulo extends Model
     {
         return $this->hasMany(ProductoImagen::class, 'producto_id', 'idarticulo')->orderBy('orden');
     }
+
+    // Productos que se recomiendan junto a este (carrito, ficha de producto)
+    public function relacionados()
+    {
+        return $this->belongsToMany(Articulo::class, 'producto_relacionados', 'idarticulo', 'relacionado_id');
+    }
 }

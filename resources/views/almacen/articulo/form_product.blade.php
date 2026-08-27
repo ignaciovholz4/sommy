@@ -249,8 +249,22 @@
                         </div>
                     </div>
                     <hr>
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <label for="relacionados-select">Productos relacionados <small class="text-muted">(se recomiendan al agregar este producto al carrito)</small></label>
+                            <select name="relacionados[]" id="relacionados-select" class="form-control" multiple>
+                                @foreach($productosDisponibles ?? [] as $p)
+                                    <option value="{{ $p->idarticulo }}"
+                                        {{ in_array($p->idarticulo, $relacionadosIds ?? []) ? 'selected' : '' }}>
+                                        {{ $p->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <hr>
                 </div>
-                
+
                 <!-- seguir incorporando -->
 
                 <div class="col-sm-12">
@@ -741,6 +755,15 @@ document.addEventListener("DOMContentLoaded", function () {
         function validarNumeros(e) {
             e.target.value = e.target.value.replace(/[^0-9]/g, ''); // solo números
         }
+    });
+</script>
+
+<script>
+    $(document).ready(function() {
+        $('#relacionados-select').select2({
+            placeholder: 'Buscar productos para recomendar...',
+            width: '100%'
+        });
     });
 </script>
 @include('partials.alta_rapida', ['arPrefijo' => 'qprovProd', 'arTitulo' => 'Crear proveedor rápido', 'arRuta' => route('quick_create_supplier'), 'arSelect' => 'proveedor-select', 'arKey' => 'supplier', 'arPk' => 'idproveedor'])
