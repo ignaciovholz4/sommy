@@ -826,6 +826,15 @@ p { line-height: 1.7; }
     .sommy-hero-illus { max-width: 420px; margin: 0 auto; }
 }
 
+/* Variante sin ilustración: todo centrado en una sola columna */
+.sommy-hero--centrado .sommy-hero-inner {
+    display: block;
+    max-width: 720px;
+    text-align: center;
+}
+.sommy-hero--centrado .sub { margin-left: auto; margin-right: auto; }
+.sommy-hero--centrado .btn-row { justify-content: center; }
+
 /* ── Ilustración institucional en heros ───────────────────────── */
 .sommy-page-hero-illus {
     max-width: 380px;

@@ -9,27 +9,22 @@
     <!--START SECCION BANNER-->
     @if($getDataBanner->isEmpty())
     {{-- Portada por defecto: se reemplaza en cuanto se carga un banner desde /banner --}}
-    <section class="sommy-hero">
+    <section class="sommy-hero sommy-hero--centrado">
         <div class="sommy-hero-inner">
-            <div>
-                <h1 data-aos="fade-up">Dormí liviano.<br>Despertá mejor.</h1>
-                <p class="sub" data-aos="fade-up" data-aos-delay="150">Distribuimos colchones directo de fabrica, y tenemos todo lo que tu habitación necesita: colchones, almohadas, sommiers y sabanas para que cada noche sea especial.</p>
-                <div class="btn-row" data-aos="fade-up" data-aos-delay="300">
-                    <a href="#productos" class="btn-sommy-dark">Ver productos</a>
-                    @if(!empty($arrayEmpresa['phone']))
-                    <a href="https://wa.me/{{ preg_replace('/\D/', '', $arrayEmpresa['whatsapp']) }}" target="_blank" rel="noopener noreferrer" class="btn-sommy-whatsapp">
-                        <i class="fa-brands fa-whatsapp"></i> Asesorate
-                    </a>
-                    @endif
-                </div>
-                <p class="sommy-hero-admin-tip">
-                    <i class="fa-solid fa-circle-info me-1"></i>
-                    Esta es la portada por defecto. Cargá una imagen y un texto propio desde <a href="{{ route('banner.index') }}">Banners</a>.
-                </p>
+            <h1 data-aos="fade-up">Dormí liviano.<br>Despertá mejor.</h1>
+            <p class="sub" data-aos="fade-up" data-aos-delay="150">Distribuimos colchones directo de fabrica, y tenemos todo lo que tu habitación necesita: colchones, almohadas, sommiers y sabanas para que cada noche sea especial.</p>
+            <div class="btn-row" data-aos="fade-up" data-aos-delay="300">
+                <a href="#productos" class="btn-sommy-dark">Ver productos</a>
+                @if(!empty($arrayEmpresa['phone']))
+                <a href="https://wa.me/{{ preg_replace('/\D/', '', $arrayEmpresa['whatsapp']) }}" target="_blank" rel="noopener noreferrer" class="btn-sommy-whatsapp">
+                    <i class="fa-brands fa-whatsapp"></i> Asesorate
+                </a>
+                @endif
             </div>
-            <div class="sommy-hero-illus">
-                <img src="{{ asset('imagenes/marca/sommy-logo-magia.png') }}" alt="Sommy">
-            </div>
+            <p class="sommy-hero-admin-tip">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                Esta es la portada por defecto. Cargá una imagen y un texto propio desde <a href="{{ route('banner.index') }}">Banners</a>.
+            </p>
         </div>
     </section>
     @else
