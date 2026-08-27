@@ -273,6 +273,10 @@ Route::post('notas', 'NotaController@store')->name('notas.store')->middleware(['
 Route::post('notas/{id}/completar', 'NotaController@completar')->name('notas.completar')->middleware(['auth','verified']);
 Route::delete('notas/{id}', 'NotaController@destroy')->name('notas.destroy')->middleware(['auth','verified']);
 
+/** ADJUNTOS GENÉRICOS (remitos/comprobantes/cualquier archivo, sin borrado) */
+Route::get('adjuntos/lista', 'AdjuntoController@lista')->name('adjuntos.lista')->middleware(['auth','verified']);
+Route::post('adjuntos', 'AdjuntoController@store')->name('adjuntos.store')->middleware(['auth','verified']);
+
 /** SEGURIDAD DE LA CUENTA: verificacion en dos pasos (2FA), opt-in por usuario */
 Route::middleware(['auth','verified'])->prefix('mi-perfil/seguridad')->group(function () {
     Route::get('/', [\App\Http\Controllers\Auth\TwoFactorSettingsController::class, 'show'])->name('two-factor.settings');

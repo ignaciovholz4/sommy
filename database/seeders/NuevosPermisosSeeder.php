@@ -69,6 +69,8 @@ class NuevosPermisosSeeder extends Seeder
             ['slug' => 'ventas.cc.movimiento',    'name' => 'registrar movimientos de cuenta corriente de clientes', 'description' => 'Puede registrar cargos/pagos en la cuenta corriente de un cliente'],
             // Notas recordatorias
             ['slug' => 'notas.index', 'name' => 'usar notas recordatorias',                          'description' => 'Puede ver, crear, tildar y borrar notas recordatorias (generales o pegadas a un cliente/proveedor/venta/compra)'],
+            // Adjuntos genéricos
+            ['slug' => 'adjuntos.index', 'name' => 'subir y ver adjuntos',                           'description' => 'Puede subir y ver remitos/comprobantes/archivos pegados a una compra, venta, presupuesto, devolución, envío o pedido de compra'],
             // Inversores
             ['slug' => 'inversores.index',      'name' => 'ver inversores',                          'description' => 'Puede ver la lista de inversores, su saldo y su historial de movimientos'],
             ['slug' => 'inversores.crud',       'name' => 'crear/editar/eliminar inversores',        'description' => 'Puede dar de alta, editar y eliminar inversores'],

@@ -100,6 +100,7 @@ function confirmarCuentaCompra(idcompra, cuentaId) {
 // Función para mostrar detalle de compra en modal
 function getDetailCompra(id) {
     if (typeof notasPanelSetEntidad === 'function') notasPanelSetEntidad('notasPanelCompraModal', 'compra', id);
+    if (typeof adjuntosPanelSetEntidad === 'function') adjuntosPanelSetEntidad('adjuntosPanelCompraModal', 'compra', id);
 
     fetch(`/compras/${id}/detail`)
         .then(res => res.json())
@@ -164,29 +165,6 @@ function getDetailCompra(id) {
                 pagosWrapC.style.display = "none";
             }
 
-            // Comprobantes adjuntos (remitos, facturas)
-            const adjWrapper = document.querySelector("#details_adjuntos_wrapper");
-            const adjContainer = document.querySelector("#details_adjuntos");
-            adjContainer.innerHTML = "";
-            if (data.adjuntos && data.adjuntos.length > 0) {
-                data.adjuntos.forEach(a => {
-                    if (a.es_imagen) {
-                        adjContainer.innerHTML += `
-                            <a href="${a.url}" target="_blank" title="${a.name}">
-                                <img src="${a.url}" alt="${a.name}"
-                                     style="width:90px; height:90px; object-fit:cover; border-radius:8px; border:1px solid #dee2e6">
-                            </a>`;
-                    } else {
-                        adjContainer.innerHTML += `
-                            <a href="${a.url}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-file-pdf text-danger"></i> ${a.name}
-                            </a>`;
-                    }
-                });
-                adjWrapper.style.display = "";
-            } else {
-                adjWrapper.style.display = "none";
-            }
 
             // Mostrar modal
             $('#ModalDetalleCompra').modal('show');

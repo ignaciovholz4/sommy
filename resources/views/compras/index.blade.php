@@ -405,9 +405,8 @@
                     <div id="details_c_pagos" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:10px 14px;font-size:13.5px;color:#166534;"></div>
                 </div>
 
-                <div id="details_adjuntos_wrapper" class="mt-3" style="display:none">
-                    <h6 class="fw-bold"><i class="fas fa-paperclip me-1"></i> Comprobantes adjuntos</h6>
-                    <div id="details_adjuntos" class="d-flex flex-wrap" style="gap:10px"></div>
+                <div class="mt-3">
+                    @include('adjuntos._panel', ['panelId' => 'adjuntosPanelCompraModal', 'tipo' => 'compra', 'id' => null])
                 </div>
 
                 <div class="mt-3">
