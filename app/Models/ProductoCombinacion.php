@@ -9,7 +9,7 @@ class ProductoCombinacion extends Model
 {
     protected $table = 'producto_combinaciones';
     protected $primaryKey = 'idcombinacion';
-    protected $fillable = ['producto_id', 'combinacion', 'sku', 'json_detalle', 'pcompra_variante', 'pventa_variante'];
+    protected $fillable = ['producto_id', 'combinacion', 'sku', 'json_detalle', 'pcompra_variante', 'pventa_variante', 'pventa_mayorista'];
 
     protected $casts = [
         'json_detalle' => 'array'

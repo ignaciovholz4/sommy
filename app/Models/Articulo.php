@@ -78,6 +78,7 @@ class Articulo extends Model
         'iva_venta_id',
         'pventa_sin_iva',
         'pventa_con_iva',
+        'pventa_mayorista',
         'descuento',
 
         // Ficha técnica colchón

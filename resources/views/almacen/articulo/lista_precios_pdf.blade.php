@@ -37,7 +37,7 @@
 <body>
 <header>
     <div class="marca">Sommy</div>
-    <div class="sub">Lista de precios &middot; Venta minorista</div>
+    <div class="sub">Lista de precios &middot; {{ $tipo === 'mayorista' ? 'Venta mayorista' : 'Venta minorista' }}</div>
     <div class="fecha">Vigente al {{ $fecha }}<br>Precios en pesos, IVA incluido</div>
 </header>
 
@@ -72,12 +72,12 @@
                         @foreach($p->combinaciones as $v)
                             <tr>
                                 <td class="medida">{{ $v->combinacion }}</td>
-                                <td class="precio">${{ number_format((float) $v->pventa_variante, 0, ',', '.') }}</td>
+                                <td class="precio">${{ number_format((float) $v->precio_mostrado, 0, ',', '.') }}</td>
                             </tr>
                         @endforeach
                     </table>
                 @else
-                    <span class="precio-unico">${{ number_format((float) $p->pventa_con_iva, 0, ',', '.') }}</span>
+                    <span class="precio-unico">${{ number_format((float) $p->precio_mostrado, 0, ',', '.') }}</span>
                 @endif
             </td>
         </tr>

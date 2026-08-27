@@ -83,9 +83,14 @@
                 </button>
             </form>
 
-            <a href="{{ url('almacen/lista-precios-pdf') }}" target="_blank" class="btn-facturarg-action btn-export-pdf" style="border-color:#2563EB;color:#2563EB;">
+            <a href="{{ url('almacen/lista-precios-pdf?tipo=minorista') }}" target="_blank" class="btn-facturarg-action btn-export-pdf" style="border-color:#2563EB;color:#2563EB;">
                 <i class="fas fa-images"></i>
-                <span>Lista de precios</span>
+                <span>Catálogo Minorista</span>
+            </a>
+
+            <a href="{{ url('almacen/lista-precios-pdf?tipo=mayorista') }}" target="_blank" class="btn-facturarg-action btn-export-pdf" style="border-color:#7C3AED;color:#7C3AED;" title="Precios mayoristas: solo para el catálogo, nunca se muestran en la web">
+                <i class="fas fa-boxes-stacked"></i>
+                <span>Catálogo Mayorista</span>
             </a>
 
             <div class="d-none d-md-block mx-1" style="width: 1px; height: 24px; background: #e2e8f0;"></div>

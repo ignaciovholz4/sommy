@@ -54,14 +54,19 @@ class ArticuloController extends Controller
      * Lista de precios para clientes: PDF con marca Sommy, foto de cada
      * producto y precio de venta por variante (o precio unico).
      */
-    public function listaPreciosPdf()
+    public function listaPreciosPdf(Request $request)
     {
+        // mayorista: solo para catálogo impreso, nunca se muestra en la web.
+        // Si un producto/variante no tiene precio mayorista cargado, cae al
+        // minorista (mejor mostrar algo que dejar el precio en blanco).
+        $tipo = $request->query('tipo') === 'mayorista' ? 'mayorista' : 'minorista';
+
         $productos = Articulo::with(['categoria', 'combinaciones', 'imagenes'])
             ->where('estado', 'Activo')
             ->orderBy('categoria_id')->orderBy('nombre')
             ->get()
             ->filter(fn ($a) => $a->combinaciones->isNotEmpty() || (float) $a->pventa_con_iva > 0)
-            ->map(function ($a) {
+            ->map(function ($a) use ($tipo) {
                 // Foto: imagen principal de la galeria, o la imagen base del producto
                 $path = optional($a->imagenes->firstWhere('principal', true) ?: $a->imagenes->first())->path;
                 if (!$path && $a->imagen) {
@@ -69,6 +74,17 @@ class ArticuloController extends Controller
                 }
                 $absoluta = $path ? public_path($path) : null;
                 $a->foto_local = ($absoluta && file_exists($absoluta)) ? $absoluta : null;
+
+                $a->precio_mostrado = $tipo === 'mayorista' && (float) $a->pventa_mayorista > 0
+                    ? (float) $a->pventa_mayorista
+                    : (float) $a->pventa_con_iva;
+
+                foreach ($a->combinaciones as $v) {
+                    $v->precio_mostrado = $tipo === 'mayorista' && (float) $v->pventa_mayorista > 0
+                        ? (float) $v->pventa_mayorista
+                        : (float) $v->pventa_variante;
+                }
+
                 return $a;
             });
 
@@ -78,9 +94,10 @@ class ArticuloController extends Controller
             'productos' => $productos,
             'empresa'   => $empresa,
             'fecha'     => now()->format('d/m/Y'),
+            'tipo'      => $tipo,
         ])->setPaper('a4');
 
-        return $pdf->stream('lista-de-precios-sommy.pdf');
+        return $pdf->stream('catalogo-' . $tipo . '-sommy.pdf');
     }
 
     public function store(Request $request)
@@ -155,6 +172,7 @@ class ArticuloController extends Controller
                 'iva_venta_id'           => $request->get('iva_venta_id'),
                 'pventa_sin_iva'         => $request->get('pventa-sin-iva'),
                 'pventa_con_iva'         => $request->get('pventa-con-iva'),
+                'pventa_mayorista'       => $request->get('pventa-mayorista') ?: null,
                 'imagen'                 => $imagen,
                 'ubicacion'              => $request->get('ubicacion') ?? '',
                 'articulo_pesable_balanza' => $request->has('articulo_pesable_balanza') ? 1 : 0,
@@ -205,7 +223,8 @@ class ArticuloController extends Controller
                         'sku'                => !empty($combo['sku']) ? trim($combo['sku']) : null,
                         'json_detalle'       => $combo['combinacion'],
                         'pcompra_variante'   => $combo['pcompra'],
-                        'pventa_variante'    => $combo['pventa']
+                        'pventa_variante'    => $combo['pventa'],
+                        'pventa_mayorista'   => $combo['pventa_mayorista'] ?? null,
                     ]);
 
                     $this->guardarImagenCombinacion($request, $articulo->idarticulo, $nuevaCombinacion->idcombinacion, $index);
@@ -536,6 +555,7 @@ class ArticuloController extends Controller
             $articulo->iva_venta_id = $request->iva_venta_id;
             $articulo->pventa_sin_iva = $request->input('pventa-sin-iva');
             $articulo->pventa_con_iva = $request->input('pventa-con-iva');
+            $articulo->pventa_mayorista = $request->input('pventa-mayorista') ?: null;
 
             // ✅ Checkbox balanza
             $articulo->articulo_pesable_balanza = $request->has('articulo_pesable_balanza') ? 1 : 0;
@@ -653,6 +673,7 @@ class ArticuloController extends Controller
                         'json_detalle'      => $detalleArray, // si tu columna no es JSON, usar json_encode($detalleArray)
                         'pcompra_variante'  => $combo['pcompra'] ?? 0,
                         'pventa_variante'   => $combo['pventa'] ?? 0,
+                        'pventa_mayorista'  => $combo['pventa_mayorista'] ?? null,
                     ];
 
                     if (!empty($combo['idcombinacion'])) {

@@ -45,6 +45,7 @@
                 'sku'              => $c->sku,
                 'pcompra_variante' => $c->pcompra_variante,
                 'pventa_variante'  => $c->pventa_variante,
+                'pventa_mayorista' => $c->pventa_mayorista,
                 'imagen_url'       => $c->imagen ? asset($c->imagen->path) : null,
             ];
         })->values()->toArray();

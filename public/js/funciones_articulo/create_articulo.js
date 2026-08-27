@@ -286,6 +286,14 @@ function renderCombinacionesTable(combinaciones, precios = []) {
                        value="${precio.pventa_variante ?? ''}"
                        placeholder="0.00">
             </td>
+
+            <td>
+                <input type="text"
+                       class="form-control solo-numeros pventa-mayorista-variante"
+                       data-index="${index}"
+                       value="${precio.pventa_mayorista ?? ''}"
+                       placeholder="0.00">
+            </td>
         `;
 
         if (precio.idcombinacion) {
@@ -406,6 +414,7 @@ document.addEventListener("DOMContentLoaded", function () {
                   sku: fila.querySelector(".sku-variante")?.value || "",
                   pcompra_variante: fila.querySelector(".pcompra-variante")?.value || "",
                   pventa_variante: fila.querySelector(".pventa-variante")?.value || "",
+                  pventa_mayorista: fila.querySelector(".pventa-mayorista-variante")?.value || "",
                   imagen_url: fila.querySelector(".preview-imagen-variante")?.src || null,
               };
           });
@@ -853,6 +862,7 @@ function saveProductoConVariantes() {
       document.querySelectorAll("#combinaciones-table tbody tr").forEach((row, index) => {
           const pcompra = row.querySelector(".pcompra-variante").value || 0;
           const pventa = row.querySelector(".pventa-variante").value || 0;
+          const pventaMayorista = row.querySelector(".pventa-mayorista-variante")?.value || null;
           const sku = (row.querySelector(".sku-variante")?.value || "").trim();
           const idcombinacion = row.dataset.idcombinacion || null;
 
@@ -867,7 +877,8 @@ function saveProductoConVariantes() {
               combinacion: combos[index],
               sku: sku,
               pcompra: pcompra,
-              pventa: pventa
+              pventa: pventa,
+              pventa_mayorista: pventaMayorista || null
           });
       });
 

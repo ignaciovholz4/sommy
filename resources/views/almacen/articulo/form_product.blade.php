@@ -227,6 +227,14 @@
                                            value="{{ old('pventa-con-iva', isset($product->pventa_con_iva) ? $product->pventa_con_iva : '') }}">
                                     </div>
                                 </div>
+                                <div class="col-sm-6" id="div-content-pventa-mayorista">
+                                    <div class="form-group">
+                                        <label for="stock">Precio mayorista <small class="text-muted">(solo catálogo, no se ve en la web)</small></label>
+                                        <input type="text" name="pventa-mayorista" class="form-control solo-numeros"
+                                           placeholder="0.00"
+                                           value="{{ old('pventa-mayorista', isset($product->pventa_mayorista) ? $product->pventa_mayorista : '') }}">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -444,6 +452,7 @@
                         <th>P. compra</th>
                         <th>Margen (%)</th>
                         <th>P. venta</th>
+                        <th>P. mayorista <small class="text-muted">(catálogo)</small></th>
                     </tr>
                     </thead>
                     <tbody></tbody>
