@@ -13,10 +13,11 @@ class Adjunto extends Model
     protected $fillable = [
         'adjuntable_type',
         'adjuntable_id',
-        'path',
-        'original_name',
+        'ruta',
+        'nombre_original',
         'mime',
-        'size',
+        'tamano',
+        'descripcion',
         'user_id',
     ];
 
@@ -27,7 +28,7 @@ class Adjunto extends Model
 
     public function getUrlAttribute(): string
     {
-        return Storage::disk('public')->url($this->path);
+        return Storage::disk('public')->url($this->ruta);
     }
 
     public function getEsImagenAttribute(): bool

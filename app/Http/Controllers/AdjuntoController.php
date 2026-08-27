@@ -57,7 +57,7 @@ class AdjuntoController extends Controller
             ->map(fn (Adjunto $a) => [
                 'id'            => $a->id,
                 'url'           => $a->url,
-                'nombre'        => $a->original_name,
+                'nombre'        => $a->nombre_original,
                 'es_imagen'     => $a->es_imagen,
                 'autor'         => optional($a->usuario)->name,
                 'fecha'         => $a->created_at->format('d/m/Y H:i'),
@@ -93,10 +93,10 @@ class AdjuntoController extends Controller
         $adjunto = Adjunto::create([
             'adjuntable_type' => $tipo,
             'adjuntable_id'   => $id,
-            'path'            => $path,
-            'original_name'   => $file->getClientOriginalName(),
+            'ruta'            => $path,
+            'nombre_original' => $file->getClientOriginalName(),
             'mime'            => $file->getClientMimeType(),
-            'size'            => $file->getSize(),
+            'tamano'          => $file->getSize(),
             'user_id'         => Auth::id(),
         ]);
 
