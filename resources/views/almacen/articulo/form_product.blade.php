@@ -442,6 +442,7 @@
                         <th>Imagen</th>
                         <th>SKU <small class="text-muted">(vacío = automático)</small></th>
                         <th>P. compra</th>
+                        <th>Margen (%)</th>
                         <th>P. venta</th>
                     </tr>
                     </thead>

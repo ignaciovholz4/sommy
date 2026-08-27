@@ -222,12 +222,20 @@ function generarCombinaciones(atributos) {
   }, [[]]);
 }
 
+const MARGEN_VARIANTE_DEFAULT = 25.00;
+
 function renderCombinacionesTable(combinaciones, precios = []) {
     const tbody = document.querySelector("#combinaciones-table tbody");
     tbody.innerHTML = "";
 
     combinaciones.forEach((comb, index) => {
         const precio = precios[index] || {};
+
+        const pcompra = parseFloat(precio.pcompra_variante) || 0;
+        const pventa = parseFloat(precio.pventa_variante) || 0;
+        const margenInicial = (pcompra > 0 && pventa > 0)
+            ? (((pventa - pcompra) / pcompra) * 100).toFixed(2)
+            : MARGEN_VARIANTE_DEFAULT.toFixed(2);
 
         const row = document.createElement("tr");
         const idAttr = precio.idcombinacion ? `data-idcombinacion="${precio.idcombinacion}"` : "";
@@ -265,6 +273,14 @@ function renderCombinacionesTable(combinaciones, precios = []) {
 
             <td>
                 <input type="text"
+                       class="form-control solo-numeros margen-variante"
+                       data-index="${index}"
+                       value="${margenInicial}"
+                       placeholder="25.00">
+            </td>
+
+            <td>
+                <input type="text"
                        class="form-control solo-numeros pventa-variante"
                        data-index="${index}"
                        value="${precio.pventa_variante ?? ''}"
@@ -277,6 +293,31 @@ function renderCombinacionesTable(combinaciones, precios = []) {
         }
 
         tbody.appendChild(row);
+
+        // Ganancia automática: P. venta = P. compra * (1 + margen/100), y viceversa
+        const inputCompra = row.querySelector(".pcompra-variante");
+        const inputMargen = row.querySelector(".margen-variante");
+        const inputVenta = row.querySelector(".pventa-variante");
+
+        function actualizarVentaVariante() {
+            const compra = parseFloat(inputCompra.value) || 0;
+            const margen = parseFloat(inputMargen.value) || 0;
+            if (compra > 0) {
+                inputVenta.value = (compra * (1 + margen / 100)).toFixed(2);
+            }
+        }
+
+        function actualizarMargenVariante() {
+            const compra = parseFloat(inputCompra.value) || 0;
+            const venta = parseFloat(inputVenta.value) || 0;
+            if (compra > 0 && venta > 0) {
+                inputMargen.value = (((venta - compra) / compra) * 100).toFixed(2);
+            }
+        }
+
+        inputCompra.addEventListener("input", actualizarVentaVariante);
+        inputMargen.addEventListener("input", actualizarVentaVariante);
+        inputVenta.addEventListener("input", actualizarMargenVariante);
     });
 }
 
