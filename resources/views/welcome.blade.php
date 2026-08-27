@@ -101,7 +101,7 @@
     {{-- Logos ficticios de referencia: reemplazar por los logos reales de las marcas --}}
     <section class="pb-4 pt-4" style="padding-top:2.5rem !important;padding-bottom:2.5rem !important;">
       <div class="container-fluid">
-        <p class="text-center" style="font-size:12px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#8A93AD;margin-bottom:42px;">Marcas con las que trabajamos</p>
+        <p class="text-center" style="font-size:12px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#8A93AD;margin-bottom:42px;">Que vendemos</p>
         <div class="sommy-marcas">
           <div class="sommy-marcas-track">
             @for ($rep = 0; $rep < 2; $rep++)
@@ -201,7 +201,7 @@
               @else
               <div class="tab-content" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-all" role="tabpanel" aria-labelledby="nav-all-tab">
-                  <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 justify-content-start">
+                  <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 justify-content-start">
                     @foreach ($getDataProd as $product)
                       <div class="col" data-aos="fade-up" data-aos-delay="{{ ($loop->index % 5) * 80 }}">
                         <div class="product-item">
