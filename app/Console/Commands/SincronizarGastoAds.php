@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\Ads\GoogleAdsService;
 use App\Services\Ads\MetaAdsService;
+use App\Services\Finanzas\GastoAdsService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -12,7 +13,8 @@ use Illuminate\Support\Facades\Log;
  * plataformas revisan el gasto de un dia hasta 72hs despues, por eso se
  * resincroniza una ventana corta en vez de solo "hoy") y lo guarda en
  * ad_spend_diario. Cada plataforma es independiente: si una falla, la otra
- * igual se sincroniza.
+ * igual se sincroniza. Tambien actualiza el "Gasto" mensual pendiente de
+ * cada plataforma (ver GastoAdsService) para poder pagarlo desde Finanzas.
  */
 class SincronizarGastoAds extends Command
 {
@@ -20,7 +22,7 @@ class SincronizarGastoAds extends Command
 
     protected $description = 'Sincroniza el gasto diario de Meta Ads y Google Ads';
 
-    public function handle(MetaAdsService $meta, GoogleAdsService $google): int
+    public function handle(MetaAdsService $meta, GoogleAdsService $google, GastoAdsService $gastoAds): int
     {
         $hasta = now();
         $desde = now()->subDays((int) $this->option('dias'));
@@ -32,6 +34,8 @@ class SincronizarGastoAds extends Command
 
                 $guardadosCampana = $meta->sincronizarPorCampana($desde, $hasta);
                 $this->info("Meta Ads (por campana): {$guardadosCampana} fila(s) sincronizada(s).");
+
+                $gastoAds->generarOActualizarGastoMensual('meta', 'Meta');
             } catch (\Throwable $th) {
                 Log::error('ads:sincronizar-gasto (meta): ' . $th->getMessage());
                 $this->error('Meta Ads: fallo la sincronizacion, ver logs.');
@@ -44,6 +48,8 @@ class SincronizarGastoAds extends Command
             try {
                 $guardados = $google->sincronizar($desde, $hasta);
                 $this->info("Google Ads: {$guardados} dia(s) sincronizado(s).");
+
+                $gastoAds->generarOActualizarGastoMensual('google', 'Google');
             } catch (\Throwable $th) {
                 Log::error('ads:sincronizar-gasto (google): ' . $th->getMessage());
                 $this->error('Google Ads: fallo la sincronizacion, ver logs.');

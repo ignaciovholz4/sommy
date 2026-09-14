@@ -8,6 +8,9 @@ use App\Models\MetaAdsCampanaInsight;
 use App\Models\ecommerce\order_ecommerce;
 use App\Services\Ads\GoogleAdsService;
 use App\Services\Ads\MetaAdsService;
+use App\Services\Finanzas\GastoAdsService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -62,7 +65,7 @@ class MarketingController extends Controller
         ]);
     }
 
-    public function sincronizarAhora(MetaAdsService $meta, GoogleAdsService $google)
+    public function sincronizarAhora(MetaAdsService $meta, GoogleAdsService $google, GastoAdsService $gastoAds)
     {
         Gate::authorize('haveaccess', 'finanzas.marketing.sincronizar');
 
@@ -76,8 +79,12 @@ class MarketingController extends Controller
         $diasMeta = $meta->habilitado() ? $meta->sincronizar($desde, $hasta) : 0;
         if ($meta->habilitado()) {
             $meta->sincronizarPorCampana($desde, $hasta);
+            $gastoAds->generarOActualizarGastoMensual('meta', 'Meta');
         }
         $diasGoogle = $google->habilitado() ? $google->sincronizar($desde, $hasta) : 0;
+        if ($google->habilitado()) {
+            $gastoAds->generarOActualizarGastoMensual('google', 'Google');
+        }
 
         return response()->json([
             'estado' => 1,
@@ -86,7 +93,7 @@ class MarketingController extends Controller
     }
 
     /** Tablero de ROI: cruza gasto por campaña (Meta) con ventas reales por utm_campaign. */
-    public function roi()
+    public function roi(Request $request)
     {
         Gate::authorize('haveaccess', 'finanzas.marketing.index');
 
@@ -107,6 +114,29 @@ class MarketingController extends Controller
             $c->cac = $c->cantidad_ventas > 0 ? round($c->gasto / $c->cantidad_ventas, 2) : null;
         }
 
-        return view('finanzas.marketing.roi', compact('campanas'));
+        // Desglose por día del mes seleccionado (?mes=YYYY-MM), por campaña
+        $mes = $request->query('mes')
+            ? Carbon::createFromFormat('Y-m', $request->query('mes'))->startOfMonth()
+            : now()->startOfMonth();
+
+        $insightsDelMes = MetaAdsCampanaInsight::whereBetween('fecha', [$mes->toDateString(), $mes->copy()->endOfMonth()->toDateString()])
+            ->orderBy('fecha')
+            ->get()
+            ->groupBy('meta_campaign_id');
+
+        $campanasDelMes = $insightsDelMes->map(function ($filas) {
+            return (object) [
+                'meta_campaign_id' => $filas->first()->meta_campaign_id,
+                'nombre_campana' => $filas->first()->nombre_campana,
+                'gasto_mes' => (float) $filas->sum('spend'),
+                'dias' => $filas->map(fn ($f) => ['fecha' => $f->fecha->format('d/m'), 'spend' => (float) $f->spend])->values(),
+            ];
+        })->sortByDesc('gasto_mes')->values();
+
+        return view('finanzas.marketing.roi', [
+            'campanas' => $campanas,
+            'mes' => $mes,
+            'campanasDelMes' => $campanasDelMes,
+        ]);
     }
 }
