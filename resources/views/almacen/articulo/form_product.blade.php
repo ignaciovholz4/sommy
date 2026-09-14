@@ -249,9 +249,9 @@
                         </div>
                     </div>
                     <hr>
-                    <div class="col-sm-12">
+                    <div class="col-sm-8">
                         <div class="form-group">
-                            <label for="relacionados-select">Productos relacionados <small class="text-muted">(se recomiendan al agregar este producto al carrito)</small></label>
+                            <label for="relacionados-select">Productos relacionados <small class="text-muted">(se recomiendan al agregar este producto al carrito, y son las opciones para armar combo)</small></label>
                             <select name="relacionados[]" id="relacionados-select" class="form-control" multiple>
                                 @foreach($productosDisponibles ?? [] as $p)
                                     <option value="{{ $p->idarticulo }}"
@@ -260,6 +260,16 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="form-group">
+                            <label for="combo_descuento_pct">Descuento por combo (%)
+                                <small class="text-muted">(el cliente arma el combo eligiendo relacionados; 0 = sin armador)</small>
+                            </label>
+                            <input type="number" name="combo_descuento_pct" id="combo_descuento_pct" class="form-control"
+                                placeholder="Ej: 10" min="0" max="100" step="0.01"
+                                value="{{ old('combo_descuento_pct', $product->combo_descuento_pct ?? 0) }}">
                         </div>
                     </div>
                     <hr>

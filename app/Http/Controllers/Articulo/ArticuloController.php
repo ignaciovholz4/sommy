@@ -173,6 +173,7 @@ class ArticuloController extends Controller
                 'pventa_sin_iva'         => $request->get('pventa-sin-iva'),
                 'pventa_con_iva'         => $request->get('pventa-con-iva'),
                 'pventa_mayorista'       => $request->get('pventa-mayorista') ?: null,
+                'combo_descuento_pct'    => $request->get('combo_descuento_pct') ?: 0,
                 'imagen'                 => $imagen,
                 'ubicacion'              => $request->get('ubicacion') ?? '',
                 'articulo_pesable_balanza' => $request->has('articulo_pesable_balanza') ? 1 : 0,
@@ -597,6 +598,7 @@ class ArticuloController extends Controller
             $articulo->pventa_sin_iva = $request->input('pventa-sin-iva');
             $articulo->pventa_con_iva = $request->input('pventa-con-iva');
             $articulo->pventa_mayorista = $request->input('pventa-mayorista') ?: null;
+            $articulo->combo_descuento_pct = $request->input('combo_descuento_pct') ?: 0;
 
             // ✅ Checkbox balanza
             $articulo->articulo_pesable_balanza = $request->has('articulo_pesable_balanza') ? 1 : 0;

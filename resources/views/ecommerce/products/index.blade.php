@@ -57,6 +57,33 @@
             font-weight: 600;
             color: #495057;
         }
+        .combo-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            max-width: 480px;
+        }
+        .combo-item img {
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        .combo-item-info { flex: 1; min-width: 0; }
+        .combo-item-name { font-weight: 600; font-size: 0.85rem; }
+        .combo-item-price { font-size: 0.8rem; color: #495057; }
+        .combo-variant-select {
+            font-size: 0.78rem;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            padding: 2px 6px;
+            margin-top: 3px;
+        }
         /* Flechas del carrusel de imágenes */
         .galeria-flecha {
             position: absolute;
@@ -340,6 +367,28 @@
                                 </div>
                             </div>
 
+                            @if(($getProd[0]->combo_descuento_pct ?? 0) > 0)
+                            <div id="comboBuilder" class="mt-5" style="display:none;"
+                                 data-product-id="{{ $getProd[0]->idarticulo }}"
+                                 data-discount="{{ $getProd[0]->combo_descuento_pct }}">
+                                <hr class="my-6" />
+                                <label class="form-label fw-bold">
+                                    Armá tu combo y ahorrá {{ rtrim(rtrim(number_format($getProd[0]->combo_descuento_pct, 2, ',', '.'), '0'), ',') }}%
+                                </label>
+                                <p class="text-muted small mb-3">Elegí qué sumar: el descuento se aplica sobre el total del combo.</p>
+                                <div id="comboItemsList" class="d-flex flex-column gap-2 mb-3"></div>
+                                <div class="mb-3">
+                                    <div class="text-muted small" id="comboPrecioNormal" style="text-decoration:line-through;"></div>
+                                    <div class="fw-bold" style="font-size:1.25rem;color:#212529;" id="comboPrecioFinal"></div>
+                                </div>
+                                <div class="d-grid col-12 col-md-8 col-lg-6">
+                                    <button type="button" id="btnAgregarCombo" class="btn btn-add-prod" style="padding:13px;white-space:nowrap;">
+                                        Agregar combo al carrito
+                                    </button>
+                                </div>
+                            </div>
+                            @endif
+
                             @if(!empty($especificaciones))
                                 <hr class="my-6" />
                                 <label class="form-label fw-bold">Especificaciones</label>
@@ -401,4 +450,200 @@
         }
         @endif
     </script>
+
+    @if(($getProd[0]->combo_descuento_pct ?? 0) > 0)
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const comboBuilder = document.getElementById('comboBuilder');
+        if (!comboBuilder) return;
+
+        const productoId = comboBuilder.getAttribute('data-product-id');
+        const descuentoPct = Number(comboBuilder.getAttribute('data-discount'));
+        const itemsList = document.getElementById('comboItemsList');
+        const precioNormalEl = document.getElementById('comboPrecioNormal');
+        const precioFinalEl = document.getElementById('comboPrecioFinal');
+        const btnAgregarCombo = document.getElementById('btnAgregarCombo');
+        let comboProductos = [];
+
+        // Precio + stock del producto de ESTA ficha, según la variante/cantidad ya elegida arriba
+        function precioProductoActual() {
+            const cant = Number(document.getElementById('cantProduct')?.value) || 1;
+            if (productValue[0].tipo_producto_id === 2) {
+                const dataValue = document.getElementById('btn-add-product')?.getAttribute('data-value');
+                if (!dataValue) return null;
+                const variantData = JSON.parse(dataValue);
+                return { precio: Number(variantData.combinacion.pventa_variante), stock: Number(variantData.stock), cant };
+            }
+            return { precio: Number(productValue[0].display_price || productValue[0].pventa_con_iva), stock: Number(productValue[0].stock), cant };
+        }
+
+        function recalcularTotales() {
+            const base = precioProductoActual();
+            if (!base) {
+                precioNormalEl.textContent = '';
+                precioFinalEl.textContent = 'Elegí una medida para ver el precio del combo';
+                return;
+            }
+
+            let normal = base.precio * base.cant;
+            itemsList.querySelectorAll('.combo-item-check:checked').forEach(chk => {
+                const producto = comboProductos.find(p => String(p.id) === chk.getAttribute('data-product-id'));
+                if (!producto) return;
+                if (producto.tipo_producto_id === 2) {
+                    const select = itemsList.querySelector(`.combo-variant-select[data-product-id="${producto.id}"]`);
+                    const variante = (producto.variantes || []).find(v => String(v.idcombinacion) === select?.value);
+                    if (variante) normal += variante.precio;
+                } else {
+                    normal += producto.precio;
+                }
+            });
+
+            const final = Math.round(normal * (1 - descuentoPct / 100) * 100) / 100;
+            precioNormalEl.textContent = window.fnFormatMoney(normal);
+            precioFinalEl.textContent = window.fnFormatMoney(final) + ' con el combo';
+        }
+
+        fetch(`/Ecommercerelacionados?ids=${productoId}`)
+            .then(res => res.json())
+            .then(data => {
+                comboProductos = data.productos || [];
+                if (comboProductos.length === 0) return;
+
+                const esc = (str) => String(str ?? '').replace(/[&<>"']/g, c => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                }[c]));
+
+                itemsList.innerHTML = comboProductos.map(p => {
+                    const variantes = Array.isArray(p.variantes) ? p.variantes : [];
+                    const tieneStock = p.tipo_producto_id === 1 ? p.stock > 0 : variantes.length > 0;
+                    if (!tieneStock) return '';
+
+                    const thumb = p.imagen ? `<img src="${esc(p.imagen)}" alt="">` : '';
+                    const selector = (p.tipo_producto_id === 2 && variantes.length > 0)
+                        ? `<select class="combo-variant-select form-control" data-product-id="${p.id}">
+                             ${variantes.map(v => `<option value="${v.idcombinacion}">${esc(v.label)} — ${window.fnFormatMoney(v.precio)}</option>`).join('')}
+                           </select>`
+                        : `<div class="combo-item-price">${window.fnFormatMoney(p.precio)}</div>`;
+
+                    return `
+                        <label class="combo-item">
+                            <input type="checkbox" class="combo-item-check" data-product-id="${p.id}">
+                            ${thumb}
+                            <div class="combo-item-info">
+                                <div class="combo-item-name">${esc(p.nombre)}</div>
+                                ${selector}
+                            </div>
+                        </label>
+                    `;
+                }).join('');
+
+                if (!itemsList.innerHTML.trim()) return;
+
+                comboBuilder.style.display = '';
+                recalcularTotales();
+
+                itemsList.querySelectorAll('.combo-item-check, .combo-variant-select').forEach(el => {
+                    el.addEventListener('change', recalcularTotales);
+                });
+            })
+            .catch(() => {});
+
+        // El precio del producto principal cambia si el cliente elige otra medida o cantidad
+        document.querySelectorAll('input[name="variantProduct"]').forEach(r => r.addEventListener('change', recalcularTotales));
+        document.getElementById('btnAddCantMore')?.addEventListener('click', () => setTimeout(recalcularTotales, 0));
+        document.getElementById('btnLessCant')?.addEventListener('click', () => setTimeout(recalcularTotales, 0));
+
+        btnAgregarCombo.addEventListener('click', function () {
+            const base = precioProductoActual();
+            if (!base) {
+                window.fnMessageToastrError('Elegí una medida antes de armar el combo', 'Error');
+                return;
+            }
+
+            const seleccionados = Array.from(itemsList.querySelectorAll('.combo-item-check:checked'));
+            if (seleccionados.length === 0) {
+                window.fnMessageToastrError('Elegí al menos un producto para armar el combo', 'Error');
+                return;
+            }
+
+            const factor = 1 - (descuentoPct / 100);
+            const imagenActual = (typeof showImageVariant !== 'undefined' && showImageVariant && showImageVariant.src) ? showImageVariant.src : null;
+
+            const items = [{
+                claveCart: productValue[0].tipo_producto_id === 2
+                    ? `${productValue[0].idarticulo}-${JSON.parse(document.getElementById('btn-add-product').getAttribute('data-value')).combinacion.idcombinacion}`
+                    : String(productValue[0].idarticulo),
+                name: productValue[0].nombre,
+                productId: productValue[0].idarticulo,
+                precio: base.precio,
+                stock: base.stock,
+                cant: base.cant,
+                rowProdVariant: productValue[0].tipo_producto_id === 2
+                    ? JSON.parse(document.getElementById('btn-add-product').getAttribute('data-value')).combinacion
+                    : null,
+                tipoProductoId: productValue[0].tipo_producto_id,
+                image: imagenActual,
+            }];
+
+            seleccionados.forEach(chk => {
+                const producto = comboProductos.find(p => String(p.id) === chk.getAttribute('data-product-id'));
+                if (!producto) return;
+
+                let variante = null;
+                if (producto.tipo_producto_id === 2) {
+                    const select = itemsList.querySelector(`.combo-variant-select[data-product-id="${producto.id}"]`);
+                    variante = (producto.variantes || []).find(v => String(v.idcombinacion) === select?.value);
+                    if (!variante) return;
+                }
+
+                items.push({
+                    claveCart: variante ? `${producto.id}-${variante.idcombinacion}` : String(producto.id),
+                    name: producto.nombre,
+                    productId: producto.id,
+                    precio: variante ? variante.precio : producto.precio,
+                    stock: variante ? variante.stock : producto.stock,
+                    cant: 1,
+                    rowProdVariant: variante ? { idcombinacion: variante.idcombinacion, combinacion: variante.label, pventa_variante: variante.precio } : null,
+                    tipoProductoId: producto.tipo_producto_id,
+                    image: producto.imagen,
+                });
+            });
+
+            const cart = window.fnListCartProduct();
+
+            items.forEach(it => {
+                const precioConDescuento = Math.round(it.precio * factor * 100) / 100;
+                const existente = cart.find(p => p.claveCart === it.claveCart);
+
+                if (existente) {
+                    existente.cant += it.cant;
+                    existente.total = existente.cant * existente.priceSale;
+                    existente.sinStock = window.fnCheckStockProduct(it.stock, existente.cant);
+                } else {
+                    cart.push({
+                        claveCart: it.claveCart,
+                        name: it.name,
+                        productId: it.productId,
+                        original_price: it.precio,
+                        priceSale: precioConDescuento,
+                        cant: it.cant,
+                        total: it.cant * precioConDescuento,
+                        rowProdVariant: it.rowProdVariant,
+                        tipoProductoId: it.tipoProductoId,
+                        stockProduct: it.stock,
+                        display_price: precioConDescuento,
+                        has_offer: true,
+                        image: it.image,
+                        sinStock: window.fnCheckStockProduct(it.stock, it.cant)
+                    });
+                }
+            });
+
+            window.fnSaveCartProduct(cart);
+            window.fnShowListCartProduct();
+            window.fnMessageToastrSuccess(`Combo agregado con ${descuentoPct}% off`, 'Éxito!');
+        });
+    });
+    </script>
+    @endif
 @endsection
