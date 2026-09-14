@@ -103,7 +103,7 @@
             </p>
             <hr>
             <div id="bloqueDesktop">
-              <span id="hintDesktop">Imagen horizontal, solo se ve en escritorio. Se recorta para llenar un rectángulo apaisado: con texto al lado usá algo cercano a 1400px x 740px (mínimo 900x475); sin texto (ocupa todo el ancho) usá algo más panorámico, cercano a 1900px x 700px (mínimo 1320x475).</span><br>
+              <span id="hintDesktop">Imagen horizontal, solo se ve en escritorio. Con texto al lado usá algo cercano a 1400px x 740px (se recorta para llenar ese rectángulo); sin texto (ocupa todo el ancho) usá <strong>1725x912</strong> — esa es la medida que ya venís usando y con la que se ve bien completa, sin recortar arriba/abajo.</span><br>
               <div class="input-group mb-3">
                 <input type="file" id="file" name="file" class="form-control" accept="image/*">
                 <div class="input-group-append">
@@ -118,7 +118,7 @@
             </div>
             <hr>
             <div id="bloqueMovil">
-              <span id="hintMovil">Imagen para celular (opcional: si no la cargás, se usa la de escritorio recortada, se ve peor). Se muestra completa, sin recortar — cualquier proporción funciona, pero se ve mejor si es más alta que ancha (vertical). Mínimo 700x350.</span><br>
+              <span id="hintMovil">Imagen para celular (opcional: si no la cargás, se usa la de escritorio recortada, se ve peor). Se muestra completa, sin recortar — vertical (más alta que ancha). Recomendado: <strong>1122x1402</strong> (la medida que ya venís usando). Mínimo 700x350.</span><br>
               <div class="input-group mb-3">
                 <input type="file" id="movilfile" name="movilfile" class="form-control" accept="image/*">
                 <div class="input-group-append">
