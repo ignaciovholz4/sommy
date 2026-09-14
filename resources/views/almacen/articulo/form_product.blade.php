@@ -248,6 +248,14 @@
                                 min="0" max="100" step="0.01">
                         </div>
                     </div>
+                    <div class="col-lg-4">
+                        <div class="form-group">
+                            <label for="color">Color <small class="text-muted">(para el filtro de la tienda)</small></label>
+                            <input type="text" name="color" id="color" class="form-control"
+                                placeholder="Ej: Negro, Beige, Gris..."
+                                value="{{ old('color', $product->color ?? '') }}">
+                        </div>
+                    </div>
                     <hr>
                     <div class="col-sm-8">
                         <div class="form-group">
@@ -270,6 +278,20 @@
                             <input type="number" name="combo_descuento_pct" id="combo_descuento_pct" class="form-control"
                                 placeholder="Ej: 10" min="0" max="100" step="0.01"
                                 value="{{ old('combo_descuento_pct', $product->combo_descuento_pct ?? 0) }}">
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <label for="regalos-select">Regalos disponibles <small class="text-muted">(al comprar este producto, el cliente puede elegir UNO de estos gratis)</small></label>
+                            <select name="regalos[]" id="regalos-select" class="form-control" multiple>
+                                @foreach($productosDisponibles ?? [] as $p)
+                                    <option value="{{ $p->idarticulo }}"
+                                        {{ in_array($p->idarticulo, $regalosIds ?? []) ? 'selected' : '' }}>
+                                        {{ $p->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     <hr>
@@ -774,6 +796,10 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener('DOMContentLoaded', function() {
         $('#relacionados-select').select2({
             placeholder: 'Buscar productos para recomendar...',
+            width: '100%'
+        });
+        $('#regalos-select').select2({
+            placeholder: 'Buscar productos para ofrecer de regalo...',
             width: '100%'
         });
     });

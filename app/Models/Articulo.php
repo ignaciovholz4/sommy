@@ -81,6 +81,7 @@ class Articulo extends Model
         'pventa_mayorista',
         'descuento',
         'combo_descuento_pct',
+        'color',
 
         // Ficha técnica colchón
         'tipo_colchon',

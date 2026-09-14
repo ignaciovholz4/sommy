@@ -174,6 +174,7 @@ class ArticuloController extends Controller
                 'pventa_con_iva'         => $request->get('pventa-con-iva'),
                 'pventa_mayorista'       => $request->get('pventa-mayorista') ?: null,
                 'combo_descuento_pct'    => $request->get('combo_descuento_pct') ?: 0,
+                'color'                  => $request->get('color') ?: null,
                 'imagen'                 => $imagen,
                 'ubicacion'              => $request->get('ubicacion') ?? '',
                 'articulo_pesable_balanza' => $request->has('articulo_pesable_balanza') ? 1 : 0,
@@ -238,6 +239,9 @@ class ArticuloController extends Controller
             // ✅ GUARDAR PRODUCTOS RELACIONADOS
             $this->sincronizarRelacionados($articulo->idarticulo, (array) $request->input('relacionados', []));
 
+            // ✅ GUARDAR REGALOS DISPONIBLES
+            $this->sincronizarRegalos($articulo->idarticulo, (array) $request->input('regalos', []));
+
             DB::commit();
 
             return response()->json([
@@ -292,6 +296,7 @@ class ArticuloController extends Controller
             'plazasOpts'   => Articulo::PLAZAS,
             'productosDisponibles' => $productosDisponibles,
             'relacionadosIds' => [],
+            'regalosIds' => [],
         ]);
     }
 
@@ -599,6 +604,7 @@ class ArticuloController extends Controller
             $articulo->pventa_con_iva = $request->input('pventa-con-iva');
             $articulo->pventa_mayorista = $request->input('pventa-mayorista') ?: null;
             $articulo->combo_descuento_pct = $request->input('combo_descuento_pct') ?: 0;
+            $articulo->color = $request->input('color') ?: null;
 
             // ✅ Checkbox balanza
             $articulo->articulo_pesable_balanza = $request->has('articulo_pesable_balanza') ? 1 : 0;
@@ -745,6 +751,9 @@ class ArticuloController extends Controller
 
             // ✅ GUARDAR PRODUCTOS RELACIONADOS
             $this->sincronizarRelacionados($articulo->idarticulo, (array) $request->input('relacionados', []));
+
+            // ✅ GUARDAR REGALOS DISPONIBLES
+            $this->sincronizarRegalos($articulo->idarticulo, (array) $request->input('regalos', []));
 
             DB::commit();
 
@@ -1051,6 +1060,11 @@ class ArticuloController extends Controller
             ->pluck('relacionado_id')
             ->all();
 
+        $regalosIds = DB::table('producto_regalos')
+            ->where('idarticulo', $id)
+            ->pluck('regalo_id')
+            ->all();
+
         return view('almacen.articulo.edit', [
             'imagenesGaleria' => $imagenesGaleria,
             'product'      => $product,
@@ -1069,6 +1083,7 @@ class ArticuloController extends Controller
             'plazasOpts'   => Articulo::PLAZAS,
             'productosDisponibles' => $productosDisponibles,
             'relacionadosIds' => $relacionadosIds,
+            'regalosIds' => $regalosIds,
         ]);
     }
     /**
@@ -1605,6 +1620,26 @@ class ArticuloController extends Controller
             DB::table('producto_relacionados')->insert([
                 ['idarticulo' => $articuloId, 'relacionado_id' => $rid, 'created_at' => $now, 'updated_at' => $now],
                 ['idarticulo' => $rid, 'relacionado_id' => $articuloId, 'created_at' => $now, 'updated_at' => $now],
+            ]);
+        }
+    }
+
+    // ✅ Regalos disponibles: DIRECCIONAL (comprar A habilita elegir un regalo entre sus B,
+    // no implica que comprar B habilite regalos de A). A diferencia de relacionados.
+    private function sincronizarRegalos(int $articuloId, array $ids): void
+    {
+        $ids = collect($ids)
+            ->map(fn ($v) => (int) $v)
+            ->filter(fn ($v) => $v > 0 && $v !== $articuloId)
+            ->unique()
+            ->values();
+
+        DB::table('producto_regalos')->where('idarticulo', $articuloId)->delete();
+
+        $now = now();
+        foreach ($ids as $rid) {
+            DB::table('producto_regalos')->insert([
+                'idarticulo' => $articuloId, 'regalo_id' => $rid, 'created_at' => $now, 'updated_at' => $now,
             ]);
         }
     }
