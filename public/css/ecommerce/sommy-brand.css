@@ -540,13 +540,17 @@ p { line-height: 1.7; }
 }
 /* Banner sin título/subtítulo/botón (el texto ya viene en la imagen): la
    imagen ocupa todo el ancho en vez de dejar la mitad derecha en blanco.
-   Alto proporcional a la medida real que se sube (1725x912) en vez del
-   min-height fijo del layout partido: si no, con una imagen tan panorámica
-   el "cover" recorta arriba/abajo y se pierde buena parte del diseño. */
+   Se muestra COMPLETA a su proporción real (nunca recortada) en vez de
+   "cover" dentro de una altura fija — cualquiera sea la medida que se
+   suba, entra entera. Vale para escritorio y mobile por igual. */
 .sommy-banner-slide--full .sommy-banner-media {
     flex-basis: 100%;
     max-width: 100%;
-    aspect-ratio: 1725 / 912;
+    height: auto;
+}
+.sommy-banner-slide--full .sommy-banner-img {
+    height: auto;
+    object-fit: contain;
 }
 .sommy-banner-img {
     width: 100%;
@@ -647,7 +651,7 @@ p { line-height: 1.7; }
     .sommy-banner-slide.carousel-item-prev {
         display: block;
     }
-    .sommy-banner-media { max-width: 100%; height: auto; aspect-ratio: auto; }
+    .sommy-banner-media { max-width: 100%; height: auto; }
     .sommy-banner-img { height: auto; object-fit: initial; }
     /* Mobile: se ve la imagen vertical, la horizontal de escritorio queda oculta */
     .sommy-banner-media .desktop-img { display: none; }
