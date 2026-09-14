@@ -8,6 +8,21 @@
           <strong> Agregar reel</strong>
         </button>
       </div>
+      <div>
+	      <button type="button" class="btn btn6 btn-sm mr-3" id="btnBulkUpload">
+          <i class="fas fa-layer-group mr-2"></i>
+          <strong> Subir varios de una</strong>
+        </button>
+        <input type="file" id="bulkReelInput" accept="video/mp4,video/quicktime,video/webm" multiple style="display:none;">
+      </div>
+      <div class="w-100">
+        <div id="bulkUploadStatus" class="card mt-2" style="display:none;">
+          <div class="card-body py-2">
+            <strong class="d-block mb-2">Subiendo varios reels...</strong>
+            <ul id="bulkUploadList" class="list-unstyled mb-0"></ul>
+          </div>
+        </div>
+      </div>
 		</div>
 	</div>
 </section>

@@ -337,3 +337,57 @@ const delete_banner = (id) => {
 
   });
 }
+
+/**************** SUBIDA MÚLTIPLE DE BANNERS DE VIDEO ****************/
+const bulkBannerInput = document.querySelector('#bulkBannerInput');
+const btnBulkUploadBanner = document.querySelector('#btnBulkUploadBanner');
+const bulkUploadStatusBanner = document.querySelector('#bulkUploadStatusBanner');
+const bulkUploadListBanner = document.querySelector('#bulkUploadListBanner');
+
+btnBulkUploadBanner?.addEventListener('click', () => bulkBannerInput.click());
+
+bulkBannerInput?.addEventListener('change', async function () {
+    const files = Array.from(this.files);
+    if (!files.length) return;
+
+    bulkUploadStatusBanner.style.display = '';
+    bulkUploadListBanner.innerHTML = '';
+    const filas = files.map((file) => {
+        const li = document.createElement('li');
+        li.className = 'mb-1';
+        li.innerHTML = `<i class="fas fa-clock text-muted mr-2"></i> ${file.name} <span class="text-muted small">(${(file.size / 1024 / 1024).toFixed(1)}MB)</span>`;
+        bulkUploadListBanner.appendChild(li);
+        return li;
+    });
+
+    let subidos = 0;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        filas[i].innerHTML = `<i class="fas fa-spinner fa-spin text-primary mr-2"></i> ${file.name} — subiendo...`;
+
+        const formData = new FormData();
+        formData.append('imagen', file);
+        formData.append('name', file.name.replace(/\.[^.]+$/, ''));
+        formData.append('tipo', 'video');
+        formData.append('titulo', '');
+        formData.append('subtitulo', '');
+        formData.append('boton_texto', '');
+        formData.append('boton_url', '');
+        formData.append('orden', i);
+        formData.append('bannerId', 0);
+
+        const resp = await seend_data('/savebanner', formData);
+
+        if (resp && resp.status === 1) {
+            filas[i].innerHTML = `<i class="fas fa-check text-success mr-2"></i> ${file.name} — listo`;
+            subidos++;
+        } else {
+            const motivo = resp && resp.message ? (Array.isArray(resp.message) ? resp.message.join(', ') : resp.message) : 'Error desconocido';
+            filas[i].innerHTML = `<i class="fas fa-triangle-exclamation text-danger mr-2"></i> ${file.name} — <span class="text-danger">${motivo}</span>`;
+        }
+    }
+
+    fnLoadTable();
+    toastr[subidos === files.length ? 'success' : 'warning'](`Se subieron ${subidos} de ${files.length} banners`);
+    bulkBannerInput.value = '';
+});

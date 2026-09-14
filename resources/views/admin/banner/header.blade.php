@@ -8,8 +8,22 @@
           <strong> Agregar nuevo banner</strong>
         </button>
       </div>
+      <div>
+	      <button type="button" class="btn btn6 btn-sm mr-3" id="btnBulkUploadBanner">
+          <i class="fas fa-layer-group mr-2"></i>
+          <strong> Subir varios videos de una</strong>
+        </button>
+        <input type="file" id="bulkBannerInput" accept="video/mp4,video/quicktime,video/webm" multiple style="display:none;">
+      </div>
 		</div>
 	</div>
+  <div id="bulkUploadStatusBanner" class="card mt-2" style="display:none;">
+    <div class="card-body py-2">
+      <strong class="d-block mb-2">Subiendo varios banners de video...</strong>
+      <p class="text-muted small mb-2">Cada video se guarda como un banner nuevo, sin título/subtítulo (ocupa todo el ancho). Podés editarlos después desde la lista para agregarles texto u orden.</p>
+      <ul id="bulkUploadListBanner" class="list-unstyled mb-0"></ul>
+    </div>
+  </div>
 </section>
 
 <!--MODAL PARA AGREGAR NUEVO BANNER-->

@@ -169,3 +169,53 @@ const delete_reel = (id) => {
         }
     });
 };
+
+/**************** SUBIDA MÚLTIPLE DE REELS ****************/
+const bulkReelInput = document.querySelector('#bulkReelInput');
+const btnBulkUpload = document.querySelector('#btnBulkUpload');
+const bulkUploadStatus = document.querySelector('#bulkUploadStatus');
+const bulkUploadList = document.querySelector('#bulkUploadList');
+
+btnBulkUpload?.addEventListener('click', () => bulkReelInput.click());
+
+bulkReelInput?.addEventListener('change', async function () {
+    const files = Array.from(this.files);
+    if (!files.length) return;
+
+    bulkUploadStatus.style.display = '';
+    bulkUploadList.innerHTML = '';
+    const filas = files.map((file) => {
+        const li = document.createElement('li');
+        li.className = 'mb-1';
+        li.innerHTML = `<i class="fas fa-clock text-muted mr-2"></i> ${file.name} <span class="text-muted small">(${(file.size / 1024 / 1024).toFixed(1)}MB)</span>`;
+        bulkUploadList.appendChild(li);
+        return li;
+    });
+
+    let subidos = 0;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        filas[i].innerHTML = `<i class="fas fa-spinner fa-spin text-primary mr-2"></i> ${file.name} — subiendo...`;
+
+        const formData = new FormData();
+        formData.append('video', file);
+        formData.append('url', '');
+        formData.append('titulo', '');
+        formData.append('orden', i);
+        formData.append('reelId', 0);
+
+        const resp = await seend_data_reel('/savereel', formData);
+
+        if (resp && resp.status === 1) {
+            filas[i].innerHTML = `<i class="fas fa-check text-success mr-2"></i> ${file.name} — listo`;
+            subidos++;
+        } else {
+            const motivo = resp && resp.message ? (Array.isArray(resp.message) ? resp.message.join(', ') : resp.message) : 'Error desconocido';
+            filas[i].innerHTML = `<i class="fas fa-triangle-exclamation text-danger mr-2"></i> ${file.name} — <span class="text-danger">${motivo}</span>`;
+        }
+    }
+
+    fnLoadTableReel();
+    toastr[subidos === files.length ? 'success' : 'warning'](`Se subieron ${subidos} de ${files.length} reels`);
+    bulkReelInput.value = '';
+});
