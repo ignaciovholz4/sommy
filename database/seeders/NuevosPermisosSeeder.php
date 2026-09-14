@@ -61,6 +61,11 @@ class NuevosPermisosSeeder extends Seeder
             ['slug' => 'finanzas.divisas.manage', 'name' => 'gestionar compra/venta de divisas',     'description' => 'Puede registrar compras y ventas de moneda extranjera'],
             ['slug' => 'finanzas.marketing.index', 'name' => 'ver panel de Meta/Google Ads',         'description' => 'Puede ver el gasto publicitario de Meta Ads y Google Ads'],
             ['slug' => 'finanzas.marketing.sincronizar', 'name' => 'sincronizar Meta/Google Ads',    'description' => 'Puede sincronizar manualmente el gasto de Meta Ads y Google Ads'],
+            ['slug' => 'finanzas.marketing.config', 'name' => 'configurar topes de Meta Ads',       'description' => 'Puede definir el tope de presupuesto diario/total de Meta Ads'],
+            ['slug' => 'finanzas.marketing.campanas.index', 'name' => 'ver campañas de Meta Ads',   'description' => 'Puede ver el listado de campañas de Meta Ads'],
+            ['slug' => 'finanzas.marketing.campanas.crear', 'name' => 'crear campañas de Meta Ads', 'description' => 'Puede crear una campaña nueva de Meta Ads desde cero'],
+            ['slug' => 'finanzas.marketing.campanas.estado', 'name' => 'pausar/activar campañas de Meta Ads', 'description' => 'Puede pausar o activar una campaña de Meta Ads'],
+            ['slug' => 'finanzas.marketing.campanas.presupuesto', 'name' => 'modificar presupuesto de Meta Ads', 'description' => 'Puede subir o bajar el presupuesto diario de un conjunto de anuncios'],
             // Alta rapida y otras acciones puntuales
             ['slug' => 'almacen_articulo.bulk_upload', 'name' => 'importar productos por Excel',     'description' => 'Puede hacer carga masiva de productos desde un Excel'],
             ['slug' => 'almacen_articulo.quick_create', 'name' => 'crear categoría/marca/unidad al vuelo', 'description' => 'Puede crear categorías, marcas o unidades rápido desde el alta de productos'],

@@ -9,6 +9,7 @@ use App\Http\Controllers\Finanzas\GastoCategoriaController;
 use App\Http\Controllers\Finanzas\GastoController;
 use App\Http\Controllers\Finanzas\InversorController;
 use App\Http\Controllers\Finanzas\MarketingController;
+use App\Http\Controllers\Finanzas\MetaAdsCampanasController;
 use App\Http\Controllers\Finanzas\OperacionCambioController;
 use App\Http\Controllers\Finanzas\RendicionFleteroController;
 use App\Http\Controllers\Finanzas\ReposicionController;
@@ -107,4 +108,14 @@ Route::middleware(['auth', 'verified'])->prefix('finanzas')->name('finanzas.')->
     Route::get('marketing', [MarketingController::class, 'index'])->name('marketing.index');
     Route::get('marketing/data', [MarketingController::class, 'data'])->name('marketing.data');
     Route::post('marketing/sincronizar', [MarketingController::class, 'sincronizarAhora'])->name('marketing.sincronizar');
+    Route::get('marketing/roi', [MarketingController::class, 'roi'])->name('marketing.roi');
+
+    // Gestion de campanas de Meta Ads (Fase 4): crear/pausar/activar/presupuesto
+    Route::get('marketing/campanas', [MetaAdsCampanasController::class, 'index'])->name('marketing.campanas.index');
+    Route::get('marketing/campanas/crear', [MetaAdsCampanasController::class, 'create'])->name('marketing.campanas.create');
+    Route::post('marketing/campanas', [MetaAdsCampanasController::class, 'store'])->name('marketing.campanas.store');
+    Route::post('marketing/campanas/{campaignId}/estado', [MetaAdsCampanasController::class, 'cambiarEstado'])->name('marketing.campanas.estado');
+    Route::post('marketing/adsets/{adsetId}/presupuesto', [MetaAdsCampanasController::class, 'actualizarPresupuesto'])->name('marketing.campanas.presupuesto');
+    Route::get('marketing/config', [MetaAdsCampanasController::class, 'config'])->name('marketing.config');
+    Route::post('marketing/config', [MetaAdsCampanasController::class, 'guardarConfig'])->name('marketing.config.guardar');
 });

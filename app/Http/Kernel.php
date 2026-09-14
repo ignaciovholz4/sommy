@@ -41,6 +41,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\AuditLog::class,
+            \App\Http\Middleware\CapturarAtribucionAds::class,
 
         ],
         'api' => [

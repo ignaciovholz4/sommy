@@ -25,6 +25,26 @@
     </script>
     @endif
 
+    {{-- Meta Pixel: eventos de navegacion/compra para Ads. Ver ViewContent/AddToCart/
+         InitiateCheckout/Purchase en las vistas puntuales del ecommerce. --}}
+    @if(config('services.meta_ads.pixel_id'))
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '{{ config('services.meta_ads.pixel_id') }}');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id={{ config('services.meta_ads.pixel_id') }}&ev=PageView&noscript=1"
+    /></noscript>
+    @endif
+
     {{-- AOS: animaciones al hacer scroll (alojado localmente, carga async e init resiliente) --}}
     <link rel="stylesheet" href="{{ assetv('css/ecommerce/aos.css') }}">
     <script src="{{ assetv('js/ecommerce/aos.js') }}" async></script>

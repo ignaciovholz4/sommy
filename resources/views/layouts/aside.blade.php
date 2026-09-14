@@ -459,8 +459,13 @@
                     </a>
                     @endcan
                     @can('haveaccess','finanzas.marketing.index')
-                    <a href="{{ route('finanzas.marketing.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/marketing') ? 'dg-drop-active' : '' }}">
+                    <a href="{{ route('finanzas.marketing.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/marketing') && !Str::startsWith($resp,'finanzas/marketing/campanas') ? 'dg-drop-active' : '' }}">
                         <i class="fab fa-facebook"></i> Meta / Google Ads
+                    </a>
+                    @endcan
+                    @can('haveaccess','finanzas.marketing.campanas.index')
+                    <a href="{{ route('finanzas.marketing.campanas.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'finanzas/marketing/campanas') ? 'dg-drop-active' : '' }}">
+                        <i class="fas fa-bullhorn"></i> Campañas de Meta Ads
                     </a>
                     @endcan
                 </div>

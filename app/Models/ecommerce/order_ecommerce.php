@@ -31,6 +31,13 @@ class order_ecommerce extends Model
         'direccion_localidad',
         'direccion_provincia',
         'direccion_cp',
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'fbclid',
+        'meta_ad_id',
+        'ctwa_clid',
+        'purchase_capi_sent_at',
     ];
 
     // 🔗 Relación con el estado de la orden

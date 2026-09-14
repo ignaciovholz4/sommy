@@ -81,6 +81,8 @@ class OrderDraftService
                     . (!empty($entrega['nombre_cliente']) ? '. Recibe: ' . $entrega['nombre_cliente'] : '')
                     . (!empty($entrega['telefono_contacto']) ? ' (tel ' . $entrega['telefono_contacto'] . ')' : '')
                     . ($draft->notas ? '. Notas: ' . $draft->notas : '')),
+                'ctwa_clid' => $conversation->ctwa_clid,
+                'meta_ad_id' => $conversation->meta_ad_id,
             ]);
 
             foreach ($draft->items as $item) {

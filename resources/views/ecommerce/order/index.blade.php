@@ -431,6 +431,13 @@
     window.CONFIG_WHATSAPP = @json($configPago['whatsapp'] ?? '');
     window.DESC_TRANSFERENCIA = {{ (float) ($configPago['descuento_transferencia'] ?? 0) }};
 </script>
+@if(config('services.meta_ads.pixel_id'))
+<script>
+    if (typeof fbq === 'function') {
+        fbq('track', 'InitiateCheckout');
+    }
+</script>
+@endif
 <script src="{{asset('js/ecommerce/cart-main-shopping.js')}}"></script>
 <script src="{{asset('js/ecommerce/order-shopping-card.js')}}?v={{ filemtime(public_path('js/ecommerce/order-shopping-card.js')) }}"></script>
 @endsection

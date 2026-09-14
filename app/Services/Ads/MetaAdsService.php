@@ -3,6 +3,7 @@
 namespace App\Services\Ads;
 
 use App\Models\AdSpendDiario;
+use App\Models\MetaAdsCampanaInsight;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -56,6 +57,55 @@ class MetaAdsService
             AdSpendDiario::updateOrCreate(
                 ['plataforma' => 'meta', 'fecha' => $dia['date_start']],
                 ['monto' => (float) $dia['spend'], 'moneda' => config('services.meta_ads.moneda', 'ARS'), 'sincronizado_at' => now()]
+            );
+            $guardados++;
+        }
+
+        return $guardados;
+    }
+
+    /** Trae el gasto diario del rango DESGLOSADO POR CAMPANA y lo guarda (upsert) en meta_ads_campanas_insights. */
+    public function sincronizarPorCampana(\DateTimeInterface $desde, \DateTimeInterface $hasta): int
+    {
+        if (!$this->habilitado()) {
+            return 0;
+        }
+
+        $version = config('services.meta_ads.graph_version', 'v21.0');
+        $adAccountId = config('services.meta_ads.ad_account_id');
+
+        try {
+            $response = Http::withToken(config('services.meta_ads.access_token'))
+                ->acceptJson()
+                ->get("https://graph.facebook.com/{$version}/act_{$adAccountId}/insights", [
+                    'level' => 'campaign',
+                    'time_increment' => 1,
+                    'fields' => 'campaign_id,campaign_name,spend,impressions,clicks',
+                    'time_range' => json_encode([
+                        'since' => $desde->format('Y-m-d'),
+                        'until' => $hasta->format('Y-m-d'),
+                    ]),
+                ])->throw();
+        } catch (\Throwable $th) {
+            Log::error('MetaAdsService::sincronizarPorCampana: ' . $th->getMessage());
+            return 0;
+        }
+
+        $guardados = 0;
+        foreach ($response->json('data') ?? [] as $fila) {
+            if (!isset($fila['date_start'], $fila['campaign_id'])) {
+                continue;
+            }
+
+            MetaAdsCampanaInsight::updateOrCreate(
+                ['meta_campaign_id' => $fila['campaign_id'], 'fecha' => $fila['date_start']],
+                [
+                    'nombre_campana' => $fila['campaign_name'] ?? null,
+                    'spend' => (float) ($fila['spend'] ?? 0),
+                    'impressions' => (int) ($fila['impressions'] ?? 0),
+                    'clicks' => (int) ($fila['clicks'] ?? 0),
+                    'sincronizado_at' => now(),
+                ]
             );
             $guardados++;
         }

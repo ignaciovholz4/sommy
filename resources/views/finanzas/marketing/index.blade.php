@@ -25,7 +25,10 @@
 <div class="fin-wrap">
     <div class="fin-title">
         <div><i class="fab fa-facebook" style="color:#2563EB;"></i> Meta Ads / Google Ads</div>
-        <button class="btn btn-sm btn-outline-primary" id="btnSincronizarAds"><i class="fas fa-rotate"></i> Sincronizar ahora</button>
+        <div class="d-flex gap-2">
+            <a href="{{ route('finanzas.marketing.roi') }}" class="btn btn-sm btn-outline-dark"><i class="fas fa-bullseye"></i> ROI por campaña</a>
+            <button class="btn btn-sm btn-outline-primary" id="btnSincronizarAds"><i class="fas fa-rotate"></i> Sincronizar ahora</button>
+        </div>
     </div>
 
     @if(!$metaHabilitado || !$googleHabilitado)

@@ -389,5 +389,16 @@
             idx = (idx + dir + thumbs.length) % thumbs.length;
             cambiarImagenGaleria(thumbs[idx]);
         }
+
+        @if(config('services.meta_ads.pixel_id'))
+        if (typeof fbq === 'function') {
+            fbq('track', 'ViewContent', {
+                content_ids: ['{{ $getProd[0]->idarticulo }}'],
+                content_type: 'product',
+                value: {{ (float) ($getProd[0]->display_price ?? 0) }},
+                currency: 'ARS'
+            });
+        }
+        @endif
     </script>
 @endsection

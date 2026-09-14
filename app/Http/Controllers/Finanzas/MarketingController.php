@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Finanzas;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdSpendDiario;
+use App\Models\MetaAdsCampanaInsight;
+use App\Models\ecommerce\order_ecommerce;
 use App\Services\Ads\GoogleAdsService;
 use App\Services\Ads\MetaAdsService;
 use Illuminate\Support\Facades\Gate;
@@ -72,11 +74,39 @@ class MarketingController extends Controller
         $hasta = now();
 
         $diasMeta = $meta->habilitado() ? $meta->sincronizar($desde, $hasta) : 0;
+        if ($meta->habilitado()) {
+            $meta->sincronizarPorCampana($desde, $hasta);
+        }
         $diasGoogle = $google->habilitado() ? $google->sincronizar($desde, $hasta) : 0;
 
         return response()->json([
             'estado' => 1,
             'mensaje' => "Sincronizado: {$diasMeta} día(s) de Meta, {$diasGoogle} día(s) de Google.",
         ]);
+    }
+
+    /** Tablero de ROI: cruza gasto por campaña (Meta) con ventas reales por utm_campaign. */
+    public function roi()
+    {
+        Gate::authorize('haveaccess', 'finanzas.marketing.index');
+
+        $campanas = MetaAdsCampanaInsight::selectRaw('meta_campaign_id, nombre_campana, SUM(spend) as gasto')
+            ->groupBy('meta_campaign_id', 'nombre_campana')
+            ->orderByDesc('gasto')
+            ->get();
+
+        foreach ($campanas as $c) {
+            $ventas = order_ecommerce::where('utm_campaign', $c->nombre_campana)
+                ->whereIn('status_order_id', [3, 4, 5]) // Pagado, Enviado, Entregado
+                ->get();
+
+            $c->gasto = (float) $c->gasto;
+            $c->ventas_totales = (float) $ventas->sum('total_amount');
+            $c->cantidad_ventas = $ventas->count();
+            $c->roas = $c->gasto > 0 ? round($c->ventas_totales / $c->gasto, 2) : null;
+            $c->cac = $c->cantidad_ventas > 0 ? round($c->gasto / $c->cantidad_ventas, 2) : null;
+        }
+
+        return view('finanzas.marketing.roi', compact('campanas'));
     }
 }

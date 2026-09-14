@@ -530,6 +530,11 @@ class OrderController extends Controller
             // 🔹 Actualizar estado de la orden
             $order->update(['status_order_id' => $request->statusId]);
 
+            // 📊 Pagado (3): CAPI Purchase, idempotente (no reenvia si ya se mando)
+            if ((int) $request->statusId === 3) {
+                app(\App\Services\Ads\MetaConversionsApiService::class)->dispararPurchase($order);
+            }
+
             // Pedido entregado o cancelado: la conversación del cliente migra a
             // "cerrada" y vuelve al bot — lista para empezar de cero si vuelve a escribir
             if (in_array((int) $request->statusId, [5, 6]) && $order->cliente_id) {
@@ -626,6 +631,9 @@ class OrderController extends Controller
 
             // 🔹 Actualizar estado de la orden
             $order->update(['status_order_id' => $request->statusId]);
+
+            // 📊 Confirmacion manual de pago (efectivo/banco): CAPI Purchase, idempotente
+            app(\App\Services\Ads\MetaConversionsApiService::class)->dispararPurchase($order);
 
             // 🔹 Actualizar método de pago
             $updatePayment = payment_ecommerce::where('order_id', $order->order_id)->first();

@@ -115,6 +115,13 @@ class MercadoPagoService
 
             $registro->save();
 
+            if ($payment->status === 'approved') {
+                $order = order_ecommerce::find($orderId);
+                if ($order) {
+                    app(\App\Services\Ads\MetaConversionsApiService::class)->dispararPurchase($order);
+                }
+            }
+
             return $payment->status === 'approved';
         } catch (\Throwable $th) {
             Log::error('MercadoPago procesarPago: ' . $th->getMessage());

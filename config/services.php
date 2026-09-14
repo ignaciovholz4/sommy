@@ -129,6 +129,13 @@ return [
         'graph_version' => env('WHATSAPP_GRAPH_VERSION', 'v21.0'),
         // Moneda de facturacion de la cuenta publicitaria (la que Meta ya usa para cobrar)
         'moneda' => env('META_ADS_MONEDA', 'ARS'),
+        // Pixel del sitio web (browser + Conversions API de eventos de compra/navegacion)
+        'pixel_id' => env('META_PIXEL_ID'),
+        // Dataset de integracion CRM (Conversions API de eventos de leads: Lead, calificacion, etc.)
+        // Requiere su propio access_token (distinto del de ads_read) generado en el asistente
+        // "Enviar un evento de CRM" del Events Manager de Meta.
+        'crm_dataset_id' => env('META_CRM_DATASET_ID'),
+        'crm_access_token' => env('META_CRM_ACCESS_TOKEN'),
     ],
 
     // Google Ads API: requiere developer token aprobado por Google + OAuth2

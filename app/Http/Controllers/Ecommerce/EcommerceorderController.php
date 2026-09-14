@@ -167,6 +167,10 @@ class EcommerceorderController extends Controller
                 $revendedor = Revendedor::where('codigo', $codigoRef)->where('estado', 'activo')->first();
             }
 
+            // 📊 Atribución a Meta Ads: la cookie la deja CapturarAtribucionAds middleware
+            // (fbclid/utm_* de la URL al aterrizar desde un anuncio), dura 30 días
+            $atribucionAds = json_decode($request->cookie(\App\Http\Middleware\CapturarAtribucionAds::COOKIE) ?? '{}', true) ?: [];
+
             // Orden
             $order = new order_ecommerce();
             $order->status_order_id = 1;
@@ -182,6 +186,10 @@ class EcommerceorderController extends Controller
             $order->direccion_provincia = $provincia;
             $order->direccion_cp = $codigoPostal;
             $order->order_date = Carbon::now();
+            $order->utm_source = $atribucionAds['utm_source'] ?? null;
+            $order->utm_medium = $atribucionAds['utm_medium'] ?? null;
+            $order->utm_campaign = $atribucionAds['utm_campaign'] ?? null;
+            $order->fbclid = $atribucionAds['fbclid'] ?? null;
             $order->save();
 
             \App\Models\Notificacion::avisar('pedido',

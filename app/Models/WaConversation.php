@@ -13,6 +13,7 @@ class WaConversation extends Model
         'wa_account_id', 'channel', 'external_id', 'cliente_id', 'phone_e164', 'profile_name',
         'status', 'assigned_user_id', 'ai_agent_id', 'mode', 'contexto_venta',
         'last_inbound_at', 'last_message_at', 'last_message_preview', 'unread_count',
+        'ctwa_clid', 'meta_ad_id', 'referral_source_url',
     ];
 
     public const CHANNELS = [

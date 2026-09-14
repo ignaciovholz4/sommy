@@ -29,6 +29,9 @@ class SincronizarGastoAds extends Command
             try {
                 $guardados = $meta->sincronizar($desde, $hasta);
                 $this->info("Meta Ads: {$guardados} dia(s) sincronizado(s).");
+
+                $guardadosCampana = $meta->sincronizarPorCampana($desde, $hasta);
+                $this->info("Meta Ads (por campana): {$guardadosCampana} fila(s) sincronizada(s).");
             } catch (\Throwable $th) {
                 Log::error('ads:sincronizar-gasto (meta): ' . $th->getMessage());
                 $this->error('Meta Ads: fallo la sincronizacion, ver logs.');

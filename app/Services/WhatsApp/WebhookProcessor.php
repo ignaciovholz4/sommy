@@ -9,6 +9,7 @@ use App\Models\Cliente;
 use App\Models\WaAccount;
 use App\Models\WaConversation;
 use App\Models\WaMessage;
+use App\Services\Ads\MetaConversionsApiService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -85,6 +86,13 @@ class WebhookProcessor
             ]
         );
 
+        // Referral de un anuncio "click-to-Messenger/Instagram": solo viene en el
+        // primer evento de una conversacion iniciada desde el boton del anuncio.
+        $referral = $event['referral'] ?? ($event['postback']['referral'] ?? null);
+        if ($referral) {
+            Log::info('Messenger/IG referral recibido (click-to-ad)', ['channel' => $channel, 'referral' => $referral]);
+        }
+
         $conversation = WaConversation::firstOrCreate(
             ['wa_account_id' => $account->id, 'external_id' => $senderId],
             [
@@ -92,8 +100,13 @@ class WebhookProcessor
                 'status' => 'nueva',
                 'mode' => 'bot',
                 'ai_agent_id' => AiAgent::where('activo', true)->value('id'),
+                'ctwa_clid' => $referral['ctwa_clid'] ?? null,
+                'meta_ad_id' => $referral['source_id'] ?? null,
+                'referral_source_url' => $referral['source_url'] ?? null,
             ]
         );
+
+        $this->dispararLeadSiCorresponde($conversation);
 
         if (!$conversation->profile_name) {
             $name = MessengerService::forAccount($account)->fetchProfileName($senderId);
@@ -188,6 +201,13 @@ class WebhookProcessor
         $profileName = collect($value['contacts'] ?? [])
             ->firstWhere('wa_id', $phone)['profile']['name'] ?? null;
 
+        // Referral de click-to-WhatsApp: solo viene en el primer mensaje de una
+        // conversacion iniciada desde el boton "Enviar mensaje" de un anuncio.
+        $referral = $message['referral'] ?? null;
+        if ($referral) {
+            Log::info('WhatsApp referral recibido (click-to-WhatsApp)', ['referral' => $referral]);
+        }
+
         $conversation = WaConversation::firstOrCreate(
             ['wa_account_id' => $account->id, 'external_id' => $phone],
             [
@@ -198,8 +218,13 @@ class WebhookProcessor
                 'mode' => 'bot',
                 'ai_agent_id' => AiAgent::where('activo', true)->value('id'),
                 'cliente_id' => Cliente::wherePhoneMatches($phone)->value('idcliente'),
+                'ctwa_clid' => $referral['ctwa_clid'] ?? null,
+                'meta_ad_id' => $referral['source_id'] ?? null,
+                'referral_source_url' => $referral['source_url'] ?? null,
             ]
         );
+
+        $this->dispararLeadSiCorresponde($conversation);
 
         if ($profileName && $conversation->profile_name !== $profileName) {
             $conversation->profile_name = $profileName;
@@ -290,5 +315,23 @@ class WebhookProcessor
             $message->error_detail = $error['title'] ?? ($error['message'] ?? null);
         }
         $message->save();
+    }
+
+    /**
+     * Evento Lead (dataset CRM) cuando nace una conversacion desde un anuncio
+     * click-to-WhatsApp/Messenger/Instagram. Solo en la creacion (no en cada
+     * mensaje de una conversacion que ya existia) y solo si trae ctwa_clid.
+     */
+    protected function dispararLeadSiCorresponde(WaConversation $conversation): void
+    {
+        if (!$conversation->wasRecentlyCreated || !$conversation->ctwa_clid) {
+            return;
+        }
+
+        app(MetaConversionsApiService::class)->enviarEventoCrm(
+            'Lead',
+            'lead_' . $conversation->id,
+            ['phone' => $conversation->phone_e164]
+        );
     }
 }

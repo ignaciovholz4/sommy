@@ -234,6 +234,15 @@ const addShoppingCart = (product, variantData = null) => {
 
     window.fnSaveCartProduct(getDataCardProduct);
     window.fnShowListCartProduct();
+
+    if (typeof fbq === "function" && addProduct.productId) {
+        fbq("track", "AddToCart", {
+            content_ids: [String(addProduct.productId)],
+            content_type: "product",
+            value: addProduct.priceSale * currentCantProduct,
+            currency: "ARS"
+        });
+    }
 };
 
 function updateBadgeOffer(precioVariante) {

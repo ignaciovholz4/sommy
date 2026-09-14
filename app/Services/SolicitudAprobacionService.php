@@ -8,6 +8,7 @@ use App\Models\Notificacion;
 use App\Models\RevendedorComision;
 use App\Models\Solicitud;
 use App\Models\Venta;
+use App\Services\Ads\MetaCampanasService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -90,6 +91,9 @@ class SolicitudAprobacionService
             'cheque.anular' => $this->anularCheque($datos['cheque_id']),
             'divisa.compra' => app(OperacionCambioService::class)->registrarCompra($datos, $solicitud->solicitante_id),
             'divisa.venta' => app(OperacionCambioService::class)->registrarVenta($datos, $solicitud->solicitante_id),
+            'meta_ads.crear_campana' => app(MetaCampanasService::class)->crearCampanaEjecutar($datos, $solicitud->solicitante_id),
+            'meta_ads.cambiar_estado' => app(MetaCampanasService::class)->cambiarEstadoEjecutar($datos, $solicitud->solicitante_id),
+            'meta_ads.actualizar_presupuesto' => app(MetaCampanasService::class)->actualizarPresupuestoEjecutar($datos, $solicitud->solicitante_id),
             default => throw new \RuntimeException("Tipo de solicitud desconocido: {$solicitud->tipo}"),
         };
     }

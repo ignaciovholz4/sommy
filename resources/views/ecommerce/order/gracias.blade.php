@@ -91,4 +91,16 @@
         });
     }
 </script>
+@if($pagado && config('services.meta_ads.pixel_id'))
+<script>
+    if (typeof fbq === 'function') {
+        fbq('track', 'Purchase', {
+            value: {{ (float) $order->total_amount }},
+            currency: 'ARS',
+            content_ids: [{{ $order->detalles->pluck('product_id')->filter()->implode(',') }}],
+            content_type: 'product'
+        }, { eventID: 'purchase_{{ $order->order_id }}' });
+    }
+</script>
+@endif
 @endsection
