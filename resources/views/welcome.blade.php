@@ -112,7 +112,10 @@
             @foreach($getReels as $reel)
               @if($reel->video_url)
               <div class="sommy-reel-card">
-                <video src="{{ $reel->video_url }}" autoplay muted loop playsinline preload="metadata"></video>
+                <video class="sommy-reel-video" src="{{ $reel->video_url }}" muted loop playsinline preload="metadata"></video>
+                <button type="button" class="sommy-reel-sound" aria-label="Activar sonido">
+                  <i class="fa-solid fa-volume-xmark"></i>
+                </button>
                 @if($reel->url)
                 <a href="{{ $reel->url }}" target="_blank" rel="noopener noreferrer" class="sommy-reel-ig-badge" aria-label="Ver en Instagram">
                   <i class="fa-brands fa-instagram"></i>
@@ -145,6 +148,58 @@
             const paso = card ? (card.offsetWidth + 16) : 280;
             track.scrollBy({ left: dir * paso, behavior: 'smooth' });
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const videos = Array.from(document.querySelectorAll('.sommy-reel-video'));
+            if (!videos.length) return;
+
+            const silenciarTodos = () => {
+                videos.forEach(v => {
+                    v.muted = true;
+                    const btn = v.closest('.sommy-reel-card')?.querySelector('.sommy-reel-sound i');
+                    if (btn) { btn.classList.remove('fa-volume-high'); btn.classList.add('fa-volume-xmark'); }
+                });
+            };
+
+            // Solo reproducen los que están realmente a la vista: evita que el navegador
+            // intente decodificar todos los videos del carrusel a la vez (eso es lo que
+            // "traba" el scroll en equipos más lentos o con conexión lenta).
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const video = entry.target;
+                    if (entry.isIntersecting) {
+                        video.play().catch(() => {});
+                    } else {
+                        video.pause();
+                    }
+                });
+            }, { root: document.getElementById('sommyReelsTrack'), threshold: 0.6 });
+
+            videos.forEach(video => {
+                observer.observe(video);
+
+                const card = video.closest('.sommy-reel-card');
+                const btnSound = card?.querySelector('.sommy-reel-sound');
+
+                const toggleSonido = () => {
+                    const activarSonido = video.muted; // estaba muteado: el click lo activa
+                    silenciarTodos();
+                    video.muted = !activarSonido;
+                    const icon = btnSound?.querySelector('i');
+                    if (icon) {
+                        icon.classList.toggle('fa-volume-high', activarSonido);
+                        icon.classList.toggle('fa-volume-xmark', !activarSonido);
+                    }
+                    if (video.paused) video.play().catch(() => {});
+                };
+
+                video.addEventListener('click', toggleSonido);
+                btnSound?.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    toggleSonido();
+                });
+            });
+        });
     </script>
     @endif
 

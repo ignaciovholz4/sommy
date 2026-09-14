@@ -1994,6 +1994,24 @@ a:not(.btn):hover { color: var(--sm-blue); }
     backdrop-filter: blur(2px);
 }
 .sommy-reel-ig-badge:hover { color: #fff; background: rgba(0, 0, 0, .65); }
+.sommy-reel-sound {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 0;
+    background: rgba(0, 0, 0, .45);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(2px);
+}
+.sommy-reel-sound:hover { background: rgba(0, 0, 0, .65); }
 .sommy-reel-caption {
     position: absolute;
     left: 0;

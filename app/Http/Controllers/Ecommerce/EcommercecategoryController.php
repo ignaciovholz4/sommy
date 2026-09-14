@@ -146,8 +146,13 @@ class EcommercecategoryController extends Controller
         if ($tipo = $request->input('tipo')) {
             $query->whereIn('tipo_colchon', (array) $tipo);
         }
-        if ($plazas = $request->input('plazas')) {
-            $query->whereIn('plazas', (array) $plazas);
+        if ($medidas = $request->input('medida')) {
+            // La medida real vive en las variantes ("Medida" del producto personalizado,
+            // ej. "0,80 x 1,90") — el campo fijo "plazas" del producto padre casi no se
+            // usa en este catálogo, la mayoría de los colchones son productos con variantes.
+            $query->whereHas('combinaciones', function ($q) use ($medidas) {
+                $q->whereIn('combinacion', (array) $medidas);
+            });
         }
         if ($marcas = $request->input('marca')) {
             $query->whereIn('marca_id', (array) $marcas);
@@ -243,7 +248,13 @@ class EcommercecategoryController extends Controller
         $opcionesFiltro = [
             'firmezas' => Articulo::where('categoria_id', $id)->whereNotNull('firmeza')->distinct()->pluck('firmeza'),
             'tipos'    => Articulo::where('categoria_id', $id)->whereNotNull('tipo_colchon')->distinct()->pluck('tipo_colchon'),
-            'plazas'   => Articulo::where('categoria_id', $id)->whereNotNull('plazas')->distinct()->pluck('plazas'),
+            'medidas'  => DB::table('producto_combinaciones as pc')
+                ->join('productos as p', 'p.idarticulo', '=', 'pc.producto_id')
+                ->where('p.categoria_id', $id)
+                ->where('p.estado', 'Activo')
+                ->distinct()
+                ->orderBy('pc.combinacion')
+                ->pluck('pc.combinacion'),
             'marcas'   => DB::table('marcas')
                 ->join('productos', 'productos.marca_id', '=', 'marcas.idmarca')
                 ->where('productos.categoria_id', $id)

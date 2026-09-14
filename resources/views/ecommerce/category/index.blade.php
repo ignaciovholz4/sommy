@@ -25,10 +25,9 @@
             @php
               $etiquetasFirmeza = \App\Models\Articulo::FIRMEZAS;
               $etiquetasTipo = \App\Models\Articulo::TIPOS_COLCHON;
-              $etiquetasPlazas = \App\Models\Articulo::PLAZAS;
               $selFirmeza = (array) request('firmeza', []);
               $selTipo = (array) request('tipo', []);
-              $selPlazas = (array) request('plazas', []);
+              $selMedida = (array) request('medida', []);
               $selMarca = (array) request('marca', []);
             @endphp
 
@@ -54,13 +53,13 @@
               @endforeach
             @endif
 
-            @if($opcionesFiltro['plazas']->isNotEmpty())
-              <h6>Plazas</h6>
-              @foreach ($opcionesFiltro['plazas'] as $valor)
+            @if($opcionesFiltro['medidas']->isNotEmpty())
+              <h6>Medida</h6>
+              @foreach ($opcionesFiltro['medidas'] as $valor)
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" name="plazas[]" value="{{ $valor }}"
-                         id="f-plazas-{{ $valor }}" {{ in_array($valor, $selPlazas) ? 'checked' : '' }}>
-                  <label class="form-check-label" for="f-plazas-{{ $valor }}">{{ $etiquetasPlazas[$valor] ?? $valor }}</label>
+                  <input class="form-check-input" type="checkbox" name="medida[]" value="{{ $valor }}"
+                         id="f-medida-{{ \Illuminate\Support\Str::slug($valor) }}" {{ in_array($valor, $selMedida) ? 'checked' : '' }}>
+                  <label class="form-check-label" for="f-medida-{{ \Illuminate\Support\Str::slug($valor) }}">{{ $valor }}</label>
                 </div>
               @endforeach
             @endif
@@ -146,7 +145,7 @@
             @endif
 
             <button type="submit" class="btn btn-dark btn-sm w-100 mt-2">Aplicar</button>
-            @if(request()->hasAny(['firmeza', 'tipo', 'plazas', 'marca', 'oferta', 'pillow', 'color', 'peso_max', 'altura_min', 'precio_min', 'precio_max']))
+            @if(request()->hasAny(['firmeza', 'tipo', 'medida', 'marca', 'oferta', 'pillow', 'color', 'peso_max', 'altura_min', 'precio_min', 'precio_max']))
               <a href="{{ url()->current() }}" class="btn btn-outline-secondary btn-sm w-100 mt-1">Limpiar filtros</a>
             @endif
           </form>
