@@ -515,14 +515,14 @@ p { line-height: 1.7; }
     padding: 28px 24px;
 }
 .sommy-banner { position: relative; max-width: 1320px; margin: 0 auto; }
-.sommy-banner .carousel-inner { border-radius: var(--ec-radius); }
+.sommy-banner .carousel-inner { border-radius: 24px; }
 /* Solo el slide activo (o el que está entrando/saliendo durante la transición)
    pasa a mostrarse: si "display" se pisa para TODOS los .carousel-item, Bootstrap
    ya no puede ocultar los inactivos y quedan todos apilados uno debajo del otro. */
 .sommy-banner-slide {
     min-height: 380px;
     background: #fff;
-    border-radius: var(--ec-radius);
+    border-radius: 24px;
     overflow: hidden;
     box-shadow: var(--sm-shadow);
 }
@@ -653,6 +653,11 @@ p { line-height: 1.7; }
     }
     .sommy-banner-media { max-width: 100%; height: auto; }
     .sommy-banner-img { height: auto; object-fit: initial; }
+    /* Pisa una regla vieja y genérica de main_ecommerce.css (".carousel-item img
+       { max-height: 240px }", para otro carrusel del tema) que sin querer también
+       agarraba el banner de Sommy por compartir la clase de Bootstrap ".carousel-item"
+       — achicaba la imagen del banner a 240px de alto dejando un montón de espacio en blanco. */
+    .sommy-banner-media .sommy-banner-img { max-height: none; }
     /* Mobile: se ve la imagen vertical, la horizontal de escritorio queda oculta */
     .sommy-banner-media .desktop-img { display: none; }
     .sommy-banner-media .mobile-img { display: block; }
