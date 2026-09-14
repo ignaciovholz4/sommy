@@ -70,6 +70,7 @@ Route::get('/categoria/{slug}', [EcommercecategoryController::class, 'showBySlug
 Route::get('/productos', [EcommercecategoryController::class, 'todos'])->name('ecommerce.catalogo');
 Route::get('/buscar', [EcommercesearchcategoryController::class, 'index'])->name('ecommerce.buscar');
 Route::get('/Ecommercerelacionados', [EcommerceproductController::class, 'relacionados'])->name('ecommerce.relacionados');
+Route::post('/Ecommercecarritosync', [\App\Http\Controllers\Ecommerce\CarritoSyncController::class, 'sync'])->name('ecommerce.carrito.sync');
 
 // Rutas viejas por ID → redirect 301 a la URL con slug
 Route::get('/Ecommercecategory/{id}', function ($id) {

@@ -57,6 +57,9 @@ class Kernel extends ConsoleKernel
 
         // Auditoria: purga logs viejos para que la tabla no crezca sin limite
         $schedule->command('auditoria:limpiar')->monthly();
+
+        // Ecommerce: avisa por mail a clientes que dejaron el carrito abandonado (una vez por abandono)
+        $schedule->command('carrito:avisar-abandonados')->everyThirtyMinutes();
     }
 
     /**

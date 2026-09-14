@@ -358,10 +358,35 @@ window.fnDeleteProdByKey = (claveCart) => {
 
 window.fnUpdateCartAfterDelete = (newCart) => {
   localStorage.setItem('listShoppingCart', JSON.stringify(newCart));
+  window.fnSyncCarritoServidor(newCart);
 };
 
 window.fnSaveCartProduct = (shoppingCart) => {
   localStorage.setItem('listShoppingCart', JSON.stringify(shoppingCart));
+  window.fnSyncCarritoServidor(shoppingCart);
+};
+
+// Manda el carrito al servidor SOLO si hay un cliente logueado (el propio
+// endpoint no hace nada si no lo hay) — sirve para poder avisarle por mail
+// si lo abandona. Con debounce para no pegarle al servidor en cada click.
+let __carritoSyncTimeout = null;
+window.fnSyncCarritoServidor = (shoppingCart) => {
+  clearTimeout(__carritoSyncTimeout);
+  __carritoSyncTimeout = setTimeout(() => {
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (!token) return;
+
+    const total = shoppingCart.reduce((acc, p) => acc + (Number(p.total) || 0), 0);
+
+    fetch('/Ecommercecarritosync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': token,
+      },
+      body: JSON.stringify({ items: shoppingCart, total }),
+    }).catch(() => {});
+  }, 600);
 };
 
 window.fnFormatMoney = (money) => {

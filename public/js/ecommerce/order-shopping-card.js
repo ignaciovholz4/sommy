@@ -277,6 +277,7 @@ const fnRegistrarPedido = () => {
         if(resp.status === 1){
             pedidoArray = [];//reset array order
             localStorage.removeItem('listShoppingCart');//remove the variable listShoppingCart
+            if (typeof window.fnSyncCarritoServidor === 'function') window.fnSyncCarritoServidor([]); // ya compró: no avisar de carrito abandonado
 
             // Rama MercadoPago: redirigir al Checkout Pro
             if(resp.mp_init_point){
