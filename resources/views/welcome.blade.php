@@ -110,11 +110,21 @@
           </button>
           <div class="sommy-reels-track" id="sommyReelsTrack">
             @foreach($getReels as $reel)
-              @if($reel->embed_url)
+              @if($reel->video_url)
               <div class="sommy-reel-card">
-                @if($reel->titulo)
-                <div class="sommy-reel-titulo">{{ $reel->titulo }}</div>
+                <video src="{{ $reel->video_url }}" autoplay muted loop playsinline preload="metadata"></video>
+                @if($reel->url)
+                <a href="{{ $reel->url }}" target="_blank" rel="noopener noreferrer" class="sommy-reel-ig-badge" aria-label="Ver en Instagram">
+                  <i class="fa-brands fa-instagram"></i>
+                </a>
                 @endif
+                @if($reel->titulo)
+                <div class="sommy-reel-caption">{{ $reel->titulo }}</div>
+                @endif
+              </div>
+              @elseif($reel->embed_url)
+              {{-- Reel viejo, cargado solo con el link (sin video propio subido): se muestra con el embed de Instagram --}}
+              <div class="sommy-reel-card sommy-reel-card--embed">
                 <iframe src="{{ $reel->embed_url }}" loading="lazy" scrolling="no" allowtransparency="true" title="{{ $reel->titulo ?: 'Reel de Instagram' }}"></iframe>
               </div>
               @endif

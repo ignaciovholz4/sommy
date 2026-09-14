@@ -10,6 +10,7 @@ const reelUrl = document.querySelector('#reelUrl');
 const reelTitulo = document.querySelector('#reelTitulo');
 const reelOrden = document.querySelector('#reelOrden');
 const reelPreview = document.querySelector('#reelPreview');
+const reelVideoInput = document.querySelector('#reelVideo');
 
 $(document).ready(function () {
     $.ajaxSetup({
@@ -28,7 +29,7 @@ $(document).ready(function () {
         columns: [
             { data: 'id', name: 'id' },
             { data: 'titulo', name: 'titulo' },
-            { data: 'url', name: 'url' },
+            { data: 'video', name: 'video' },
             { data: 'orden', name: 'orden' },
             { data: 'action', name: 'action' },
         ],
@@ -49,18 +50,6 @@ const seend_data_reel = async (url, form) => {
     }
 };
 
-const fnShortcodeReel = (url) => {
-    const m = String(url || '').match(/instagram\.com\/(?:reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
-    return m ? m[1] : null;
-};
-
-reelUrl.addEventListener('input', () => {
-    const shortcode = fnShortcodeReel(reelUrl.value);
-    reelPreview.innerHTML = shortcode
-        ? `<iframe src="https://www.instagram.com/reel/${shortcode}/embed" style="width:100%;max-width:340px;height:480px;border:0;border-radius:8px;" allowtransparency="true"></iframe>`
-        : (reelUrl.value ? '<p class="text-danger small">Ese link no parece ser de un reel/publicación de Instagram.</p>' : '');
-});
-
 btnshowmodalreel.addEventListener('click', (e) => {
     e.preventDefault();
     formReel.reset();
@@ -70,10 +59,27 @@ btnshowmodalreel.addEventListener('click', (e) => {
     new bootstrap.Modal(idmodalreel).show();
 });
 
+reelVideoInput.addEventListener('change', function () {
+    const file = this.files[0];
+    reelPreview.innerHTML = '';
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.src = url;
+    video.controls = true;
+    video.muted = true;
+    video.style.maxWidth = '260px';
+    video.style.borderRadius = '8px';
+    reelPreview.appendChild(video);
+});
+
 btnsavereel.addEventListener('click', (e) => {
     e.preventDefault();
 
     const formData = new FormData();
+    const fileVideo = reelVideoInput.files[0];
+    if (fileVideo) formData.append('video', fileVideo);
     formData.append('url', reelUrl.value);
     formData.append('titulo', reelTitulo.value);
     formData.append('orden', reelOrden.value || 0);
@@ -107,10 +113,21 @@ const edit_reel = (id) => {
         const row = resp.data[0];
         reelLabel.textContent = 'Actualizar el reel';
         reelId.value = row.id;
-        reelUrl.value = row.url;
+        reelUrl.value = row.url || '';
         reelTitulo.value = row.titulo || '';
         reelOrden.value = row.orden || 0;
-        reelUrl.dispatchEvent(new Event('input'));
+
+        reelPreview.innerHTML = '';
+        if (row.video) {
+            const video = document.createElement('video');
+            video.src = `../imagenes/reels/${row.video}`;
+            video.controls = true;
+            video.muted = true;
+            video.style.maxWidth = '260px';
+            video.style.borderRadius = '8px';
+            reelPreview.appendChild(video);
+        }
+
         new bootstrap.Modal(idmodalreel).show();
     });
 };

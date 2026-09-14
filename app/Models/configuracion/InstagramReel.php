@@ -10,6 +10,8 @@ class InstagramReel extends Model
 
     protected $fillable = [
         'url',
+        'video',
+        'poster',
         'titulo',
         'orden',
         'status',
@@ -29,5 +31,11 @@ class InstagramReel extends Model
     public function getEmbedUrlAttribute(): ?string
     {
         return $this->shortcode ? "https://www.instagram.com/reel/{$this->shortcode}/embed" : null;
+    }
+
+    /** URL pública del video propio (alojado en el servidor). */
+    public function getVideoUrlAttribute(): ?string
+    {
+        return $this->video ? asset('imagenes/reels/' . $this->video) : null;
     }
 }

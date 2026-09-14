@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\configuracion\InstagramReel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Yajra\Datatables\Datatables;
 
 /**
- * Carrusel de reels de Instagram en la home: se cargan solo pegando la URL
- * del reel (embed oficial de Instagram, sin descargar ni alojar video).
+ * Carrusel de reels de Instagram en la home: se sube el video (guardado y
+ * alojado acá, se reproduce en un <video> propio, sin el marco/branding de
+ * Instagram) y opcionalmente se linkea al posteo original.
  */
 class InstagramReelController extends Controller
 {
@@ -27,11 +29,14 @@ class InstagramReelController extends Controller
             $esNuevo = $reelId === 0;
 
             $validator = Validator::make($request->all(), [
-                'url' => ['required', 'string', 'regex:#instagram\.com/(reel|reels|p|tv)/[A-Za-z0-9_-]+#i'],
+                'video' => ($esNuevo ? 'required' : 'nullable') . '|mimes:mp4,mov,webm,m4v|max:30720',
+                'url' => ['nullable', 'string', 'regex:#instagram\.com/(reel|reels|p|tv)/[A-Za-z0-9_-]+#i'],
                 'titulo' => 'nullable|string|max:120',
                 'orden' => 'nullable|integer',
             ], [
-                'url.required' => 'Pegá el link del reel de Instagram',
+                'video.required' => 'Subí el video del reel (mp4)',
+                'video.mimes' => 'El video tiene que ser mp4, mov o webm',
+                'video.max' => 'El video no puede pesar más de 30MB',
                 'url.regex' => 'Ese link no parece ser de un reel/publicación de Instagram (ej: https://www.instagram.com/reel/XXXXXXX/)',
             ]);
 
@@ -39,13 +44,24 @@ class InstagramReelController extends Controller
                 return response()->json(['status' => 0, 'message' => $validator->errors()->all()]);
             }
 
+            $destinationPath = public_path('/imagenes/reels');
+            if (!File::isDirectory($destinationPath)) {
+                File::makeDirectory($destinationPath, 0755, true);
+            }
+
             $datos = [
-                'url' => $request->url,
+                'url' => $request->url ?: null,
                 'titulo' => $request->titulo ?: null,
                 'orden' => $request->orden ?: 0,
             ];
 
+            $videoFile = $request->file('video');
+
             if ($esNuevo) {
+                $nombreVideo = $videoFile->hashName();
+                $videoFile->move($destinationPath, $nombreVideo);
+                $datos['video'] = $nombreVideo;
+
                 InstagramReel::create($datos);
                 $message = 'Se agregó el reel con éxito';
             } else {
@@ -53,6 +69,16 @@ class InstagramReelController extends Controller
                 if (!$reel) {
                     return response()->json(['status' => 0, 'message' => ['No se encontró el reel a actualizar']]);
                 }
+
+                if ($videoFile) {
+                    if ($reel->video && File::exists($destinationPath . '/' . $reel->video)) {
+                        File::delete($destinationPath . '/' . $reel->video);
+                    }
+                    $nombreVideo = $videoFile->hashName();
+                    $videoFile->move($destinationPath, $nombreVideo);
+                    $datos['video'] = $nombreVideo;
+                }
+
                 $reel->update($datos);
                 $message = 'Se actualizó el reel con éxito';
             }
@@ -93,6 +119,7 @@ class InstagramReelController extends Controller
             if ($reel) {
                 $reel->status = 0;
                 $reel->save();
+                // El archivo de video se conserva (soft delete vía status) por si se restaura.
             }
 
             return response()->json(['status' => 1, 'message' => 'Se eliminó el reel con éxito']);

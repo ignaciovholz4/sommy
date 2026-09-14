@@ -25,22 +25,33 @@
       <div class="modal-body style-modal-form">
         <form action="" id="formReel">
             <input type="hidden" name="reelId" id="reelId" value="0">
-            <p class="text-muted small">Pegá el link del reel/publicación de Instagram (ej: https://www.instagram.com/reel/DdRwzc3JJm3/). Se embebe con el reproductor oficial de Instagram, no hace falta subir ningún video.</p>
+            <p class="text-muted small">Subí el video del reel (descargalo desde la app de Instagram: Compartir &rsaquo; Guardar video, o desde Meta Business Suite). Se reproduce con un video propio, sin el marco ni los botones de Instagram.</p>
+            <span id="hintVideo">Formato vertical (como el reel original). Máximo 30MB. mp4, mov o webm.</span><br>
             <div class="input-group mb-3">
+              <input type="file" id="reelVideo" name="video" class="form-control" accept="video/mp4,video/quicktime,video/webm">
               <div class="input-group-append">
                   <div class="input-group-text style-icon-fas">
-                      <i class="fab fa-instagram"></i>
+                      <i class="fas fa-video"></i>
                   </div>
               </div>
-            	<input type="text" id="reelUrl" name="url" class="form-control style-input" placeholder="https://www.instagram.com/reel/XXXXXXXXXXX/">
             </div>
+            <div id="reelPreview" class="mt-3 mb-3"></div>
+            <hr>
             <div class="input-group mb-3">
               <div class="input-group-append">
                   <div class="input-group-text style-icon-fas">
                       <i class="fas fa-align-left"></i>
                   </div>
               </div>
-              <input type="text" id="reelTitulo" name="titulo" class="form-control style-input" placeholder="Título/leyenda que se ve arriba del reel (opcional)" maxlength="120">
+              <input type="text" id="reelTitulo" name="titulo" class="form-control style-input" placeholder="Título/leyenda que se ve sobre el video (opcional)" maxlength="120">
+            </div>
+            <div class="input-group mb-3">
+              <div class="input-group-append">
+                  <div class="input-group-text style-icon-fas">
+                      <i class="fab fa-instagram"></i>
+                  </div>
+              </div>
+              <input type="text" id="reelUrl" name="url" class="form-control style-input" placeholder="Link al posteo de Instagram (opcional, para el ícono que lleva al perfil)">
             </div>
             <div class="input-group mb-3">
               <div class="input-group-append">
@@ -50,7 +61,6 @@
               </div>
               <input type="number" id="reelOrden" name="orden" class="form-control style-input" placeholder="Orden (0 = primero)" min="0">
             </div>
-            <div id="reelPreview" class="mt-3"></div>
              @include('custom.validate_save_form_ajax')
         </form>
       </div>
