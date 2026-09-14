@@ -67,9 +67,9 @@
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-bold">Imagen del anuncio</label>
-                <input type="file" name="imagen" class="form-control" accept="image/*" required>
-                <small class="text-muted">Subida manual — no se genera con IA.</small>
+                <label class="form-label fw-bold">Imagen o video del anuncio</label>
+                <input type="file" name="archivo" class="form-control" accept="image/*,video/mp4,video/quicktime,video/x-msvideo" required>
+                <small class="text-muted">Subida manual — no se genera con IA. Video hasta 40&nbsp;MB (mp4/mov/avi, límite del servidor); si el video queda "procesando" en Meta, puede tardar un momento en generarse la miniatura.</small>
             </div>
 
             <button type="submit" class="btn btn-primary w-100">

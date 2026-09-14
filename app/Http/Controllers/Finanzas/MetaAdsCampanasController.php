@@ -39,20 +39,22 @@ class MetaAdsCampanasController extends Controller
             'presupuesto_diario' => 'required|numeric|min:1',
             'texto' => 'nullable|string|max:500',
             'link_destino' => 'nullable|url',
-            'imagen' => 'required|image|max:10240',
+            // Tope real limitado por upload_max_filesize/post_max_size del servidor (hoy 40MB local)
+            'archivo' => 'required|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi|max:40960',
         ]);
 
-        $validado['imagen_path'] = $request->file('imagen')->store('meta_ads/temp');
+        $validado['archivo_path'] = $request->file('archivo')->store('meta_ads/temp');
+        $validado['es_video'] = str_starts_with($request->file('archivo')->getMimeType(), 'video/');
 
         try {
             $resultado = $service->solicitarCrearCampana($validado);
         } catch (\Throwable $th) {
-            Storage::delete($validado['imagen_path']);
+            Storage::delete($validado['archivo_path']);
             return back()->with('error', 'No se pudo crear la campaña: ' . $th->getMessage())->withInput();
         }
 
         if (!$resultado['ok']) {
-            Storage::delete($validado['imagen_path']);
+            Storage::delete($validado['archivo_path']);
             return back()->with('error', $resultado['mensaje'])->withInput();
         }
 

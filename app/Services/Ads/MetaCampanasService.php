@@ -133,27 +133,45 @@ class MetaCampanasService
             ])->throw()->json();
             $adsetId = $adset['id'];
 
-            // 3. Imagen subida por el usuario (creativo manual, no generado con IA)
-            $imageHash = null;
-            $imagenPath = $datos['imagen_path'] ?? null;
-            if ($imagenPath && Storage::exists($imagenPath)) {
+            // 3. Creativo subido por el usuario (imagen o video, manual, no generado con IA)
+            $archivoPath = $datos['archivo_path'] ?? null;
+            $objectStorySpec = [
+                'page_id' => config('services.whatsapp.page_id'),
+            ];
+
+            if (($datos['es_video'] ?? false) && $archivoPath && Storage::exists($archivoPath)) {
+                $videoId = Http::withToken($token)
+                    ->attach('source', Storage::get($archivoPath), basename($archivoPath))
+                    ->post("{$base}/advideos")->throw()->json('id');
+
+                $thumbnailUrl = $this->esperarThumbnailVideo($token, $version, $videoId);
+
+                $objectStorySpec['video_data'] = [
+                    'video_id' => $videoId,
+                    'image_url' => $thumbnailUrl,
+                    'message' => $datos['texto'] ?? '',
+                    'call_to_action' => [
+                        'type' => 'LEARN_MORE',
+                        'value' => ['link' => $datos['link_destino'] ?? url('/')],
+                    ],
+                ];
+            } elseif ($archivoPath && Storage::exists($archivoPath)) {
                 $subida = Http::withToken($token)
-                    ->attach('source', Storage::get($imagenPath), basename($imagenPath))
+                    ->attach('source', Storage::get($archivoPath), basename($archivoPath))
                     ->post("{$base}/adimages")->throw()->json();
                 $imageHash = collect($subida['images'] ?? [])->first()['hash'] ?? null;
+
+                $objectStorySpec['link_data'] = [
+                    'link' => $datos['link_destino'] ?? url('/'),
+                    'message' => $datos['texto'] ?? '',
+                    'image_hash' => $imageHash,
+                ];
             }
 
             // 4. Creativo del anuncio
             $creative = Http::withToken($token)->asForm()->post("{$base}/adcreatives", [
                 'name' => $datos['nombre'] . ' - Creativo',
-                'object_story_spec' => json_encode([
-                    'page_id' => config('services.whatsapp.page_id'),
-                    'link_data' => [
-                        'link' => $datos['link_destino'] ?? url('/'),
-                        'message' => $datos['texto'] ?? '',
-                        'image_hash' => $imageHash,
-                    ],
-                ]),
+                'object_story_spec' => json_encode($objectStorySpec),
             ])->throw()->json();
             $creativeId = $creative['id'];
 
@@ -169,8 +187,8 @@ class MetaCampanasService
 
             $this->auditar('crear_campana', $campaignId, $adsetId, $datos['nombre'], null, $resultado, true, null, $userId);
 
-            if ($imagenPath) {
-                Storage::delete($imagenPath);
+            if ($archivoPath) {
+                Storage::delete($archivoPath);
             }
 
             return $resultado;
@@ -179,6 +197,29 @@ class MetaCampanasService
             $this->auditar('crear_campana', null, null, $datos['nombre'] ?? null, null, null, false, $th->getMessage(), $userId);
             throw $th;
         }
+    }
+
+    /**
+     * Meta procesa el video de forma asincronica: el thumbnail (obligatorio
+     * para el creativo de video) tarda unos segundos en estar listo. Reintenta
+     * unas pocas veces antes de rendirse.
+     */
+    private function esperarThumbnailVideo(string $token, string $version, string $videoId): ?string
+    {
+        for ($intento = 0; $intento < 8; $intento++) {
+            $thumbnails = Http::withToken($token)
+                ->get("https://graph.facebook.com/{$version}/{$videoId}/thumbnails")
+                ->json('data') ?? [];
+
+            if (!empty($thumbnails)) {
+                $preferido = collect($thumbnails)->firstWhere('is_preferred', true) ?? $thumbnails[0];
+                return $preferido['uri'] ?? null;
+            }
+
+            sleep(3);
+        }
+
+        throw new \RuntimeException('El video todavía se está procesando en Meta (sin thumbnail disponible). Probá crear la campaña de nuevo en un minuto.');
     }
 
     // ---------------------------------------------------------------
