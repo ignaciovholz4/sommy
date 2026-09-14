@@ -228,7 +228,7 @@
                 <a class="ec-nav-link {{ request()->is('/') ? 'is-active' : '' }}" href="{{ url('/') }}">Inicio</a>
             </li>
             <li class="ec-nav-drop">
-                <a class="ec-nav-link {{ request()->is('categoria/*') ? 'is-active' : '' }}" href="{{ url('/#categorias') }}">
+                <a class="ec-nav-link {{ request()->is('categoria/*') ? 'is-active' : '' }}" href="{{ url('/productos') }}">
                     Categorías <i class="fa-solid fa-chevron-down" style="font-size:10px;margin-left:4px;"></i>
                 </a>
                 <div class="ec-nav-drop-panel">

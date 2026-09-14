@@ -92,52 +92,6 @@
     </section>
     <!--END MARCAS QUE TRABAJAMOS-->
 
-    @if($getDataCategory->isEmpty())
-    <section class="ec-placeholder-section py-5">
-      <div class="container-fluid">
-        <h2 class="section-title mb-4">Categorias</h2>
-        <div class="ec-placeholder-grid">
-          @for($i = 0; $i < 5; $i++)
-          <div class="ec-placeholder-cat-card">
-            <div class="ec-placeholder-cat-thumb">
-              <i class="fa-solid fa-tag"></i>
-            </div>
-            <p class="ec-placeholder-cat-label">Categoría {{ $i + 1 }}</p>
-          </div>
-          @endfor
-        </div>
-        <div class="ec-placeholder-inline-hint mt-4">
-          <i class="fa-solid fa-circle-info me-1"></i>
-          <strong>¿Cómo configurar las categorías?</strong> Cada categoría muestra su imagen y nombre. Tus clientes hacen clic para explorar los productos de esa sección.
-          Creá tus categorías desde el panel &rsaquo; <strong>Ecommerce &rsaquo; Categorías</strong>: poné un nombre, subí una imagen representativa y ya aparecerá aquí.
-        </div>
-      </div>
-    </section>
-    @else
-    {{-- Categorías: tiles de foto con nombre superpuesto --}}
-    <section class="py-5" id="categorias">
-      <div class="container-fluid">
-        {{-- Encabezado con el mismo estilo que "Ultimos productos" --}}
-        <div class="tabs-header d-flex justify-content-between border-bottom my-5" data-aos="fade-up">
-          <h3>Categorías</h3>
-        </div>
-        <br>
-        <div class="sommy-cat-grid">
-          @foreach ($getDataCategory as $cat)
-          <a href="{{ url('categoria/' . $cat->slug) }}" class="sommy-cat-tile" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
-            <img src="{{ asset('imagenes/categorias/' . $cat->name_imagen) }}" alt="{{ $cat->nombre }}">
-            {{-- Las imágenes "categoria_*.webp" ya traen el nombre incorporado: no superponer texto --}}
-            @if(!\Illuminate\Support\Str::startsWith($cat->name_imagen, 'categoria_'))
-            <span class="veil"></span>
-            <span class="label">{{ $cat->nombre }}</span>
-            @endif
-            <span class="go">Ver productos <i class="fa-solid fa-arrow-right"></i></span>
-          </a>
-          @endforeach
-        </div>
-      </div>
-    </section>
-    @endif    
     <!--Ultimos productos agregados-->
     <section class="py-5" id="productos">
       <div class="container-fluid">
