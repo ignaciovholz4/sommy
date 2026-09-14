@@ -373,13 +373,22 @@ class ArticuloController extends Controller
                 $color = $stock <= 3 ? 'background:#FEF3C7;color:#92400E;' : 'background:#DCFCE7;color:#15803D;';
                 return '<span class="badge" style="'.$color.'font-size:0.8rem;">'.rtrim(rtrim(number_format($stock, 2, ',', '.'), '0'), ',').' u.</span>';
             })
-            ->addColumn('costo_fmt', fn($a) => '$'.number_format($a->pcompra_con_iva, 2, ',', '.'))
+            ->addColumn('costo_fmt', function ($a) {
+                // Con variantes el costo es POR variante (cada medida se compra a un precio distinto)
+                $variantes = $this->variantesDelArticulo($a->idarticulo);
+
+                if ($variantes->isNotEmpty()) {
+                    return $variantes->map(fn ($v) =>
+                        '<div style="font-size:0.78rem;white-space:nowrap;"><span style="color:#94a3b8;">'.e($v->combinacion).':</span> '
+                        . '<strong>$'.number_format((float) $v->pcompra_variante, 2, ',', '.').'</strong></div>'
+                    )->implode('');
+                }
+
+                return '$'.number_format($a->pcompra_con_iva, 2, ',', '.');
+            })
             ->addColumn('venta_fmt', function ($a) {
                 // Con variantes el precio de venta es POR variante: se listan todas
-                $variantes = DB::table('producto_combinaciones')
-                    ->where('producto_id', $a->idarticulo)
-                    ->orderBy('idcombinacion')
-                    ->get(['combinacion', 'pventa_variante']);
+                $variantes = $this->variantesDelArticulo($a->idarticulo);
 
                 if ($variantes->isNotEmpty()) {
                     return $variantes->map(fn ($v) =>
@@ -391,6 +400,21 @@ class ArticuloController extends Controller
                 return '<strong>$'.number_format($a->pventa_con_iva, 2, ',', '.').'</strong>';
             })
             ->addColumn('margen', function ($a) {
+                // Con variantes el margen es POR variante: cada medida tiene su propio costo y precio
+                $variantes = $this->variantesDelArticulo($a->idarticulo);
+
+                if ($variantes->isNotEmpty()) {
+                    return $variantes->map(function ($v) {
+                        $costo = (float) $v->pcompra_variante;
+                        if ($costo <= 0) {
+                            return '<div style="font-size:0.78rem;"><span class="text-muted">—</span></div>';
+                        }
+                        $pct = round((((float) $v->pventa_variante - $costo) / $costo) * 100);
+                        $color = $pct <= 0 ? '#B91C1C' : ($pct < 20 ? '#92400E' : '#15803D');
+                        return '<div style="font-size:0.78rem;white-space:nowrap;"><span style="font-weight:800;color:'.$color.';">'.($pct > 0 ? '+' : '').$pct.'%</span></div>';
+                    })->implode('');
+                }
+
                 if ($a->pcompra_sin_iva <= 0) {
                     return '<span class="text-muted">—</span>';
                 }
@@ -454,8 +478,19 @@ class ArticuloController extends Controller
                     </div>
                 ';
             })
-            ->rawColumns(['select','producto','stock_badge','venta_fmt','margen','action'])
+            ->rawColumns(['select','producto','stock_badge','costo_fmt','venta_fmt','margen','action'])
             ->make(true);
+    }
+
+    /** Variantes (medida, costo, precio) de un artículo, cacheadas por request para no repetir la consulta entre columnas del listado. */
+    private array $variantesCache = [];
+
+    private function variantesDelArticulo(int $idarticulo)
+    {
+        return $this->variantesCache[$idarticulo] ??= DB::table('producto_combinaciones')
+            ->where('producto_id', $idarticulo)
+            ->orderBy('idcombinacion')
+            ->get(['combinacion', 'pventa_variante', 'pcompra_variante']);
     }
 
 
