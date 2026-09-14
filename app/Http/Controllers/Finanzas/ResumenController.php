@@ -10,6 +10,9 @@ use App\Models\Gasto;
 use App\Models\Movimiento;
 use App\Models\Venta;
 use App\Models\ecommerce\order_ecommerce;
+use App\Services\Ai\ReportesTools\CuentasPorPagarQueryTool;
+use App\Services\Ai\ReportesTools\DeudoresQueryTool;
+use App\Services\Ai\ReportesTools\TesoreriaQueryTool;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -71,6 +74,21 @@ class ResumenController extends Controller
             ->havingRaw('SUM(ef.monto_cobrado) > 0')
             ->get();
 
+        $historicoMensual = $this->historicoMensual();
+        $historicoTotal = [
+            'ingresos' => (float) $historicoMensual->sum('ingresos'),
+            'egresos'  => (float) $historicoMensual->sum('egresos'),
+            'neto'     => (float) $historicoMensual->sum('neto'),
+        ];
+
+        // Foto actual (no del período): cuánto hay en caja/banco, cuánto me deben
+        // los clientes y cuánto le debo a proveedores. Reusa las mismas consultas
+        // que usa el chat de Reportes para que los números coincidan siempre.
+        $tesoreria = (new TesoreriaQueryTool())->execute([]);
+        $porCobrar = (new DeudoresQueryTool())->execute(['limit' => 10]);
+        $porPagar = (new CuentasPorPagarQueryTool())->execute(['limit' => 10]);
+        $posicionNeta = $tesoreria['saldo_total_actual'] + $porCobrar['deuda_total'] - $porPagar['deuda_total'];
+
         return view('finanzas.resumen.index', [
             'periodo'          => $periodo,
             'desde'            => $desde,
@@ -81,7 +99,53 @@ class ResumenController extends Controller
             'fleterosEfectivo' => $fleterosEfectivo,
             'actividad'        => $actividad,
             'comprobantes'     => $comprobantes,
+            'historicoMensual' => $historicoMensual,
+            'historicoTotal'   => $historicoTotal,
+            'tesoreria'        => $tesoreria,
+            'porCobrar'        => $porCobrar,
+            'porPagar'         => $porPagar,
+            'posicionNeta'     => $posicionNeta,
         ]);
+    }
+
+    /**
+     * Ganancia/pérdida mes a mes (en ARS: cuentas sin moneda cargada se
+     * consideran ARS por defecto, igual criterio que $totalesPorMoneda arriba)
+     * desde el primer movimiento cargado hasta hoy, con acumulado histórico.
+     * Sirve para el resumen imprimible: de un vistazo, en qué meses se ganó
+     * y en qué meses se perdió plata, y el resultado acumulado de todo el negocio.
+     */
+    private function historicoMensual()
+    {
+        $filas = DB::table('movimientos as m')
+            ->leftJoin('cuentas as c', 'c.id', '=', 'm.cuenta_id')
+            ->leftJoin('monedas as mo', 'mo.id', '=', 'c.moneda_id')
+            ->where(function ($q) {
+                $q->whereNull('mo.codigo')->orWhere('mo.codigo', 'ARS');
+            })
+            ->selectRaw("DATE_FORMAT(m.fecha, '%Y-%m-01') as mes,
+                SUM(CASE WHEN m.tipo = 'ingreso' THEN m.total ELSE 0 END) as ingresos,
+                SUM(CASE WHEN m.tipo = 'egreso' THEN m.total ELSE 0 END) as egresos")
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get();
+
+        $acumulado = 0;
+
+        return $filas->map(function ($f) use (&$acumulado) {
+            $ingresos = (float) $f->ingresos;
+            $egresos = (float) $f->egresos;
+            $neto = $ingresos - $egresos;
+            $acumulado += $neto;
+
+            return [
+                'fecha'     => Carbon::parse($f->mes),
+                'ingresos'  => $ingresos,
+                'egresos'   => $egresos,
+                'neto'      => $neto,
+                'acumulado' => $acumulado,
+            ];
+        });
     }
 
     /**

@@ -132,6 +132,139 @@
         </div>
     </div>
 
+    <div class="fin-card mb-4">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:4px;">Posición financiera actual (foto de hoy)</h3>
+        <p class="text-muted small mb-3">No es lo movido en el período: es cuánta plata tenés ahora, cuánto te deben y cuánto debés, en este mismo momento.</p>
+        <div class="row mb-3">
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Caja + bancos ahora</div>
+                <div class="res-tot-valor">${{ number_format($tesoreria['saldo_total_actual'], 2, ',', '.') }}</div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Me deben (clientes)</div>
+                <div class="res-tot-valor">${{ number_format($porCobrar['deuda_total'], 2, ',', '.') }}</div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Debo (proveedores)</div>
+                <div class="res-tot-valor rojo">${{ number_format($porPagar['deuda_total'], 2, ',', '.') }}</div>
+                @if($porPagar['vencido_total'] > 0)
+                    <div class="small" style="color:#b4552d;">de eso, ${{ number_format($porPagar['vencido_total'], 2, ',', '.') }} ya vencido</div>
+                @endif
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Posición neta</div>
+                <div class="res-tot-valor {{ $posicionNeta < 0 ? 'rojo' : '' }}">${{ number_format($posicionNeta, 2, ',', '.') }}</div>
+                <div class="small text-muted">caja + por cobrar − por pagar</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div style="font-size:12px;font-weight:600;color:#47536F;margin-bottom:6px;">Saldo por cuenta</div>
+                <table class="table table-sm">
+                    <tbody>
+                        @forelse($tesoreria['saldo_por_cuenta'] as $c)
+                        <tr>
+                            <td>{{ $c['cuenta'] }} <span class="text-muted small">({{ $c['tipo'] }})</span></td>
+                            <td class="text-end fw-bold {{ $c['saldo'] < 0 ? 'text-danger' : '' }}">${{ number_format($c['saldo'], 2, ',', '.') }}</td>
+                        </tr>
+                        @empty
+                        <tr><td class="text-muted small">Sin cuentas activas.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div style="font-size:12px;font-weight:600;color:#47536F;margin-bottom:6px;">Principales deudores</div>
+                <table class="table table-sm">
+                    <tbody>
+                        @forelse($porCobrar['top_deudores'] as $d)
+                        <tr>
+                            <td>{{ $d['cliente'] }}</td>
+                            <td class="text-end fw-bold">${{ number_format($d['saldo'], 2, ',', '.') }}</td>
+                        </tr>
+                        @empty
+                        <tr><td class="text-muted small">Nadie te debe plata en cuenta corriente.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div style="font-size:12px;font-weight:600;color:#47536F;margin-bottom:6px;">Proveedores — vencido / próximo a vencer</div>
+                <table class="table table-sm">
+                    <tbody>
+                        @foreach($porPagar['proveedores_vencidos'] as $p)
+                        <tr>
+                            <td class="text-danger">{{ $p['proveedor'] }} <span class="small">(vencido {{ \Carbon\Carbon::parse($p['vencimiento'])->format('d/m') }})</span></td>
+                            <td class="text-end fw-bold text-danger">${{ number_format($p['monto'], 2, ',', '.') }}</td>
+                        </tr>
+                        @endforeach
+                        @foreach($porPagar['proveedores_proximos_a_vencer'] as $p)
+                        <tr>
+                            <td>{{ $p['proveedor'] }} <span class="text-muted small">(vence {{ \Carbon\Carbon::parse($p['vencimiento'])->format('d/m') }})</span></td>
+                            <td class="text-end fw-bold">${{ number_format($p['monto'], 2, ',', '.') }}</td>
+                        </tr>
+                        @endforeach
+                        @if(empty($porPagar['proveedores_vencidos']) && empty($porPagar['proveedores_proximos_a_vencer']))
+                        <tr><td class="text-muted small">Sin vencimientos próximos ni deuda vencida.</td></tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="fin-card mb-4">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:4px;">¿Estoy ganando o perdiendo plata? — histórico mes a mes</h3>
+        <p class="text-muted small mb-3">Ingresos y egresos reales de caja/banco (ARS) de cada mes, con el resultado acumulado desde el primer movimiento cargado.</p>
+        <div class="row mb-3">
+            <div class="col-md-4 mb-2">
+                <div class="res-tot-label">Ingresos históricos</div>
+                <div class="res-tot-valor">${{ number_format($historicoTotal['ingresos'], 2, ',', '.') }}</div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div class="res-tot-label">Egresos históricos</div>
+                <div class="res-tot-valor rojo">${{ number_format($historicoTotal['egresos'], 2, ',', '.') }}</div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div class="res-tot-label">Resultado histórico</div>
+                <div class="res-tot-valor {{ $historicoTotal['neto'] < 0 ? 'rojo' : '' }}">
+                    {{ $historicoTotal['neto'] >= 0 ? 'Ganancia' : 'Pérdida' }}: ${{ number_format(abs($historicoTotal['neto']), 2, ',', '.') }}
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Mes</th>
+                        <th class="text-end">Ingresos</th>
+                        <th class="text-end">Egresos</th>
+                        <th class="text-end">Resultado del mes</th>
+                        <th class="text-end">Acumulado histórico</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($historicoMensual as $h)
+                    <tr>
+                        <td style="text-transform:capitalize;">{{ $h['fecha']->translatedFormat('F Y') }}</td>
+                        <td class="text-end">${{ number_format($h['ingresos'], 2, ',', '.') }}</td>
+                        <td class="text-end">${{ number_format($h['egresos'], 2, ',', '.') }}</td>
+                        <td class="text-end fw-bold {{ $h['neto'] < 0 ? 'text-danger' : 'text-success' }}">
+                            {{ $h['neto'] >= 0 ? '+' : '−' }}${{ number_format(abs($h['neto']), 2, ',', '.') }}
+                        </td>
+                        <td class="text-end fw-bold {{ $h['acumulado'] < 0 ? 'text-danger' : 'text-success' }}">
+                            ${{ number_format($h['acumulado'], 2, ',', '.') }}
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="5" class="text-center text-muted py-4">Todavía no hay movimientos de caja/banco cargados.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="fin-card">
         <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">Movimientos de caja/banco del período ({{ $movimientos->count() }})</h3>
         <div class="table-responsive">
