@@ -359,6 +359,31 @@
                                 </div>
                             </div>
 
+                            @if($regalos->isNotEmpty())
+                            <div class="mt-4" id="regaloPicker">
+                                <label class="form-label fw-bold"><i class="fa-solid fa-gift text-danger me-1"></i> Elegí tu regalo</label>
+                                <div class="d-flex flex-column gap-2" style="max-width:420px;">
+                                    @foreach($regalos as $regalo)
+                                    <label class="d-flex align-items-center gap-2 border rounded p-2" style="cursor:pointer;">
+                                        <input type="radio" name="regaloElegido" value="{{ $regalo->id }}" class="form-check-input mt-0"
+                                               data-nombre="{{ $regalo->nombre }}" data-precio="{{ $regalo->precio }}"
+                                               data-stock="{{ $regalo->stock }}" data-imagen="{{ $regalo->imagen_url }}"
+                                               {{ $loop->first ? 'checked' : '' }}>
+                                        @if($regalo->imagen_url)
+                                        <img src="{{ $regalo->imagen_url }}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
+                                        @endif
+                                        <span class="flex-grow-1">{{ $regalo->nombre }}</span>
+                                        <span class="badge bg-success">GRATIS</span>
+                                    </label>
+                                    @endforeach
+                                    <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                                        <input type="radio" name="regaloElegido" value="" class="form-check-input mt-0">
+                                        <span class="text-muted small">No quiero el regalo</span>
+                                    </label>
+                                </div>
+                            </div>
+                            @endif
+
                             <div class="mt-3 row">
                                 <div class="d-grid col-12 col-md-8 col-lg-6">
                                     <button type="button" class="btn btn-add-prod" id="btn-add-product" style="padding:13px;white-space:nowrap;">
@@ -642,6 +667,57 @@
             window.fnSaveCartProduct(cart);
             window.fnShowListCartProduct();
             window.fnMessageToastrSuccess(`Combo agregado con ${descuentoPct}% off`, 'Éxito!');
+        });
+    });
+    </script>
+    @endif
+
+    @if($regalos->isNotEmpty())
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const regaloPicker = document.getElementById('regaloPicker');
+        const btnAdd = document.getElementById('btn-add-product');
+        if (!regaloPicker || !btnAdd) return;
+
+        // Se cuelga del mismo botón de "Agregar al carrito": shopping-card.js agrega el
+        // producto principal primero (este script corrió después en la página), acá solo
+        // sumamos el regalo elegido como una línea aparte a precio $0.
+        btnAdd.addEventListener('click', function () {
+            // Si es un producto con variantes y no hay medida elegida, shopping-card.js ya
+            // mostró el error y no agregó nada: no sumar el regalo tampoco.
+            if (productValue[0].tipo_producto_id === 2 && !btnAdd.getAttribute('data-value')) return;
+
+            const seleccionado = regaloPicker.querySelector('input[name="regaloElegido"]:checked');
+            if (!seleccionado || !seleccionado.value) return;
+
+            const cart = window.fnListCartProduct();
+            const claveCart = 'regalo-' + seleccionado.value;
+            const existente = cart.find(p => p.claveCart === claveCart);
+
+            if (existente) {
+                existente.cant += 1;
+                existente.total = 0;
+            } else {
+                cart.push({
+                    claveCart: claveCart,
+                    name: seleccionado.getAttribute('data-nombre') + ' (regalo)',
+                    productId: Number(seleccionado.value),
+                    original_price: Number(seleccionado.getAttribute('data-precio')) || 0,
+                    priceSale: 0,
+                    cant: 1,
+                    total: 0,
+                    rowProdVariant: null,
+                    tipoProductoId: 1,
+                    stockProduct: Number(seleccionado.getAttribute('data-stock')) || 0,
+                    display_price: 0,
+                    has_offer: true,
+                    image: seleccionado.getAttribute('data-imagen') || null,
+                    sinStock: false
+                });
+            }
+
+            window.fnSaveCartProduct(cart);
+            window.fnShowListCartProduct();
         });
     });
     </script>

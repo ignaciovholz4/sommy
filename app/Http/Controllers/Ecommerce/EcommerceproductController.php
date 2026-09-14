@@ -118,6 +118,27 @@ class EcommerceproductController extends Controller
         // Ficha técnica: solo campos con valor
         $especificaciones = $this->armarEspecificaciones($producto);
 
+        // Regalos disponibles al comprar este producto: el cliente elige UNO gratis.
+        // Simplificación: solo productos simples (sin variantes) pueden ofrecerse de regalo.
+        $conStockRegalos = $stockController->getProductosConStock()->keyBy('producto_id');
+        $regalos = DB::table('producto_regalos as pr')
+            ->join('productos as p', 'p.idarticulo', '=', 'pr.regalo_id')
+            ->where('pr.idarticulo', $producto->idarticulo)
+            ->where('p.estado', 'Activo')
+            ->where('p.tipo_producto_id', 1)
+            ->whereIn('p.idarticulo', $conStockRegalos->keys())
+            ->select('p.idarticulo as id', 'p.nombre', 'p.imagen', 'p.pventa_con_iva as precio')
+            ->get()
+            ->map(function ($r) use ($conStockRegalos) {
+                $foto = DB::table('producto_imagenes')
+                    ->where('producto_id', $r->id)->whereNull('combinacion_id')
+                    ->orderByDesc('principal')->orderBy('orden')->first();
+                $r->imagen_url = $foto ? asset($foto->path) : ($r->imagen ? asset('imagenes/articulos/' . $r->imagen) : null);
+                $r->stock = (int) ($conStockRegalos->get($r->id)->total_stock ?? 0);
+
+                return $r;
+            });
+
         return view('ecommerce.products.index', compact(
             'getProd',
             'getVariantesData',
@@ -126,7 +147,8 @@ class EcommerceproductController extends Controller
             'getCategoryLimit',
             'arrayEmpresa',
             'imagenesGaleria',
-            'especificaciones'
+            'especificaciones',
+            'regalos'
         ));
     }
 

@@ -94,6 +94,18 @@
               @endif
             @endif
 
+            @if($opcionesFiltro['colores']->isNotEmpty())
+              @php $selColor = (array) request('color', []); @endphp
+              <h6>Color</h6>
+              @foreach ($opcionesFiltro['colores'] as $valor)
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="color[]" value="{{ $valor }}"
+                         id="f-color-{{ \Illuminate\Support\Str::slug($valor) }}" {{ in_array($valor, $selColor) ? 'checked' : '' }}>
+                  <label class="form-check-label" for="f-color-{{ \Illuminate\Support\Str::slug($valor) }}">{{ $valor }}</label>
+                </div>
+              @endforeach
+            @endif
+
             @if($opcionesFiltro['hayPeso'])
               @php
                 $bucketsPeso = [85, 90, 100, 110, 120, 150];
@@ -134,7 +146,7 @@
             @endif
 
             <button type="submit" class="btn btn-dark btn-sm w-100 mt-2">Aplicar</button>
-            @if(request()->hasAny(['firmeza', 'tipo', 'plazas', 'marca', 'oferta', 'pillow', 'peso_max', 'altura_min', 'precio_min', 'precio_max']))
+            @if(request()->hasAny(['firmeza', 'tipo', 'plazas', 'marca', 'oferta', 'pillow', 'color', 'peso_max', 'altura_min', 'precio_min', 'precio_max']))
               <a href="{{ url()->current() }}" class="btn btn-outline-secondary btn-sm w-100 mt-1">Limpiar filtros</a>
             @endif
           </form>
