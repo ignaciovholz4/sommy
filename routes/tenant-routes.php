@@ -62,6 +62,7 @@ use App\Http\Controllers\Email\TicketController;
 */
 
 Route::get('/', [EcommerceController::class, 'index']);
+Route::get('/sitemap.xml', [\App\Http\Controllers\Ecommerce\SitemapController::class, 'index'])->name('ecommerce.sitemap');
 
 // Rutas SEO con slug
 Route::get('/producto/{slug}', [EcommerceproductController::class, 'showBySlug'])->name('ecommerce.producto');

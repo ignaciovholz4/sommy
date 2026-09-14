@@ -1,6 +1,8 @@
 @extends('ecommerce.layouts.main-ecommerce')
 
-@section('meta_title', 'Todos los productos | Sommy')
+@section('meta_title', 'Catálogo completo: colchones, sommiers y más | Sommy Córdoba')
+@section('meta_description', 'Todo el catálogo Sommy: colchones, sommiers, almohadas y sábanas de fábrica en Córdoba. Comprá online con envío a toda la ciudad.')
+@section('meta_keywords', 'catálogo colchones Córdoba, colchones y sommiers, comprar colchón online, Sommy productos')
 
 @section('contentEcommerce')
 <style>

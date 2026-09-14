@@ -1,6 +1,8 @@
 @extends('ecommerce.layouts.main-ecommerce')
 
-@section('meta_title', 'Categoría: ' . $getCategory[0]->nombre)
+@section('meta_title', $getCategory[0]->nombre . ' | Sommy — Fábrica de colchones en Córdoba')
+@section('meta_description', $getCategory[0]->nombre . ' de fábrica en Córdoba. Comprá ' . strtolower($getCategory[0]->nombre) . ' online con envío a toda la ciudad, directo de Sommy, sin intermediarios.')
+@section('meta_keywords', $getCategory[0]->nombre . ' Córdoba, comprar ' . strtolower($getCategory[0]->nombre) . ', ' . strtolower($getCategory[0]->nombre) . ' online, Sommy ' . strtolower($getCategory[0]->nombre))
 
 @section('contentEcommerce')
 <style>

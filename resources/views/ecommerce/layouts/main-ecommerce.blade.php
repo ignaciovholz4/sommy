@@ -2,17 +2,62 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
-    <title>@yield('meta_title', 'Sommy')</title>
+    @php
+        $seoTituloDefault = 'Sommy — Fábrica de colchones y sommiers en Córdoba';
+        $seoDescDefault = 'Fabricamos colchones, sommiers, almohadas y sábanas en Córdoba. Comprá online con envíos a toda la ciudad. Directo de fábrica, sin intermediarios.';
+        $seoKeywordsDefault = 'colchones Córdoba, colchones a medida, fábrica de colchones, sommiers Córdoba, colchones y sommiers, almohadas, sábanas, Sommy colchones, comprar colchón online Córdoba';
+        $seoImagenDefault = asset('imagenes/marca/sommy-hero-poster-h.jpg');
+    @endphp
+    <title>@yield('meta_title', $seoTituloDefault)</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="author" content="">
-    <meta name="keywords" content="">
-    <meta name="description" content="@yield('meta_description', '')">
+    <meta name="author" content="Sommy">
+    <meta name="robots" content="index, follow">
+    <meta name="keywords" content="@yield('meta_keywords', $seoKeywordsDefault)">
+    <meta name="description" content="@yield('meta_description', $seoDescDefault)">
+    <link rel="canonical" href="@yield('meta_canonical', url()->current())">
+
+    {{-- Open Graph / Facebook e Instagram --}}
+    <meta property="og:type" content="@yield('meta_og_type', 'website')">
+    <meta property="og:site_name" content="Sommy">
+    <meta property="og:locale" content="es_AR">
+    <meta property="og:url" content="@yield('meta_canonical', url()->current())">
+    <meta property="og:title" content="@yield('meta_title', $seoTituloDefault)">
+    <meta property="og:description" content="@yield('meta_description', $seoDescDefault)">
+    <meta property="og:image" content="@yield('meta_imagen', $seoImagenDefault)">
+
+    {{-- Twitter Card --}}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="@yield('meta_title', $seoTituloDefault)">
+    <meta name="twitter:description" content="@yield('meta_description', $seoDescDefault)">
+    <meta name="twitter:image" content="@yield('meta_imagen', $seoImagenDefault)">
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('imagenes/marca/sommy-favicon.svg') }}">
+
+    {{-- Datos estructurados: negocio local (ayuda a aparecer con dirección/teléfono en Google) --}}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FurnitureStore",
+        "name": "Sommy",
+        "image": "{{ $seoImagenDefault }}",
+        "url": "{{ url('/') }}",
+        "telephone": "{{ $arrayEmpresa['phone'] ?? '' }}",
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Córdoba",
+            "addressRegion": "Córdoba",
+            "addressCountry": "AR"
+        },
+        "areaServed": "Córdoba, Argentina",
+        "priceRange": "$$"
+    }
+    </script>
+    @yield('meta_structured_data')
 
     {{-- Microsoft Clarity: mapas de calor + grabaciones de sesion (gratis, no toca nuestro server) --}}
     @if(config('services.clarity.project_id'))

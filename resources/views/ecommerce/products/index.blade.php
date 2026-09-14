@@ -1,7 +1,38 @@
 @extends('ecommerce.layouts.main-ecommerce')
 
-@section('meta_title', $getProd[0]->meta_title ?: $getProd[0]->nombre)
-@section('meta_description', $getProd[0]->meta_description ?: \Illuminate\Support\Str::limit(strip_tags($getProd[0]->descripcion ?? ''), 155))
+@section('meta_title', $getProd[0]->meta_title ?: ($getProd[0]->nombre . ' | Sommy Córdoba'))
+@section('meta_description', $getProd[0]->meta_description ?: \Illuminate\Support\Str::limit(strip_tags($getProd[0]->descripcion ?? ($getProd[0]->nombre . ' — de fábrica, en Córdoba. Comprá online con envío a toda la ciudad.')), 155))
+@section('meta_keywords', $getProd[0]->nombre . ', ' . $getProd[0]->nombre . ' Córdoba, comprar ' . strtolower($getProd[0]->nombre) . ', Sommy')
+@section('meta_og_type', 'product')
+@section('meta_imagen', $imagenesGaleria->first() ? asset($imagenesGaleria->first()->path) : asset('imagenes/marca/sommy-hero-poster-h.jpg'))
+
+@php
+    $seoPrecio = $getProd[0]->tipo_producto_id == 2
+        ? ($getVariantesData->where('pventa_variante', '>', 0)->min('pventa_variante') ?: 0)
+        : ($getProd[0]->display_price ?? $getProd[0]->pventa_con_iva ?? 0);
+    $seoHayStock = $getProd[0]->tipo_producto_id == 2
+        ? collect($getEachVarianteProd)->sum('total_stock') > 0
+        : ($getProd[0]->stock ?? 0) > 0;
+@endphp
+@section('meta_structured_data')
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": {!! json_encode($getProd[0]->nombre) !!},
+    "image": {!! json_encode($imagenesGaleria->first() ? asset($imagenesGaleria->first()->path) : asset('imagenes/marca/sommy-hero-poster-h.jpg')) !!},
+    "description": {!! json_encode(\Illuminate\Support\Str::limit(strip_tags($getProd[0]->descripcion ?? ''), 300)) !!},
+    "brand": { "@type": "Brand", "name": "Sommy" },
+    "offers": {
+        "@type": "Offer",
+        "url": {!! json_encode(url()->current()) !!},
+        "priceCurrency": "ARS",
+        "price": "{{ number_format((float) $seoPrecio, 2, '.', '') }}",
+        "availability": "https://schema.org/{{ $seoHayStock ? 'InStock' : 'OutOfStock' }}"
+    }
+}
+</script>
+@endsection
 
 @section('contentEcommerce')
     <style>
