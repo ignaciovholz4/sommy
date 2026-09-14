@@ -91,7 +91,7 @@ Route::post('/cuenta/login', [\App\Http\Controllers\Ecommerce\ClienteAuthControl
 Route::get('/cuenta/registro', [\App\Http\Controllers\Ecommerce\ClienteAuthController::class, 'showRegister'])->name('cliente.registro');
 Route::post('/cuenta/registro', [\App\Http\Controllers\Ecommerce\ClienteAuthController::class, 'register'])->name('cliente.registro.post');
 Route::get('/cuenta/salir', [\App\Http\Controllers\Ecommerce\ClienteAuthController::class, 'logout'])->name('cliente.logout');
-Route::get('/cuenta/pedidos', [\App\Http\Controllers\Ecommerce\ClientePedidosController::class, 'index'])->name('cliente.pedidos')->middleware('auth.cliente');
+Route::get('/cuenta/pedidos', [\App\Http\Controllers\Ecommerce\ClientePedidosController::class, 'index'])->name('cliente.pedidos')->middleware(['auth.cliente', 'cliente.verified']);
 
 /** Verificación de correo del comprador (guard cliente) — ruta propia porque
  * "verification.verify"/"verification.notice" ya las usa el panel de admin (guard web) */
@@ -135,7 +135,7 @@ Route::get('/cambios-y-devoluciones', [\App\Http\Controllers\Ecommerce\LegalCont
 Route::get('/arrepentimiento', [\App\Http\Controllers\Ecommerce\LegalController::class, 'arrepentimiento'])->name('legal.arrepentimiento');
 Route::post('/arrepentimiento', [\App\Http\Controllers\Ecommerce\LegalController::class, 'arrepentimientoStore'])->name('legal.arrepentimiento.post');
 Route::get('/feed/productos.xml', [\App\Http\Controllers\Ecommerce\FeedController::class, 'productos'])->name('feed.productos');
-Route::get('/cuenta/pedidos/{id}', [\App\Http\Controllers\Ecommerce\ClientePedidosController::class, 'show'])->name('cliente.pedido')->middleware('auth.cliente');
+Route::get('/cuenta/pedidos/{id}', [\App\Http\Controllers\Ecommerce\ClientePedidosController::class, 'show'])->name('cliente.pedido')->middleware(['auth.cliente', 'cliente.verified']);
 Route::post('/Ecommercesaveorder', [EcommerceorderController::class, 'store'])->middleware(['auth.cliente', 'cliente.verified']);
 Route::post('/EcommerceFindEmailCustomer', [EcommerceorderController::class, 'validateEmaiLIfExist']);
 

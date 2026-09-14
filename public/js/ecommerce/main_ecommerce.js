@@ -186,21 +186,38 @@ window.fnShowRelatedProducts = () => {
           ? `<img src="${esc(p.imagen)}" alt="" class="sommy-related-thumb">`
           : `<div class="sommy-related-thumb sommy-related-thumb--ph"><i class="fa-solid fa-feather" aria-hidden="true"></i></div>`;
 
-        // Solo se agrega directo si es producto simple (sin variantes) y tiene stock.
-        const puedeAgregarDirecto = p.tipo_producto_id === 1 && p.stock > 0;
-        const boton = puedeAgregarDirecto
-          ? `<button type="button" class="sommy-related-add" data-related-id="${p.id}">Agregar</button>`
-          : `<a href="/producto/${esc(p.slug)}" class="sommy-related-add sommy-related-add--link">Ver producto</a>`;
+        const variantes = Array.isArray(p.variantes) ? p.variantes : [];
+        const tieneStock = p.tipo_producto_id === 1 ? p.stock > 0 : variantes.length > 0;
+
+        // Producto simple: agrega directo. Con variantes: agrega directo si hay una sola
+        // opción con stock, o abre un mini selector si hay varias.
+        const boton = tieneStock
+          ? `<button type="button" class="sommy-related-add sommy-related-add--icon" data-related-id="${p.id}" aria-label="Agregar al carrito">+</button>`
+          : '';
+
+        const picker = (p.tipo_producto_id === 2 && variantes.length > 1)
+          ? `
+            <div class="sommy-related-picker" data-picker-id="${p.id}" hidden>
+              <select class="sommy-related-picker-select">
+                ${variantes.map(v => `<option value="${v.idcombinacion}">${esc(v.label)}</option>`).join('')}
+              </select>
+              <button type="button" class="sommy-related-picker-confirm" data-confirm-id="${p.id}" aria-label="Confirmar">+</button>
+            </div>
+          `
+          : '';
 
         return `
           <div class="sommy-related-card">
-            ${thumb}
-            <div class="sommy-related-info">
-              <div class="sommy-related-name">${esc(p.nombre)}</div>
-              ${desdeLabel}
-              <div class="sommy-related-price">${window.fnFormatMoney(p.precio)}</div>
-            </div>
+            <a href="/producto/${esc(p.slug)}" class="sommy-related-link">
+              ${thumb}
+              <div class="sommy-related-info">
+                <div class="sommy-related-name">${esc(p.nombre)}</div>
+                ${desdeLabel}
+                <div class="sommy-related-price">${window.fnFormatMoney(p.precio)}</div>
+              </div>
+            </a>
             ${boton}
+            ${picker}
           </div>
         `;
       }).join('');
@@ -213,10 +230,44 @@ window.fnShowRelatedProducts = () => {
       `;
 
       window.cartRelatedProductsContainer.querySelectorAll('.sommy-related-add[data-related-id]').forEach(btn => {
-        const producto = productos.find(p => String(p.id) === btn.getAttribute('data-related-id'));
-        if (producto) {
-          btn.addEventListener('click', () => window.fnAddRelatedToCart(producto));
-        }
+        const id = btn.getAttribute('data-related-id');
+        const producto = productos.find(p => String(p.id) === id);
+        if (!producto) return;
+
+        btn.addEventListener('click', () => {
+          const variantes = Array.isArray(producto.variantes) ? producto.variantes : [];
+
+          if (producto.tipo_producto_id === 1) {
+            window.fnAddRelatedToCart(producto);
+            return;
+          }
+
+          // Producto con variantes: si hay una sola opción se agrega directo,
+          // si hay varias se despliega el selector para elegir cuál.
+          if (variantes.length === 1) {
+            window.fnAddRelatedVariantToCart(producto, variantes[0]);
+            return;
+          }
+
+          const picker = window.cartRelatedProductsContainer.querySelector(`.sommy-related-picker[data-picker-id="${id}"]`);
+          if (picker) picker.hidden = !picker.hidden;
+        });
+      });
+
+      window.cartRelatedProductsContainer.querySelectorAll('.sommy-related-picker-confirm[data-confirm-id]').forEach(btn => {
+        const id = btn.getAttribute('data-confirm-id');
+        const producto = productos.find(p => String(p.id) === id);
+        if (!producto) return;
+
+        btn.addEventListener('click', () => {
+          const picker = btn.closest('.sommy-related-picker');
+          const select = picker.querySelector('.sommy-related-picker-select');
+          const variante = (producto.variantes || []).find(v => String(v.idcombinacion) === select.value);
+          if (variante) {
+            window.fnAddRelatedVariantToCart(producto, variante);
+            picker.hidden = true;
+          }
+        });
       });
     })
     .catch(() => {
@@ -250,6 +301,40 @@ window.fnAddRelatedToCart = (product) => {
       has_offer: product.has_offer || false,
       image: product.imagen,
       sinStock: window.fnCheckStockProduct(product.stock, 1)
+    });
+  }
+
+  window.fnSaveCartProduct(cart);
+  window.fnShowListCartProduct();
+  window.fnMessageToastrSuccess("Se agregó con éxito el producto al carrito", "Éxito!");
+};
+
+// Agrega una variante puntual (medida/combinación) de un producto recomendado
+window.fnAddRelatedVariantToCart = (product, variante) => {
+  const cart = window.fnListCartProduct();
+  const claveCart = `${product.id}-${variante.idcombinacion}`;
+  const existente = cart.find(prod => prod.claveCart === claveCart);
+
+  if (existente) {
+    existente.cant += 1;
+    existente.total = existente.cant * existente.priceSale;
+    existente.sinStock = window.fnCheckStockProduct(variante.stock, existente.cant);
+  } else {
+    cart.push({
+      claveCart: claveCart,
+      name: product.nombre,
+      productId: product.id,
+      original_price: variante.precio,
+      priceSale: variante.precio,
+      cant: 1,
+      total: variante.precio,
+      rowProdVariant: { idcombinacion: variante.idcombinacion, combinacion: variante.label, pventa_variante: variante.precio },
+      tipoProductoId: 2,
+      stockProduct: variante.stock,
+      display_price: variante.precio,
+      has_offer: false,
+      image: product.imagen,
+      sinStock: window.fnCheckStockProduct(variante.stock, 1)
     });
   }
 

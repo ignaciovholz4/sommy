@@ -984,8 +984,19 @@ p { line-height: 1.7; }
     align-items: center;
     padding: 8px 0;
     border-bottom: 1px solid var(--sm-border);
+    position: relative;
+    flex-wrap: wrap;
 }
 .sommy-related-card:last-child { border-bottom: none; }
+.sommy-related-link {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+}
 .sommy-related-thumb {
     width: 48px;
     height: 48px;
@@ -1039,6 +1050,45 @@ p { line-height: 1.7; }
 }
 .sommy-related-add:hover { background: var(--sm-navy); color: #fff; }
 .sommy-related-add--link { text-align: center; }
+.sommy-related-add--icon {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.sommy-related-picker {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    margin-top: 6px;
+}
+.sommy-related-picker-select {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--sm-border);
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--sm-navy);
+    background: #fff;
+}
+.sommy-related-picker-confirm {
+    border: 1px solid var(--sm-navy);
+    background: var(--sm-navy);
+    color: #fff;
+    border-radius: 999px;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+}
 
 /* Miniatura en el checkout */
 .sommy-order-thumb {

@@ -161,17 +161,44 @@ class EcommerceproductController extends Controller
             return response()->json(['productos' => []]);
         }
 
-        $productos = Articulo::whereIn('idarticulo', $idsRelacionados)
+        $articulosRelacionados = Articulo::whereIn('idarticulo', $idsRelacionados)
             ->where('estado', 'Activo')
             ->whereIn('idarticulo', $conStock->keys())
             ->with(['imagenes' => fn ($q) => $q->whereNull('combinacion_id')->orderByDesc('principal')->orderBy('orden')])
             ->limit(8)
-            ->get()
-            ->map(function ($p) use ($conStock) {
+            ->get();
+
+        // Variantes con stock de los productos con combinaciones, para poder agregarlos
+        // directo desde el widget del carrito (sin pasar por la ficha del producto).
+        $idsVariables = $articulosRelacionados->where('tipo_producto_id', 2)->pluck('idarticulo');
+        $variantesPorProducto = $idsVariables->isEmpty()
+            ? collect()
+            : DB::table('sucursal_combinacion')
+                ->join('producto_combinaciones', 'producto_combinaciones.idcombinacion', '=', 'sucursal_combinacion.combinacion_id')
+                ->where('sucursal_combinacion.activo', 1)
+                ->whereIn('producto_combinaciones.producto_id', $idsVariables)
+                ->groupBy('producto_combinaciones.idcombinacion', 'producto_combinaciones.producto_id', 'producto_combinaciones.combinacion', 'producto_combinaciones.pventa_variante')
+                ->havingRaw('SUM(sucursal_combinacion.stock) > 0')
+                ->selectRaw('producto_combinaciones.producto_id, producto_combinaciones.idcombinacion, producto_combinaciones.combinacion as label, producto_combinaciones.pventa_variante as precio, SUM(sucursal_combinacion.stock) as stock')
+                ->get()
+                ->groupBy('producto_id');
+
+        $productos = $articulosRelacionados
+            ->map(function ($p) use ($conStock, $variantesPorProducto) {
                 $precioDesde = false;
                 $precio = $p->pventa_con_iva;
+                $variantes = [];
 
                 if ($p->tipo_producto_id == 2) {
+                    $variantes = ($variantesPorProducto->get($p->idarticulo) ?? collect())
+                        ->map(fn ($v) => [
+                            'idcombinacion' => (int) $v->idcombinacion,
+                            'label' => $v->label,
+                            'precio' => (float) $v->precio,
+                            'stock' => (int) $v->stock,
+                        ])
+                        ->values();
+
                     $minVariante = $p->combinaciones()->where('pventa_variante', '>', 0)->min('pventa_variante');
                     if ($minVariante) {
                         $precioDesde = true;
@@ -198,6 +225,7 @@ class EcommerceproductController extends Controller
                     'imagen' => $foto ? asset($foto->path) : ($p->imagen ? asset('imagenes/articulos/' . $p->imagen) : null),
                     'tipo_producto_id' => (int) $p->tipo_producto_id,
                     'stock' => (int) ($conStock->get($p->idarticulo)->total_stock ?? 0),
+                    'variantes' => $variantes,
                 ];
             })
             ->values();

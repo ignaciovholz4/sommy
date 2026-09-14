@@ -759,7 +759,9 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 <script>
-    $(document).ready(function() {
+    // jQuery/select2 se cargan al final del layout (admin.blade.php), después de este bloque
+    // de contenido — por eso no se puede usar $(document).ready aquí, todavía no existe $.
+    document.addEventListener('DOMContentLoaded', function() {
         $('#relacionados-select').select2({
             placeholder: 'Buscar productos para recomendar...',
             width: '100%'
