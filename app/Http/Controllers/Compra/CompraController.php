@@ -591,6 +591,8 @@ class CompraController extends Controller
                         'total'            => $monto,
                         'cotizacion'       => $cotizacion,
                         'total_ars'        => $totalArs,
+                        'referencia_type'  => Compra::class,
+                        'referencia_id'    => $compra->idcompra,
                     ]);
 
                     $movimientosCreados[] = $mov;

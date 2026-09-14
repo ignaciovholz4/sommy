@@ -216,17 +216,26 @@
 
     <div class="fin-card mb-4">
         <h3 style="font-size:14px;font-weight:600;margin-bottom:4px;">¿Estoy ganando o perdiendo plata? — histórico mes a mes</h3>
-        <p class="text-muted small mb-3">Ingresos y egresos reales de caja/banco (ARS) de cada mes, con el resultado acumulado desde el primer movimiento cargado.</p>
+        <p class="text-muted small mb-3">
+            Comprar mercadería no es una pérdida: esa plata se convierte en stock (un activo), no se esfuma. Por eso
+            el resultado de cada mes es <strong>ingresos − gastos operativos reales</strong> (alquiler, sueldos, marketing, etc.).
+            Lo pagado en compras de mercadería se muestra aparte, como inversión en stock, y no resta acá.
+        </p>
         <div class="row mb-3">
-            <div class="col-md-4 mb-2">
+            <div class="col-md-3 mb-2">
                 <div class="res-tot-label">Ingresos históricos</div>
                 <div class="res-tot-valor">${{ number_format($historicoTotal['ingresos'], 2, ',', '.') }}</div>
             </div>
-            <div class="col-md-4 mb-2">
-                <div class="res-tot-label">Egresos históricos</div>
-                <div class="res-tot-valor rojo">${{ number_format($historicoTotal['egresos'], 2, ',', '.') }}</div>
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Gastos operativos históricos</div>
+                <div class="res-tot-valor rojo">${{ number_format($historicoTotal['egresos_operativos'], 2, ',', '.') }}</div>
             </div>
-            <div class="col-md-4 mb-2">
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Invertido en stock (compras)</div>
+                <div class="res-tot-valor">${{ number_format($historicoTotal['egresos_stock'], 2, ',', '.') }}</div>
+                <div class="small text-muted">no es pérdida: es mercadería</div>
+            </div>
+            <div class="col-md-3 mb-2">
                 <div class="res-tot-label">Resultado histórico</div>
                 <div class="res-tot-valor {{ $historicoTotal['neto'] < 0 ? 'rojo' : '' }}">
                     {{ $historicoTotal['neto'] >= 0 ? 'Ganancia' : 'Pérdida' }}: ${{ number_format(abs($historicoTotal['neto']), 2, ',', '.') }}
@@ -239,7 +248,8 @@
                     <tr>
                         <th>Mes</th>
                         <th class="text-end">Ingresos</th>
-                        <th class="text-end">Egresos</th>
+                        <th class="text-end">Gastos operativos</th>
+                        <th class="text-end">Invertido en stock</th>
                         <th class="text-end">Resultado del mes</th>
                         <th class="text-end">Acumulado histórico</th>
                     </tr>
@@ -249,7 +259,8 @@
                     <tr>
                         <td style="text-transform:capitalize;">{{ $h['fecha']->translatedFormat('F Y') }}</td>
                         <td class="text-end">${{ number_format($h['ingresos'], 2, ',', '.') }}</td>
-                        <td class="text-end">${{ number_format($h['egresos'], 2, ',', '.') }}</td>
+                        <td class="text-end">${{ number_format($h['egresos_operativos'], 2, ',', '.') }}</td>
+                        <td class="text-end text-muted">${{ number_format($h['egresos_stock'], 2, ',', '.') }}</td>
                         <td class="text-end fw-bold {{ $h['neto'] < 0 ? 'text-danger' : 'text-success' }}">
                             {{ $h['neto'] >= 0 ? '+' : '−' }}${{ number_format(abs($h['neto']), 2, ',', '.') }}
                         </td>
@@ -258,7 +269,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" class="text-center text-muted py-4">Todavía no hay movimientos de caja/banco cargados.</td></tr>
+                    <tr><td colspan="6" class="text-center text-muted py-4">Todavía no hay movimientos de caja/banco cargados.</td></tr>
                     @endforelse
                 </tbody>
             </table>

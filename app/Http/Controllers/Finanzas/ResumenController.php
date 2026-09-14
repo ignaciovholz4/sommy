@@ -76,9 +76,10 @@ class ResumenController extends Controller
 
         $historicoMensual = $this->historicoMensual();
         $historicoTotal = [
-            'ingresos' => (float) $historicoMensual->sum('ingresos'),
-            'egresos'  => (float) $historicoMensual->sum('egresos'),
-            'neto'     => (float) $historicoMensual->sum('neto'),
+            'ingresos'           => (float) $historicoMensual->sum('ingresos'),
+            'egresos_stock'      => (float) $historicoMensual->sum('egresos_stock'),
+            'egresos_operativos' => (float) $historicoMensual->sum('egresos_operativos'),
+            'neto'               => (float) $historicoMensual->sum('neto'),
         ];
 
         // Foto actual (no del período): cuánto hay en caja/banco, cuánto me deben
@@ -112,20 +113,34 @@ class ResumenController extends Controller
      * Ganancia/pérdida mes a mes (en ARS: cuentas sin moneda cargada se
      * consideran ARS por defecto, igual criterio que $totalesPorMoneda arriba)
      * desde el primer movimiento cargado hasta hoy, con acumulado histórico.
-     * Sirve para el resumen imprimible: de un vistazo, en qué meses se ganó
-     * y en qué meses se perdió plata, y el resultado acumulado de todo el negocio.
+     *
+     * Comprar mercadería no es una pérdida: esa plata se convirtió en stock
+     * (un activo), no se esfumó. Por eso separamos los egresos en dos:
+     * "egresos_stock" (pagos de compras, directos o cancelando cuenta
+     * corriente de proveedor) y "egresos_operativos" (gastos reales:
+     * alquiler, sueldos, marketing, etc.). Solo estos últimos restan en el
+     * resultado del mes — las compras se muestran aparte, como inversión.
      */
     private function historicoMensual()
     {
         $filas = DB::table('movimientos as m')
             ->leftJoin('cuentas as c', 'c.id', '=', 'm.cuenta_id')
             ->leftJoin('monedas as mo', 'mo.id', '=', 'c.moneda_id')
+            // Pago directo de una compra: el comprobante del movimiento es el num_folio de la compra.
+            ->leftJoin('compras as cmp', function ($j) {
+                $j->on('cmp.num_folio', '=', 'm.comprobante')->whereNotNull('m.comprobante');
+            })
+            // Pago que cancela deuda de cuenta corriente con un proveedor.
+            ->leftJoin('proveedor_cc_movimientos as ccm', function ($j) {
+                $j->on('ccm.id', '=', 'm.referencia_id')->where('m.referencia_type', '=', \App\Models\ProveedorCcMovimiento::class);
+            })
             ->where(function ($q) {
                 $q->whereNull('mo.codigo')->orWhere('mo.codigo', 'ARS');
             })
             ->selectRaw("DATE_FORMAT(m.fecha, '%Y-%m-01') as mes,
                 SUM(CASE WHEN m.tipo = 'ingreso' THEN m.total ELSE 0 END) as ingresos,
-                SUM(CASE WHEN m.tipo = 'egreso' THEN m.total ELSE 0 END) as egresos")
+                SUM(CASE WHEN m.tipo = 'egreso' AND (cmp.idcompra IS NOT NULL OR ccm.compra_id IS NOT NULL) THEN m.total ELSE 0 END) as egresos_stock,
+                SUM(CASE WHEN m.tipo = 'egreso' AND cmp.idcompra IS NULL AND ccm.compra_id IS NULL THEN m.total ELSE 0 END) as egresos_operativos")
             ->groupBy('mes')
             ->orderBy('mes')
             ->get();
@@ -134,16 +149,18 @@ class ResumenController extends Controller
 
         return $filas->map(function ($f) use (&$acumulado) {
             $ingresos = (float) $f->ingresos;
-            $egresos = (float) $f->egresos;
-            $neto = $ingresos - $egresos;
+            $egresosStock = (float) $f->egresos_stock;
+            $egresosOperativos = (float) $f->egresos_operativos;
+            $neto = $ingresos - $egresosOperativos;
             $acumulado += $neto;
 
             return [
-                'fecha'     => Carbon::parse($f->mes),
-                'ingresos'  => $ingresos,
-                'egresos'   => $egresos,
-                'neto'      => $neto,
-                'acumulado' => $acumulado,
+                'fecha'             => Carbon::parse($f->mes),
+                'ingresos'          => $ingresos,
+                'egresos_stock'     => $egresosStock,
+                'egresos_operativos'=> $egresosOperativos,
+                'neto'              => $neto,
+                'acumulado'         => $acumulado,
             ];
         });
     }
