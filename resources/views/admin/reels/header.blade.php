@@ -26,7 +26,7 @@
         <form action="" id="formReel">
             <input type="hidden" name="reelId" id="reelId" value="0">
             <p class="text-muted small">Subí el video del reel (descargalo desde la app de Instagram: Compartir &rsaquo; Guardar video, o desde Meta Business Suite). Se reproduce con un video propio, sin el marco ni los botones de Instagram.</p>
-            <span id="hintVideo">Formato vertical (como el reel original). Máximo 100MB, pero para que cargue bien en el celular de tus clientes tratá de que pese <strong>bajo 10-15MB</strong> (en CapCut/InShot/el editor que uses: exportar en 720p en vez de 4K/1080p baja mucho el peso sin notarse la diferencia en el celular). mp4, mov o webm.</span><br>
+            <span id="hintVideo">Formato vertical (como el reel original). Máximo <strong>25MB</strong> — si tu video pesa más (es común si lo exportás sin comprimir, algunos llegan a pesar 60-70MB y tardan minutos en cargar en el celular), comprimilo antes: en CapCut/InShot/el editor que uses, exportar en <strong>720p</strong> en vez de 4K/1080p baja mucho el peso sin notarse la diferencia en el celular. mp4, mov o webm.</span><br>
             <div class="input-group mb-3">
               <input type="file" id="reelVideo" name="video" class="form-control" accept="video/mp4,video/quicktime,video/webm">
               <div class="input-group-append">

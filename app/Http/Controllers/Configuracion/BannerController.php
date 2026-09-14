@@ -50,8 +50,8 @@ class BannerController extends Controller
                 'boton_texto' => 'nullable|string|max:40',
                 'boton_url' => 'nullable|string|max:255',
                 'orden' => 'nullable|integer',
-                'imagen' => ($esNuevo ? 'required' : 'nullable') . ($esVideo ? '|mimes:mp4,mov,webm,m4v|max:102400' : '|image|max:5120'),
-                'imageMovil' => 'nullable' . ($esVideo ? '|mimes:mp4,mov,webm,m4v|max:102400' : '|image|max:5120'),
+                'imagen' => ($esNuevo ? 'required' : 'nullable') . ($esVideo ? '|mimes:mp4,mov,webm,m4v|max:25600' : '|image|max:5120'),
+                'imageMovil' => 'nullable' . ($esVideo ? '|mimes:mp4,mov,webm,m4v|max:25600' : '|image|max:5120'),
             ];
 
             $messages = [
@@ -59,7 +59,7 @@ class BannerController extends Controller
                 'imagen.required' => $esVideo ? 'El video es requerido' : 'La imagen es requerida',
                 'imagen.image' => 'Debe de agregar una imagen para escritorio',
                 'imagen.mimes' => 'El video tiene que ser mp4, mov o webm',
-                'imagen.max' => $esVideo ? 'El video no puede pesar más de 100MB' : 'La imagen no puede pesar más de 5MB',
+                'imagen.max' => $esVideo ? 'El video no puede pesar más de 25MB — comprimilo (720p) antes de subirlo' : 'La imagen no puede pesar más de 5MB',
                 'imageMovil.image' => 'Debe de agregar una imagen para móvil',
                 'imageMovil.mimes' => 'El video tiene que ser mp4, mov o webm',
             ];

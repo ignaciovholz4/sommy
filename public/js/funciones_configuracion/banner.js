@@ -30,8 +30,8 @@ const fnAplicarTipoBanner = () => {
     if (esTipoVideo()) {
         imageInput.accept = 'video/mp4,video/quicktime,video/webm';
         imageInputMovil.accept = 'video/mp4,video/quicktime,video/webm';
-        hintDesktop.textContent = 'Video horizontal, solo se ve en escritorio. Con texto al lado usá formato apaisado ~1400x740; sin texto (ocupa todo el ancho) usá algo más panorámico, ~1900x700. Máximo 100MB — para que cargue bien, tratá de que pese poco (720p en vez de 4K).';
-        hintMovil.textContent = 'Video vertical para celular (opcional: si no lo cargás, se usa el de escritorio). Formato vertical (ej: 1080x1920). Máximo 100MB.';
+        hintDesktop.textContent = 'Video horizontal, solo se ve en escritorio. Con texto al lado usá formato apaisado ~1400x740; sin texto (ocupa todo el ancho) usá algo más panorámico, ~1900x700. Máximo 25MB — comprimilo en 720p (no 4K) antes de subirlo, si no la home va a cargar muy lento en el celular.';
+        hintMovil.textContent = 'Video vertical para celular (opcional: si no lo cargás, se usa el de escritorio). Formato vertical (ej: 1080x1920). Máximo 25MB, comprimido en 720p.';
     } else {
         imageInput.accept = 'image/*';
         imageInputMovil.accept = 'image/*';

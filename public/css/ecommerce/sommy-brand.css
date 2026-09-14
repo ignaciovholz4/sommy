@@ -511,7 +511,7 @@ p { line-height: 1.7; }
 
 /* ── Hero: banner carousel editable (imagen + texto, estilo split) ── */
 .sommy-banner-section {
-    background: var(--sm-cotton);
+    background: #fff;
     padding: 28px 24px;
 }
 .sommy-banner { position: relative; max-width: 1320px; margin: 0 auto; }
