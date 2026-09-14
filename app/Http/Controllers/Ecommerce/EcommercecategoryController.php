@@ -158,6 +158,10 @@ class EcommercecategoryController extends Controller
         if ($request->boolean('pillow')) {
             $query->where('pillow_top', 1);
         }
+        if ($pesoMax = $request->input('peso_max')) {
+            // "Hasta 90kg" = el producto soporta al menos 90kg (no al revés): filtra por el mínimo elegido.
+            $query->where('peso_max_kg', '>=', min(array_map('floatval', (array) $pesoMax)));
+        }
         if ($request->filled('altura_min')) {
             $query->where('altura_cm', '>=', (float) $request->input('altura_min'));
         }
@@ -246,6 +250,7 @@ class EcommercecategoryController extends Controller
                 ->get(['marcas.idmarca', 'marcas.nombre']),
             'hayOfertas'   => Articulo::where('categoria_id', $id)->where('descuento', '>', 0)->exists(),
             'hayPillowTop' => Articulo::where('categoria_id', $id)->where('pillow_top', 1)->exists(),
+            'hayPeso'      => Articulo::where('categoria_id', $id)->whereNotNull('peso_max_kg')->exists(),
         ];
 
         $getDataProd = $paginado; // la vista itera el paginador directamente

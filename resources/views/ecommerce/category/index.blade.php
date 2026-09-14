@@ -94,6 +94,26 @@
               @endif
             @endif
 
+            @if($opcionesFiltro['hayPeso'])
+              @php
+                $bucketsPeso = [85, 90, 100, 110, 120, 150];
+                $selPeso = (array) request('peso_max', []);
+              @endphp
+              <h6>Peso máximo soportado</h6>
+              @foreach ($bucketsPeso as $kg)
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="peso_max[]" value="{{ $kg }}"
+                         id="f-peso-{{ $kg }}" {{ in_array((string) $kg, $selPeso) ? 'checked' : '' }}>
+                  <label class="form-check-label" for="f-peso-{{ $kg }}">Hasta {{ $kg }} kg</label>
+                </div>
+              @endforeach
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="peso_max[]" value="151"
+                       id="f-peso-151" {{ in_array('151', $selPeso) ? 'checked' : '' }}>
+                <label class="form-check-label" for="f-peso-151">Más de 150 kg</label>
+              </div>
+            @endif
+
             <h6>Altura mínima</h6>
             <div class="input-group input-group-sm mb-2">
               <input type="number" class="form-control" name="altura_min" placeholder="Ej: 25"
@@ -114,7 +134,7 @@
             @endif
 
             <button type="submit" class="btn btn-dark btn-sm w-100 mt-2">Aplicar</button>
-            @if(request()->hasAny(['firmeza', 'tipo', 'plazas', 'marca', 'oferta', 'pillow', 'altura_min', 'precio_min', 'precio_max']))
+            @if(request()->hasAny(['firmeza', 'tipo', 'plazas', 'marca', 'oferta', 'pillow', 'peso_max', 'altura_min', 'precio_min', 'precio_max']))
               <a href="{{ url()->current() }}" class="btn btn-outline-secondary btn-sm w-100 mt-1">Limpiar filtros</a>
             @endif
           </form>
