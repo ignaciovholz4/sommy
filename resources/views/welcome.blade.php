@@ -297,29 +297,6 @@
               </div>
             </div>
           </div>
-          <div class="accordion-item">
-            <h3 class="accordion-header">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">¿Qué garantía tienen los colchones?</button>
-            </h3>
-            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#sommyFaq">
-              <div class="accordion-body">
-                Somos fabricantes: todos nuestros colchones tienen garantía de fábrica (el plazo figura en cada ficha de producto).
-                Si tu compra llega con algún defecto, la cambiamos sin costo. Ante cualquier problema escribinos:
-                respondemos directo, sin intermediarios.
-              </div>
-            </div>
-          </div>
-          <div class="accordion-item">
-            <h3 class="accordion-header">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">¿Cómo puedo pagar?</button>
-            </h3>
-            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#sommyFaq">
-              <div class="accordion-body">
-                Podés pagar online al hacer tu pedido o coordinar con nosotros el medio que te quede más cómodo
-                (efectivo, transferencia u otras opciones vigentes). Consultanos por promociones y descuentos antes de comprar.
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
