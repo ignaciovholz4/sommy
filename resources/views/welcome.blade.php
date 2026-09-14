@@ -35,11 +35,11 @@
                   <div class="carousel-item sommy-banner-slide {{ $loop->first ? 'active' : '' }} {{ ($banner->titulo || $banner->subtitulo || $banner->boton_texto) ? '' : 'sommy-banner-slide--full' }}">
                       <div class="sommy-banner-media">
                           @if($banner->tipo === 'video')
-                          <video class="sommy-banner-img desktop-img" autoplay muted loop playsinline preload="auto">
-                              <source src="{{ asset('imagenes/banner/'.$banner->name_image) }}">
+                          <video class="sommy-banner-img desktop-img" muted loop playsinline preload="none">
+                              <source data-src="{{ asset('imagenes/banner/'.$banner->name_image) }}">
                           </video>
-                          <video class="sommy-banner-img mobile-img" autoplay muted loop playsinline preload="auto">
-                              <source src="{{ asset('imagenes/banner/'.($banner->name_image_movil ?: $banner->name_image)) }}">
+                          <video class="sommy-banner-img mobile-img" muted loop playsinline preload="none">
+                              <source data-src="{{ asset('imagenes/banner/'.($banner->name_image_movil ?: $banner->name_image)) }}">
                           </video>
                           @else
                           <img src="{{ asset('imagenes/banner/'.$banner->name_image) }}" class="sommy-banner-img desktop-img" alt="{{ $banner->titulo ?: 'Sommy' }}">
@@ -79,6 +79,53 @@
             @endif
         </div>
     </section>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const heroCarousel = document.getElementById('heroBannerCarousel');
+            if (!heroCarousel) return;
+
+            // Solo se carga/reproduce UN video a la vez: el de escritorio o el de mobile
+            // (según el ancho de pantalla, el otro queda oculto por CSS) del slide activo
+            // nada más. Antes los dos (y los de TODOS los slides) tenían autoplay+preload
+            // a la vez, lo que tumbaba la carga en mobile.
+            const cargarYReproducir = (video) => {
+                if (!video || getComputedStyle(video).display === 'none') return;
+                const source = video.querySelector('source');
+                if (source && !source.src && source.dataset.src) {
+                    source.src = source.dataset.src;
+                    video.load();
+                }
+                video.play().catch(() => {});
+            };
+
+            const manejarSlide = (slide) => {
+                if (!slide) return;
+                slide.querySelectorAll('video.sommy-banner-img').forEach(cargarYReproducir);
+            };
+
+            const pausarSlide = (slide) => {
+                if (!slide) return;
+                slide.querySelectorAll('video.sommy-banner-img').forEach(v => v.pause());
+            };
+
+            manejarSlide(heroCarousel.querySelector('.carousel-item.active'));
+
+            heroCarousel.addEventListener('slide.bs.carousel', function (e) {
+                pausarSlide(e.relatedTarget?.previousElementSibling ?? null);
+                heroCarousel.querySelectorAll('.carousel-item').forEach(slide => {
+                    if (slide !== e.relatedTarget) pausarSlide(slide);
+                });
+            });
+            heroCarousel.addEventListener('slid.bs.carousel', function (e) {
+                manejarSlide(e.relatedTarget);
+            });
+
+            // Cambió de escritorio a mobile (o al revés): puede cambiar cuál video es el visible
+            window.addEventListener('resize', function () {
+                manejarSlide(heroCarousel.querySelector('.carousel-item.active'));
+            });
+        });
+    </script>
     @endif
     <!--END SECCION BANNER-->
 
