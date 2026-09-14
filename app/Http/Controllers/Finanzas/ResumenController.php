@@ -8,6 +8,7 @@ use App\Models\CompraAdjunto;
 use App\Models\Devolucion;
 use App\Models\Gasto;
 use App\Models\Movimiento;
+use App\Models\OperacionCambio;
 use App\Models\Venta;
 use App\Models\ecommerce\order_ecommerce;
 use App\Services\Ai\ReportesTools\CuentasPorPagarQueryTool;
@@ -74,7 +75,7 @@ class ResumenController extends Controller
             ->havingRaw('SUM(ef.monto_cobrado) > 0')
             ->get();
 
-        $historicoMensual = $this->historicoMensual();
+        $historicoMensual = $this->historicoMensual('ARS');
         $historicoTotal = [
             'ingresos'           => (float) $historicoMensual->sum('ingresos'),
             'egresos_stock'      => (float) $historicoMensual->sum('egresos_stock'),
@@ -82,37 +83,97 @@ class ResumenController extends Controller
             'neto'               => (float) $historicoMensual->sum('neto'),
         ];
 
+        // Monedas extranjeras con actividad alguna vez (no solo en este período),
+        // para saber si hace falta mostrar su propia sección de histórico/saldo.
+        $monedasExtranjeras = DB::table('movimientos as m')
+            ->join('cuentas as c', 'c.id', '=', 'm.cuenta_id')
+            ->join('monedas as mo', 'mo.id', '=', 'c.moneda_id')
+            ->where('mo.codigo', '!=', 'ARS')
+            ->distinct()
+            ->pluck('mo.codigo', 'mo.codigo');
+
+        $historicoPorMoneda = $monedasExtranjeras->mapWithKeys(function ($codigo) {
+            $mensual = $this->historicoMensual($codigo);
+
+            return [$codigo => [
+                'mensual' => $mensual,
+                'total' => [
+                    'ingresos'           => (float) $mensual->sum('ingresos'),
+                    'egresos_stock'      => (float) $mensual->sum('egresos_stock'),
+                    'egresos_operativos' => (float) $mensual->sum('egresos_operativos'),
+                    'neto'               => (float) $mensual->sum('neto'),
+                ],
+            ]];
+        });
+
         // Foto actual (no del período): cuánto hay en caja/banco, cuánto me deben
         // los clientes y cuánto le debo a proveedores. Reusa las mismas consultas
         // que usa el chat de Reportes para que los números coincidan siempre.
+        // OJO: saldo_total_actual de la tesorería suma cuentas de TODAS las
+        // monedas como si fueran la misma unidad — para "Caja + bancos ahora"
+        // usamos $saldoPorMoneda (abajo), que sí las separa.
         $tesoreria = (new TesoreriaQueryTool())->execute([]);
         $porCobrar = (new DeudoresQueryTool())->execute(['limit' => 10]);
         $porPagar = (new CuentasPorPagarQueryTool())->execute(['limit' => 10]);
-        $posicionNeta = $tesoreria['saldo_total_actual'] + $porCobrar['deuda_total'] - $porPagar['deuda_total'];
+
+        $saldoPorMoneda = $this->saldoPorMoneda();
+        $saldoArs = $saldoPorMoneda->get('ARS')['saldo'] ?? 0.0;
+        $posicionNeta = $saldoArs + $porCobrar['deuda_total'] - $porPagar['deuda_total'];
+
+        // Cómo se transformaron los dólares (y otras monedas) en pesos y viceversa:
+        // cada compra/venta de moneda extranjera, con la cotización usada y el
+        // resultado (ganancia/pérdida cambiaria) cuando corresponde.
+        $operacionesCambio = OperacionCambio::with('moneda')
+            ->orderBy('fecha')
+            ->orderBy('id')
+            ->get();
 
         return view('finanzas.resumen.index', [
-            'periodo'          => $periodo,
-            'desde'            => $desde,
-            'hasta'            => $hasta,
-            'movimientos'      => $movimientos,
-            'totales'          => $totales,
-            'totalesPorMoneda' => $totalesPorMoneda,
-            'fleterosEfectivo' => $fleterosEfectivo,
-            'actividad'        => $actividad,
-            'comprobantes'     => $comprobantes,
-            'historicoMensual' => $historicoMensual,
-            'historicoTotal'   => $historicoTotal,
-            'tesoreria'        => $tesoreria,
-            'porCobrar'        => $porCobrar,
-            'porPagar'         => $porPagar,
-            'posicionNeta'     => $posicionNeta,
+            'periodo'            => $periodo,
+            'desde'              => $desde,
+            'hasta'              => $hasta,
+            'movimientos'        => $movimientos,
+            'totales'            => $totales,
+            'totalesPorMoneda'   => $totalesPorMoneda,
+            'fleterosEfectivo'   => $fleterosEfectivo,
+            'actividad'          => $actividad,
+            'comprobantes'       => $comprobantes,
+            'historicoMensual'   => $historicoMensual,
+            'historicoTotal'     => $historicoTotal,
+            'historicoPorMoneda' => $historicoPorMoneda,
+            'tesoreria'          => $tesoreria,
+            'porCobrar'          => $porCobrar,
+            'porPagar'           => $porPagar,
+            'saldoPorMoneda'     => $saldoPorMoneda,
+            'saldoArs'           => $saldoArs,
+            'posicionNeta'       => $posicionNeta,
+            'operacionesCambio'  => $operacionesCambio,
         ]);
     }
 
     /**
-     * Ganancia/pérdida mes a mes (en ARS: cuentas sin moneda cargada se
-     * consideran ARS por defecto, igual criterio que $totalesPorMoneda arriba)
-     * desde el primer movimiento cargado hasta hoy, con acumulado histórico.
+     * Saldo actual de cada cuenta sumado por moneda (no mezcla ARS con USD:
+     * son unidades distintas). Mismo criterio de "sin moneda = ARS" que el
+     * resto de la página.
+     */
+    private function saldoPorMoneda()
+    {
+        return DB::table('cuentas as cu')
+            ->leftJoin('monedas as mo', 'mo.id', '=', 'cu.moneda_id')
+            ->leftJoin('movimientos as m', 'm.cuenta_id', '=', 'cu.id')
+            ->where('cu.activa', 1)
+            ->groupBy('moneda', 'simbolo')
+            ->selectRaw("COALESCE(mo.codigo, 'ARS') as moneda, COALESCE(mo.simbolo, '$') as simbolo,
+                COALESCE(SUM(CASE WHEN m.tipo = 'ingreso' THEN m.total WHEN m.tipo = 'egreso' THEN -m.total ELSE 0 END), 0) as saldo")
+            ->get()
+            ->map(fn ($r) => ['moneda' => $r->moneda, 'simbolo' => $r->simbolo, 'saldo' => (float) $r->saldo])
+            ->keyBy('moneda');
+    }
+
+    /**
+     * Ganancia/pérdida mes a mes en una moneda dada (por defecto ARS: cuentas
+     * sin moneda cargada se consideran ARS, igual criterio que $totalesPorMoneda
+     * arriba) desde el primer movimiento cargado hasta hoy, con acumulado histórico.
      *
      * Comprar mercadería no es una pérdida: esa plata se convirtió en stock
      * (un activo), no se esfumó. Por eso separamos los egresos en dos:
@@ -121,7 +182,7 @@ class ResumenController extends Controller
      * alquiler, sueldos, marketing, etc.). Solo estos últimos restan en el
      * resultado del mes — las compras se muestran aparte, como inversión.
      */
-    private function historicoMensual()
+    private function historicoMensual(string $monedaCodigo = 'ARS')
     {
         $filas = DB::table('movimientos as m')
             ->leftJoin('cuentas as c', 'c.id', '=', 'm.cuenta_id')
@@ -134,8 +195,12 @@ class ResumenController extends Controller
             ->leftJoin('proveedor_cc_movimientos as ccm', function ($j) {
                 $j->on('ccm.id', '=', 'm.referencia_id')->where('m.referencia_type', '=', \App\Models\ProveedorCcMovimiento::class);
             })
-            ->where(function ($q) {
-                $q->whereNull('mo.codigo')->orWhere('mo.codigo', 'ARS');
+            ->where(function ($q) use ($monedaCodigo) {
+                if ($monedaCodigo === 'ARS') {
+                    $q->whereNull('mo.codigo')->orWhere('mo.codigo', 'ARS');
+                } else {
+                    $q->where('mo.codigo', $monedaCodigo);
+                }
             })
             ->selectRaw("DATE_FORMAT(m.fecha, '%Y-%m-01') as mes,
                 SUM(CASE WHEN m.tipo = 'ingreso' THEN m.total ELSE 0 END) as ingresos,

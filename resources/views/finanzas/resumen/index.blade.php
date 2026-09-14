@@ -137,8 +137,8 @@
         <p class="text-muted small mb-3">No es lo movido en el período: es cuánta plata tenés ahora, cuánto te deben y cuánto debés, en este mismo momento.</p>
         <div class="row mb-3">
             <div class="col-md-3 mb-2">
-                <div class="res-tot-label">Caja + bancos ahora</div>
-                <div class="res-tot-valor">${{ number_format($tesoreria['saldo_total_actual'], 2, ',', '.') }}</div>
+                <div class="res-tot-label">Caja + bancos ahora (ARS)</div>
+                <div class="res-tot-valor {{ $saldoArs < 0 ? 'rojo' : '' }}">${{ number_format($saldoArs, 2, ',', '.') }}</div>
             </div>
             <div class="col-md-3 mb-2">
                 <div class="res-tot-label">Me deben (clientes)</div>
@@ -152,11 +152,23 @@
                 @endif
             </div>
             <div class="col-md-3 mb-2">
-                <div class="res-tot-label">Posición neta</div>
+                <div class="res-tot-label">Posición neta (ARS)</div>
                 <div class="res-tot-valor {{ $posicionNeta < 0 ? 'rojo' : '' }}">${{ number_format($posicionNeta, 2, ',', '.') }}</div>
-                <div class="small text-muted">caja + por cobrar − por pagar</div>
+                <div class="small text-muted">caja ARS + por cobrar − por pagar</div>
             </div>
         </div>
+
+        @if($saldoPorMoneda->except('ARS')->isNotEmpty())
+        <div class="row mb-3">
+            @foreach($saldoPorMoneda->except('ARS') as $codigo => $s)
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Caja + bancos en {{ $codigo }}</div>
+                <div class="res-tot-valor {{ $s['saldo'] < 0 ? 'rojo' : '' }}">{{ $s['simbolo'] }} {{ number_format($s['saldo'], 2, ',', '.') }}</div>
+                <div class="small text-muted">no se suma al total en pesos: es otra unidad</div>
+            </div>
+            @endforeach
+        </div>
+        @endif
 
         <div class="row">
             <div class="col-md-4 mb-3">
@@ -275,6 +287,113 @@
             </table>
         </div>
     </div>
+
+    @foreach($historicoPorMoneda as $codigo => $h)
+    <div class="fin-card mb-4">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:4px;">¿Estoy ganando o perdiendo en {{ $codigo }}? — histórico mes a mes</h3>
+        <p class="text-muted small mb-3">Mismo criterio que en pesos: comprar mercadería en {{ $codigo }} no es pérdida, se muestra aparte como inversión en stock.</p>
+        <div class="row mb-3">
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Ingresos históricos</div>
+                <div class="res-tot-valor">{{ $codigo }} {{ number_format($h['total']['ingresos'], 2, ',', '.') }}</div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Gastos operativos históricos</div>
+                <div class="res-tot-valor rojo">{{ $codigo }} {{ number_format($h['total']['egresos_operativos'], 2, ',', '.') }}</div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Invertido en stock (compras)</div>
+                <div class="res-tot-valor">{{ $codigo }} {{ number_format($h['total']['egresos_stock'], 2, ',', '.') }}</div>
+                <div class="small text-muted">no es pérdida: es mercadería</div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="res-tot-label">Resultado histórico</div>
+                <div class="res-tot-valor {{ $h['total']['neto'] < 0 ? 'rojo' : '' }}">
+                    {{ $h['total']['neto'] >= 0 ? 'Ganancia' : 'Pérdida' }}: {{ $codigo }} {{ number_format(abs($h['total']['neto']), 2, ',', '.') }}
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Mes</th>
+                        <th class="text-end">Ingresos</th>
+                        <th class="text-end">Gastos operativos</th>
+                        <th class="text-end">Invertido en stock</th>
+                        <th class="text-end">Resultado del mes</th>
+                        <th class="text-end">Acumulado histórico</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($h['mensual'] as $row)
+                    <tr>
+                        <td style="text-transform:capitalize;">{{ $row['fecha']->translatedFormat('F Y') }}</td>
+                        <td class="text-end">{{ $codigo }} {{ number_format($row['ingresos'], 2, ',', '.') }}</td>
+                        <td class="text-end">{{ $codigo }} {{ number_format($row['egresos_operativos'], 2, ',', '.') }}</td>
+                        <td class="text-end text-muted">{{ $codigo }} {{ number_format($row['egresos_stock'], 2, ',', '.') }}</td>
+                        <td class="text-end fw-bold {{ $row['neto'] < 0 ? 'text-danger' : 'text-success' }}">
+                            {{ $row['neto'] >= 0 ? '+' : '−' }}{{ $codigo }} {{ number_format(abs($row['neto']), 2, ',', '.') }}
+                        </td>
+                        <td class="text-end fw-bold {{ $row['acumulado'] < 0 ? 'text-danger' : 'text-success' }}">
+                            {{ $codigo }} {{ number_format($row['acumulado'], 2, ',', '.') }}
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="6" class="text-center text-muted py-4">Sin movimientos en {{ $codigo }}.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endforeach
+
+    @if($operacionesCambio->isNotEmpty())
+    <div class="fin-card mb-4">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:4px;">Cómo se transformaron los dólares — cambios de moneda</h3>
+        <p class="text-muted small mb-3">Cada vez que entraron o salieron dólares (u otra moneda extranjera) contra pesos: a qué cotización, cuántos pesos resultaron, y la ganancia o pérdida por la diferencia de cambio cuando aplica.</p>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Operación</th>
+                        <th class="text-end">Monto en moneda</th>
+                        <th class="text-end">Cotización</th>
+                        <th class="text-end">Se transformó en (pesos)</th>
+                        <th class="text-end">Resultado cambiario</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($operacionesCambio as $op)
+                    @php
+                        $codOp = optional($op->moneda)->codigo ?? '?';
+                        $simOp = optional($op->moneda)->simbolo ?? '';
+                        $esReal = $op->cuenta_ars_id !== null;
+                        $etiqueta = $op->tipo === 'compra'
+                            ? ($esReal ? "Compra de {$codOp}" : "Cobro en {$codOp}")
+                            : ($esReal ? "Venta de {$codOp}" : "Pago en {$codOp}");
+                    @endphp
+                    <tr>
+                        <td>{{ \Carbon\Carbon::parse($op->fecha)->format('d/m/Y') }}</td>
+                        <td>{{ $etiqueta }}</td>
+                        <td class="text-end">{{ $simOp }} {{ number_format($op->monto_moneda, 2, ',', '.') }}</td>
+                        <td class="text-end">${{ number_format($op->cotizacion, 2, ',', '.') }}</td>
+                        <td class="text-end fw-bold">${{ number_format($op->monto_ars, 2, ',', '.') }}</td>
+                        <td class="text-end {{ $op->resultado !== null ? ($op->resultado < 0 ? 'text-danger fw-bold' : 'text-success fw-bold') : 'text-muted' }}">
+                            @if($op->resultado !== null)
+                                {{ $op->resultado >= 0 ? '+' : '−' }}${{ number_format(abs($op->resultado), 2, ',', '.') }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
 
     <div class="fin-card">
         <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">Movimientos de caja/banco del período ({{ $movimientos->count() }})</h3>
