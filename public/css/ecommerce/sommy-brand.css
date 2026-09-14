@@ -67,7 +67,7 @@ html { scroll-behavior: smooth; }
 #productos, #categorias, #fabricantes { scroll-margin-top: calc(var(--header-height) + 16px); }
 
 body {
-    background: var(--sm-cotton);
+    background: #fff;
     font-weight: 400;
     color: var(--sm-text-2);
     overflow-x: hidden;
