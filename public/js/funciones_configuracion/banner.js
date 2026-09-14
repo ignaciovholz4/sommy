@@ -19,6 +19,41 @@ const bannerOrden = document.querySelector("#bannerOrden");
 const imageInputMovil = document.querySelector("#movilfile");
 const previewContainerMovil = document.getElementById('previewContainerMovil');
 
+const tipoImagenRadio = document.querySelector('#tipoImagen');
+const tipoVideoRadio = document.querySelector('#tipoVideo');
+const hintDesktop = document.querySelector('#hintDesktop');
+const hintMovil = document.querySelector('#hintMovil');
+
+const esTipoVideo = () => tipoVideoRadio.checked;
+
+const fnAplicarTipoBanner = () => {
+    if (esTipoVideo()) {
+        imageInput.accept = 'video/mp4,video/quicktime,video/webm';
+        imageInputMovil.accept = 'video/mp4,video/quicktime,video/webm';
+        hintDesktop.textContent = 'Video horizontal, solo se ve en escritorio. Con texto al lado usá formato apaisado ~1400x740; sin texto (ocupa todo el ancho) usá algo más panorámico, ~1900x700. Máximo 100MB — para que cargue bien, tratá de que pese poco (720p en vez de 4K).';
+        hintMovil.textContent = 'Video vertical para celular (opcional: si no lo cargás, se usa el de escritorio). Formato vertical (ej: 1080x1920). Máximo 100MB.';
+    } else {
+        imageInput.accept = 'image/*';
+        imageInputMovil.accept = 'image/*';
+        hintDesktop.textContent = 'Imagen horizontal, solo se ve en escritorio. Se recorta para llenar un rectángulo apaisado: usá algo cercano a 1400px x 740px (mínimo 900x475).';
+        hintMovil.textContent = 'Imagen para celular (opcional: si no la cargás, se usa la de escritorio recortada, se ve peor). Se muestra completa, sin recortar — cualquier proporción funciona, pero se ve mejor si es más alta que ancha (vertical). Mínimo 700x350.';
+    }
+};
+
+tipoImagenRadio.addEventListener('change', fnAplicarTipoBanner);
+tipoVideoRadio.addEventListener('change', fnAplicarTipoBanner);
+
+const fnPreviewVideo = (file, container) => {
+    container.innerHTML = '';
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(file);
+    video.controls = true;
+    video.muted = true;
+    video.style.maxWidth = '100%';
+    video.style.borderRadius = '6px';
+    container.appendChild(video);
+};
+
 $(document).ready( function () {
     $.ajaxSetup({
         headers: {
@@ -71,6 +106,8 @@ btnshowmodalbanner.addEventListener('click', (e) =>{
     previewContainerMovil.innerHTML = "";
     bannerId.value = 0;
     bannerLabel.textContent = 'Agregar nuevo banner';
+    tipoImagenRadio.checked = true;
+    fnAplicarTipoBanner();
     const myModalsavebanner = new bootstrap.Modal(idmodalbannercategory);
     myModalsavebanner.show();
 });
@@ -83,6 +120,7 @@ btnsavebanner.addEventListener("click",(e) => {
     const formData = new FormData();
     if (fileBanner) formData.append("imagen", fileBanner);
     formData.append("name", nombre.value);
+    formData.append("tipo", esTipoVideo() ? 'video' : 'imagen');
     formData.append("titulo", bannerTitulo.value);
     formData.append("subtitulo", bannerSubtitulo.value);
     formData.append("boton_texto", bannerBotonTexto.value);
@@ -128,6 +166,10 @@ imageInput.addEventListener('change', function () {
   const MIN_WIDTH = 900;
   const MIN_HEIGHT = 475;
   const file = this.files[0];
+  if (file && esTipoVideo()) {
+    fnPreviewVideo(file, previewContainer);
+    return;
+  }
   if (file) {
     if (file.type.startsWith('image/')) {
       const img = new Image();
@@ -169,6 +211,10 @@ imageInputMovil.addEventListener('change', function () {
   const MIN_WIDTH = 700;
   const MIN_HEIGHT = 350;
   const file = this.files[0];
+  if (file && esTipoVideo()) {
+    fnPreviewVideo(file, previewContainerMovil);
+    return;
+  }
   if (file) {
     if (file.type.startsWith('image/')) {
       const img = new Image();
@@ -216,23 +262,46 @@ const edit_banner = (id) => {
     bannerBotonUrl.value = dataRow.boton_url || '';
     bannerOrden.value = dataRow.orden || 0;
 
+    const esVideo = dataRow.tipo === 'video';
+    tipoImagenRadio.checked = !esVideo;
+    tipoVideoRadio.checked = esVideo;
+    fnAplicarTipoBanner();
+
     previewContainer.innerHTML = '';
-    const elDesktop = document.createElement('img');
-    elDesktop.src = `../imagenes/banner/${dataRow.name_image}`;
-    elDesktop.alt = 'imagen seleccionada';
-    elDesktop.className = 'img-thumbnail';
-    elDesktop.style.maxWidth = '100%';
-    elDesktop.style.height = 'auto';
-    previewContainer.appendChild(elDesktop);
+    if (esVideo) {
+      const vidDesktop = document.createElement('video');
+      vidDesktop.src = `../imagenes/banner/${dataRow.name_image}`;
+      vidDesktop.controls = true;
+      vidDesktop.muted = true;
+      vidDesktop.style.maxWidth = '100%';
+      previewContainer.appendChild(vidDesktop);
+    } else {
+      const elDesktop = document.createElement('img');
+      elDesktop.src = `../imagenes/banner/${dataRow.name_image}`;
+      elDesktop.alt = 'imagen seleccionada';
+      elDesktop.className = 'img-thumbnail';
+      elDesktop.style.maxWidth = '100%';
+      elDesktop.style.height = 'auto';
+      previewContainer.appendChild(elDesktop);
+    }
     /*********************************************** */
     previewContainerMovil.innerHTML = '';
-    const elMovil = document.createElement('img');
-    elMovil.src = `../imagenes/banner/${dataRow.name_image_movil}`;
-    elMovil.alt = 'imagen seleccionada';
-    elMovil.className = 'img-thumbnail';
-    elMovil.style.maxWidth = '100%';
-    elMovil.style.height = 'auto';
-    previewContainerMovil.appendChild(elMovil);
+    if (esVideo) {
+      const vidMovil = document.createElement('video');
+      vidMovil.src = `../imagenes/banner/${dataRow.name_image_movil}`;
+      vidMovil.controls = true;
+      vidMovil.muted = true;
+      vidMovil.style.maxWidth = '100%';
+      previewContainerMovil.appendChild(vidMovil);
+    } else {
+      const elMovil = document.createElement('img');
+      elMovil.src = `../imagenes/banner/${dataRow.name_image_movil}`;
+      elMovil.alt = 'imagen seleccionada';
+      elMovil.className = 'img-thumbnail';
+      elMovil.style.maxWidth = '100%';
+      elMovil.style.height = 'auto';
+      previewContainerMovil.appendChild(elMovil);
+    }
 
     const myModalShow = new bootstrap.Modal(idmodalbannercategory);
     myModalShow.show();

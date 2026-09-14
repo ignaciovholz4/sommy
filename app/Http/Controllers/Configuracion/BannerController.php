@@ -40,6 +40,8 @@ class BannerController extends Controller
         try {
 
             $esNuevo = (int) $request->bannerId === 0;
+            $tipo = $request->tipo === 'video' ? 'video' : 'imagen';
+            $esVideo = $tipo === 'video';
 
             $rules = [
                 'name' => 'required',
@@ -48,15 +50,18 @@ class BannerController extends Controller
                 'boton_texto' => 'nullable|string|max:40',
                 'boton_url' => 'nullable|string|max:255',
                 'orden' => 'nullable|integer',
-                'imagen' => ($esNuevo ? 'required' : 'nullable') . '|image|max:5120',
-                'imageMovil' => 'nullable|image|max:5120',
+                'imagen' => ($esNuevo ? 'required' : 'nullable') . ($esVideo ? '|mimes:mp4,mov,webm,m4v|max:102400' : '|image|max:5120'),
+                'imageMovil' => 'nullable' . ($esVideo ? '|mimes:mp4,mov,webm,m4v|max:102400' : '|image|max:5120'),
             ];
 
             $messages = [
                 'name.required' => 'El nombre es requerido',
-                'imagen.required' => 'La imagen es requerida',
+                'imagen.required' => $esVideo ? 'El video es requerido' : 'La imagen es requerida',
                 'imagen.image' => 'Debe de agregar una imagen para escritorio',
+                'imagen.mimes' => 'El video tiene que ser mp4, mov o webm',
+                'imagen.max' => $esVideo ? 'El video no puede pesar más de 100MB' : 'La imagen no puede pesar más de 5MB',
                 'imageMovil.image' => 'Debe de agregar una imagen para móvil',
+                'imageMovil.mimes' => 'El video tiene que ser mp4, mov o webm',
             ];
 
             $validator = Validator::make($request->all(), $rules, $messages);
@@ -73,7 +78,7 @@ class BannerController extends Controller
 
             $datosContenido = [
                 'name' => $request->name,
-                'tipo' => 'imagen',
+                'tipo' => $tipo,
                 'titulo' => $request->titulo ?: null,
                 'subtitulo' => $request->subtitulo ?: null,
                 'boton_texto' => $request->boton_texto ?: null,

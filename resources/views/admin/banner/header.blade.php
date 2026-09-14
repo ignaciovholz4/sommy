@@ -74,30 +74,48 @@
               <input type="number" id="bannerOrden" name="orden" class="form-control style-input" placeholder="Orden (0 = primero)" min="0">
             </div>
             <hr>
-            <span id="hintDesktop">Imagen horizontal, solo se ve en escritorio. Se recorta para llenar un rectángulo apaisado: usá algo cercano a 1400px x 740px (mínimo 900x475).</span><br>
-            <div class="input-group mb-3">
-              <input type="file" id="file" name="file" class="form-control" accept="image/*">
-              <div class="input-group-append">
-                  <div class="input-group-text style-icon-fas">
-                      <i class="fas fa-image"></i>
-                  </div>
-              </div>
+            <label class="d-block mb-2"><strong>Tipo de banner</strong></label>
+            <div class="btn-group mb-3" role="group" id="bannerTipoGroup">
+              <input type="radio" class="btn-check" name="tipo" id="tipoImagen" value="imagen" checked>
+              <label class="btn btn-outline-primary" for="tipoImagen"><i class="fas fa-image me-1"></i> Imagen</label>
+              <input type="radio" class="btn-check" name="tipo" id="tipoVideo" value="video">
+              <label class="btn btn-outline-primary" for="tipoVideo"><i class="fas fa-video me-1"></i> Video</label>
             </div>
-            <p class="text-muted mt-3">La vista previa aparecerá aquí...</p>
-            <div id="previewContainer" class="mt-3 mb-2">
+            <p class="text-muted small mb-3">
+                <i class="fas fa-circle-info me-1"></i>
+                Si cargás <strong>Título, Subtítulo o Texto del botón</strong>, el banner queda dividido: el texto a un lado y la imagen/video ocupando el otro 54%.
+                Si dejás esos tres campos <strong>vacíos</strong>, la imagen/video pasa a ocupar <strong>todo el ancho del banner</strong> (el texto, si lo lleva, tiene que venir ya incluido en la propia imagen/video) —
+                en ese caso subí un archivo más ancho (ver medidas para "sin texto" en cada hint de abajo).
+            </p>
+            <hr>
+            <div id="bloqueDesktop">
+              <span id="hintDesktop">Imagen horizontal, solo se ve en escritorio. Se recorta para llenar un rectángulo apaisado: con texto al lado usá algo cercano a 1400px x 740px (mínimo 900x475); sin texto (ocupa todo el ancho) usá algo más panorámico, cercano a 1900px x 700px (mínimo 1320x475).</span><br>
+              <div class="input-group mb-3">
+                <input type="file" id="file" name="file" class="form-control" accept="image/*">
+                <div class="input-group-append">
+                    <div class="input-group-text style-icon-fas">
+                        <i class="fas fa-image"></i>
+                    </div>
+                </div>
+              </div>
+              <p class="text-muted mt-3">La vista previa aparecerá aquí...</p>
+              <div id="previewContainer" class="mt-3 mb-2">
+              </div>
             </div>
             <hr>
-            <span id="hintMovil">Imagen para celular (opcional: si no la cargás, se usa la de escritorio recortada, se ve peor). Se muestra completa, sin recortar — cualquier proporción funciona, pero se ve mejor si es más alta que ancha (vertical). Mínimo 700x350.</span><br>
-            <div class="input-group mb-3">
-              <input type="file" id="movilfile" name="movilfile" class="form-control" accept="image/*">
-              <div class="input-group-append">
-                  <div class="input-group-text style-icon-fas">
-                      <i class="fas fa-image"></i>
-                  </div>
+            <div id="bloqueMovil">
+              <span id="hintMovil">Imagen para celular (opcional: si no la cargás, se usa la de escritorio recortada, se ve peor). Se muestra completa, sin recortar — cualquier proporción funciona, pero se ve mejor si es más alta que ancha (vertical). Mínimo 700x350.</span><br>
+              <div class="input-group mb-3">
+                <input type="file" id="movilfile" name="movilfile" class="form-control" accept="image/*">
+                <div class="input-group-append">
+                    <div class="input-group-text style-icon-fas">
+                        <i class="fas fa-image"></i>
+                    </div>
+                </div>
               </div>
-            </div>
-            <p class="text-muted mt-3">La vista previa aparecerá aquí...</p>
-            <div id="previewContainerMovil" class="mt-3 mb-2">
+              <p class="text-muted mt-3">La vista previa aparecerá aquí...</p>
+              <div id="previewContainerMovil" class="mt-3 mb-2">
+              </div>
             </div>
              @include('custom.validate_save_form_ajax')
         </form>

@@ -34,8 +34,17 @@
                 @foreach ($getDataBanner as $banner)
                   <div class="carousel-item sommy-banner-slide {{ $loop->first ? 'active' : '' }} {{ ($banner->titulo || $banner->subtitulo || $banner->boton_texto) ? '' : 'sommy-banner-slide--full' }}">
                       <div class="sommy-banner-media">
+                          @if($banner->tipo === 'video')
+                          <video class="sommy-banner-img desktop-img" autoplay muted loop playsinline preload="auto">
+                              <source src="{{ asset('imagenes/banner/'.$banner->name_image) }}">
+                          </video>
+                          <video class="sommy-banner-img mobile-img" autoplay muted loop playsinline preload="auto">
+                              <source src="{{ asset('imagenes/banner/'.($banner->name_image_movil ?: $banner->name_image)) }}">
+                          </video>
+                          @else
                           <img src="{{ asset('imagenes/banner/'.$banner->name_image) }}" class="sommy-banner-img desktop-img" alt="{{ $banner->titulo ?: 'Sommy' }}">
                           <img src="{{ asset('imagenes/banner/'.($banner->name_image_movil ?: $banner->name_image)) }}" class="sommy-banner-img mobile-img" alt="{{ $banner->titulo ?: 'Sommy' }}">
+                          @endif
                       </div>
                       @if($banner->titulo || $banner->subtitulo || $banner->boton_texto)
                       <div class="sommy-banner-copy">
