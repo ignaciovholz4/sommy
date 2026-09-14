@@ -82,6 +82,8 @@ btnsavereel.addEventListener('click', (e) => {
     const formData = new FormData();
     const fileVideo = reelVideoInput.files[0];
     if (fileVideo) formData.append('video', fileVideo);
+    const filePoster = document.getElementById('reelPoster').files[0];
+    if (filePoster) formData.append('poster', filePoster);
     formData.append('url', reelUrl.value);
     formData.append('titulo', reelTitulo.value);
     formData.append('orden', reelOrden.value || 0);

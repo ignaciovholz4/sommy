@@ -30,6 +30,7 @@ class InstagramReelController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'video' => ($esNuevo ? 'required' : 'nullable') . '|mimes:mp4,mov,webm,m4v|max:102400',
+                'poster' => 'nullable|image|max:5120',
                 'url' => ['nullable', 'string', 'regex:#instagram\.com/(reel|reels|p|tv)/[A-Za-z0-9_-]+#i'],
                 'titulo' => 'nullable|string|max:120',
                 'orden' => 'nullable|integer',
@@ -37,6 +38,7 @@ class InstagramReelController extends Controller
                 'video.required' => 'Subí el video del reel (mp4)',
                 'video.mimes' => 'El video tiene que ser mp4, mov o webm',
                 'video.max' => 'El video no puede pesar más de 100MB',
+                'poster.image' => 'La portada tiene que ser una imagen',
                 'url.regex' => 'Ese link no parece ser de un reel/publicación de Instagram (ej: https://www.instagram.com/reel/XXXXXXX/)',
             ]);
 
@@ -56,11 +58,18 @@ class InstagramReelController extends Controller
             ];
 
             $videoFile = $request->file('video');
+            $posterFile = $request->file('poster');
 
             if ($esNuevo) {
                 $nombreVideo = $videoFile->hashName();
                 $videoFile->move($destinationPath, $nombreVideo);
                 $datos['video'] = $nombreVideo;
+
+                if ($posterFile) {
+                    $nombrePoster = $posterFile->hashName();
+                    $posterFile->move($destinationPath, $nombrePoster);
+                    $datos['poster'] = $nombrePoster;
+                }
 
                 InstagramReel::create($datos);
                 $message = 'Se agregó el reel con éxito';
@@ -77,6 +86,15 @@ class InstagramReelController extends Controller
                     $nombreVideo = $videoFile->hashName();
                     $videoFile->move($destinationPath, $nombreVideo);
                     $datos['video'] = $nombreVideo;
+                }
+
+                if ($posterFile) {
+                    if ($reel->poster && File::exists($destinationPath . '/' . $reel->poster)) {
+                        File::delete($destinationPath . '/' . $reel->poster);
+                    }
+                    $nombrePoster = $posterFile->hashName();
+                    $posterFile->move($destinationPath, $nombrePoster);
+                    $datos['poster'] = $nombrePoster;
                 }
 
                 $reel->update($datos);

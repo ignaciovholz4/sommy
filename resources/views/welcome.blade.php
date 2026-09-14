@@ -112,7 +112,9 @@
             @foreach($getReels as $reel)
               @if($reel->video_url)
               <div class="sommy-reel-card">
-                <video class="sommy-reel-video" src="{{ $reel->video_url }}" muted loop playsinline preload="metadata"></video>
+                <video class="sommy-reel-video" data-src="{{ $reel->video_url }}"
+                       @if($reel->poster_url) poster="{{ $reel->poster_url }}" @endif
+                       muted loop playsinline preload="none"></video>
                 <button type="button" class="sommy-reel-sound" aria-label="Activar sonido">
                   <i class="fa-solid fa-volume-xmark"></i>
                 </button>
@@ -153,6 +155,8 @@
             const videos = Array.from(document.querySelectorAll('.sommy-reel-video'));
             if (!videos.length) return;
 
+            const track = document.getElementById('sommyReelsTrack');
+
             const silenciarTodos = () => {
                 videos.forEach(v => {
                     v.muted = true;
@@ -161,27 +165,49 @@
                 });
             };
 
-            // Solo reproducen los que están realmente a la vista: evita que el navegador
-            // intente decodificar todos los videos del carrusel a la vez (eso es lo que
-            // "traba" el scroll en equipos más lentos o con conexión lenta).
-            const observer = new IntersectionObserver((entries) => {
+            // No hay src hasta que el video está por entrar en pantalla: si todos
+            // arrancan a bajar el archivo apenas carga la home, en un celular con
+            // datos móviles se traba todo (varios videos pesados bajando a la vez).
+            const cargarSiHaceFalta = (video) => {
+                if (!video.src && video.dataset.src) {
+                    video.src = video.dataset.src;
+                    video.load();
+                }
+            };
+
+            // Observer de CARGA: dispara un poco antes de que el video esté 100% a la
+            // vista (rootMargin), así ya tiene algo buffereado cuando le toca reproducir.
+            const loadObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        cargarSiHaceFalta(entry.target);
+                    }
+                });
+            }, { root: track, rootMargin: '0px 300px 0px 300px', threshold: 0.01 });
+
+            // Observer de REPRODUCCIÓN: solo reproduce el que está realmente a la vista,
+            // pausa los demás (evita decodificar varios videos en simultáneo).
+            const playObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     const video = entry.target;
                     if (entry.isIntersecting) {
+                        cargarSiHaceFalta(video);
                         video.play().catch(() => {});
                     } else {
                         video.pause();
                     }
                 });
-            }, { root: document.getElementById('sommyReelsTrack'), threshold: 0.6 });
+            }, { root: track, threshold: 0.6 });
 
             videos.forEach(video => {
-                observer.observe(video);
+                loadObserver.observe(video);
+                playObserver.observe(video);
 
                 const card = video.closest('.sommy-reel-card');
                 const btnSound = card?.querySelector('.sommy-reel-sound');
 
                 const toggleSonido = () => {
+                    cargarSiHaceFalta(video);
                     const activarSonido = video.muted; // estaba muteado: el click lo activa
                     silenciarTodos();
                     video.muted = !activarSonido;

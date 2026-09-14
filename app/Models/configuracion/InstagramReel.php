@@ -38,4 +38,10 @@ class InstagramReel extends Model
     {
         return $this->video ? asset('imagenes/reels/' . $this->video) : null;
     }
+
+    /** URL pública de la imagen de portada (se ve mientras el video no cargó). */
+    public function getPosterUrlAttribute(): ?string
+    {
+        return $this->poster ? asset('imagenes/reels/' . $this->poster) : null;
+    }
 }
