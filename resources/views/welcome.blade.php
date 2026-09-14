@@ -85,12 +85,58 @@
             <span class="sommy-marca-logo sommy-marca-logo--caps"><i class="fa-solid fa-moon"></i><span class="n">Sommiers</span></span>
             <span class="sommy-marca-logo"><i class="fa-solid fa-bed"></i><span class="n">Almohadas</span></span>
             <span class="sommy-marca-logo sommy-marca-logo--serif"><i class="fa-solid fa-star"></i><span class="n">Sabanas</span></span>
+            <span class="sommy-marca-logo sommy-marca-logo--serif"><i class="fa-solid fa-feather"></i><span class="n">Colchones</span></span>
+            <span class="sommy-marca-logo sommy-marca-logo--caps"><i class="fa-solid fa-moon"></i><span class="n">Sommiers</span></span>
+            <span class="sommy-marca-logo"><i class="fa-solid fa-bed"></i><span class="n">Almohadas</span></span>
+            <span class="sommy-marca-logo sommy-marca-logo--serif"><i class="fa-solid fa-star"></i><span class="n">Sabanas</span></span>
+           
             @endfor
           </div>
         </div>
       </div>
     </section>
     <!--END MARCAS QUE TRABAJAMOS-->
+
+    @if($getReels->isNotEmpty())
+    <!--CARRUSEL DE REELS DE INSTAGRAM-->
+    <section class="py-5" id="reels-instagram">
+      <div class="container-fluid">
+        <div class="tabs-header d-flex justify-content-between border-bottom my-5" data-aos="fade-up">
+          <h3>Mirá lo último en Instagram</h3>
+        </div>
+        <div class="sommy-reels-wrap">
+          <button type="button" class="sommy-reels-arrow sommy-reels-arrow--prev" onclick="moverReelsCarrusel(-1)" aria-label="Anterior">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <div class="sommy-reels-track" id="sommyReelsTrack">
+            @foreach($getReels as $reel)
+              @if($reel->embed_url)
+              <div class="sommy-reel-card">
+                @if($reel->titulo)
+                <div class="sommy-reel-titulo">{{ $reel->titulo }}</div>
+                @endif
+                <iframe src="{{ $reel->embed_url }}" loading="lazy" scrolling="no" allowtransparency="true" title="{{ $reel->titulo ?: 'Reel de Instagram' }}"></iframe>
+              </div>
+              @endif
+            @endforeach
+          </div>
+          <button type="button" class="sommy-reels-arrow sommy-reels-arrow--next" onclick="moverReelsCarrusel(1)" aria-label="Siguiente">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+    <!--END CARRUSEL DE REELS DE INSTAGRAM-->
+    <script>
+        function moverReelsCarrusel(dir) {
+            const track = document.getElementById('sommyReelsTrack');
+            if (!track) return;
+            const card = track.querySelector('.sommy-reel-card');
+            const paso = card ? (card.offsetWidth + 16) : 280;
+            track.scrollBy({ left: dir * paso, behavior: 'smooth' });
+        }
+    </script>
+    @endif
 
     <!--Ultimos productos agregados-->
     <section class="py-5" id="productos">

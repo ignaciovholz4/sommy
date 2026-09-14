@@ -8,7 +8,7 @@
     $isCaja      = Str::startsWith($resp, ['caja', 'cuentas', 'finanzas']) && !Str::startsWith($resp, ['finanzas/gastos', 'finanzas/gasto-categorias']);
     $isWhatsapp  = Str::startsWith($resp, ['whatsapp']);
     $isReportes  = Str::startsWith($resp, ['graph', 'inventory', 'pdfinventario']);
-    $isEcommerce = Str::startsWith($resp, ['orders', 'banner', 'zonas-envio', 'Ecommerce', 'ventas/ecommerce', 'ventas/ordenes', 'publicaciones', 'revendedores-panel', 'envios']);
+    $isEcommerce = Str::startsWith($resp, ['orders', 'banner', 'reels-instagram', 'zonas-envio', 'Ecommerce', 'ventas/ecommerce', 'ventas/ordenes', 'publicaciones', 'revendedores-panel', 'envios']);
     $isSistema   = Str::startsWith($resp, ['config', 'admin/', 'chatbot', 'documentation', 'training-videos']);
 
     // Badge de solicitudes de aprobación pendientes (solo se consulta si el usuario puede verlas)
@@ -524,6 +524,9 @@
                     <div class="dg-drop-sep"></div>
                     <a href="{{ url('banner') }}" class="dg-drop-item {{ $resp === 'banner' ? 'dg-drop-active' : '' }}">
                         <i class="fas fa-image"></i> Banner Principal
+                    </a>
+                    <a href="{{ url('reels-instagram') }}" class="dg-drop-item {{ $resp === 'reels-instagram' ? 'dg-drop-active' : '' }}">
+                        <i class="fab fa-instagram"></i> Reels de Instagram
                     </a>
                 </div>
             </li>

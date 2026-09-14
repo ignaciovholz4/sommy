@@ -1933,3 +1933,66 @@ a:not(.btn):hover { color: var(--sm-blue); }
     border-color: var(--sm-blue);
     box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, .12);
 }
+
+/* ── Carrusel de reels de Instagram (home) ───────────────────── */
+.sommy-reels-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.sommy-reels-track {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 4px 2px 12px;
+    flex: 1;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.sommy-reels-track::-webkit-scrollbar { display: none; }
+.sommy-reel-card {
+    flex: 0 0 auto;
+    width: 260px;
+    scroll-snap-align: start;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--sm-border);
+    background: #000;
+}
+.sommy-reel-card iframe {
+    width: 100%;
+    height: 460px;
+    border: 0;
+    display: block;
+}
+.sommy-reel-titulo {
+    padding: 8px 12px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--sm-navy);
+    background: #fff;
+}
+.sommy-reels-arrow {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--sm-border);
+    background: #fff;
+    color: var(--sm-navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+.sommy-reels-arrow:hover { background: var(--sm-navy); color: #fff; }
+@media (max-width: 576px) {
+    .sommy-reels-arrow { display: none; }
+    .sommy-reel-card { width: 220px; }
+    .sommy-reel-card iframe { height: 400px; }
+}

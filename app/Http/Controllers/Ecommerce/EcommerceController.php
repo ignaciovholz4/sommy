@@ -76,6 +76,7 @@ class EcommerceController extends Controller
         });
 
         $getDataBanner = DB::table('banner_ecommerce as be')->where('status','=', 1)->orderBy('orden')->orderBy('banner_id')->get();
+        $getReels = \App\Models\configuracion\InstagramReel::where('status', 1)->orderBy('orden')->orderBy('id')->get();
         $getDataCategory = ShareController::getAllCategory();
         $getCategoryLimit = ShareController::getLimitCategory();
         $arrayEmpresa = ShareController::getEmpresaImage();
@@ -93,7 +94,8 @@ class EcommerceController extends Controller
             'getCategoryLimit',
             'arrayEmpresa',
             'getDataBanner',
-            'categoriaFinder'
+            'categoriaFinder',
+            'getReels'
         ));
     }
 }

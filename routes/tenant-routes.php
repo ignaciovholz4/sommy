@@ -997,6 +997,13 @@ Route::get('/showbanner', [BannerController::class, 'show'])->name('banner.show'
 Route::post('/getByIdbanner', [BannerController::class, 'edit'])->name('banner.edit')->middleware(['auth','verified']);
 Route::post('/deleteByIdbanner', [BannerController::class, 'destroy'])->name('banner.destroy')->middleware(['auth','verified']);
 
+/*****RUTAS PARA EL CARRUSEL DE REELS DE INSTAGRAM DEL ECOMMERCE*******/
+Route::get('/reels-instagram', [\App\Http\Controllers\Configuracion\InstagramReelController::class, 'index'])->name('reels.index')->middleware(['auth','verified']);
+Route::post('/savereel', [\App\Http\Controllers\Configuracion\InstagramReelController::class, 'store'])->name('reels.store')->middleware(['auth','verified']);
+Route::get('/showreel', [\App\Http\Controllers\Configuracion\InstagramReelController::class, 'show'])->name('reels.show')->middleware(['auth','verified']);
+Route::post('/getByIdreel', [\App\Http\Controllers\Configuracion\InstagramReelController::class, 'edit'])->name('reels.edit')->middleware(['auth','verified']);
+Route::post('/deleteByIdreel', [\App\Http\Controllers\Configuracion\InstagramReelController::class, 'destroy'])->name('reels.destroy')->middleware(['auth','verified']);
+
 /**ZONAS DE ENVIO (checkout ecommerce) */
 Route::get('/zonas-envio', [\App\Http\Controllers\Configuracion\ZonaEnvioController::class, 'index'])->name('zonas_envio.index')->middleware(['auth','verified']);
 Route::get('/showzonasenvio', [\App\Http\Controllers\Configuracion\ZonaEnvioController::class, 'show'])->name('zonas_envio.show')->middleware(['auth','verified']);
