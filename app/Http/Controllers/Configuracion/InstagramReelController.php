@@ -29,14 +29,14 @@ class InstagramReelController extends Controller
             $esNuevo = $reelId === 0;
 
             $validator = Validator::make($request->all(), [
-                'video' => ($esNuevo ? 'required' : 'nullable') . '|mimes:mp4,mov,webm,m4v|max:30720',
+                'video' => ($esNuevo ? 'required' : 'nullable') . '|mimes:mp4,mov,webm,m4v|max:102400',
                 'url' => ['nullable', 'string', 'regex:#instagram\.com/(reel|reels|p|tv)/[A-Za-z0-9_-]+#i'],
                 'titulo' => 'nullable|string|max:120',
                 'orden' => 'nullable|integer',
             ], [
                 'video.required' => 'Subí el video del reel (mp4)',
                 'video.mimes' => 'El video tiene que ser mp4, mov o webm',
-                'video.max' => 'El video no puede pesar más de 30MB',
+                'video.max' => 'El video no puede pesar más de 100MB',
                 'url.regex' => 'Ese link no parece ser de un reel/publicación de Instagram (ej: https://www.instagram.com/reel/XXXXXXX/)',
             ]);
 

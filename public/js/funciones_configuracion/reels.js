@@ -74,6 +74,8 @@ reelVideoInput.addEventListener('change', function () {
     reelPreview.appendChild(video);
 });
 
+const btnsavereelHtmlOriginal = btnsavereel.innerHTML;
+
 btnsavereel.addEventListener('click', (e) => {
     e.preventDefault();
 
@@ -85,7 +87,14 @@ btnsavereel.addEventListener('click', (e) => {
     formData.append('orden', reelOrden.value || 0);
     formData.append('reelId', reelId.value);
 
+    // Un video pesado puede tardar varios minutos en subir: avisar que no está trabado.
+    btnsavereel.disabled = true;
+    btnsavereel.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Subiendo video, puede tardar unos minutos...';
+
     seend_data_reel('/savereel', formData).then((resp) => {
+        btnsavereel.disabled = false;
+        btnsavereel.innerHTML = btnsavereelHtmlOriginal;
+
         if (resp.status === 1) {
             fnLoadTableReel();
             toastr.success(resp.message);

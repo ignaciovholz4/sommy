@@ -26,7 +26,7 @@
         <form action="" id="formReel">
             <input type="hidden" name="reelId" id="reelId" value="0">
             <p class="text-muted small">Subí el video del reel (descargalo desde la app de Instagram: Compartir &rsaquo; Guardar video, o desde Meta Business Suite). Se reproduce con un video propio, sin el marco ni los botones de Instagram.</p>
-            <span id="hintVideo">Formato vertical (como el reel original). Máximo 30MB. mp4, mov o webm.</span><br>
+            <span id="hintVideo">Formato vertical (como el reel original). Máximo 100MB. mp4, mov o webm. Si pesa mucho, puede tardar unos minutos en subir — esperá a que termine.</span><br>
             <div class="input-group mb-3">
               <input type="file" id="reelVideo" name="video" class="form-control" accept="video/mp4,video/quicktime,video/webm">
               <div class="input-group-append">
