@@ -66,6 +66,9 @@ class NuevosPermisosSeeder extends Seeder
             ['slug' => 'finanzas.marketing.campanas.crear', 'name' => 'crear campañas de Meta Ads', 'description' => 'Puede crear una campaña nueva de Meta Ads desde cero'],
             ['slug' => 'finanzas.marketing.campanas.estado', 'name' => 'pausar/activar campañas de Meta Ads', 'description' => 'Puede pausar o activar una campaña de Meta Ads'],
             ['slug' => 'finanzas.marketing.campanas.presupuesto', 'name' => 'modificar presupuesto de Meta Ads', 'description' => 'Puede subir o bajar el presupuesto diario de un conjunto de anuncios'],
+            // Microsoft Clarity (comportamiento de visitantes del ecommerce)
+            ['slug' => 'clarity.index', 'name' => 'ver métricas de Clarity', 'description' => 'Puede ver el panel de comportamiento de visitantes (Microsoft Clarity)'],
+            ['slug' => 'clarity.sincronizar', 'name' => 'sincronizar Clarity', 'description' => 'Puede sincronizar manualmente las métricas de Microsoft Clarity'],
             // Alta rapida y otras acciones puntuales
             ['slug' => 'almacen_articulo.bulk_upload', 'name' => 'importar productos por Excel',     'description' => 'Puede hacer carga masiva de productos desde un Excel'],
             ['slug' => 'almacen_articulo.quick_create', 'name' => 'crear categoría/marca/unidad al vuelo', 'description' => 'Puede crear categorías, marcas o unidades rápido desde el alta de productos'],

@@ -156,8 +156,16 @@ return [
     // Microsoft Clarity: mapas de calor + grabaciones de sesion de la tienda online.
     // Gratis, no guarda nada en nuestro servidor. Crear proyecto en clarity.microsoft.com
     // y pegar el Project ID aqui — sin eso, el script ni se inyecta.
+    // Google Tag Manager: contenedor de tags del sitio (Analytics, conversiones, etc.)
+    'gtm' => [
+        'container_id' => env('GOOGLE_TAG_MANAGER_ID'),
+    ],
+
     'clarity' => [
         'project_id' => env('MICROSOFT_CLARITY_ID'),
+        // Data Export API: metricas agregadas (sesiones, engagement, rage/dead clicks).
+        // NO da el mapa de calor visual ni las grabaciones, eso solo se ve en clarity.microsoft.com.
+        'api_token' => env('CLARITY_API_TOKEN'),
     ],
 
 ];

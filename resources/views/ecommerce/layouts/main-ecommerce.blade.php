@@ -2,6 +2,14 @@
 <!DOCTYPE html>
 <html lang="es">
   <head>
+    {{-- Google Tag Manager: lo mas arriba posible en <head>, segun pide GTM --}}
+    @if(config('services.gtm.container_id'))
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','{{ config('services.gtm.container_id') }}');</script>
+    @endif
     @php
         $seoTituloDefault = 'Sommy — Fábrica de colchones y sommiers en Córdoba';
         $seoDescDefault = 'Fabricamos colchones, sommiers, almohadas y sábanas en Córdoba. Comprá online con envíos a toda la ciudad. Directo de fábrica, sin intermediarios.';
@@ -132,7 +140,10 @@
 
   </head>
   <body class="@yield('bodyClass')">
-
+    @if(config('services.gtm.container_id'))
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ config('services.gtm.container_id') }}"
+        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    @endif
 
     <div class="preloader-wrapper" id="ec-preloader">
         <div class="preloader"></div>

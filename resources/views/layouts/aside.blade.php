@@ -468,6 +468,11 @@
                         <i class="fas fa-bullhorn"></i> Campañas de Meta Ads
                     </a>
                     @endcan
+                    @can('haveaccess','clarity.index')
+                    <a href="{{ route('clarity.index') }}" class="dg-drop-item {{ Str::startsWith($resp,'clarity') ? 'dg-drop-active' : '' }}">
+                        <i class="fas fa-fire"></i> Comportamiento de visitantes
+                    </a>
+                    @endcan
                 </div>
             </li>
             @endcan

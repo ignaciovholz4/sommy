@@ -88,6 +88,25 @@ class IntegracionController extends Controller
                 ],
                 'configurada' => fn () => env('MAIL_MAILER') === 'smtp' && env('MAIL_HOST'),
             ],
+            'clarity' => [
+                'titulo' => 'Microsoft Clarity (mapa de calor)',
+                'icono' => 'fa-fire',
+                'descripcion' => 'Mapas de calor y grabaciones de sesión de los visitantes del ecommerce. El Project ID activa el script en el sitio; el API Token es opcional, solo hace falta para ver las métricas agregadas dentro del panel de Sommy (Finanzas › Clarity).',
+                'campos' => [
+                    ['env' => 'MICROSOFT_CLARITY_ID', 'label' => 'Project ID', 'secreto' => false, 'ayuda' => 'clarity.microsoft.com › tu proyecto › Configuración › Setup'],
+                    ['env' => 'CLARITY_API_TOKEN', 'label' => 'API Token (Data Export)', 'secreto' => true, 'ayuda' => 'clarity.microsoft.com › tu proyecto › Configuración › Data Export › Generate new API token'],
+                ],
+                'configurada' => fn () => (bool) env('MICROSOFT_CLARITY_ID'),
+            ],
+            'gtm' => [
+                'titulo' => 'Google Tag Manager',
+                'icono' => 'fa-tags',
+                'descripcion' => 'Contenedor de tags del sitio (Google Analytics, conversiones, píxeles de terceros) gestionado desde tagmanager.google.com sin tocar el código.',
+                'campos' => [
+                    ['env' => 'GOOGLE_TAG_MANAGER_ID', 'label' => 'Container ID', 'secreto' => false, 'ayuda' => 'Formato GTM-XXXXXXX, lo ves en tagmanager.google.com al elegir tu contenedor'],
+                ],
+                'configurada' => fn () => (bool) env('GOOGLE_TAG_MANAGER_ID'),
+            ],
         ];
     }
 

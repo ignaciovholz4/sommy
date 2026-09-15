@@ -55,6 +55,9 @@ class Kernel extends ConsoleKernel
         // Ads: gasto diario de Meta Ads y Google Ads (solo si hay claves cargadas)
         $schedule->command('ads:sincronizar-gasto')->dailyAt('07:00');
 
+        // Clarity: metricas agregadas de visitantes (Data Export API limita a 10 llamadas/dia)
+        $schedule->command('clarity:sincronizar')->dailyAt('07:30');
+
         // Auditoria: purga logs viejos para que la tabla no crezca sin limite
         $schedule->command('auditoria:limpiar')->monthly();
 
