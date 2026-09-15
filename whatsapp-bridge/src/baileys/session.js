@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const pino = require('pino');
 const {
@@ -56,7 +57,20 @@ async function start() {
       const loggedOut = statusCode === DisconnectReason.loggedOut;
 
       if (loggedOut) {
-        console.log('[baileys] sesion cerrada (logout) — hace falta escanear un QR nuevo en /qr');
+        // El telefono desvinculo el dispositivo (o WhatsApp invalido la sesion):
+        // las credenciales guardadas ya no sirven. Si no se borran, Baileys
+        // reintenta autenticar con ellas para siempre sin nunca emitir un QR
+        // nuevo — el bug real de "el QR no aparece, se queda esperando".
+        // Se limpia la sesion vieja y se vuelve a arrancar para que se genere
+        // un QR fresco.
+        console.log('[baileys] sesion cerrada (logout) — limpiando sesion vieja y generando un QR nuevo');
+        latestQr = null;
+        try {
+          fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+        } catch (err) {
+          console.error('[baileys] no se pudo borrar auth_session', err.message);
+        }
+        setTimeout(start, reconnectDelayMs);
         return;
       }
 
