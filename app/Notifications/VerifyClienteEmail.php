@@ -32,9 +32,9 @@ class VerifyClienteEmail extends VerifyEmail
 
         return (new MailMessage())
             ->subject('Confirmá tu correo — Sommy')
-            ->greeting('¡Hola' . ($notifiable->nombre ? ' ' . $notifiable->nombre : '') . '!')
-            ->line('Antes de poder finalizar tu compra necesitamos que confirmes tu correo.')
-            ->action('Confirmar mi correo', $url)
-            ->line('El enlace vence en 60 minutos. Si no creaste esta cuenta, ignorá este mensaje.');
+            ->view('emails.verificar_cuenta', [
+                'nombre' => $notifiable->nombre ?? null,
+                'url' => $url,
+            ]);
     }
 }
