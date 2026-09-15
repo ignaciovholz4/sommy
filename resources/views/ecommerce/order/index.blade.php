@@ -337,22 +337,6 @@
                                         @if(!empty($configPago['alias_cbu']))<p class="mb-1">Alias: <strong>{{ $configPago['alias_cbu'] }}</strong></p>@endif
                                         <p class="mb-0 text-muted"><small>Al confirmar el pedido vas a recibir estos datos por email. Envianos el comprobante por WhatsApp.</small></p>
                                     </div>
-                                    @if(!empty($configPago['mp_habilitado']))
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-mercadopago" value="mercadopago">
-                                        <label class="form-check-label" for="pago-mercadopago">
-                                            <strong>Mercado Pago</strong> <span class="text-muted">— tarjeta de crédito/débito, en cuotas</span>
-                                        </label>
-                                    </div>
-                                    @endif
-
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-tarjeta" value="tarjeta">
-                                        <label class="form-check-label" for="pago-tarjeta">
-                                            <strong>Tarjeta de débito o crédito</strong> <span class="text-muted">— coordinamos el cobro al confirmar</span>
-                                        </label>
-                                    </div>
-
                                     <div class="form-check mb-0">
                                         <input class="form-check-input radio-metodo-pago" type="radio" name="metodoPago" id="pago-efectivo" value="efectivo">
                                         <label class="form-check-label" for="pago-efectivo">
