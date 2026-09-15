@@ -260,10 +260,6 @@
                 <span>Panel</span>
             </a>
             @elseif(Auth::guard('cliente')->check())
-            <a class="ec-action-btn" href="{{ url('/cuenta/pedidos') }}" title="Seguí tus pedidos">
-                <i class="fa-solid fa-box"></i>
-                <span>Mis pedidos</span>
-            </a>
             <span class="ec-action-btn" style="cursor:default;">
                 <i class="fa-solid fa-user-check"></i>
                 <span>{{ explode(' ', trim(Auth::guard('cliente')->user()->nombre))[0] }}</span>
@@ -315,9 +311,6 @@
             <i class="fa-solid fa-screwdriver-wrench"></i> Panel
         </a>
         @elseif(Auth::guard('cliente')->check())
-        <a class="ec-action-btn" href="{{ url('/cuenta/pedidos') }}">
-            <i class="fa-solid fa-box"></i> Mis pedidos
-        </a>
         <a class="ec-action-btn" href="{{ url('/cuenta/salir') }}">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión ({{ explode(' ', trim(Auth::guard('cliente')->user()->nombre))[0] }})
         </a>

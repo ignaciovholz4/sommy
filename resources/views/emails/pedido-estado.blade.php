@@ -26,13 +26,6 @@
                 </tr>
                 @endif
             </table>
-
-            <div style="text-align:center;">
-                <a href="{{ url('/cuenta/pedidos/' . $pedido->order_id) }}"
-                   style="display:inline-block;background:#1B2B5A;color:#ffffff;text-decoration:none;border-radius:999px;padding:13px 32px;font-size:14px;font-weight:bold;">
-                    Seguir mi pedido
-                </a>
-            </div>
         </div>
         <p style="text-align:center;color:#8A93AD;font-size:11.5px;margin-top:16px;">
             Este es un aviso automático de tu compra en Sommy. Ante cualquier duda, respondé este correo o escribinos por WhatsApp.

@@ -395,13 +395,10 @@
                         <p style="font-size:20px;margin:8px 0 2px;">Tu número de pedido es</p>
                         <p id="p-numero-pedido" style="font-size:34px;font-weight:700;color:#1B2B5A;margin-bottom:10px;">#—</p>
                         <p class="fs-4" id="p-name-customer">Gracias nombre apellido1 apellido2</p>
-                        <p class="col-md-12" style="font-size:15px;color:#47536F;">Te abrimos WhatsApp con el detalle. Podés seguir el estado de tu compra en cualquier momento desde <strong>Mis pedidos</strong>.</p>
+                        <p class="col-md-12" style="font-size:15px;color:#47536F;">Te abrimos WhatsApp con el detalle. Cualquier consulta sobre el estado de tu pedido, escribinos por ahí.</p>
                         <button type="button" class="btn btn-lg" id="btnSendDataOrderWhatsapp" style="background-color:#5FFC7B;color:#ffffff;">
                             Enviar detalle por WhatsApp
                         </button><br>
-                        <a class="btn btn-lg mt-4" href="{{ url('/cuenta/pedidos') }}" style="background:#1B2B5A;color:#fff;border-radius:999px;padding:12px 28px;">
-                            <i class="fa-solid fa-box"></i> Seguir mi pedido
-                        </a>
                         <a class="btn btn-light btn-lg border border-2 mt-4" href="{{url('/')}}">Continuar comprando</a>
                     </div>
                 </div>

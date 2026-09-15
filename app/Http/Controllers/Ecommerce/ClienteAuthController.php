@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Ecommerce;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Ecommerce\ShareController;
 use App\Models\ClienteCuenta;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -128,10 +127,7 @@ class ClienteAuthController extends Controller
         Auth::guard('cliente')->login($cliente, true);
         $request->session()->regenerate();
 
-        // Dispara el envío del correo de verificación (necesario para comprar)
-        event(new Registered($cliente));
-
-        return redirect()->route('cliente.verification.notice');
+        return redirect($request->input('next') ?: '/');
     }
 
     public function logout(Request $request)
