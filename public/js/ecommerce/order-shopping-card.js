@@ -147,13 +147,17 @@ const fnShowCurrentCartProduct = () => {
 const fnActualizarResumen = () => {
     const subtotal = listCartProdOrder.reduce((acc, p) => acc + Number(p.total || 0), 0);
 
-    // Envío según zona seleccionada
+    // Envío según zona seleccionada. Costo vacío = "a coordinar" (envío a
+    // domicilio real: depende de la zona/peso, lo confirma un vendedor por
+    // WhatsApp), distinto de $0 que es "Gratis" (ej. retiro en el local).
     let costoEnvio = 0;
     const zonaSeleccionada = document.querySelector('.radio-zona-envio:checked');
     if (zonaSeleccionada) {
-        costoEnvio = Number(zonaSeleccionada.dataset.costo || 0);
+        const rawCosto = zonaSeleccionada.dataset.costo;
+        const aCoordinar = rawCosto === '' || rawCosto === undefined;
+        costoEnvio = aCoordinar ? 0 : Number(rawCosto);
         rowEnvioPedido.style.setProperty('display', 'flex', 'important');
-        showEnvioPedido.textContent = costoEnvio > 0 ? fnFormatMoney(costoEnvio) : 'Gratis';
+        showEnvioPedido.textContent = aCoordinar ? 'A coordinar' : (costoEnvio > 0 ? fnFormatMoney(costoEnvio) : 'Gratis');
     } else if (rowEnvioPedido) {
         rowEnvioPedido.style.setProperty('display', 'none', 'important');
     }
@@ -174,10 +178,31 @@ const fnActualizarResumen = () => {
     showTotalPedido.textContent = fnFormatMoney(subtotal + costoEnvio - descuento);
 };
 
+/**
+ * Muestra/oculta y exige (o no) los campos de dirección según si la zona
+ * de envío elegida los necesita — retiro en el local no necesita
+ * dirección, envío a domicilio sí.
+ */
+const fnToggleDireccionEntrega = (zonaInput) => {
+    const entregaWrapper = document.getElementById('card-entrega-wrapper');
+    if (!zonaInput || !entregaWrapper) return;
+
+    const requiereDireccion = zonaInput.dataset.requiereDireccion === '1';
+    entregaWrapper.style.display = requiereDireccion ? '' : 'none';
+
+    ['calle', 'numberExterior', 'localidad', 'provincia'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.required = requiereDireccion;
+    });
+};
+
 // Recalcular resumen al cambiar zona o método de pago
 document.addEventListener('change', (e) => {
     if (e.target.classList && (e.target.classList.contains('radio-zona-envio') || e.target.classList.contains('radio-metodo-pago'))) {
         fnActualizarResumen();
+    }
+    if (e.target.classList && e.target.classList.contains('radio-zona-envio')) {
+        fnToggleDireccionEntrega(e.target);
     }
     // Mostrar/ocultar datos bancarios
     if (e.target.classList && e.target.classList.contains('radio-metodo-pago')) {
@@ -187,6 +212,10 @@ document.addEventListener('change', (e) => {
         }
     }
 });
+
+// Estado inicial: aplicar según la zona que viene marcada por defecto
+// (este script se carga al final del body, el DOM ya está listo)
+fnToggleDireccionEntrega(document.querySelector('.radio-zona-envio:checked'));
 
 const fnDeleteProductOrder = (claveProductCart) => {
     console.log(claveProductCart);

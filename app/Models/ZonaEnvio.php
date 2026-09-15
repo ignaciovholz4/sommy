@@ -8,10 +8,11 @@ class ZonaEnvio extends Model
 {
     protected $table = 'zonas_envio';
 
-    protected $fillable = ['nombre', 'costo', 'activo', 'orden'];
+    protected $fillable = ['nombre', 'costo', 'requiere_direccion', 'activo', 'orden'];
 
     protected $casts = [
         'activo' => 'boolean',
+        'requiere_direccion' => 'boolean',
         'costo' => 'decimal:2',
     ];
 

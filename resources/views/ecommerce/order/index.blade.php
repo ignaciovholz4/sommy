@@ -236,7 +236,7 @@
                                 </form>
                             </div>
                         </div>
-                        <div class="card border-0 shadow-sm mb-4">
+                        <div class="card border-0 shadow-sm mb-4" id="card-entrega-wrapper">
                             <div class="card-header border-0 shadow-sm header-content-card">
                                 <strong class="card-title">Entrega</strong>
                             </div>
@@ -299,10 +299,11 @@
                                         <div class="form-check mb-2">
                                             <input class="form-check-input radio-zona-envio" type="radio" name="zonaEnvio"
                                                    id="zona-{{ $zona->id }}" value="{{ $zona->id }}" data-costo="{{ $zona->costo }}"
+                                                   data-requiere-direccion="{{ $zona->requiere_direccion ? '1' : '0' }}"
                                                    {{ $loop->first ? 'checked' : '' }}>
                                             <label class="form-check-label d-flex justify-content-between" for="zona-{{ $zona->id }}" style="width:100%;max-width:400px;">
                                                 <span>{{ $zona->nombre }}</span>
-                                                <strong>{{ $zona->costo > 0 ? format_money_global($zona->costo) : 'Gratis' }}</strong>
+                                                <strong>{{ is_null($zona->costo) ? 'A coordinar' : ($zona->costo > 0 ? format_money_global($zona->costo) : 'Gratis') }}</strong>
                                             </label>
                                         </div>
                                     @endforeach

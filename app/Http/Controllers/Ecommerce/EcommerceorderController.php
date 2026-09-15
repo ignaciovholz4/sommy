@@ -100,6 +100,10 @@ class EcommerceorderController extends Controller
                     return response()->json(['status' => 0, 'mensaje' => 'La zona de envío seleccionada no es válida']);
                 }
                 $costoEnvio = (float) $zona->costo;
+
+                if ($zona->requiere_direccion && (trim((string) $adress) === '' || trim((string) $localidad) === '' || trim((string) $provincia) === '')) {
+                    return response()->json(['status' => 0, 'mensaje' => 'Para envío a domicilio necesitamos la calle, la localidad y la provincia']);
+                }
             }
 
             // 🔒 Descuento por transferencia server-side desde configuración
