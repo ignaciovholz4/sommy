@@ -161,6 +161,11 @@ return [
         'container_id' => env('GOOGLE_TAG_MANAGER_ID'),
     ],
 
+    // Google Analytics 4 (gtag.js instalado manual, no via GTM)
+    'ga4' => [
+        'measurement_id' => env('GA4_MEASUREMENT_ID'),
+    ],
+
     'clarity' => [
         'project_id' => env('MICROSOFT_CLARITY_ID'),
         // Data Export API: metricas agregadas (sesiones, engagement, rage/dead clicks).

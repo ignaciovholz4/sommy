@@ -10,6 +10,17 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','{{ config('services.gtm.container_id') }}');</script>
     @endif
+
+    {{-- Google tag (gtag.js) — Google Analytics 4, instalado manual (no via GTM) --}}
+    @if(config('services.ga4.measurement_id'))
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('services.ga4.measurement_id') }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ config('services.ga4.measurement_id') }}');
+    </script>
+    @endif
     @php
         $seoTituloDefault = 'Sommy — Fábrica de colchones y sommiers en Córdoba';
         $seoDescDefault = 'Fabricamos colchones, sommiers, almohadas y sábanas en Córdoba. Comprá online con envíos a toda la ciudad. Directo de fábrica, sin intermediarios.';

@@ -107,6 +107,15 @@ class IntegracionController extends Controller
                 ],
                 'configurada' => fn () => (bool) env('GOOGLE_TAG_MANAGER_ID'),
             ],
+            'ga4' => [
+                'titulo' => 'Google Analytics 4',
+                'icono' => 'fa-chart-line',
+                'descripcion' => 'Estadísticas de tráfico y comportamiento del sitio. Instalado directo (gtag.js), independiente de Google Tag Manager.',
+                'campos' => [
+                    ['env' => 'GA4_MEASUREMENT_ID', 'label' => 'Measurement ID', 'secreto' => false, 'ayuda' => 'Formato G-XXXXXXX, lo ves en analytics.google.com › Admin › Flujos de datos › tu sitio'],
+                ],
+                'configurada' => fn () => (bool) env('GA4_MEASUREMENT_ID'),
+            ],
         ];
     }
 
