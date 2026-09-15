@@ -109,11 +109,18 @@ const fnShowCurrentCartProduct = () => {
                         </div>
                     </div>
                     <div class="col-md-3">
+                        ${String(product.claveCart).startsWith('regalo-') ? `
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="number" class="quantity-input" value="${product.cant}" min="1" disabled>
+                            <span class="badge bg-success">Regalo, cantidad fija</span>
+                        </div>
+                        ` : `
                         <div class="d-flex align-items-center gap-2">
                             <button class="quantity-btn" onclick="updateSubtractionQuantity('${product.claveCart}')">-</button>
                             <input type="number" class="quantity-input" id="${identifyProduct}" value="${product.cant}" min="1" disabled>
                             <button class="quantity-btn" onclick="updateSumQuantity('${product.claveCart}')">+</button>
                         </div>
+                        `}
                     </div>
                     <div class="col-md-3">
                         ${priceDisplay}
@@ -195,6 +202,9 @@ const fnDeleteProductOrder = (claveProductCart) => {
 } 
 
 const updateSumQuantity = (claveProduct) => {
+    // Los regalos (ej. almohadas de un combo) tienen cantidad fija: no se
+    // pueden sumar mas unidades gratis desde el carrito.
+    if (String(claveProduct).startsWith('regalo-')) return;
     const findProductIndex = listCartProdOrder.findIndex(item => item.claveCart === claveProduct);//find the product for update
     let currentCantProduct = Number(listCartProdOrder[findProductIndex].cant);
     let currentStockProduct = Number(listCartProdOrder[findProductIndex].stockProduct);

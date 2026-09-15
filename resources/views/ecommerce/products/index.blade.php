@@ -736,10 +736,10 @@
             const claveCart = 'regalo-' + seleccionado.value;
             const existente = cart.find(p => p.claveCart === claveCart);
 
-            if (existente) {
-                existente.cant += cantidadRegalo;
-                existente.total = 0;
-            } else {
+            // El regalo es de cantidad fija: si ya está en el carrito (ej. el
+            // cliente clickeó "Agregar al carrito" más de una vez), no se
+            // duplica ni se suma de nuevo.
+            if (!existente) {
                 cart.push({
                     claveCart: claveCart,
                     name: seleccionado.getAttribute('data-nombre') + (cantidadRegalo > 1 ? ` x${cantidadRegalo}` : '') + ' (regalo)',
