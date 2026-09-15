@@ -125,6 +125,7 @@
                         <li><a href="{{ url('/contacto') }}">Contacto</a></li>
                         <li><a href="{{ url('/revendedores') }}">Vendé Sommy</a></li>
                         <li><a href="{{ url('/terminos') }}">Términos y condiciones</a></li>
+                        <li><a href="{{ url('/politica-de-privacidad') }}">Política de privacidad</a></li>
                         <li><a href="{{ url('/cambios-y-devoluciones') }}">Cambios y devoluciones</a></li>
                         <li><a href="{{ url('/arrepentimiento') }}" style="color:#fff !important;font-weight:500;">Botón de arrepentimiento</a></li>
                     </ul>
