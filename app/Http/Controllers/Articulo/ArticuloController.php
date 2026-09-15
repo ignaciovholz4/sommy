@@ -173,7 +173,7 @@ class ArticuloController extends Controller
                 'pventa_sin_iva'         => $request->get('pventa-sin-iva'),
                 'pventa_con_iva'         => $request->get('pventa-con-iva'),
                 'pventa_mayorista'       => $request->get('pventa-mayorista') ?: null,
-                'combo_descuento_pct'    => $request->get('combo_descuento_pct') ?: 0,
+                // combo_descuento_pct se configura desde Artículos > Combos, no acá.
                 'destacado'              => $request->has('destacado') ? 1 : 0,
                 'color'                  => $request->get('color') ?: null,
                 'imagen'                 => $imagen,
@@ -240,8 +240,9 @@ class ArticuloController extends Controller
             // ✅ GUARDAR PRODUCTOS RELACIONADOS
             $this->sincronizarRelacionados($articulo->idarticulo, (array) $request->input('relacionados', []));
 
-            // ✅ GUARDAR REGALOS DISPONIBLES
-            $this->sincronizarRegalos($articulo->idarticulo, (array) $request->input('regalos', []));
+            // Regalos y % de combo se configuran desde Artículos > Combos (con
+            // cantidad por regalo) — este formulario ya no los toca, para no
+            // pisarlos con un guardado sin querer.
 
             DB::commit();
 
@@ -604,7 +605,8 @@ class ArticuloController extends Controller
             $articulo->pventa_sin_iva = $request->input('pventa-sin-iva');
             $articulo->pventa_con_iva = $request->input('pventa-con-iva');
             $articulo->pventa_mayorista = $request->input('pventa-mayorista') ?: null;
-            $articulo->combo_descuento_pct = $request->input('combo_descuento_pct') ?: 0;
+            // combo_descuento_pct se configura desde Artículos > Combos, no acá
+            // (si no, un guardado normal de este formulario lo resetea a 0).
             $articulo->destacado = $request->has('destacado') ? 1 : 0;
             $articulo->color = $request->input('color') ?: null;
 
@@ -754,8 +756,9 @@ class ArticuloController extends Controller
             // ✅ GUARDAR PRODUCTOS RELACIONADOS
             $this->sincronizarRelacionados($articulo->idarticulo, (array) $request->input('relacionados', []));
 
-            // ✅ GUARDAR REGALOS DISPONIBLES
-            $this->sincronizarRegalos($articulo->idarticulo, (array) $request->input('regalos', []));
+            // Regalos y % de combo se configuran desde Artículos > Combos (con
+            // cantidad por regalo) — este formulario ya no los toca, para no
+            // pisarlos con un guardado sin querer.
 
             DB::commit();
 

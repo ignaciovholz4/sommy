@@ -270,14 +270,11 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-sm-4">
-                        <div class="form-group">
-                            <label for="combo_descuento_pct">Descuento por combo (%)
-                                <small class="text-muted">(el cliente arma el combo eligiendo relacionados; 0 = sin armador)</small>
-                            </label>
-                            <input type="number" name="combo_descuento_pct" id="combo_descuento_pct" class="form-control"
-                                placeholder="Ej: 10" min="0" max="100" step="0.01"
-                                value="{{ old('combo_descuento_pct', $product->combo_descuento_pct ?? 0) }}">
+                    <div class="col-sm-8">
+                        <div class="alert alert-info py-2 px-3 mb-0" style="font-size:0.85rem;">
+                            <i class="fas fa-circle-info me-1"></i>
+                            El % de descuento por combo y los regalos gratis (con su cantidad) se configuran desde
+                            <a href="{{ url('almacen/combos') }}" target="_blank"><strong>Artículos &rsaquo; Combos</strong></a>.
                         </div>
                     </div>
                     <div class="col-sm-4">
@@ -288,20 +285,6 @@
                                     {{ old('destacado', $product->destacado ?? 0) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="destacado">Se muestra en "Productos destacados" de la home</label>
                             </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="col-sm-12">
-                        <div class="form-group">
-                            <label for="regalos-select">Regalos disponibles <small class="text-muted">(al comprar este producto, el cliente puede elegir UNO de estos gratis)</small></label>
-                            <select name="regalos[]" id="regalos-select" class="form-control" multiple>
-                                @foreach($productosDisponibles ?? [] as $p)
-                                    <option value="{{ $p->idarticulo }}"
-                                        {{ in_array($p->idarticulo, $regalosIds ?? []) ? 'selected' : '' }}>
-                                        {{ $p->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
                         </div>
                     </div>
                     <hr>
@@ -806,10 +789,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener('DOMContentLoaded', function() {
         $('#relacionados-select').select2({
             placeholder: 'Buscar productos para recomendar...',
-            width: '100%'
-        });
-        $('#regalos-select').select2({
-            placeholder: 'Buscar productos para ofrecer de regalo...',
             width: '100%'
         });
     });
