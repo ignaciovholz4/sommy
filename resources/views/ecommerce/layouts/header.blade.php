@@ -267,11 +267,6 @@
             <a class="ec-action-btn" href="{{ url('/cuenta/salir') }}" title="Cerrar sesión">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
             </a>
-            @else
-            <a class="ec-action-btn" href="{{ url('/cuenta/login') }}">
-                <i class="fa-solid fa-user"></i>
-                <span>Ingresar</span>
-            </a>
             @endauth
 
             <button class="ec-action-btn ec-cart-btn" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart" aria-label="Carrito">
@@ -313,10 +308,6 @@
         @elseif(Auth::guard('cliente')->check())
         <a class="ec-action-btn" href="{{ url('/cuenta/salir') }}">
             <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión ({{ explode(' ', trim(Auth::guard('cliente')->user()->nombre))[0] }})
-        </a>
-        @else
-        <a class="ec-action-btn" href="{{ url('/cuenta/login') }}">
-            <i class="fa-solid fa-user"></i> Ingresar
         </a>
         @endauth
         <button class="ec-action-btn" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCart">
