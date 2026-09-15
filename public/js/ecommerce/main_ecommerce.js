@@ -128,6 +128,7 @@ window.fnShowListCartProduct = () => {
 
   window.fnShowQuantityProduct(quantityProduct);
   window.fnShowRelatedProducts();
+  window.fnReconciliarRegalos();
 };
 
 window.fnShowQuantityProduct = (quantity) => {
@@ -275,11 +276,17 @@ window.fnShowRelatedProducts = () => {
     });
 };
 
-// Agrega un producto simple (sin variantes) recomendado desde el carrito
+// Agrega un producto simple (sin variantes) recomendado desde el carrito.
+// Si viene de un combo activo en el carrito (product.combo_descuento_pct),
+// se agrega con ese descuento — mismo criterio que armarlo desde la ficha.
 window.fnAddRelatedToCart = (product) => {
   const cart = window.fnListCartProduct();
   const claveCart = String(product.id);
   const existente = cart.find(prod => prod.claveCart === claveCart);
+  const descuentoPct = Number(product.combo_descuento_pct) || 0;
+  const precioFinal = descuentoPct > 0
+    ? Math.round(product.precio * (1 - descuentoPct / 100) * 100) / 100
+    : product.precio;
 
   if (existente) {
     existente.cant += 1;
@@ -291,14 +298,14 @@ window.fnAddRelatedToCart = (product) => {
       name: product.nombre,
       productId: product.id,
       original_price: product.precio,
-      priceSale: product.precio,
+      priceSale: precioFinal,
       cant: 1,
-      total: product.precio,
+      total: precioFinal,
       rowProdVariant: null,
       tipoProductoId: 1,
       stockProduct: product.stock,
-      display_price: product.precio,
-      has_offer: product.has_offer || false,
+      display_price: precioFinal,
+      has_offer: descuentoPct > 0 || product.has_offer || false,
       image: product.imagen,
       sinStock: window.fnCheckStockProduct(product.stock, 1)
     });
@@ -314,6 +321,10 @@ window.fnAddRelatedVariantToCart = (product, variante) => {
   const cart = window.fnListCartProduct();
   const claveCart = `${product.id}-${variante.idcombinacion}`;
   const existente = cart.find(prod => prod.claveCart === claveCart);
+  const descuentoPct = Number(product.combo_descuento_pct) || 0;
+  const precioFinal = descuentoPct > 0
+    ? Math.round(variante.precio * (1 - descuentoPct / 100) * 100) / 100
+    : variante.precio;
 
   if (existente) {
     existente.cant += 1;
@@ -325,14 +336,14 @@ window.fnAddRelatedVariantToCart = (product, variante) => {
       name: product.nombre,
       productId: product.id,
       original_price: variante.precio,
-      priceSale: variante.precio,
+      priceSale: precioFinal,
       cant: 1,
-      total: variante.precio,
+      total: precioFinal,
       rowProdVariant: { idcombinacion: variante.idcombinacion, combinacion: variante.label, pventa_variante: variante.precio },
       tipoProductoId: 2,
       stockProduct: variante.stock,
-      display_price: variante.precio,
-      has_offer: false,
+      display_price: precioFinal,
+      has_offer: descuentoPct > 0,
       image: product.imagen,
       sinStock: window.fnCheckStockProduct(variante.stock, 1)
     });
@@ -343,6 +354,68 @@ window.fnAddRelatedVariantToCart = (product, variante) => {
   window.fnMessageToastrSuccess("Se agregó con éxito el producto al carrito", "Éxito!");
 };
 /***************************************************************/
+
+// Mantiene los regalos del carrito sincronizados con lo que realmente hay:
+// si el carrito tiene un colchón con combo activo y algo de sus relacionados
+// (ej. la base), sea cual sea el orden en que se agregaron o si vinieron de
+// la ficha del producto o de "también te puede interesar", agrega el regalo
+// que corresponda gratis. Si se saca alguna pieza del combo, saca el regalo.
+window.fnReconciliarRegalos = () => {
+  const cart = window.fnListCartProduct();
+  const ids = [...new Set(cart.map(prod => prod.productId))];
+
+  if (ids.length === 0) {
+    const limpio = cart.filter(p => !String(p.claveCart).startsWith('regalo-'));
+    if (limpio.length !== cart.length) {
+      window.fnSaveCartProduct(limpio);
+      window.fnShowListCartProduct();
+    }
+    return;
+  }
+
+  fetch(`/Ecommercecombos?ids=${ids.join(',')}`)
+    .then(res => res.json())
+    .then(data => {
+      const corresponden = data.regalos || [];
+      const cartActual = window.fnListCartProduct();
+      let cambio = false;
+
+      let nuevoCart = cartActual.filter(item => {
+        if (!String(item.claveCart).startsWith('regalo-')) return true;
+        const sigue = corresponden.some(r => `regalo-${r.id}` === item.claveCart);
+        if (!sigue) cambio = true;
+        return sigue;
+      });
+
+      corresponden.forEach(r => {
+        const clave = `regalo-${r.id}`;
+        if (nuevoCart.some(item => item.claveCart === clave)) return;
+        cambio = true;
+        nuevoCart.push({
+          claveCart: clave,
+          name: r.nombre + (r.cantidad > 1 ? ` x${r.cantidad}` : '') + ' (regalo)',
+          productId: r.id,
+          original_price: r.precio,
+          priceSale: 0,
+          cant: r.cantidad,
+          total: 0,
+          rowProdVariant: null,
+          tipoProductoId: 1,
+          stockProduct: r.stock,
+          display_price: 0,
+          has_offer: true,
+          image: r.imagen_url,
+          sinStock: false
+        });
+      });
+
+      if (cambio) {
+        window.fnSaveCartProduct(nuevoCart);
+        window.fnShowListCartProduct();
+      }
+    })
+    .catch(() => {});
+};
 
 window.fnDeleteProd = (product) => {
   const list = window.fnListCartProduct().filter(item => item.claveCart !== product.claveCart);

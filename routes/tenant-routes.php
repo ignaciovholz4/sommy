@@ -71,6 +71,7 @@ Route::get('/productos', [EcommercecategoryController::class, 'todos'])->name('e
 Route::get('/combos', [EcommerceController::class, 'combos'])->name('ecommerce.combos');
 Route::get('/buscar', [EcommercesearchcategoryController::class, 'index'])->name('ecommerce.buscar');
 Route::get('/Ecommercerelacionados', [EcommerceproductController::class, 'relacionados'])->name('ecommerce.relacionados');
+Route::get('/Ecommercecombos', [EcommerceproductController::class, 'regalosDelCarrito'])->name('ecommerce.combos.carrito');
 Route::post('/Ecommercecarritosync', [\App\Http\Controllers\Ecommerce\CarritoSyncController::class, 'sync'])->name('ecommerce.carrito.sync');
 
 // Rutas viejas por ID → redirect 301 a la URL con slug

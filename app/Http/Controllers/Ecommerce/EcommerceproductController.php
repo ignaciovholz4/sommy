@@ -193,6 +193,28 @@ class EcommerceproductController extends Controller
             return response()->json(['productos' => []]);
         }
 
+        // Si alguno de los productos ya en el carrito es un ancla de combo activa
+        // (combo_descuento_pct > 0), y este candidato es uno de sus relacionados,
+        // se ofrece con ese descuento — es el mismo combo que arma la ficha del
+        // producto, pero agregado desde el "también te puede interesar" del carrito.
+        $anchorsConCombo = DB::table('productos')
+            ->whereIn('idarticulo', $idsCarrito)
+            ->where('combo_descuento_pct', '>', 0)
+            ->pluck('combo_descuento_pct', 'idarticulo');
+
+        $descuentoPorRelacionado = [];
+        if ($anchorsConCombo->isNotEmpty()) {
+            DB::table('producto_relacionados')
+                ->whereIn('idarticulo', $anchorsConCombo->keys())
+                ->get(['idarticulo', 'relacionado_id'])
+                ->each(function ($row) use (&$descuentoPorRelacionado, $anchorsConCombo) {
+                    $pct = (float) $anchorsConCombo[$row->idarticulo];
+                    if (!isset($descuentoPorRelacionado[$row->relacionado_id]) || $pct > $descuentoPorRelacionado[$row->relacionado_id]) {
+                        $descuentoPorRelacionado[$row->relacionado_id] = $pct;
+                    }
+                });
+        }
+
         $articulosRelacionados = Articulo::whereIn('idarticulo', $idsRelacionados)
             ->where('estado', 'Activo')
             ->whereIn('idarticulo', $conStock->keys())
@@ -216,7 +238,7 @@ class EcommerceproductController extends Controller
                 ->groupBy('producto_id');
 
         $productos = $articulosRelacionados
-            ->map(function ($p) use ($conStock, $variantesPorProducto) {
+            ->map(function ($p) use ($conStock, $variantesPorProducto, $descuentoPorRelacionado) {
                 $precioDesde = false;
                 $precio = $p->pventa_con_iva;
                 $variantes = [];
@@ -258,11 +280,73 @@ class EcommerceproductController extends Controller
                     'tipo_producto_id' => (int) $p->tipo_producto_id,
                     'stock' => (int) ($conStock->get($p->idarticulo)->total_stock ?? 0),
                     'variantes' => $variantes,
+                    'combo_descuento_pct' => $descuentoPorRelacionado[$p->idarticulo] ?? 0,
                 ];
             })
             ->values();
 
         return response()->json(['productos' => $productos]);
+    }
+
+    /**
+     * Regalos que corresponden dado el contenido ACTUAL del carrito (no solo
+     * al momento de agregar un producto puntual): si el carrito tiene un
+     * ancla de combo (colchón con combo_descuento_pct) y también algo de sus
+     * relacionados (ej. la base), sea cual sea el orden u origen en que se
+     * agregaron (ficha del producto o "también te puede interesar" del
+     * carrito), el regalo configurado para esa ancla corresponde gratis.
+     * GET /Ecommercecombos?ids=1,2,3
+     */
+    public function regalosDelCarrito(Request $request)
+    {
+        $ids = collect(explode(',', (string) $request->query('ids', '')))
+            ->map(fn ($v) => (int) trim($v))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return response()->json(['regalos' => []]);
+        }
+
+        $stockController = new StockController();
+        $conStock = $stockController->getProductosConStock()->keyBy('producto_id');
+
+        $anchors = DB::table('productos')
+            ->whereIn('idarticulo', $ids)
+            ->where('combo_descuento_pct', '>', 0)
+            ->pluck('idarticulo');
+
+        $regalos = collect();
+        foreach ($anchors as $anchorId) {
+            // El combo se completa si además del ancla hay en el carrito al
+            // menos uno de sus relacionados (ej. colchón + base).
+            $relacionadosIds = DB::table('producto_relacionados')->where('idarticulo', $anchorId)->pluck('relacionado_id');
+            if ($relacionadosIds->intersect($ids)->isEmpty()) {
+                continue;
+            }
+
+            DB::table('producto_regalos as pr')
+                ->join('productos as p', 'p.idarticulo', '=', 'pr.regalo_id')
+                ->where('pr.idarticulo', $anchorId)
+                ->where('p.estado', 'Activo')
+                ->select('p.idarticulo as id', 'p.nombre', 'p.imagen', 'p.pventa_con_iva as precio', 'pr.cantidad')
+                ->get()
+                ->each(function ($r) use ($regalos, $conStock) {
+                    $r->cantidad = max(1, (int) $r->cantidad);
+                    $r->stock = (int) ($conStock->get($r->id)->total_stock ?? 0);
+                    if ($r->stock < $r->cantidad) {
+                        return;
+                    }
+                    $foto = DB::table('producto_imagenes')
+                        ->where('producto_id', $r->id)->whereNull('combinacion_id')
+                        ->orderByDesc('principal')->orderBy('orden')->first();
+                    $r->imagen_url = $foto ? asset($foto->path) : ($r->imagen ? asset('imagenes/articulos/' . $r->imagen) : null);
+                    $regalos->push($r);
+                });
+        }
+
+        return response()->json(['regalos' => $regalos->unique('id')->values()]);
     }
 
     /**
