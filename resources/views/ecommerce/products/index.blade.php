@@ -541,20 +541,25 @@
                 return;
             }
 
-            let normal = base.precio * base.cant;
+            // El descuento del combo se aplica SOLO a lo que se suma (relacionados
+            // tildados), nunca al producto principal de esta ficha: su precio
+            // queda siempre el mismo, con o sin combo.
+            const anchor = base.precio * base.cant;
+            let addons = 0;
             itemsList.querySelectorAll('.combo-item-check:checked').forEach(chk => {
                 const producto = comboProductos.find(p => String(p.id) === chk.getAttribute('data-product-id'));
                 if (!producto) return;
                 if (producto.tipo_producto_id === 2) {
                     const select = itemsList.querySelector(`.combo-variant-select[data-product-id="${producto.id}"]`);
                     const variante = (producto.variantes || []).find(v => String(v.idcombinacion) === select?.value);
-                    if (variante) normal += variante.precio;
+                    if (variante) addons += variante.precio;
                 } else {
-                    normal += producto.precio;
+                    addons += producto.precio;
                 }
             });
 
-            const final = Math.round(normal * (1 - descuentoPct / 100) * 100) / 100;
+            const normal = anchor + addons;
+            const final = Math.round((anchor + addons * (1 - descuentoPct / 100)) * 100) / 100;
             precioNormalEl.textContent = window.fnFormatMoney(normal);
             precioFinalEl.textContent = window.fnFormatMoney(final) + ' con el combo';
         }
@@ -639,6 +644,7 @@
                     : null,
                 tipoProductoId: productValue[0].tipo_producto_id,
                 image: imagenActual,
+                esAnchor: true,
             }];
 
             seleccionados.forEach(chk => {
@@ -662,13 +668,16 @@
                     rowProdVariant: variante ? { idcombinacion: variante.idcombinacion, combinacion: variante.label, pventa_variante: variante.precio } : null,
                     tipoProductoId: producto.tipo_producto_id,
                     image: producto.imagen,
+                    esAnchor: false,
                 });
             });
 
             const cart = window.fnListCartProduct();
 
             items.forEach(it => {
-                const precioConDescuento = Math.round(it.precio * factor * 100) / 100;
+                // El producto principal de la ficha queda siempre a su precio normal:
+                // el descuento del combo es solo para lo que se suma.
+                const precioConDescuento = it.esAnchor ? it.precio : Math.round(it.precio * factor * 100) / 100;
                 const existente = cart.find(p => p.claveCart === it.claveCart);
 
                 if (existente) {
@@ -688,7 +697,7 @@
                         tipoProductoId: it.tipoProductoId,
                         stockProduct: it.stock,
                         display_price: precioConDescuento,
-                        has_offer: true,
+                        has_offer: !it.esAnchor,
                         image: it.image,
                         sinStock: window.fnCheckStockProduct(it.stock, it.cant)
                     });

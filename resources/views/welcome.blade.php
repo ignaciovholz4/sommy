@@ -366,6 +366,57 @@
       </div>
     </section>
 
+    @if($getDataCombos->isNotEmpty())
+    <!--Combos en oferta: vidriera de los combos dinamicos reales (colchon + relacionados)-->
+    <section class="py-5" id="combos">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="tabs-header d-flex justify-content-between border-bottom my-5" data-aos="fade-up">
+              <h3>Combos en oferta</h3>
+            </div>
+            <p class="text-muted mb-4" data-aos="fade-up">Colchón + base sommier + almohadas: armando el combo te sale más barato que comprando todo por separado.</p>
+            <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 justify-content-start">
+              @foreach ($getDataCombos as $combo)
+                <div class="col" data-aos="fade-up" data-aos-delay="{{ ($loop->index % 5) * 80 }}">
+                  <div class="product-item">
+
+                    @if($combo->ahorro > 0)
+                      <span class="badge bg-success position-absolute m-3">
+                        <i class="fas fa-piggy-bank"></i> Ahorrás ${{ number_format($combo->ahorro, 0, ',', '.') }}
+                      </span>
+                    @endif
+
+                    <figure>
+                      <a href="{{ url('producto/' . $combo->producto->slug) }}" title="{{ $combo->producto->nombre }}">
+                        <img src="{{asset('imagenes/articulos/'.$combo->producto->imagen )}}" class="tab-image">
+                      </a>
+                    </figure>
+                    <div class="name-product">
+                      <h3>{{ $combo->producto->nombre }}</h3>
+                      @if(!empty($combo->incluye))
+                        <div class="text-muted" style="font-size:11px;">+ {{ implode(' + ', $combo->incluye) }}</div>
+                      @endif
+                    </div>
+
+                    <div class="text-center mb-2">
+                      <span class="d-block" style="font-size:11px;color:#94a3b8;text-decoration:line-through;">${{ number_format($combo->precio_separado, 2, ',', '.') }} por separado</span>
+                      <span class="fw-bold">${{ number_format($combo->display_price, 2, ',', '.') }}</span>
+                    </div>
+
+                    <div class="text-center div-button-cart">
+                      <a class="btn btn-add-prod" href="{{ url('producto/' . $combo->producto->slug) }}">Armar combo</a>
+                    </div>
+                  </div>
+                </div>
+              @endforeach
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    @endif
+
     <!--START SOMOS FABRICANTES-->
     <section class="pb-5">
       <div class="container-fluid">
