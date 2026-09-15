@@ -88,39 +88,8 @@ class EcommerceController extends Controller
             $categoriaFinder = $catFinderId ? \App\Models\Categoria::find($catFinderId) : null;
         }
 
-        // Combos en oferta: productos de la categoría "Conjunto Sommier" (colchón +
-        // base + almohadas de regalo, todo en un solo precio). El "ahorrás $X" compara
-        // contra comprar los mismos componentes por separado al precio de lista actual
-        // (colchón 140x190 + base 140 + 2 almohadas), fijo por combo porque son SKUs
-        // armados a mano, no un kit dinámico con componentes vinculados en la base.
-        $categoriaCombos = \App\Models\Categoria::where('slug', 'conjunto-sommier')->first();
-        $getDataCombos = collect();
-        if ($categoriaCombos) {
-            $precioSeparado = [
-                7 => 297270.00, // Conjunto Nube: colchón 224.000 + base 49.270 + 2 almohadas 24.000
-                8 => 320270.00, // Conjunto Cielo: colchón 247.000 + base 49.270 + 2 almohadas 24.000
-                9 => 368270.00, // Conjunto Eclipse: colchón 295.000 + base 49.270 + 2 almohadas 24.000
-            ];
-            $getDataCombos = $getDataProd
-                ->filter(fn ($p) => $p->producto->categoria_id === $categoriaCombos->idcategoria)
-                ->map(function ($p) use ($precioSeparado) {
-                    $separado = $precioSeparado[$p->producto->idarticulo] ?? null;
-                    $p->precio_separado = $separado;
-                    $p->ahorro = $separado ? round($separado - $p->display_price, 2) : null;
-                    return $p;
-                })
-                ->values();
-
-            // Los combos tienen su propia sección más abajo: que no se dupliquen
-            // también en "Últimos productos".
-            $getDataProd = $getDataProd
-                ->reject(fn ($p) => $p->producto->categoria_id === $categoriaCombos->idcategoria)
-                ->values();
-        }
-
         return view('welcome', compact(
             'getDataProd',
-            'getDataCombos',
             'getDataCategory',
             'getCategoryLimit',
             'arrayEmpresa',
