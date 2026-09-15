@@ -115,14 +115,24 @@ class EcommerceController extends Controller
 
                 $descuento = (float) $anchor->combo_descuento_pct / 100;
                 $anchorPrice = (float) $variante->pventa_variante;
+                // Medida del colchón elegido (ej. "1,40 x 1,90" -> "1.40"), para
+                // buscar la variante de la misma medida en los relacionados con
+                // variantes (la base), en vez de quedarnos con la más barata.
+                $anchorMedida = str_replace(',', '.', trim(explode('x', $variante->combinacion)[0] ?? ''));
                 $addonsFull = 0.0;
                 $incluye = [];
 
                 foreach ($relacionados as $rel) {
                     $cantidad = stripos($rel->nombre, 'almohada') !== false ? 2 : 1;
-                    $precioUnit = $rel->tipo_producto_id == 2
-                        ? (float) ($rel->combinaciones->where('pventa_variante', '>', 0)->min('pventa_variante') ?? 0)
-                        : (float) $rel->pventa_con_iva;
+
+                    if ($rel->tipo_producto_id == 2) {
+                        $variantesConPrecio = $rel->combinaciones->where('pventa_variante', '>', 0);
+                        $match = $variantesConPrecio->first(fn ($v) => str_replace(',', '.', trim($v->combinacion)) === $anchorMedida);
+                        $precioUnit = (float) ($match->pventa_variante ?? $variantesConPrecio->min('pventa_variante') ?? 0);
+                    } else {
+                        $precioUnit = (float) $rel->pventa_con_iva;
+                    }
+
                     if ($precioUnit <= 0) {
                         continue;
                     }
