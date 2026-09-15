@@ -153,10 +153,22 @@ class FinanzasDashboardController extends Controller
         // están en su moneda nativa. "Acumulado" es el histórico completo (no solo
         // el mes) porque lo que se busca es cuánto se viene ganando/gastando en esa
         // moneda desde que se empezó a operar con ella, no solo este mes.
+        //
+        // Igual que en Finanzas > Resumen: pagar una compra de mercadería en
+        // dólares no es una "pérdida" en dólares, es plata que se convirtió en
+        // stock. Por eso "resultado" acá solo resta egresos_operativos (gastos
+        // reales), no egresos_stock — si no, una compra pagada en USD se
+        // mostraba en rojo como si fuera plata perdida.
         $resultadoExtranjero = function ($desde = null) {
             $q = DB::table('movimientos as m')
                 ->join('cuentas as c', 'c.id', '=', 'm.cuenta_id')
                 ->join('monedas as mo', 'mo.id', '=', 'c.moneda_id')
+                ->leftJoin('compras as cmp', function ($j) {
+                    $j->on('cmp.num_folio', '=', 'm.comprobante')->whereNotNull('m.comprobante');
+                })
+                ->leftJoin('proveedor_cc_movimientos as ccm', function ($j) {
+                    $j->on('ccm.id', '=', 'm.referencia_id')->where('m.referencia_type', '=', ProveedorCcMovimiento::class);
+                })
                 ->where('mo.codigo', '!=', 'ARS');
             if ($desde) {
                 $q->where('m.fecha', '>=', $desde);
@@ -164,7 +176,8 @@ class FinanzasDashboardController extends Controller
             return $q->groupBy('mo.codigo', 'mo.simbolo')
                 ->selectRaw("mo.codigo, mo.simbolo,
                     COALESCE(SUM(CASE WHEN m.tipo = 'ingreso' THEN m.total ELSE 0 END), 0) as ingresos,
-                    COALESCE(SUM(CASE WHEN m.tipo = 'egreso' THEN m.total ELSE 0 END), 0) as egresos")
+                    COALESCE(SUM(CASE WHEN m.tipo = 'egreso' AND (cmp.idcompra IS NOT NULL OR ccm.compra_id IS NOT NULL) THEN m.total ELSE 0 END), 0) as egresos_stock,
+                    COALESCE(SUM(CASE WHEN m.tipo = 'egreso' AND cmp.idcompra IS NULL AND ccm.compra_id IS NULL THEN m.total ELSE 0 END), 0) as egresos_operativos")
                 ->get()
                 ->keyBy('codigo');
         };
@@ -174,13 +187,18 @@ class FinanzasDashboardController extends Controller
 
         $resultadoExtranjeroMonedas = $extranjeroTodo->map(function ($r, $codigo) use ($extranjeroMes) {
             $mes = $extranjeroMes->get($codigo);
+            $ingresosMes = (float) ($mes->ingresos ?? 0);
+            $egresosStockMes = (float) ($mes->egresos_stock ?? 0);
+            $egresosOperativosMes = (float) ($mes->egresos_operativos ?? 0);
+
             return [
-                'codigo'            => $r->codigo,
-                'simbolo'           => $r->simbolo,
-                'ingresos_mes'      => round((float) ($mes->ingresos ?? 0), 2),
-                'egresos_mes'       => round((float) ($mes->egresos ?? 0), 2),
-                'resultado_mes'     => round((float) ($mes->ingresos ?? 0) - (float) ($mes->egresos ?? 0), 2),
-                'resultado_total'   => round((float) $r->ingresos - (float) $r->egresos, 2),
+                'codigo'                 => $r->codigo,
+                'simbolo'                => $r->simbolo,
+                'ingresos_mes'           => round($ingresosMes, 2),
+                'egresos_stock_mes'      => round($egresosStockMes, 2),
+                'egresos_operativos_mes' => round($egresosOperativosMes, 2),
+                'resultado_mes'          => round($ingresosMes - $egresosOperativosMes, 2),
+                'resultado_total'        => round((float) $r->ingresos - (float) $r->egresos_operativos, 2),
             ];
         })->values();
 

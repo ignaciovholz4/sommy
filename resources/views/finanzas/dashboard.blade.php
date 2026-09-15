@@ -130,18 +130,19 @@
     <div class="fin-grid">
         <div class="fin-card" style="grid-column: 1 / -1;">
             <h3>Resultado en moneda extranjera</h3>
-            <p style="font-size:12.5px;color:#6E7A96;margin:-6px 0 12px;">Ingresos menos egresos de tesorería en esa moneda, sin convertir a pesos. "Acumulado" es desde siempre.</p>
+            <p style="font-size:12.5px;color:#6E7A96;margin:-6px 0 12px;">Ingresos menos gastos operativos de tesorería en esa moneda, sin convertir a pesos. Las compras de mercadería pagadas en esa moneda van aparte: no son una pérdida, son plata convertida en stock. "Acumulado" es desde siempre.</p>
             <div style="overflow-x:auto;">
                 <table class="fin-tabla">
                     <thead>
-                        <tr><th>Moneda</th><th class="der">Ingresos (mes)</th><th class="der">Egresos (mes)</th><th class="der">Resultado (mes)</th><th class="der">Resultado acumulado</th></tr>
+                        <tr><th>Moneda</th><th class="der">Ingresos (mes)</th><th class="der">Compras de stock (mes)</th><th class="der">Gastos operativos (mes)</th><th class="der">Resultado (mes)</th><th class="der">Resultado acumulado</th></tr>
                     </thead>
                     <tbody>
                         @foreach($resultadoExtranjeroMonedas as $r)
                         <tr>
                             <td style="font-weight:500;">{{ $r['codigo'] }}</td>
                             <td class="der">{{ $r['simbolo'] }} {{ number_format($r['ingresos_mes'], 2, ',', '.') }}</td>
-                            <td class="der">{{ $r['simbolo'] }} {{ number_format($r['egresos_mes'], 2, ',', '.') }}</td>
+                            <td class="der">{{ $r['simbolo'] }} {{ number_format($r['egresos_stock_mes'], 2, ',', '.') }}</td>
+                            <td class="der">{{ $r['simbolo'] }} {{ number_format($r['egresos_operativos_mes'], 2, ',', '.') }}</td>
                             <td class="der" style="font-weight:600;color:{{ $r['resultado_mes'] >= 0 ? '#0d8a4f' : '#c0392b' }};">{{ $r['simbolo'] }} {{ number_format($r['resultado_mes'], 2, ',', '.') }}</td>
                             <td class="der" style="font-weight:700;color:{{ $r['resultado_total'] >= 0 ? '#0d8a4f' : '#c0392b' }};">{{ $r['simbolo'] }} {{ number_format($r['resultado_total'], 2, ',', '.') }}</td>
                         </tr>
