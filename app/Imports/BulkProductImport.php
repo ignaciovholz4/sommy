@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Articulo;
+use App\Support\Precio;
 use App\Models\Categoria;
 use App\Models\Marca;
 use App\Models\Proveedor;
@@ -105,7 +106,7 @@ class BulkProductImport implements ToModel, WithHeadingRow, WithValidation, Skip
             $pcompra_sin_iva = floatval($row['precio_compra_sin_iva']);
             $pventa_sin_iva = floatval($row['precio_venta_sin_iva']);
             $pcompra_con_iva = $pcompra_sin_iva * (1 + $ivaCompra->value_iva/100);
-            $pventa_con_iva  = $pventa_sin_iva * (1 + $ivaVenta->value_iva/100);
+            $pventa_con_iva  = Precio::redondear($pventa_sin_iva * (1 + $ivaVenta->value_iva/100));
 
             // Pesable
             $pesable = (!empty($row['pesable']) && strtolower(trim($row['pesable'])) === 'sí');

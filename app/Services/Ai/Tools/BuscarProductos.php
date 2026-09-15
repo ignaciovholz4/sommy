@@ -5,6 +5,7 @@ namespace App\Services\Ai\Tools;
 use App\Models\AiAgent;
 use App\Models\WaConversation;
 use App\Services\Ai\Concerns\ResuelveMaterialProducto;
+use App\Support\Precio;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -68,7 +69,7 @@ class BuscarProductos
 
         // Promo activa: el precio real se presenta como precio con descuento
         $promoPct = (int) config('services.bot_promo.porcentaje', 0);
-        $precioLista = fn ($precio) => $promoPct > 0 ? round($precio * (1 + $promoPct / 100), -3) : null;
+        $precioLista = fn ($precio) => $promoPct > 0 ? Precio::redondear($precio * (1 + $promoPct / 100)) : null;
 
         return [
             'promo' => $promoPct > 0 ? [
@@ -164,7 +165,7 @@ class BuscarProductos
                     'variantes' => $variantes->map(fn ($v) => [
                         'combinacion_id' => $v->idcombinacion,
                         'detalle' => $v->combinacion,
-                        'precio' => round((float) $v->pventa_variante * (1 - $descuentoPct / 100), 2),
+                        'precio' => Precio::redondear((float) $v->pventa_variante * (1 - $descuentoPct / 100)),
                     ])->values()->all(),
                 ];
             }
@@ -172,7 +173,7 @@ class BuscarProductos
             return [
                 'producto_id' => $r->idarticulo,
                 'nombre' => $r->nombre,
-                'precio' => round((float) $r->pventa_con_iva * (1 - $descuentoPct / 100), 2),
+                'precio' => Precio::redondear((float) $r->pventa_con_iva * (1 - $descuentoPct / 100)),
             ];
         })->values()->all();
 

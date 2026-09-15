@@ -5,6 +5,7 @@ namespace App\Services\Ai\Tools;
 use App\Models\AiAgent;
 use App\Models\WaConversation;
 use App\Services\Ai\Concerns\ResuelveMaterialProducto;
+use App\Support\Precio;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -59,7 +60,7 @@ class VerCatalogo
             ->groupBy('producto_id');
 
         $promoPct = (int) config('services.bot_promo.porcentaje', 0);
-        $precioLista = fn ($precio) => $promoPct > 0 ? round($precio * (1 + $promoPct / 100), -3) : null;
+        $precioLista = fn ($precio) => $promoPct > 0 ? Precio::redondear($precio * (1 + $promoPct / 100)) : null;
 
         $catalogo = $productos->groupBy('categoria')->map(fn ($items) => $items->map(fn ($p) => [
             'producto_id' => $p->idarticulo,

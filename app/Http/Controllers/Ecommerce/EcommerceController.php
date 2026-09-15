@@ -201,15 +201,15 @@ class EcommerceController extends Controller
                     return null;
                 }
 
-                $separado = $anchorPrice + $addonsFull + $regalosValor;
-                $comboTotal = round($anchorPrice + $addonsFull * (1 - $descuento), 2);
+                $separado = \App\Support\Precio::redondear($anchorPrice + $addonsFull + $regalosValor);
+                $comboTotal = \App\Support\Precio::redondear($anchorPrice + $addonsFull * (1 - $descuento));
 
                 return (object) [
                     'producto'        => $anchor,
                     'incluye'         => $incluye,
                     'display_price'   => $comboTotal,
                     'precio_separado' => $separado,
-                    'ahorro'          => round($separado - $comboTotal, 2),
+                    'ahorro'          => $separado - $comboTotal,
                 ];
             })
             ->filter()

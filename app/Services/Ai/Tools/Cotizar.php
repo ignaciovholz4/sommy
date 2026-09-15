@@ -5,6 +5,7 @@ namespace App\Services\Ai\Tools;
 use App\Models\AiAgent;
 use App\Models\WaConversation;
 use App\Models\WaOrderDraft;
+use App\Support\Precio;
 use Illuminate\Support\Facades\DB;
 
 class Cotizar
@@ -148,7 +149,7 @@ class Cotizar
                     $item['precio_unitario'] = 0.0;
                     $item['descripcion'] .= ' — de regalo por combo';
                 } elseif ($relacionadoIds->contains($item['producto_id'])) {
-                    $item['precio_unitario'] = round($item['precio_unitario'] * (1 - $descuentoPct / 100), 2);
+                    $item['precio_unitario'] = Precio::redondear($item['precio_unitario'] * (1 - $descuentoPct / 100));
                     $item['descripcion'] .= ' — con descuento de combo';
                 }
             }

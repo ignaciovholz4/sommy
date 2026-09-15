@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 use App\Models\Articulo;
+use App\Support\Precio;
 use App\Models\ProductoAtributo;
 use App\Models\ProductoAtributoVariante;
 use App\Models\ProductoCombinacion;
@@ -171,7 +172,7 @@ class ArticuloController extends Controller
                 'pcompra_con_iva'        => $request->get('pcompra-con-iva'),
                 'iva_venta_id'           => $request->get('iva_venta_id'),
                 'pventa_sin_iva'         => $request->get('pventa-sin-iva'),
-                'pventa_con_iva'         => $request->get('pventa-con-iva'),
+                'pventa_con_iva'         => Precio::redondear($request->get('pventa-con-iva')),
                 'pventa_mayorista'       => $request->get('pventa-mayorista') ?: null,
                 // combo_descuento_pct se configura desde Artículos > Combos, no acá.
                 'destacado'              => $request->has('destacado') ? 1 : 0,
@@ -226,7 +227,7 @@ class ArticuloController extends Controller
                         'sku'                => !empty($combo['sku']) ? trim($combo['sku']) : null,
                         'json_detalle'       => $combo['combinacion'],
                         'pcompra_variante'   => $combo['pcompra'],
-                        'pventa_variante'    => $combo['pventa'],
+                        'pventa_variante'    => Precio::redondear($combo['pventa']),
                         'pventa_mayorista'   => $combo['pventa_mayorista'] ?? null,
                     ]);
 
@@ -603,7 +604,7 @@ class ArticuloController extends Controller
 
             $articulo->iva_venta_id = $request->iva_venta_id;
             $articulo->pventa_sin_iva = $request->input('pventa-sin-iva');
-            $articulo->pventa_con_iva = $request->input('pventa-con-iva');
+            $articulo->pventa_con_iva = Precio::redondear($request->input('pventa-con-iva'));
             $articulo->pventa_mayorista = $request->input('pventa-mayorista') ?: null;
             // combo_descuento_pct se configura desde Artículos > Combos, no acá
             // (si no, un guardado normal de este formulario lo resetea a 0).
@@ -725,7 +726,7 @@ class ArticuloController extends Controller
                         'sku'               => !empty($combo['sku']) ? trim($combo['sku']) : null,
                         'json_detalle'      => $detalleArray, // si tu columna no es JSON, usar json_encode($detalleArray)
                         'pcompra_variante'  => $combo['pcompra'] ?? 0,
-                        'pventa_variante'   => $combo['pventa'] ?? 0,
+                        'pventa_variante'   => Precio::redondear($combo['pventa'] ?? 0),
                         'pventa_mayorista'  => $combo['pventa_mayorista'] ?? null,
                     ];
 
