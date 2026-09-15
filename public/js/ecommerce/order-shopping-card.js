@@ -39,102 +39,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /*********************UPDATE FOR VERSION 2************************ */
 
+/**
+ * El detalle rico (fotos, +/-, borrar) ya se ve en el carrito al agregar
+ * productos: acá en el checkout solo se escribe como texto en el modal
+ * "Ver productos", para no repetir la misma tarjeta dos veces. Para
+ * modificar cantidades o borrar algo, el cliente usa el carrito (el ícono
+ * del header), no esta pantalla.
+ */
 const fnShowCurrentCartProduct = () => {
     let totalCartProduct = 0;
     let quantityProduct = 0;
-    const divShowProductCart = document.querySelector('.show-product-added-cart');
-    divShowProductCart.innerHTML = "";
+    const listaDetalleModal = document.getElementById('lista-detalle-productos-modal');
+    const cantidadProductosModal = document.getElementById('p-cantidad-productos-modal');
+    if (listaDetalleModal) listaDetalleModal.innerHTML = "";
 
     if(listCartProdOrder.length === 0){
         btnRegisterOrder.disabled = true;
         fnShowQuantityProduct(0);
         showSubtotalPedido.textContent = fnFormatMoney(0);
         showTotalPedido.textContent = fnFormatMoney(0);
+        if (cantidadProductosModal) cantidadProductosModal.textContent = '(0)';
         return false;
     }
 
     btnRegisterOrder.disabled = false;
 
-    listCartProdOrder.forEach((product,index) => {
-        let addRow = "";
-        // Mostrar combinación si existe
-        if(product.tipoProductoId === 2 && product.rowProdVariant){
-            addRow = `
-                <p class="text-muted mb-0"><b>Combinación:</b> ${product.rowProdVariant.combinacion}</p>
+    listCartProdOrder.forEach((product) => {
+        const detalleVariante = (product.tipoProductoId === 2 && product.rowProdVariant)
+            ? ` — ${product.rowProdVariant.combinacion}`
+            : '';
+        const precioUnitario = fnFormatMoney(product.display_price || product.priceSale);
+        const esRegalo = String(product.claveCart).startsWith('regalo-');
+
+        if (listaDetalleModal) {
+            const li = document.createElement('li');
+            li.className = 'd-flex justify-content-between mb-2';
+            li.innerHTML = `
+                <span>${product.cant} x ${product.name}${detalleVariante}${esRegalo ? ' <span class="badge bg-success">Regalo</span>' : ''}</span>
+                <span class="fw-bold ms-2">${esRegalo ? 'Gratis' : precioUnitario}</span>
             `;
+            listaDetalleModal.appendChild(li);
         }
 
-        // Mostrar precios
-        let priceDisplay = '';
-        if (product.has_offer) {
-            priceDisplay = `
-                <span class="badge bg-success mb-1">
-                    <i class="fas fa-tags"></i> Oferta
-                </span>
-                <div class="price-container">
-                    <span class="price original-price text-muted text-decoration-line-through">
-                        ${fnFormatMoney(product.original_price)}
-                    </span>
-                    <span class="price effective-price text-success fw-bold">
-                        ${fnFormatMoney(product.display_price)}
-                    </span>
-                </div>
-            `;
-        } else {
-            priceDisplay = `<span class="fw-bold">${fnFormatMoney(product.display_price || product.priceSale)}</span>`;
-        }
-
-        let identifyProduct = `product-${index + 1}`;
-
-        // Miniatura del producto (placeholder pluma si no hay imagen guardada)
-        const thumbOrder = product.image
-            ? `<img src="${product.image}" class="sommy-order-thumb" alt="">`
-            : `<div class="sommy-order-thumb sommy-order-thumb--ph"><i class="fa-solid fa-feather" aria-hidden="true"></i></div>`;
-
-        const badgeSinStock = product.sinStock
-            ? `<span class="sommy-badge-sinstock"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Sin stock — a consultar</span>`
-            : "";
-
-        divShowProductCart.innerHTML += `
-            <div class="product-card p-3 shadow-sm">
-                <div class="row align-items-center">
-                    <div class="col-md-4">
-                        <div class="d-flex align-items-center gap-3">
-                            ${thumbOrder}
-                            <div style="min-width:0;">
-                                <h6 class="mb-1">${product.name}</h6>
-                                ${addRow}
-                                ${badgeSinStock ? `<div class="mt-1">${badgeSinStock}</div>` : ""}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        ${String(product.claveCart).startsWith('regalo-') ? `
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="number" class="quantity-input" value="${product.cant}" min="1" disabled>
-                            <span class="badge bg-success">Regalo, cantidad fija</span>
-                        </div>
-                        ` : `
-                        <div class="d-flex align-items-center gap-2">
-                            <button class="quantity-btn" onclick="updateSubtractionQuantity('${product.claveCart}')">-</button>
-                            <input type="number" class="quantity-input" id="${identifyProduct}" value="${product.cant}" min="1" disabled>
-                            <button class="quantity-btn" onclick="updateSumQuantity('${product.claveCart}')">+</button>
-                        </div>
-                        `}
-                    </div>
-                    <div class="col-md-3">
-                        ${priceDisplay}
-                    </div>
-                    <div class="col-md-2 text-md-end">
-                        <button class="btn" onclick="fnDeleteProductOrder('${product.claveCart}');"><i class="fas fa-trash remove-btn"></i></button>
-                    </div>
-                </div>
-            </div>
-        `;
         quantityProduct++;
         totalCartProduct += product.total;
     });
 
+    if (cantidadProductosModal) cantidadProductosModal.textContent = `(${quantityProduct})`;
     showSubtotalPedido.textContent = fnFormatMoney(totalCartProduct);
     fnActualizarResumen();
     fnShowQuantityProduct(quantityProduct);

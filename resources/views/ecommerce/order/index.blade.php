@@ -178,15 +178,10 @@
             @endif
             <div class="row">
                 <div class="col-md-8">
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header shadow-sm header-content-card">
-                            <strong>Lista de productos agregados</strong>
-                        </div>
-                        <div class="">
-                            <div class="d-flex flex-column gap-3 show-product-added-cart">
-                            </div>
-                        </div>
-                    </div>
+                    {{-- El detalle de productos ya no se repite acá: se ve al agregar al
+                    carrito y, si hace falta revisarlo de nuevo, desde el modal de
+                    "Ver productos" del resumen de la derecha. Acá solo el formulario. --}}
+                    <div class="d-flex flex-column gap-3 show-product-added-cart" style="display:none !important;"></div>
                     <div id="div-content-section-order">
                         <div class="card border-0 shadow-sm mb-4">
                             <div class="card-header border-0 shadow-sm header-content-card">
@@ -357,10 +352,13 @@
                         <div class="">
                             <div class="summary-card p-4 shadow-sm">
                         
-                                <div class="d-flex justify-content-between mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
                                     <span class="text-muted">Subtotal</span>
                                     <span id="showSubtotalPedido">$0.00</span>
                                 </div>
+                                <button type="button" class="btn btn-sm btn-link px-0 mb-3" data-bs-toggle="modal" data-bs-target="#modal-detalle-pedido" style="text-decoration:none;">
+                                    <i class="fas fa-list-ul"></i> Ver productos <span id="p-cantidad-productos-modal" class="text-muted">(0)</span>
+                                </button>
                                 <div class="d-flex justify-content-between mb-3" id="row-envio-pedido" style="display:none !important;">
                                     <span class="text-muted">Envío</span>
                                     <span id="showEnvioPedido">$0.00</span>
@@ -407,6 +405,22 @@
         </div>
     </div>
 </section>
+
+{{-- Modal "Ver productos": detalle del pedido en texto, sin repetir la
+tarjeta grande de imágenes que ya se ve al agregar al carrito. --}}
+<div class="modal fade" id="modal-detalle-pedido" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title mb-0">Productos de tu pedido</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-unstyled mb-0" id="lista-detalle-productos-modal"></ul>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 @section('scriptEcommerce')
 <script>
