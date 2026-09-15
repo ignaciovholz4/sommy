@@ -141,8 +141,15 @@ class EcommerceController extends Controller
                     return null;
                 }
 
-                // Relacionados con descuento (hoy: la base). Los regalos van aparte.
-                $relacionadosIds = DB::table('producto_relacionados')->where('idarticulo', $anchor->idarticulo)->pluck('relacionado_id');
+                // Relacionados con descuento (hoy: la base). Los regalos van aparte:
+                // si un producto está configurado como regalo de este ancla, se saca
+                // del pool con descuento aunque también esté cargado como relacionado
+                // (evita contarlo dos veces si alguien lo deja tildado en los dos lados).
+                $regaloIdsAncla = DB::table('producto_regalos')->where('idarticulo', $anchor->idarticulo)->pluck('regalo_id');
+                $relacionadosIds = DB::table('producto_relacionados')
+                    ->where('idarticulo', $anchor->idarticulo)
+                    ->whereNotIn('relacionado_id', $regaloIdsAncla)
+                    ->pluck('relacionado_id');
                 $relacionados = \App\Models\Articulo::whereIn('idarticulo', $relacionadosIds)
                     ->where('estado', 'Activo')
                     ->with('combinaciones')

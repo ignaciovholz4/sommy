@@ -177,11 +177,16 @@ class EcommerceproductController extends Controller
         $stockController = new StockController();
         $conStock = $stockController->getProductosConStock()->keyBy('producto_id');
 
+        // Si un producto ya es el regalo gratis de algo que está en $idsCarrito, no lo
+        // ofrezcas también como relacionado con descuento (quedaría duplicado: gratis
+        // en "Elegí tu regalo" y pago con descuento en "Armá tu combo").
+        $regaloIdsDeCarrito = DB::table('producto_regalos')->whereIn('idarticulo', $idsCarrito)->pluck('regalo_id');
         $idsRelacionados = DB::table('producto_relacionados')
             ->whereIn('idarticulo', $idsCarrito)
             ->pluck('relacionado_id')
             ->unique()
             ->diff($idsCarrito)
+            ->diff($regaloIdsDeCarrito)
             ->values();
 
         if ($idsRelacionados->isEmpty()) {
