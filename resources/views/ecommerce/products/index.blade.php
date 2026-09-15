@@ -390,6 +390,22 @@
                                 </div>
                             </div>
 
+                            @if(($getProd[0]->combo_descuento_pct ?? 0) > 0)
+                            <div id="comboBuilder" class="mt-4" style="display:none;"
+                                 data-product-id="{{ $getProd[0]->idarticulo }}"
+                                 data-discount="{{ $getProd[0]->combo_descuento_pct }}">
+                                <label class="form-label fw-bold">
+                                    Armá tu combo y ahorrá {{ rtrim(rtrim(number_format($getProd[0]->combo_descuento_pct, 2, ',', '.'), '0'), ',') }}%
+                                </label>
+                                <p class="text-muted small mb-2">Elegí qué sumar: el descuento se aplica sobre lo que agregues, no sobre este producto.</p>
+                                <div id="comboItemsList" class="d-flex flex-column gap-2 mb-2"></div>
+                                <div class="mb-2">
+                                    <div class="text-muted small" id="comboPrecioNormal" style="text-decoration:line-through;"></div>
+                                    <div class="fw-bold" style="font-size:1.1rem;color:#212529;" id="comboPrecioFinal"></div>
+                                </div>
+                            </div>
+                            @endif
+
                             @if($regalos->isNotEmpty())
                             <div class="mt-4" id="regaloPicker">
                                 <label class="form-label fw-bold"><i class="fa-solid fa-gift text-danger me-1"></i> Elegí tu regalo</label>
@@ -423,28 +439,6 @@
                                     </button>
                                 </div>
                             </div>
-
-                            @if(($getProd[0]->combo_descuento_pct ?? 0) > 0)
-                            <div id="comboBuilder" class="mt-5" style="display:none;"
-                                 data-product-id="{{ $getProd[0]->idarticulo }}"
-                                 data-discount="{{ $getProd[0]->combo_descuento_pct }}">
-                                <hr class="my-6" />
-                                <label class="form-label fw-bold">
-                                    Armá tu combo y ahorrá {{ rtrim(rtrim(number_format($getProd[0]->combo_descuento_pct, 2, ',', '.'), '0'), ',') }}%
-                                </label>
-                                <p class="text-muted small mb-3">Elegí qué sumar: el descuento se aplica sobre el total del combo.</p>
-                                <div id="comboItemsList" class="d-flex flex-column gap-2 mb-3"></div>
-                                <div class="mb-3">
-                                    <div class="text-muted small" id="comboPrecioNormal" style="text-decoration:line-through;"></div>
-                                    <div class="fw-bold" style="font-size:1.25rem;color:#212529;" id="comboPrecioFinal"></div>
-                                </div>
-                                <div class="d-grid col-12 col-md-8 col-lg-6">
-                                    <button type="button" id="btnAgregarCombo" class="btn btn-add-prod" style="padding:13px;white-space:nowrap;">
-                                        Agregar combo al carrito
-                                    </button>
-                                </div>
-                            </div>
-                            @endif
 
                             @if(!empty($especificaciones))
                                 <hr class="my-6" />
@@ -519,7 +513,7 @@
         const itemsList = document.getElementById('comboItemsList');
         const precioNormalEl = document.getElementById('comboPrecioNormal');
         const precioFinalEl = document.getElementById('comboPrecioFinal');
-        const btnAgregarCombo = document.getElementById('btnAgregarCombo');
+        const btnAdd = document.getElementById('btn-add-product');
         let comboProductos = [];
 
         // Precio + stock del producto de ESTA ficha, según la variante/cantidad ya elegida arriba
@@ -615,38 +609,19 @@
         document.getElementById('btnAddCantMore')?.addEventListener('click', () => setTimeout(recalcularTotales, 0));
         document.getElementById('btnLessCant')?.addEventListener('click', () => setTimeout(recalcularTotales, 0));
 
-        btnAgregarCombo.addEventListener('click', function () {
-            const base = precioProductoActual();
-            if (!base) {
-                window.fnMessageToastrError('Elegí una medida antes de armar el combo', 'Error');
-                return;
-            }
+        // Se cuelga del mismo botón "Agregar al carrito": shopping-card.js agrega el
+        // producto principal de esta ficha (con su precio normal, sin tocar); acá solo
+        // sumamos lo que el cliente tildó del combo, con el descuento.
+        btnAdd.addEventListener('click', function () {
+            // Si es un producto con variantes y no eligió medida, shopping-card.js ya
+            // mostró el error y no agregó nada: no sumar el combo tampoco.
+            if (productValue[0].tipo_producto_id === 2 && !btnAdd.getAttribute('data-value')) return;
 
             const seleccionados = Array.from(itemsList.querySelectorAll('.combo-item-check:checked'));
-            if (seleccionados.length === 0) {
-                window.fnMessageToastrError('Elegí al menos un producto para armar el combo', 'Error');
-                return;
-            }
+            if (seleccionados.length === 0) return;
 
             const factor = 1 - (descuentoPct / 100);
-            const imagenActual = (typeof showImageVariant !== 'undefined' && showImageVariant && showImageVariant.src) ? showImageVariant.src : null;
-
-            const items = [{
-                claveCart: productValue[0].tipo_producto_id === 2
-                    ? `${productValue[0].idarticulo}-${JSON.parse(document.getElementById('btn-add-product').getAttribute('data-value')).combinacion.idcombinacion}`
-                    : String(productValue[0].idarticulo),
-                name: productValue[0].nombre,
-                productId: productValue[0].idarticulo,
-                precio: base.precio,
-                stock: base.stock,
-                cant: base.cant,
-                rowProdVariant: productValue[0].tipo_producto_id === 2
-                    ? JSON.parse(document.getElementById('btn-add-product').getAttribute('data-value')).combinacion
-                    : null,
-                tipoProductoId: productValue[0].tipo_producto_id,
-                image: imagenActual,
-                esAnchor: true,
-            }];
+            const items = [];
 
             seleccionados.forEach(chk => {
                 const producto = comboProductos.find(p => String(p.id) === chk.getAttribute('data-product-id'));
@@ -669,16 +644,15 @@
                     rowProdVariant: variante ? { idcombinacion: variante.idcombinacion, combinacion: variante.label, pventa_variante: variante.precio } : null,
                     tipoProductoId: producto.tipo_producto_id,
                     image: producto.imagen,
-                    esAnchor: false,
                 });
             });
+
+            if (items.length === 0) return;
 
             const cart = window.fnListCartProduct();
 
             items.forEach(it => {
-                // El producto principal de la ficha queda siempre a su precio normal:
-                // el descuento del combo es solo para lo que se suma.
-                const precioConDescuento = it.esAnchor ? it.precio : Math.round(it.precio * factor * 100) / 100;
+                const precioConDescuento = Math.round(it.precio * factor * 100) / 100;
                 const existente = cart.find(p => p.claveCart === it.claveCart);
 
                 if (existente) {
@@ -698,7 +672,7 @@
                         tipoProductoId: it.tipoProductoId,
                         stockProduct: it.stock,
                         display_price: precioConDescuento,
-                        has_offer: !it.esAnchor,
+                        has_offer: true,
                         image: it.image,
                         sinStock: window.fnCheckStockProduct(it.stock, it.cant)
                     });
@@ -707,7 +681,6 @@
 
             window.fnSaveCartProduct(cart);
             window.fnShowListCartProduct();
-            window.fnMessageToastrSuccess(`Combo agregado con ${descuentoPct}% off`, 'Éxito!');
         });
     });
     </script>
