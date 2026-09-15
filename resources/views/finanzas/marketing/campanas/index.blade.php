@@ -13,6 +13,17 @@
     .badge-activo { background: #E7F7EE; color: #0d8a4f; }
     .badge-pausado { background: #F1F2F6; color: #6E7A96; }
     .fin-aviso { background:#FEF6E7; color:#9a6b0f; border-radius:12px; padding:10px 14px; font-size:13px; margin-bottom:16px; }
+    .btn-detalle { background:none; border:none; color:#2563EB; font-size:12.5px; font-weight:600; padding:0; }
+    .fin-detalle-row { display:none; background:#F7F9FC; }
+    .fin-detalle-row.abierto { display:table-row; }
+    .fin-adset-card { background:#fff; border:1px solid #E7EAF2; border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+    .fin-adset-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; }
+    .fin-adset-nombre { font-weight:600; }
+    .fin-ads-list { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+    .fin-ad-item { display:flex; align-items:center; gap:10px; font-size:12.5px; border-top:1px dashed #E7EAF2; padding-top:8px; }
+    .fin-ad-thumb { width:36px; height:36px; border-radius:8px; object-fit:cover; background:#E7EAF2; flex:none; }
+    .fin-ad-nombre { flex:1; }
+    .fin-vacio-mini { color:#6E7A96; font-size:12.5px; padding:4px 0; }
 </style>
 
 <div class="fin-wrap">
@@ -49,6 +60,7 @@
                 <table class="table fin-roi-table mb-0">
                     <thead>
                         <tr>
+                            <th></th>
                             <th>Campaña</th>
                             <th>Objetivo</th>
                             <th>Presupuesto diario</th>
@@ -57,8 +69,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($campanas as $c)
+                        @foreach($campanas as $i => $c)
                         <tr>
+                            <td>
+                                <button type="button" class="btn-detalle" data-toggle-detalle="fin-detalle-{{ $i }}">
+                                    <i class="fas fa-chevron-right"></i> Ver anuncios
+                                </button>
+                            </td>
                             <td>{{ $c['name'] }}</td>
                             <td>{{ $c['objective'] ?? '—' }}</td>
                             <td>{{ isset($c['daily_budget']) ? '$' . number_format($c['daily_budget'] / 100, 2) : '—' }}</td>
@@ -75,6 +92,38 @@
                                 @endcan
                             </td>
                         </tr>
+                        <tr class="fin-detalle-row" id="fin-detalle-{{ $i }}">
+                            <td colspan="6">
+                                @if(empty($c['adsets']))
+                                    <div class="fin-vacio-mini">Esta campaña todavía no tiene conjuntos de anuncios.</div>
+                                @else
+                                    @foreach($c['adsets'] as $as)
+                                    <div class="fin-adset-card">
+                                        <div class="fin-adset-head">
+                                            <div><i class="fas fa-layer-group" style="color:#94A3C1;"></i> <span class="fin-adset-nombre">{{ $as['name'] }}</span></div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span>{{ isset($as['daily_budget']) ? '$' . number_format($as['daily_budget'] / 100, 2) . '/día' : (isset($as['lifetime_budget']) ? '$' . number_format($as['lifetime_budget'] / 100, 2) . ' total' : '— sin presupuesto') }}</span>
+                                                <span class="badge {{ ($as['effective_status'] ?? $as['status']) === 'ACTIVE' ? 'badge-activo' : 'badge-pausado' }}">{{ $as['effective_status'] ?? $as['status'] }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="fin-ads-list">
+                                            @if(empty($as['ads']))
+                                                <div class="fin-vacio-mini">Este conjunto todavía no tiene anuncios cargados.</div>
+                                            @else
+                                                @foreach($as['ads'] as $ad)
+                                                <div class="fin-ad-item">
+                                                    <img class="fin-ad-thumb" src="{{ $ad['creative']['thumbnail_url'] ?? '' }}" onerror="this.style.visibility='hidden'" alt="">
+                                                    <span class="fin-ad-nombre">{{ $ad['name'] }}</span>
+                                                    <span class="badge {{ ($ad['effective_status'] ?? $ad['status']) === 'ACTIVE' ? 'badge-activo' : 'badge-pausado' }}">{{ $ad['effective_status'] ?? $ad['status'] }}</span>
+                                                </div>
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                @endif
+                            </td>
+                        </tr>
                         @endforeach
                     </tbody>
                 </table>
@@ -88,6 +137,16 @@
 <script>
 const CSRF = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 const URL_FINANZAS = "{{ url('finanzas') }}";
+
+document.querySelectorAll('[data-toggle-detalle]').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const fila = document.getElementById(this.dataset.toggleDetalle);
+        const abierto = fila.classList.toggle('abierto');
+        this.innerHTML = abierto
+            ? '<i class="fas fa-chevron-down"></i> Ocultar anuncios'
+            : '<i class="fas fa-chevron-right"></i> Ver anuncios';
+    });
+});
 
 document.querySelectorAll('.btn-toggle-estado').forEach(btn => {
     btn.addEventListener('click', function () {

@@ -42,7 +42,7 @@ class MetaCampanasService
             $response = Http::withToken(config('services.meta_ads.access_token'))
                 ->acceptJson()
                 ->get("https://graph.facebook.com/{$version}/act_{$adAccountId}/campaigns", [
-                    'fields' => 'id,name,status,effective_status,objective,daily_budget',
+                    'fields' => 'id,name,status,effective_status,objective,daily_budget,lifetime_budget',
                     'limit' => 100,
                 ])->throw();
         } catch (\Throwable $th) {
@@ -53,7 +53,12 @@ class MetaCampanasService
         return $response->json('data') ?? [];
     }
 
-    /** Adsets de una campana (para poder mostrar/editar su presupuesto). */
+    /**
+     * Adsets (conjuntos de anuncios) de una campana, con sus anuncios
+     * anidados — el presupuesto real casi siempre vive acá (a nivel conjunto)
+     * y no en la campana, que es donde antes se mostraba "—" aunque hubiera
+     * plata cargada.
+     */
     public function listarAdsets(string $campaignId): array
     {
         if (!$this->habilitado()) {
@@ -66,10 +71,41 @@ class MetaCampanasService
             $response = Http::withToken(config('services.meta_ads.access_token'))
                 ->acceptJson()
                 ->get("https://graph.facebook.com/{$version}/{$campaignId}/adsets", [
-                    'fields' => 'id,name,status,daily_budget',
+                    'fields' => 'id,name,status,effective_status,daily_budget,lifetime_budget',
+                    'limit' => 100,
                 ])->throw();
         } catch (\Throwable $th) {
             Log::error('MetaCampanasService::listarAdsets: ' . $th->getMessage());
+            return [];
+        }
+
+        $adsets = $response->json('data') ?? [];
+
+        foreach ($adsets as &$adset) {
+            $adset['ads'] = $this->listarAds($adset['id']);
+        }
+
+        return $adsets;
+    }
+
+    /** Anuncios (creatividades) de un conjunto de anuncios, con su miniatura si Meta ya la generó. */
+    public function listarAds(string $adsetId): array
+    {
+        if (!$this->habilitado()) {
+            return [];
+        }
+
+        $version = config('services.meta_ads.graph_version', 'v21.0');
+
+        try {
+            $response = Http::withToken(config('services.meta_ads.access_token'))
+                ->acceptJson()
+                ->get("https://graph.facebook.com/{$version}/{$adsetId}/ads", [
+                    'fields' => 'id,name,status,effective_status,creative{thumbnail_url,object_story_spec}',
+                    'limit' => 100,
+                ])->throw();
+        } catch (\Throwable $th) {
+            Log::error('MetaCampanasService::listarAds: ' . $th->getMessage());
             return [];
         }
 

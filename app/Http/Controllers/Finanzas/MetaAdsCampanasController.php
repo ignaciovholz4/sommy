@@ -16,9 +16,17 @@ class MetaAdsCampanasController extends Controller
     {
         Gate::authorize('haveaccess', 'finanzas.marketing.campanas.index');
 
+        // Detalle completo (conjuntos + anuncios de cada campaña): el
+        // presupuesto real y los anuncios individuales viven ahí, no en la
+        // campaña, así que sin esto la vista solo mostraba el nombre suelto.
+        $campanas = $service->listar();
+        foreach ($campanas as &$campana) {
+            $campana['adsets'] = $service->listarAdsets($campana['id']);
+        }
+
         return view('finanzas.marketing.campanas.index', [
             'habilitado' => $service->habilitado(),
-            'campanas' => $service->listar(),
+            'campanas' => $campanas,
         ]);
     }
 
