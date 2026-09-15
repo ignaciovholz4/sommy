@@ -398,12 +398,13 @@
                                     <label class="d-flex align-items-center gap-2 border rounded p-2" style="cursor:pointer;">
                                         <input type="radio" name="regaloElegido" value="{{ $regalo->id }}" class="form-check-input mt-0"
                                                data-nombre="{{ $regalo->nombre }}" data-precio="{{ $regalo->precio }}"
+                                               data-cantidad="{{ $regalo->cantidad }}"
                                                data-stock="{{ $regalo->stock }}" data-imagen="{{ $regalo->imagen_url }}"
                                                {{ $loop->first ? 'checked' : '' }}>
                                         @if($regalo->imagen_url)
                                         <img src="{{ $regalo->imagen_url }}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
                                         @endif
-                                        <span class="flex-grow-1">{{ $regalo->nombre }}</span>
+                                        <span class="flex-grow-1">{{ $regalo->nombre }}{{ $regalo->cantidad > 1 ? ' x' . $regalo->cantidad : '' }}</span>
                                         <span class="badge bg-success">GRATIS</span>
                                     </label>
                                     @endforeach
@@ -730,21 +731,22 @@
             const seleccionado = regaloPicker.querySelector('input[name="regaloElegido"]:checked');
             if (!seleccionado || !seleccionado.value) return;
 
+            const cantidadRegalo = Number(seleccionado.getAttribute('data-cantidad')) || 1;
             const cart = window.fnListCartProduct();
             const claveCart = 'regalo-' + seleccionado.value;
             const existente = cart.find(p => p.claveCart === claveCart);
 
             if (existente) {
-                existente.cant += 1;
+                existente.cant += cantidadRegalo;
                 existente.total = 0;
             } else {
                 cart.push({
                     claveCart: claveCart,
-                    name: seleccionado.getAttribute('data-nombre') + ' (regalo)',
+                    name: seleccionado.getAttribute('data-nombre') + (cantidadRegalo > 1 ? ` x${cantidadRegalo}` : '') + ' (regalo)',
                     productId: Number(seleccionado.value),
                     original_price: Number(seleccionado.getAttribute('data-precio')) || 0,
                     priceSale: 0,
-                    cant: 1,
+                    cant: cantidadRegalo,
                     total: 0,
                     rowProdVariant: null,
                     tipoProductoId: 1,

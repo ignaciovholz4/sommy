@@ -280,6 +280,16 @@
                                 value="{{ old('combo_descuento_pct', $product->combo_descuento_pct ?? 0) }}">
                         </div>
                     </div>
+                    <div class="col-sm-4">
+                        <div class="form-group">
+                            <label for="destacado">Destacado</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="destacado" name="destacado"
+                                    {{ old('destacado', $product->destacado ?? 0) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="destacado">Se muestra en "Productos destacados" de la home</label>
+                            </div>
+                        </div>
+                    </div>
                     <hr>
                     <div class="col-sm-12">
                         <div class="form-group">

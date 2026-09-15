@@ -63,6 +63,7 @@ class Articulo extends Model
         'imagen',
         'estado',
         'bot_ofrecer',
+        'destacado',
         'ubicacion',
         'tipo_producto_id',
         'marca_id',

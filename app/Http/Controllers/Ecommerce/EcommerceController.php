@@ -75,6 +75,10 @@ class EcommerceController extends Controller
             return $prod;
         });
 
+        // "Productos destacados": no son los últimos cargados, son los que se
+        // tildan a mano desde el panel (Artículos > editar > "Destacado").
+        $getDataProd = $getDataProd->filter(fn ($p) => (bool) $p->producto->destacado)->values();
+
         $getDataBanner = DB::table('banner_ecommerce as be')->where('status','=', 1)->orderBy('orden')->orderBy('banner_id')->get();
         $getReels = \App\Models\configuracion\InstagramReel::where('status', 1)->orderBy('orden')->orderBy('id')->get();
         $getDataCategory = ShareController::getAllCategory();
@@ -118,11 +122,10 @@ class EcommerceController extends Controller
     /**
      * Combos en oferta: NO son productos aparte, es una vidriera de los
      * combos dinámicos reales (colchón con combo_descuento_pct + sus
-     * relacionados, con el stock y precio real de cada variante — el mismo
-     * armador de la ficha de producto). El "ahorrás $X" compara contra
-     * comprar cada cosa suelta al precio de lista. Las almohadas se
-     * muestran en cantidad 2 (se arman así en el carrito, sosteniendo el
-     * mismo precio con descuento por unidad).
+     * relacionados con descuento — hoy la base — más los regalos reales de
+     * producto_regalos, que van a $0 con su cantidad, no descontados). El
+     * "ahorrás $X" compara contra comprar cada cosa suelta al precio de
+     * lista, regalos incluidos a precio de lista.
      */
     private function combosDisponibles()
     {
@@ -138,6 +141,7 @@ class EcommerceController extends Controller
                     return null;
                 }
 
+                // Relacionados con descuento (hoy: la base). Los regalos van aparte.
                 $relacionadosIds = DB::table('producto_relacionados')->where('idarticulo', $anchor->idarticulo)->pluck('relacionado_id');
                 $relacionados = \App\Models\Articulo::whereIn('idarticulo', $relacionadosIds)
                     ->where('estado', 'Activo')
@@ -154,8 +158,6 @@ class EcommerceController extends Controller
                 $incluye = [];
 
                 foreach ($relacionados as $rel) {
-                    $cantidad = stripos($rel->nombre, 'almohada') !== false ? 2 : 1;
-
                     if ($rel->tipo_producto_id == 2) {
                         $variantesConPrecio = $rel->combinaciones->where('pventa_variante', '>', 0);
                         $match = $variantesConPrecio->first(fn ($v) => str_replace(',', '.', trim($v->combinacion)) === $anchorMedida);
@@ -167,15 +169,32 @@ class EcommerceController extends Controller
                     if ($precioUnit <= 0) {
                         continue;
                     }
-                    $addonsFull += $precioUnit * $cantidad;
-                    $incluye[] = $cantidad > 1 ? "{$rel->nombre} x{$cantidad}" : $rel->nombre;
+                    $addonsFull += $precioUnit;
+                    $incluye[] = $rel->nombre;
                 }
 
-                if ($addonsFull <= 0) {
+                // Regalos reales (producto_regalos): van a $0 en el combo, pero
+                // suman a precio de lista en "precio_separado" para mostrar el
+                // ahorro real de llevarlos gratis.
+                $regalosValor = 0.0;
+                $regalos = DB::table('producto_regalos as pr')
+                    ->join('productos as p', 'p.idarticulo', '=', 'pr.regalo_id')
+                    ->where('pr.idarticulo', $anchor->idarticulo)
+                    ->where('p.estado', 'Activo')
+                    ->select('p.nombre', 'p.pventa_con_iva', 'pr.cantidad')
+                    ->get();
+
+                foreach ($regalos as $r) {
+                    $cant = max(1, (int) $r->cantidad);
+                    $regalosValor += (float) $r->pventa_con_iva * $cant;
+                    $incluye[] = ($cant > 1 ? "{$r->nombre} x{$cant}" : $r->nombre) . ' de regalo';
+                }
+
+                if ($addonsFull <= 0 && $regalosValor <= 0) {
                     return null;
                 }
 
-                $separado = $anchorPrice + $addonsFull;
+                $separado = $anchorPrice + $addonsFull + $regalosValor;
                 $comboTotal = round($anchorPrice + $addonsFull * (1 - $descuento), 2);
 
                 return (object) [

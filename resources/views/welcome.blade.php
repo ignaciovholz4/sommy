@@ -285,14 +285,14 @@
     </script>
     @endif
 
-    <!--Ultimos productos agregados-->
+    <!--Productos destacados: los que se tildan a mano desde el panel-->
     <section class="py-5" id="productos">
       <div class="container-fluid">
         <div class="row">
           <div class="col-md-12">
             <div class="bootstrap-tabs product-tabs">
               <div class="tabs-header d-flex justify-content-between border-bottom my-5" data-aos="fade-up">
-                <h3>Ultimos productos</h3>
+                <h3>Productos destacados</h3>
                 @if($getDataProd->isNotEmpty())
                 @endif
               </div>
@@ -301,8 +301,8 @@
               <div class="ec-placeholder-products-wrap">
                 <div class="ec-placeholder-inline-hint mb-4">
                   <i class="fa-solid fa-circle-info me-1"></i>
-                  <strong>¿Cómo publicar productos en la tienda?</strong> Acá van a aparecer los últimos artículos con foto, nombre y precio para que tus clientes los agreguen al carrito.
-                  Para publicarlos: ingresá al panel &rsaquo; <strong>Artículos</strong>, creá o editá un artículo, asignale una imagen, precio y stock, y habilitá la opción de venta online.
+                  <strong>¿Cómo elegir los productos destacados?</strong> Acá aparecen los artículos que marques como destacados, con foto, nombre y precio para que tus clientes los agreguen al carrito.
+                  Para elegirlos: ingresá al panel &rsaquo; <strong>Artículos</strong>, editá el artículo que querés destacar y tildá la casilla <strong>"Destacado"</strong>.
                 </div>
                 <div class="product-grid row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-5">
                   @for($i = 0; $i < 5; $i++)
