@@ -408,7 +408,7 @@
 
                             @if($regalos->isNotEmpty())
                             <div class="mt-4" id="regaloPicker">
-                                <label class="form-label fw-bold"><i class="fa-solid fa-gift text-danger me-1"></i> Elegí tu regalo</label>
+                                <label class="form-label fw-bold"><i class="fa-solid fa-gift text-danger me-1"></i> Sumá esto también</label>
                                 <div class="d-flex flex-column gap-2" style="max-width:420px;">
                                     @foreach($regalos as $regalo)
                                     <label class="d-flex align-items-center gap-2 border rounded p-2" style="cursor:pointer;">
@@ -421,12 +421,12 @@
                                         <img src="{{ $regalo->imagen_url }}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
                                         @endif
                                         <span class="flex-grow-1">{{ $regalo->nombre }}{{ $regalo->cantidad > 1 ? ' x' . $regalo->cantidad : '' }}</span>
-                                        <span class="badge bg-success">GRATIS</span>
+                                        <span class="badge bg-secondary regalo-precio-badge" data-precio-fmt="${{ number_format($regalo->precio, 2, ',', '.') }}">${{ number_format($regalo->precio, 2, ',', '.') }}</span>
                                     </label>
                                     @endforeach
                                     <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
                                         <input type="radio" name="regaloElegido" value="" class="form-check-input mt-0">
-                                        <span class="text-muted small">No quiero el regalo</span>
+                                        <span class="text-muted small">No quiero sumar nada más</span>
                                     </label>
                                 </div>
                             </div>
@@ -693,39 +693,71 @@
         const btnAdd = document.getElementById('btn-add-product');
         if (!regaloPicker || !btnAdd) return;
 
+        // El regalo es un beneficio del COMBO, no del colchón solo: solo va gratis
+        // si además sumó algo del armador de combo (ej. la base). Si no, se puede
+        // sumar igual pero a su precio normal — nunca es gratis por separado.
+        const comboItemsList = document.getElementById('comboItemsList');
+
+        function tieneComboSeleccionado() {
+            return !!comboItemsList && comboItemsList.querySelectorAll('.combo-item-check:checked').length > 0;
+        }
+
+        function actualizarBadgesRegalo() {
+            const esGratis = tieneComboSeleccionado();
+            regaloPicker.querySelectorAll('.regalo-precio-badge').forEach(badge => {
+                if (esGratis) {
+                    badge.textContent = 'GRATIS';
+                    badge.className = 'badge bg-success regalo-precio-badge';
+                } else {
+                    badge.textContent = badge.getAttribute('data-precio-fmt');
+                    badge.className = 'badge bg-secondary regalo-precio-badge';
+                }
+            });
+        }
+
+        actualizarBadgesRegalo();
+        // Delegado: los checkboxes del combo se arman después (via fetch), así que
+        // escuchamos en el contenedor en vez de cada checkbox individual.
+        document.addEventListener('change', function (e) {
+            if (e.target.matches('.combo-item-check')) actualizarBadgesRegalo();
+        });
+
         // Se cuelga del mismo botón de "Agregar al carrito": shopping-card.js agrega el
-        // producto principal primero (este script corrió después en la página), acá solo
-        // sumamos el regalo elegido como una línea aparte a precio $0.
+        // producto principal primero (este script corrió después en la página), acá
+        // sumamos lo elegido como línea aparte — gratis si completó el combo, a precio
+        // normal (1 unidad) si no.
         btnAdd.addEventListener('click', function () {
             // Si es un producto con variantes y no hay medida elegida, shopping-card.js ya
-            // mostró el error y no agregó nada: no sumar el regalo tampoco.
+            // mostró el error y no agregó nada: no sumar esto tampoco.
             if (productValue[0].tipo_producto_id === 2 && !btnAdd.getAttribute('data-value')) return;
 
             const seleccionado = regaloPicker.querySelector('input[name="regaloElegido"]:checked');
             if (!seleccionado || !seleccionado.value) return;
 
-            const cantidadRegalo = Number(seleccionado.getAttribute('data-cantidad')) || 1;
+            const esGratis = tieneComboSeleccionado();
+            const cantidad = esGratis ? (Number(seleccionado.getAttribute('data-cantidad')) || 1) : 1;
+            const precioNormal = Number(seleccionado.getAttribute('data-precio')) || 0;
+            const priceSale = esGratis ? 0 : precioNormal;
             const cart = window.fnListCartProduct();
-            const claveCart = 'regalo-' + seleccionado.value;
+            const claveCart = (esGratis ? 'regalo-' : 'addon-') + seleccionado.value;
             const existente = cart.find(p => p.claveCart === claveCart);
 
-            // El regalo es de cantidad fija: si ya está en el carrito (ej. el
-            // cliente clickeó "Agregar al carrito" más de una vez), no se
-            // duplica ni se suma de nuevo.
+            // Cantidad fija por click (gratis o no): si ya está en el carrito (ej. el
+            // cliente clickeó "Agregar al carrito" más de una vez), no se duplica.
             if (!existente) {
                 cart.push({
                     claveCart: claveCart,
-                    name: seleccionado.getAttribute('data-nombre') + (cantidadRegalo > 1 ? ` x${cantidadRegalo}` : '') + ' (regalo)',
+                    name: seleccionado.getAttribute('data-nombre') + (cantidad > 1 ? ` x${cantidad}` : '') + (esGratis ? ' (regalo)' : ''),
                     productId: Number(seleccionado.value),
-                    original_price: Number(seleccionado.getAttribute('data-precio')) || 0,
-                    priceSale: 0,
-                    cant: cantidadRegalo,
-                    total: 0,
+                    original_price: precioNormal,
+                    priceSale: priceSale,
+                    cant: cantidad,
+                    total: cantidad * priceSale,
                     rowProdVariant: null,
                     tipoProductoId: 1,
                     stockProduct: Number(seleccionado.getAttribute('data-stock')) || 0,
-                    display_price: 0,
-                    has_offer: true,
+                    display_price: priceSale,
+                    has_offer: esGratis,
                     image: seleccionado.getAttribute('data-imagen') || null,
                     sinStock: false
                 });
