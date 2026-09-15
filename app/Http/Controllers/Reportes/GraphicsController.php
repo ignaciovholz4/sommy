@@ -259,15 +259,58 @@ class GraphicsController extends Controller
             ->count();
 
         // ── Finanzas: tesorería, gastos, devoluciones, deudas (período) ──
-        $ingresosPeriodo = (float) DB::table('movimientos')->where('tipo', 'ingreso')
-            ->whereBetween('fecha', [$desde, $hasta])->sum('total');
-        $egresosPeriodo = (float) DB::table('movimientos')->where('tipo', 'egreso')
-            ->whereBetween('fecha', [$desde, $hasta])->sum('total');
+        // Solo movimientos en ARS (o sin moneda cargada, que se considera ARS por
+        // convención): sumar acá un egreso en USD como si fuera pesos mezclaría
+        // unidades distintas y falsearía el resultado. Los dólares (y otras
+        // monedas) se muestran aparte, en $extranjeroPeriodo/$extranjeroSaldo.
+        $movimientosArs = fn () => DB::table('movimientos as m')
+            ->leftJoin('cuentas as c', 'c.id', '=', 'm.cuenta_id')
+            ->leftJoin('monedas as mo', 'mo.id', '=', 'c.moneda_id')
+            ->where(fn ($q) => $q->whereNull('mo.codigo')->orWhere('mo.codigo', 'ARS'));
+
+        $ingresosPeriodo = (float) $movimientosArs()->where('m.tipo', 'ingreso')
+            ->whereBetween('m.fecha', [$desde, $hasta])->sum('m.total');
+        $egresosPeriodo = (float) $movimientosArs()->where('m.tipo', 'egreso')
+            ->whereBetween('m.fecha', [$desde, $hasta])->sum('m.total');
         $resultadoPeriodo = round($ingresosPeriodo - $egresosPeriodo, 2);
 
-        $saldoTotalCuentas = (float) DB::table('movimientos')
-            ->selectRaw("COALESCE(SUM(CASE WHEN tipo='ingreso' THEN total ELSE -total END),0) as saldo")
+        $saldoTotalCuentas = (float) $movimientosArs()
+            ->selectRaw("COALESCE(SUM(CASE WHEN m.tipo='ingreso' THEN m.total ELSE -m.total END),0) as saldo")
             ->value('saldo');
+
+        // Movimientos en moneda extranjera (USD, etc.), separados por moneda.
+        // Mismo criterio que en Finanzas > Resumen: pagar una compra de
+        // mercadería en dólares no es una "pérdida" en dólares, es plata que
+        // se convirtió en stock — por eso egresos_stock queda aparte de
+        // egresos_operativos (gastos reales pagados en esa moneda).
+        $extranjeroPeriodo = DB::table('movimientos as m')
+            ->join('cuentas as c', 'c.id', '=', 'm.cuenta_id')
+            ->join('monedas as mo', 'mo.id', '=', 'c.moneda_id')
+            ->leftJoin('compras as cmp', function ($j) {
+                $j->on('cmp.num_folio', '=', 'm.comprobante')->whereNotNull('m.comprobante');
+            })
+            ->leftJoin('proveedor_cc_movimientos as ccm', function ($j) {
+                $j->on('ccm.id', '=', 'm.referencia_id')->where('m.referencia_type', '=', \App\Models\ProveedorCcMovimiento::class);
+            })
+            ->where('mo.codigo', '!=', 'ARS')
+            ->whereBetween('m.fecha', [$desde, $hasta])
+            ->groupBy('mo.codigo', 'mo.simbolo')
+            ->selectRaw("mo.codigo, mo.simbolo,
+                COALESCE(SUM(CASE WHEN m.tipo = 'ingreso' THEN m.total ELSE 0 END), 0) as ingresos,
+                COALESCE(SUM(CASE WHEN m.tipo = 'egreso' AND (cmp.idcompra IS NOT NULL OR ccm.compra_id IS NOT NULL) THEN m.total ELSE 0 END), 0) as egresos_stock,
+                COALESCE(SUM(CASE WHEN m.tipo = 'egreso' AND cmp.idcompra IS NULL AND ccm.compra_id IS NULL THEN m.total ELSE 0 END), 0) as egresos_operativos")
+            ->get();
+
+        // Tenencia actual (foto de hoy, no del período) de cada moneda extranjera.
+        $extranjeroSaldo = DB::table('movimientos as m')
+            ->join('cuentas as c', 'c.id', '=', 'm.cuenta_id')
+            ->join('monedas as mo', 'mo.id', '=', 'c.moneda_id')
+            ->where('mo.codigo', '!=', 'ARS')
+            ->groupBy('mo.codigo', 'mo.simbolo')
+            ->selectRaw("mo.codigo, mo.simbolo,
+                COALESCE(SUM(CASE WHEN m.tipo = 'ingreso' THEN m.total ELSE -m.total END), 0) as saldo")
+            ->get()
+            ->keyBy('codigo');
 
         $gastosPeriodo = (float) DB::table('gastos')->where('estado', 'pagado')
             ->whereBetween('fecha', [$desde->toDateString(), $hasta->toDateString()])->sum('monto');
@@ -384,6 +427,7 @@ class GraphicsController extends Controller
             'clientesNuevos', 'clientesRecurrentes', 'clientesActivosPeriodo',
             'inv', 'stockCritico', 'stockPorCategoria', 'productosSinStock', 'productosSinMovimiento',
             'ingresosPeriodo', 'egresosPeriodo', 'resultadoPeriodo', 'saldoTotalCuentas',
+            'extranjeroPeriodo', 'extranjeroSaldo',
             'gastosPeriodo', 'gastosPorCategoriaPeriodo', 'devolucionesPeriodo', 'resultadoDivisasPeriodo',
             'rankingVendedores', 'rankingRevendedores', 'atencionHumana', 'atencionIA', 'conversacionesPorEstado',
             'cxpVencidas', 'cxpProximas', 'cxpVencidoTotal', 'cxpProximasTotal',

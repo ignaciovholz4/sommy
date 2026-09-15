@@ -346,22 +346,22 @@
     <div class="ceo-pane" id="pane-finanzas">
         <div class="ceo-kpis">
             <div class="ceo-kpi">
-                <div class="k-label">Saldo total en cuentas</div>
+                <div class="k-label">Saldo total en cuentas (ARS)</div>
                 <div class="k-value" style="color:{{ $saldoTotalCuentas >= 0 ? '#0d8a4f' : '#b4552d' }};">{{ $money($saldoTotalCuentas) }}</div>
-                <span class="k-delta flat">caja + bancos, foto actual</span>
+                <span class="k-delta flat">caja + bancos en pesos, foto actual</span>
             </div>
             <div class="ceo-kpi">
-                <div class="k-label">Ingresos del período</div>
+                <div class="k-label">Ingresos del período (ARS)</div>
                 <div class="k-value">{{ $money($ingresosPeriodo) }}</div>
             </div>
             <div class="ceo-kpi">
-                <div class="k-label">Egresos del período</div>
+                <div class="k-label">Egresos del período (ARS)</div>
                 <div class="k-value">{{ $money($egresosPeriodo) }}</div>
             </div>
             <div class="ceo-kpi">
-                <div class="k-label">Resultado del período</div>
+                <div class="k-label">Resultado del período (ARS)</div>
                 <div class="k-value" style="color:{{ $resultadoPeriodo >= 0 ? '#0d8a4f' : '#b4552d' }};">{{ $money($resultadoPeriodo) }}</div>
-                <span class="k-delta flat">ingresos − egresos</span>
+                <span class="k-delta flat">ingresos − egresos, solo pesos</span>
             </div>
             <div class="ceo-kpi">
                 <div class="k-label">Gastos operativos del período</div>
@@ -374,11 +374,43 @@
                 <span class="k-delta flat">{{ $devolucionesPeriodo->cantidad }} devolución(es)</span>
             </div>
             <div class="ceo-kpi">
-                <div class="k-label">Resultado divisas del período</div>
+                <div class="k-label">Resultado por compra/venta de divisa</div>
                 <div class="k-value" style="color:{{ $resultadoDivisasPeriodo >= 0 ? '#0d8a4f' : '#b4552d' }};">{{ $money($resultadoDivisasPeriodo) }}</div>
+                <span class="k-delta flat">ganancia/pérdida cambiaria realizada</span>
                 <a class="ceo-link" href="{{ route('finanzas.divisas.index') }}">Ver historial →</a>
             </div>
         </div>
+
+        @if($extranjeroPeriodo->isNotEmpty() || $extranjeroSaldo->isNotEmpty())
+        <div class="ceo-panel" style="margin-bottom:16px;">
+            <h3>Movimientos en moneda extranjera</h3>
+            <p class="text-muted small mb-2">Van aparte porque no son pesos: sumarlos directo a los totales de arriba mezclaría unidades distintas. Un pago de mercadería hecho en dólares se muestra como "stock" (no es una pérdida, es una compra), igual que en Finanzas &gt; Resumen.</p>
+            <ul class="ceo-list">
+                @forelse($extranjeroPeriodo as $ext)
+                <li>
+                    <span class="n">{{ $ext->codigo }} — ingresos del período</span>
+                    <span class="v">{{ $ext->simbolo }}{{ number_format($ext->ingresos, 2, ',', '.') }}</span>
+                </li>
+                <li>
+                    <span class="n">{{ $ext->codigo }} — compras de mercadería pagadas en {{ $ext->codigo }}</span>
+                    <span class="v">{{ $ext->simbolo }}{{ number_format($ext->egresos_stock, 2, ',', '.') }}</span>
+                </li>
+                <li>
+                    <span class="n">{{ $ext->codigo }} — gastos operativos pagados en {{ $ext->codigo }}</span>
+                    <span class="v crit">{{ $ext->simbolo }}{{ number_format($ext->egresos_operativos, 2, ',', '.') }}</span>
+                </li>
+                @empty
+                <li><span class="n">Sin movimientos en moneda extranjera en el período.</span></li>
+                @endforelse
+                @foreach($extranjeroSaldo as $codigo => $s)
+                <li>
+                    <span class="n">Tenencia actual en {{ $codigo }}</span>
+                    <span class="v" style="color:{{ $s->saldo >= 0 ? '#0d8a4f' : '#b4552d' }};">{{ $s->simbolo }}{{ number_format($s->saldo, 2, ',', '.') }}</span>
+                </li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
 
         <div class="ceo-grid">
             <div class="ceo-panel">
