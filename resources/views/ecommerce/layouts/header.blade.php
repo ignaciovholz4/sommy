@@ -241,6 +241,10 @@
                         {{ $catLimit->nombre }}
                     </a>
                     @endforeach
+                    <div style="height:1px;background:#E7EAF2;margin:6px 8px;"></div>
+                    <a class="ec-nav-drop-item {{ request()->is('combos') ? 'is-active' : '' }}" href="{{ url('/combos') }}">
+                        Combos en oferta
+                    </a>
                 </div>
             </li>
             <li>
@@ -302,6 +306,7 @@
             {{ $catLimit->nombre }}
         </a>
         @endforeach
+        <a class="ec-nav-link" href="{{ url('/combos') }}">Combos en oferta</a>
         <div class="ec-mobile-sep"></div>
         <a class="ec-nav-link" href="{{ url('/contacto') }}">Contacto</a>
         <div class="ec-mobile-sep"></div>

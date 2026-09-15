@@ -68,6 +68,7 @@ Route::get('/sitemap.xml', [\App\Http\Controllers\Ecommerce\SitemapController::c
 Route::get('/producto/{slug}', [EcommerceproductController::class, 'showBySlug'])->name('ecommerce.producto');
 Route::get('/categoria/{slug}', [EcommercecategoryController::class, 'showBySlug'])->name('ecommerce.categoria');
 Route::get('/productos', [EcommercecategoryController::class, 'todos'])->name('ecommerce.catalogo');
+Route::get('/combos', [EcommerceController::class, 'combos'])->name('ecommerce.combos');
 Route::get('/buscar', [EcommercesearchcategoryController::class, 'index'])->name('ecommerce.buscar');
 Route::get('/Ecommercerelacionados', [EcommerceproductController::class, 'relacionados'])->name('ecommerce.relacionados');
 Route::post('/Ecommercecarritosync', [\App\Http\Controllers\Ecommerce\CarritoSyncController::class, 'sync'])->name('ecommerce.carrito.sync');

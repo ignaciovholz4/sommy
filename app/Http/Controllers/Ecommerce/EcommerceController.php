@@ -88,14 +88,45 @@ class EcommerceController extends Controller
             $categoriaFinder = $catFinderId ? \App\Models\Categoria::find($catFinderId) : null;
         }
 
-        // Combos en oferta: NO son productos aparte, es una vidriera de los
-        // combos dinámicos reales (colchón con combo_descuento_pct + sus
-        // relacionados, con el stock y precio real de cada variante — el
-        // mismo armador de la ficha de producto). El "ahorrás $X" compara
-        // contra comprar cada cosa suelta al precio de lista. Las almohadas
-        // se muestran en cantidad 2 (se arman así en el carrito, sosteniendo
-        // el mismo precio con descuento por unidad).
-        $getDataCombos = \App\Models\Articulo::where('estado', 'Activo')
+        $getDataCombos = $this->combosDisponibles();
+
+        return view('welcome', compact(
+            'getDataProd',
+            'getDataCombos',
+            'getDataCategory',
+            'getCategoryLimit',
+            'arrayEmpresa',
+            'getDataBanner',
+            'categoriaFinder',
+            'getReels'
+        ));
+    }
+
+    /**
+     * Página dedicada con todos los combos en oferta (link desde el menú
+     * Categorías). Misma vidriera que la home, en una página propia.
+     */
+    public function combos()
+    {
+        $getDataCombos = $this->combosDisponibles();
+        $getCategoryLimit = ShareController::getLimitCategory();
+        $arrayEmpresa = ShareController::getEmpresaImage();
+
+        return view('ecommerce.combos.index', compact('getDataCombos', 'getCategoryLimit', 'arrayEmpresa'));
+    }
+
+    /**
+     * Combos en oferta: NO son productos aparte, es una vidriera de los
+     * combos dinámicos reales (colchón con combo_descuento_pct + sus
+     * relacionados, con el stock y precio real de cada variante — el mismo
+     * armador de la ficha de producto). El "ahorrás $X" compara contra
+     * comprar cada cosa suelta al precio de lista. Las almohadas se
+     * muestran en cantidad 2 (se arman así en el carrito, sosteniendo el
+     * mismo precio con descuento por unidad).
+     */
+    private function combosDisponibles()
+    {
+        return \App\Models\Articulo::where('estado', 'Activo')
             ->where('tipo_producto_id', 2)
             ->where('combo_descuento_pct', '>', 0)
             ->with('combinaciones')
@@ -157,16 +188,5 @@ class EcommerceController extends Controller
             })
             ->filter()
             ->values();
-
-        return view('welcome', compact(
-            'getDataProd',
-            'getDataCombos',
-            'getDataCategory',
-            'getCategoryLimit',
-            'arrayEmpresa',
-            'getDataBanner',
-            'categoriaFinder',
-            'getReels'
-        ));
     }
 }
