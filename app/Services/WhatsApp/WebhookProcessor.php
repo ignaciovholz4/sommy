@@ -103,6 +103,11 @@ class WebhookProcessor
                 'ctwa_clid' => $referral['ctwa_clid'] ?? null,
                 'meta_ad_id' => $referral['source_id'] ?? null,
                 'referral_source_url' => $referral['source_url'] ?? null,
+                // Messenger/IG traen el titulo del anuncio en ads_context_data
+                // (no en headline/body como WhatsApp) — se guarda igual para
+                // que el bot lo use (ver AiAgentService::buildSystem).
+                'referral_headline' => $referral['ads_context_data']['ad_title'] ?? ($referral['headline'] ?? null),
+                'referral_body' => $referral['body'] ?? null,
             ]
         );
 
@@ -221,6 +226,11 @@ class WebhookProcessor
                 'ctwa_clid' => $referral['ctwa_clid'] ?? null,
                 'meta_ad_id' => $referral['source_id'] ?? null,
                 'referral_source_url' => $referral['source_url'] ?? null,
+                // Texto real de la creatividad del anuncio: lo usa el bot para
+                // saber de que anuncio vino el cliente y ofrecer proactivamente
+                // lo que ese anuncio promociona (ver AiAgentService::buildSystem).
+                'referral_headline' => $referral['headline'] ?? null,
+                'referral_body' => $referral['body'] ?? null,
             ]
         );
 

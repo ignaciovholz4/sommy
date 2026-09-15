@@ -402,6 +402,16 @@ class AiAgentService
             $system .= "\n\nEste es el PRIMER mensaje de este cliente en la conversación: abrí tu respuesta con un saludo de bienvenida cálido y natural (ej: \"Hola, ¿cómo andás? Bienvenido/a a Sommy Argentina\") antes de responder su consulta.";
         }
 
+        // Cliente que entró haciendo clic en un anuncio puntual de Meta Ads
+        // (click-to-WhatsApp/Messenger/Instagram): si el anuncio tenía texto
+        // propio (headline/body de la creatividad), se lo pasamos al bot para
+        // que ofrezca proactivamente lo que ESE anuncio promocionaba, sin
+        // esperar a que el cliente lo mencione.
+        if ($conversation->referral_headline || $conversation->referral_body) {
+            $textoAnuncio = trim(($conversation->referral_headline ?? '') . '. ' . ($conversation->referral_body ?? ''), ' .');
+            $system .= "\n\nEste cliente entró escribiendo después de tocar un anuncio puntual de Meta con este texto: \"{$textoAnuncio}\". Es un dato tuyo, no lo cites textual ni digas \"vi que tocaste un anuncio\": usalo para entender qué le interesa y ofrecerle proactivamente eso mismo apenas arranca la charla, sin esperar a que lo pida. Si el anuncio habla de un combo o una promo puntual, confirmalo con buscar_productos/cotizar antes de ofrecerlo — nunca repitas de memoria un precio que diga el anuncio.";
+        }
+
         // "Memoria" de venta (medida, tipo, producto de interés, etapa): la
         // guarda actualizar_contexto. Se repite acá en cada turno para que el
         // bot no vuelva a preguntar algo que el cliente ya contó.
@@ -450,6 +460,12 @@ class AiAgentService
     {
         // WhatsApp usa *negrita* con un solo asterisco, no **markdown**
         $text = preg_replace('/\*\*(.+?)\*\*/s', '*$1*', $text);
+
+        // Guarda: el modelo a veces "muestra" una foto escribiendo markdown de
+        // imagen en vez de llamar a enviar_material — WhatsApp no lo renderiza,
+        // así que llegaría como texto roto tipo "![...](img:1)". Se recorta acá
+        // por si la instrucción del prompt no alcanzó a frenarlo.
+        $text = preg_replace('/!\[[^\]]*\]\([^)]*\)/u', '', $text);
 
         // Como una persona real: cada bloque separado por línea en blanco sale
         // como un mensaje aparte (la cola los procesa en orden, y el bridge
