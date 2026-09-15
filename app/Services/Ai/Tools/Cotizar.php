@@ -13,7 +13,7 @@ class Cotizar
     {
         return [
             'name' => 'cotizar',
-            'description' => 'Arma o actualiza la cotización (borrador de pedido) de esta conversación con los productos y cantidades que el cliente quiere. Los precios se toman del sistema, no los pases vos. Devuelve el detalle y el total para presentarle al cliente.',
+            'description' => 'Arma o actualiza la cotización (borrador de pedido) de esta conversación con los productos y cantidades que el cliente quiere. Los precios se toman del sistema, no los pases vos. Si entre los items está el producto ancla de un combo junto con alguno de sus relacionados o regalos (los que te devolvió buscar_productos en "combo"), el sistema aplica solo el descuento y el regalo a $0 automáticamente. Devuelve el detalle y el total para presentarle al cliente.',
             'parameters' => [
                 'type' => 'object',
                 'properties' => [
@@ -81,6 +81,8 @@ class Cotizar
             ];
         }
 
+        $items = $this->aplicarCombos($items);
+
         // Un borrador activo por conversacion: se pisa con la nueva cotizacion
         $draft = WaOrderDraft::firstOrNew([
             'conversation_id' => $conversation->id,
@@ -105,5 +107,54 @@ class Cotizar
             'total' => $draft->total,
             'nota' => 'VERIFICÁ: estos items y este total son los REALES que va a llevar el pedido. El resumen que le mandes al cliente se copia EXACTAMENTE de acá (producto, medida, precio, total) — nunca redondees ni recalcules. Si algo no coincide con lo que venías hablando (producto o medida distintos), corregí la cotización ANTES de resumir. Si el cliente acepta, pedile dirección de entrega y usá crear_pedido.',
         ];
+    }
+
+    /**
+     * Si entre los items cotizados está el producto ancla de un combo activo
+     * (combo_descuento_pct > 0) junto con alguno de sus relacionados o
+     * regalos configurados en almacen/combos, aplica automáticamente el
+     * descuento o el precio $0 del regalo — nunca a partir de lo que diga el
+     * LLM, siempre recalculado acá con los datos reales del combo.
+     */
+    private function aplicarCombos(array $items): array
+    {
+        $productoIds = collect($items)->pluck('producto_id')->unique();
+
+        $anchors = DB::table('productos')
+            ->whereIn('idarticulo', $productoIds)
+            ->where('combo_descuento_pct', '>', 0)
+            ->pluck('combo_descuento_pct', 'idarticulo');
+
+        if ($anchors->isEmpty()) {
+            return $items;
+        }
+
+        foreach ($anchors as $anchorId => $descuentoPct) {
+            $regalos = DB::table('producto_regalos')
+                ->where('idarticulo', $anchorId)
+                ->pluck('cantidad', 'regalo_id');
+
+            $relacionadoIds = DB::table('producto_relacionados')
+                ->where('idarticulo', $anchorId)
+                ->whereNotIn('relacionado_id', $regalos->keys())
+                ->pluck('relacionado_id');
+
+            foreach ($items as &$item) {
+                if ($item['producto_id'] === $anchorId) {
+                    continue;
+                }
+
+                if ($regalos->has($item['producto_id']) && $item['cantidad'] <= $regalos->get($item['producto_id'])) {
+                    $item['precio_unitario'] = 0.0;
+                    $item['descripcion'] .= ' — de regalo por combo';
+                } elseif ($relacionadoIds->contains($item['producto_id'])) {
+                    $item['precio_unitario'] = round($item['precio_unitario'] * (1 - $descuentoPct / 100), 2);
+                    $item['descripcion'] .= ' — con descuento de combo';
+                }
+            }
+            unset($item);
+        }
+
+        return $items;
     }
 }
