@@ -105,6 +105,11 @@
                 <span>Categorías</span>
             </a>
 
+            <a href="{{url('almacen/combos')}}" class="btn-facturarg-action btn-main-dark" style="background: #7C3AED;">
+                <i class="fas fa-layer-group"></i>
+                <span>Combos</span>
+            </a>
+
         </div>
     </div>
 </section>

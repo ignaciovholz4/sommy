@@ -360,6 +360,13 @@ Route::get('articulo/{id}/edit', [ArticuloController::class, 'edit_product'])->n
 Route::get('articulos/load-options/categoria', [ArticuloController::class, 'loadOptionsCategoria']);
 Route::get('articulos/load-options/marca', [ArticuloController::class, 'loadOptionsMarca']);
 
+/** RUTAS DE COMBOS (panel: elegir productos existentes + regalo, sin tocar la base a mano) */
+Route::get('almacen/combos', 'Articulo\ComboController@index')->name('combos.index')->middleware(['auth','verified']);
+Route::get('showcombos', 'Articulo\ComboController@data')->name('combos.data')->middleware(['auth','verified']);
+Route::get('combo-list/{id}', 'Articulo\ComboController@edit')->name('combos.edit')->middleware(['auth','verified']);
+Route::post('savecombo', 'Articulo\ComboController@store')->name('combos.store')->middleware(['auth','verified']);
+Route::post('deletecombo', 'Articulo\ComboController@destroy')->name('combos.destroy')->middleware(['auth','verified']);
+
 
 /** RUTAS DE SUCURSAL */
 Route::get('sucursal', [SucursalController::class, 'index'])
