@@ -131,6 +131,24 @@ p { line-height: 1.7; }
     border-color: var(--sm-blue) !important;
 }
 
+/* ── Pedir por WhatsApp: acompaña a "Agregar al carrito" en las tarjetas de producto ── */
+.btn-whatsapp-prod {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    background: #25D366 !important;
+    color: #fff !important;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 13.5px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    text-decoration: none !important;
+    transition: background .2s ease, transform .15s ease;
+}
+.btn-whatsapp-prod:hover { background: #1EBE5A !important; color: #fff !important; transform: translateY(-1px); }
+
 .btn-outline-dark {
     color: var(--sm-navy) !important;
     border-color: var(--sm-navy) !important;

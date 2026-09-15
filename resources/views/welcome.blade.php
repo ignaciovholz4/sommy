@@ -285,6 +285,28 @@
     </script>
     @endif
 
+    @if($getDataCombos->isNotEmpty())
+    <!--Combos en oferta: vidriera de los combos dinamicos reales (colchon + relacionados)-->
+    <section class="py-5" id="combos">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="tabs-header d-flex justify-content-between border-bottom my-5" data-aos="fade-up">
+              <h3>Combos en oferta</h3>
+              <a href="{{ route('ecommerce.combos') }}" class="ec-nav-link" style="font-size:13px;">Ver todos →</a>
+            </div>
+            <p class="text-muted mb-4" data-aos="fade-up">Colchón + base sommier + almohadas: armando el combo te sale más barato que comprando todo por separado.</p>
+            <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 justify-content-start">
+              @foreach ($getDataCombos as $combo)
+                @include('ecommerce.partials.combo-card')
+              @endforeach
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    @endif
+
     <!--Productos destacados: los que se tildan a mano desde el panel-->
     <section class="py-5" id="productos">
       <div class="container-fluid">
@@ -349,8 +371,14 @@
                             <span class="fw-bold">${{ number_format($product->display_price, 2, ',', '.') }}</span>
                           </div>
 
-                          <div class="text-center div-button-cart">
+                          <div class="text-center div-button-cart d-flex flex-column gap-2">
                             <a class="btn btn-add-prod" href="{{ url('producto/' . $product->producto->slug) }}">Agregar al carrito</a>
+                            @if(!empty($arrayEmpresa['whatsapp']))
+                            <a class="btn-whatsapp-prod" target="_blank" rel="noopener noreferrer"
+                               href="https://wa.me/{{ preg_replace('/\D/', '', $arrayEmpresa['whatsapp']) }}?text={{ urlencode('Hola! Quiero pedir el ' . $product->producto->nombre . '. Lo vi acá: ' . url('producto/' . $product->producto->slug)) }}">
+                                <i class="fa-brands fa-whatsapp"></i> Pedir por WhatsApp
+                            </a>
+                            @endif
                           </div>
                         </div>
                       </div>
@@ -365,28 +393,6 @@
         </div>
       </div>
     </section>
-
-    @if($getDataCombos->isNotEmpty())
-    <!--Combos en oferta: vidriera de los combos dinamicos reales (colchon + relacionados)-->
-    <section class="py-5" id="combos">
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-md-12">
-            <div class="tabs-header d-flex justify-content-between border-bottom my-5" data-aos="fade-up">
-              <h3>Combos en oferta</h3>
-              <a href="{{ route('ecommerce.combos') }}" class="ec-nav-link" style="font-size:13px;">Ver todos →</a>
-            </div>
-            <p class="text-muted mb-4" data-aos="fade-up">Colchón + base sommier + almohadas: armando el combo te sale más barato que comprando todo por separado.</p>
-            <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 justify-content-start">
-              @foreach ($getDataCombos as $combo)
-                @include('ecommerce.partials.combo-card')
-              @endforeach
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    @endif
 
     <!--START SOMOS FABRICANTES-->
     <section class="pb-5">
