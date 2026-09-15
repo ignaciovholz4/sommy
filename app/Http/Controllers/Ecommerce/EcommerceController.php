@@ -110,6 +110,12 @@ class EcommerceController extends Controller
                     return $p;
                 })
                 ->values();
+
+            // Los combos tienen su propia sección más abajo: que no se dupliquen
+            // también en "Últimos productos".
+            $getDataProd = $getDataProd
+                ->reject(fn ($p) => $p->producto->categoria_id === $categoriaCombos->idcategoria)
+                ->values();
         }
 
         return view('welcome', compact(
