@@ -238,7 +238,7 @@
                         <div style="font-size:11px;color:#475569;">
                           @foreach($product->variantes as $variante)
                             <div class="d-flex justify-content-between">
-                              <span>{{ $variante->medida }}</span>
+                              <span>{{ $variante->plaza }} <span class="text-muted">{{ $variante->medida }}</span></span>
                               <span class="fw-bold">{{ format_money_global($variante->precio) }}</span>
                             </div>
                           @endforeach

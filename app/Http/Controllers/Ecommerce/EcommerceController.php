@@ -215,6 +215,8 @@ class EcommerceController extends Controller
 
                 return (object) [
                     'producto'         => $anchor,
+                    'medida'           => trim($variante->combinacion),
+                    'plaza'            => ShareController::getPlazaLabel($variante->combinacion),
                     'incluye'          => $incluye,
                     'incluye_sommier'  => $incluyeSommier,
                     'regalos'          => $regalosNombres,

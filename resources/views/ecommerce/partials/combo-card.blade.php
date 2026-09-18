@@ -33,7 +33,12 @@
     </div>
 
     <div class="text-center mb-2">
-      <span class="d-block" style="font-size:11px;color:#94a3b8;">{{ $combo->incluye_sommier ? 'Combo colchón + sommier' : 'Precio del combo' }}</span>
+      <span class="d-block" style="font-size:11px;color:#94a3b8;">
+        {{ $combo->incluye_sommier ? 'Combo colchón + sommier' : 'Precio del combo' }}
+        @if($combo->plaza)
+          · {{ $combo->plaza }} ({{ $combo->medida }})
+        @endif
+      </span>
       <span class="d-block" style="font-size:11px;color:#94a3b8;text-decoration:line-through;">${{ number_format($combo->precio_separado, 2, ',', '.') }} por separado</span>
       <span class="fw-bold">${{ number_format($combo->display_price, 2, ',', '.') }}</span>
     </div>

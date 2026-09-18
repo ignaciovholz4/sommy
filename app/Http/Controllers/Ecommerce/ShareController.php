@@ -45,6 +45,28 @@ class ShareController extends Controller
     }
 
     /**
+     * Traduce el ancho de una medida (ej "0,80 x 1,90" o "1,40x1,90") a como
+     * la conoce la gente: 1 plaza, plaza y media, 2 plazas, Queen o King.
+     * La medida exacta en cm queda al lado en la tarjeta, esto es solo la
+     * etiqueta común para que no haya que saber de memoria qué ancho es qué.
+     */
+    public static function getPlazaLabel(string $medida): ?string
+    {
+        $ancho = (float) str_replace(',', '.', trim(explode('x', $medida)[0] ?? ''));
+        if ($ancho <= 0) {
+            return null;
+        }
+
+        return match (true) {
+            $ancho < 0.85  => '1 plaza',
+            $ancho < 1.30  => '1 plaza y media',
+            $ancho < 1.50  => '2 plazas',
+            $ancho < 1.80  => 'Queen',
+            default        => 'King',
+        };
+    }
+
+    /**
      * Precio de cada medida de un producto con variantes, para mostrar en la
      * tarjeta en vez de un solo "Desde $X" que obliga a entrar al producto
      * para saber cuánto sale la medida que a cada uno le interesa.
@@ -67,6 +89,7 @@ class ShareController extends Controller
                 }
                 return (object) [
                     'medida' => trim($v->combinacion),
+                    'plaza'  => self::getPlazaLabel($v->combinacion),
                     'precio' => $precio,
                 ];
             })
