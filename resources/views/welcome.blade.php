@@ -365,10 +365,21 @@
                           </div>
 
                           <div class="text-center mb-2">
-                            @if($product->precio_desde)
+                            @if($product->precio_desde && $product->variantes->count() > 1)
+                              <div style="font-size:11px;color:#475569;">
+                                @foreach($product->variantes as $variante)
+                                  <div class="d-flex justify-content-between">
+                                    <span>{{ $variante->medida }}</span>
+                                    <span class="fw-bold">${{ number_format($variante->precio, 0, ',', '.') }}</span>
+                                  </div>
+                                @endforeach
+                              </div>
+                            @else
+                              @if($product->precio_desde)
                                 <span class="d-block" style="font-size:11px;color:#64748b;">Desde</span>
+                              @endif
+                              <span class="fw-bold">${{ number_format($product->display_price, 2, ',', '.') }}</span>
                             @endif
-                            <span class="fw-bold">${{ number_format($product->display_price, 2, ',', '.') }}</span>
                           </div>
 
                           <div class="text-center div-button-cart d-flex flex-column gap-2">

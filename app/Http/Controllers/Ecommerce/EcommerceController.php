@@ -34,10 +34,12 @@ class EcommerceController extends Controller
             // base del producto (que ni se usa): se muestra "Desde $" con la
             // variante más barata que tenga precio cargado.
             $prod->precio_desde = false;
+            $prod->variantes = collect();
             if ($producto->tipo_producto_id == 2) {
                 $minVariante = $producto->combinaciones->where('pventa_variante', '>', 0)->min('pventa_variante');
                 if ($minVariante) {
                     $prod->precio_desde = true;
+                    $prod->variantes = ShareController::getVariantesOrdenadas($producto, (float) $producto->descuento);
                 }
             }
 
@@ -163,6 +165,7 @@ class EcommerceController extends Controller
                 $anchorMedida = str_replace(',', '.', trim(explode('x', $variante->combinacion)[0] ?? ''));
                 $addonsFull = 0.0;
                 $incluye = [];
+                $incluyeSommier = false;
 
                 foreach ($relacionados as $rel) {
                     if ($rel->tipo_producto_id == 2) {
@@ -177,13 +180,18 @@ class EcommerceController extends Controller
                         continue;
                     }
                     $addonsFull += $precioUnit;
-                    $incluye[] = $rel->nombre;
+                    $nombreLimpio = $this->nombreParaMostrar($rel->nombre);
+                    $incluye[] = $nombreLimpio;
+                    if (stripos($nombreLimpio, 'sommier') !== false || stripos($nombreLimpio, 'base') !== false) {
+                        $incluyeSommier = true;
+                    }
                 }
 
                 // Regalos reales (producto_regalos): van a $0 en el combo, pero
                 // suman a precio de lista en "precio_separado" para mostrar el
                 // ahorro real de llevarlos gratis.
                 $regalosValor = 0.0;
+                $regalosNombres = [];
                 $regalos = DB::table('producto_regalos as pr')
                     ->join('productos as p', 'p.idarticulo', '=', 'pr.regalo_id')
                     ->where('pr.idarticulo', $anchor->idarticulo)
@@ -194,7 +202,8 @@ class EcommerceController extends Controller
                 foreach ($regalos as $r) {
                     $cant = max(1, (int) $r->cantidad);
                     $regalosValor += (float) $r->pventa_con_iva * $cant;
-                    $incluye[] = ($cant > 1 ? "{$r->nombre} x{$cant}" : $r->nombre) . ' de regalo';
+                    $nombreLimpio = $this->nombreParaMostrar($r->nombre);
+                    $regalosNombres[] = $cant > 1 ? "{$nombreLimpio} x{$cant}" : $nombreLimpio;
                 }
 
                 if ($addonsFull <= 0 && $regalosValor <= 0) {
@@ -205,14 +214,27 @@ class EcommerceController extends Controller
                 $comboTotal = \App\Support\Precio::redondear($anchorPrice + $addonsFull * (1 - $descuento));
 
                 return (object) [
-                    'producto'        => $anchor,
-                    'incluye'         => $incluye,
-                    'display_price'   => $comboTotal,
-                    'precio_separado' => $separado,
-                    'ahorro'          => $separado - $comboTotal,
+                    'producto'         => $anchor,
+                    'incluye'          => $incluye,
+                    'incluye_sommier'  => $incluyeSommier,
+                    'regalos'          => $regalosNombres,
+                    'display_price'    => $comboTotal,
+                    'precio_separado'  => $separado,
+                    'ahorro'           => $separado - $comboTotal,
                 ];
             })
             ->filter()
             ->values();
+    }
+
+    /**
+     * Nombre de producto listo para mostrarle al cliente: saca aclaraciones
+     * internas entre paréntesis (ej "Base Sommier Ecocuero (Solo con colchón)"
+     * -> "Base Sommier Ecocuero") que sirven para distinguir variantes en el
+     * panel pero no aportan nada a un comprador.
+     */
+    private function nombreParaMostrar(string $nombre): string
+    {
+        return trim(preg_replace('/\s*\([^)]*\)\s*/', ' ', $nombre));
     }
 }

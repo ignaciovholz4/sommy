@@ -79,11 +79,13 @@ class EcommercecategoryController extends Controller
                 // base del producto: se muestra "Desde $" con la más barata.
                 $precioDesde = false;
                 $precioBase = $articulo->pventa_con_iva;
+                $variantes = collect();
                 if ($articulo->tipo_producto_id == 2) {
                     $minVariante = $articulo->combinaciones->where('pventa_variante', '>', 0)->min('pventa_variante');
                     if ($minVariante) {
                         $precioDesde = true;
                         $precioBase = $minVariante;
+                        $variantes = ShareController::getVariantesOrdenadas($articulo, (float) $articulo->descuento, $this->priceListService);
                     }
                 }
 
@@ -109,6 +111,7 @@ class EcommercecategoryController extends Controller
                 $obj->display_price = $displayPrice;
                 $obj->precio_desde = $precioDesde;
                 $obj->precio_base = $basePrice;
+                $obj->variantes = $variantes;
 
                 return $obj;
             })
@@ -207,11 +210,13 @@ class EcommercecategoryController extends Controller
                 // base del producto: se muestra "Desde $" con la más barata.
                 $precioDesde = false;
                 $precioBase = $articulo->pventa_con_iva;
+                $variantes = collect();
                 if ($articulo->tipo_producto_id == 2) {
                     $minVariante = $articulo->combinaciones->where('pventa_variante', '>', 0)->min('pventa_variante');
                     if ($minVariante) {
                         $precioDesde = true;
                         $precioBase = $minVariante;
+                        $variantes = ShareController::getVariantesOrdenadas($articulo, (float) $articulo->descuento, $this->priceListService);
                     }
                 }
 
@@ -239,6 +244,7 @@ class EcommercecategoryController extends Controller
                 $obj->display_price = $displayPrice;
                 $obj->precio_desde = $precioDesde;
                 $obj->precio_base = $basePrice;
+                $obj->variantes = $variantes;
 
                 return $obj;
             })

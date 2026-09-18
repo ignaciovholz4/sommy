@@ -45,10 +45,21 @@
                     <h3>{{ $product->producto->nombre }}</h3>
                   </div>
 
-                  @if($product->precio_desde)
-                    <span class="d-block" style="font-size:11px;color:#64748b;">Desde</span>
+                  @if($product->precio_desde && $product->variantes->count() > 1)
+                    <div style="font-size:11px;color:#475569;">
+                      @foreach($product->variantes as $variante)
+                        <div class="d-flex justify-content-between">
+                          <span>{{ $variante->medida }}</span>
+                          <span class="fw-bold">{{ format_money_global($variante->precio) }}</span>
+                        </div>
+                      @endforeach
+                    </div>
+                  @else
+                    @if($product->precio_desde)
+                      <span class="d-block" style="font-size:11px;color:#64748b;">Desde</span>
+                    @endif
+                    <span class="price">{{ format_money_global($product->display_price) }}</span>
                   @endif
-                  <span class="price">{{ format_money_global($product->display_price) }}</span>
 
                   <div class="text-center">
                     <a href="{{ url('producto/'.$product->producto->slug) }}" class="btn btn-add-prod">Ver producto</a>

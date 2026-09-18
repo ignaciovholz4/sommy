@@ -97,16 +97,27 @@
             @endphp
             <span class="qty">{{ implode(' · ', $miniSpecs) }}</span><span class="rating"></span>
 
-            @if($product->precio_desde)
-              <span class="d-block" style="font-size:11px;color:#64748b;">Desde</span>
-            @endif
-            @if($product->has_offer && $product->display_price < $product->precio_base)
-              <div class="price-container">
-                <span class="price original-price text-muted text-decoration-line-through">{{ format_money_global($product->precio_base) }}</span>
-                <span class="price effective-price fw-bold">{{ format_money_global($product->display_price) }}</span>
+            @if($product->precio_desde && $product->variantes->count() > 1)
+              <div style="font-size:11px;color:#475569;">
+                @foreach($product->variantes as $variante)
+                  <div class="d-flex justify-content-between">
+                    <span>{{ $variante->medida }}</span>
+                    <span class="fw-bold">{{ format_money_global($variante->precio) }}</span>
+                  </div>
+                @endforeach
               </div>
             @else
-              <span class="price">{{ format_money_global($product->display_price) }}</span>
+              @if($product->precio_desde)
+                <span class="d-block" style="font-size:11px;color:#64748b;">Desde</span>
+              @endif
+              @if($product->has_offer && $product->display_price < $product->precio_base)
+                <div class="price-container">
+                  <span class="price original-price text-muted text-decoration-line-through">{{ format_money_global($product->precio_base) }}</span>
+                  <span class="price effective-price fw-bold">{{ format_money_global($product->display_price) }}</span>
+                </div>
+              @else
+                <span class="price">{{ format_money_global($product->display_price) }}</span>
+              @endif
             @endif
 
             <div class="text-center">

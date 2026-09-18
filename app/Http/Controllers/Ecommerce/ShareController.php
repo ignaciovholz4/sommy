@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Ecommerce;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Services\PriceListService;
 
 use Illuminate\Support\Facades\DB;
 
@@ -41,6 +42,38 @@ class ShareController extends Controller
     {
         $getDataCategoryLimit = DB::table('categorias')->where('status', 1)->orderBy('orden')->orderBy('nombre')->take(7)->get();
         return $getDataCategoryLimit;
+    }
+
+    /**
+     * Precio de cada medida de un producto con variantes, para mostrar en la
+     * tarjeta en vez de un solo "Desde $X" que obliga a entrar al producto
+     * para saber cuánto sale la medida que a cada uno le interesa.
+     * Espera $producto con la relación 'combinaciones' ya cargada. El
+     * descuento % y la lista de precios (si se pasan) se aplican a cada
+     * medida igual que se le aplican al precio "desde", para que la tarjeta
+     * no muestre un precio distinto al que después cobra el checkout.
+     */
+    public static function getVariantesOrdenadas($producto, float $descuentoPct = 0, ?PriceListService $priceListService = null)
+    {
+        return $producto->combinaciones
+            ->where('pventa_variante', '>', 0)
+            ->map(function ($v) use ($producto, $descuentoPct, $priceListService) {
+                $precio = (float) $v->pventa_variante;
+                if ($priceListService) {
+                    $precio = $priceListService->getEffectiveSalePrice($producto->idarticulo, $precio);
+                }
+                if ($descuentoPct > 0) {
+                    $precio -= $precio * ($descuentoPct / 100);
+                }
+                return (object) [
+                    'medida' => trim($v->combinacion),
+                    'precio' => $precio,
+                ];
+            })
+            ->sortBy(function ($v) {
+                return (float) str_replace(',', '.', trim(explode('x', $v->medida)[0] ?? '0'));
+            })
+            ->values();
     }
 
 }
