@@ -280,6 +280,17 @@ class EnvioController extends Controller
 
         $envio->save();
 
+        // 🔹 El flete salió con la mercadería: se descuenta el stock real aunque
+        // el pedido todavía no esté pagado (transferencia pendiente, pago
+        // contra entrega, etc.) — la venta manual ya descontó su stock al
+        // cargarse, así que esto solo aplica a pedidos de ecommerce.
+        if ($request->estado === 'despachado' && $envio->tipo === 'venta' && $envio->order_ecommerce_id) {
+            $orden = \App\Models\ecommerce\order_ecommerce::with('asignaciones')->find($envio->order_ecommerce_id);
+            if ($orden) {
+                app(\App\Http\Controllers\StockController::class)->descontarStockPedido($orden);
+            }
+        }
+
         return response()->json([
             'estado'  => 1,
             'mensaje' => 'El envío pasó a "' . (self::LABELS[$envio->estado] ?? $envio->estado) . '".',

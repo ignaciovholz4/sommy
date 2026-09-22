@@ -38,6 +38,7 @@ class order_ecommerce extends Model
         'meta_ad_id',
         'ctwa_clid',
         'purchase_capi_sent_at',
+        'stock_descontado_at',
     ];
 
     // 🔗 Relación con el estado de la orden

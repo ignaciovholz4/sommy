@@ -220,6 +220,43 @@ class StockController extends Controller
         }
     }
 
+    /**
+     * Descuenta el stock real de un pedido ecommerce usando sus asignaciones
+     * (order_stock_asignaciones: qué sucursal/combinación cubre cada línea,
+     * cargado en "Comprobación de stock"). Idempotente por
+     * stock_descontado_at: se llama tanto al confirmar el pago
+     * (OrderController::update_paid) como al despachar el flete
+     * (EnvioController::setEstado) — el que ocurra primero descuenta,
+     * el segundo no vuelve a tocar el stock.
+     *
+     * Si algún ítem falla (stock insuficiente, dato inconsistente) se
+     * loguea y se sigue con el resto: la mercadería ya salió/se cobró en la
+     * vida real, no tiene sentido bloquear la acción por esto.
+     */
+    public function descontarStockPedido(order_ecommerce $order): void
+    {
+        if ($order->stock_descontado_at) {
+            return;
+        }
+
+        foreach ($order->asignaciones as $asig) {
+            try {
+                $this->disminuirStockEnSucursal(
+                    $asig->sucursal_id,
+                    $asig->product_id,
+                    $asig->cantidad,
+                    $asig->combinacion_id
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning(
+                    "No se pudo descontar stock del pedido #{$order->order_id} (asignación {$asig->id}): " . $e->getMessage()
+                );
+            }
+        }
+
+        $order->update(['stock_descontado_at' => now()]);
+    }
+
     public function incrementarStockEnSucursal(int $sucursalId, int $articuloId, int $cantidad, ?int $combinacionId = null): void
     {
         if ($combinacionId) {

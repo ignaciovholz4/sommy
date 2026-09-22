@@ -646,16 +646,9 @@ class OrderController extends Controller
                 $updatePayment->save();
             }
 
-            // 🔹 Descontar stock usando StockController
-            $asignaciones = $order->asignaciones;
-            foreach ($asignaciones as $asig) {
-                app(StockController::class)->disminuirStockEnSucursal(
-                    $asig->sucursal_id,
-                    $asig->product_id,
-                    $asig->cantidad,
-                    $asig->combinacion_id
-                );
-            }
+            // 🔹 Descontar stock (idempotente: si el flete ya lo había descontado
+            // al despacharse, esto no vuelve a tocarlo — ver StockController::descontarStockPedido)
+            app(StockController::class)->descontarStockPedido($order);
 
             DB::commit();
             return response()->json([
