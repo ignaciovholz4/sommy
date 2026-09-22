@@ -210,7 +210,12 @@ class GraphicsController extends Controller
             ->orderByDesc('saldo')->limit(6)->get();
 
         // ── Stock (foto actual) ──────────────────────────────────────
-        $inv = DB::table('sucursal_articulo as sa')
+        // OJO: el stock real vive en DOS tablas — sucursal_articulo para
+        // productos simples y sucursal_combinacion para productos con
+        // variantes (medida/color, ej. los colchones, que son la mayoría
+        // del catálogo). Sumar solo sucursal_articulo subestima gravemente
+        // la capitalización real: hay que sumar las dos.
+        $invSimple = DB::table('sucursal_articulo as sa')
             ->join('productos as p', 'p.idarticulo', '=', 'sa.articulo_id')
             ->where('sa.activo', 1)
             ->selectRaw('COALESCE(SUM(sa.stock),0) as unidades,
@@ -218,32 +223,90 @@ class GraphicsController extends Controller
                          COALESCE(SUM(sa.stock * p.pventa_con_iva),0) as valor_venta')
             ->first();
 
-        $stockCritico = DB::table('sucursal_articulo as sa')
+        $invVariantes = DB::table('sucursal_combinacion as sc')
+            ->join('producto_combinaciones as pc', 'pc.idcombinacion', '=', 'sc.combinacion_id')
+            ->where('sc.activo', 1)
+            ->selectRaw('COALESCE(SUM(sc.stock),0) as unidades,
+                         COALESCE(SUM(sc.stock * pc.pcompra_variante),0) as valor_costo,
+                         COALESCE(SUM(sc.stock * pc.pventa_variante),0) as valor_venta')
+            ->first();
+
+        $inv = (object) [
+            'unidades'    => (float) $invSimple->unidades + (float) $invVariantes->unidades,
+            'valor_costo' => (float) $invSimple->valor_costo + (float) $invVariantes->valor_costo,
+            'valor_venta' => (float) $invSimple->valor_venta + (float) $invVariantes->valor_venta,
+        ];
+
+        $criticoSimple = DB::table('sucursal_articulo as sa')
             ->join('productos as p', 'p.idarticulo', '=', 'sa.articulo_id')
             ->where('sa.activo', 1)->where('p.estado', 'Activo')
             ->groupBy('p.idarticulo', 'p.nombre')
-            ->havingRaw('SUM(sa.stock) <= 3')
-            ->selectRaw('p.nombre, SUM(sa.stock) as stock')
-            ->orderBy('stock')->limit(10)->get();
+            ->selectRaw('p.idarticulo, p.nombre, SUM(sa.stock) as stock')
+            ->get();
 
-        $stockPorCategoria = DB::table('sucursal_articulo as sa')
+        $criticoVariantes = DB::table('sucursal_combinacion as sc')
+            ->join('producto_combinaciones as pc', 'pc.idcombinacion', '=', 'sc.combinacion_id')
+            ->join('productos as p', 'p.idarticulo', '=', 'pc.producto_id')
+            ->where('sc.activo', 1)->where('p.estado', 'Activo')
+            ->groupBy('p.idarticulo', 'p.nombre')
+            ->selectRaw('p.idarticulo, p.nombre, SUM(sc.stock) as stock')
+            ->get();
+
+        $stockCritico = $criticoSimple->concat($criticoVariantes)
+            ->groupBy('idarticulo')
+            ->map(fn ($rows) => (object) ['nombre' => $rows->first()->nombre, 'stock' => $rows->sum('stock')])
+            ->filter(fn ($r) => $r->stock <= 3)
+            ->sortBy('stock')
+            ->take(10)
+            ->values();
+
+        $catSimple = DB::table('sucursal_articulo as sa')
             ->join('productos as p', 'p.idarticulo', '=', 'sa.articulo_id')
             ->join('categorias as c', 'c.idcategoria', '=', 'p.categoria_id')
             ->where('sa.activo', 1)
             ->groupBy('c.idcategoria', 'c.nombre')
-            ->selectRaw('c.nombre, COALESCE(SUM(sa.stock),0) as unidades, COALESCE(SUM(sa.stock * p.pventa_con_iva),0) as valor')
-            ->orderByDesc('valor')->get();
+            ->selectRaw('c.idcategoria, c.nombre, SUM(sa.stock) as unidades, SUM(sa.stock * p.pventa_con_iva) as valor')
+            ->get();
 
-        // Sin stock (foto actual) y sin movimiento de ventas en el período (estancados)
-        // select() explícito: sucursal_articulo y productos comparten la columna
-        // "ubicacion" — un SELECT * acá rompe el count() (MySQL no puede armar la
-        // tabla derivada con dos columnas del mismo nombre).
-        $productosSinStock = DB::table('sucursal_articulo as sa')
+        $catVariantes = DB::table('sucursal_combinacion as sc')
+            ->join('producto_combinaciones as pc', 'pc.idcombinacion', '=', 'sc.combinacion_id')
+            ->join('productos as p', 'p.idarticulo', '=', 'pc.producto_id')
+            ->join('categorias as c', 'c.idcategoria', '=', 'p.categoria_id')
+            ->where('sc.activo', 1)
+            ->groupBy('c.idcategoria', 'c.nombre')
+            ->selectRaw('c.idcategoria, c.nombre, SUM(sc.stock) as unidades, SUM(sc.stock * pc.pventa_variante) as valor')
+            ->get();
+
+        $stockPorCategoria = $catSimple->concat($catVariantes)
+            ->groupBy('idcategoria')
+            ->map(fn ($rows) => (object) [
+                'nombre'   => $rows->first()->nombre,
+                'unidades' => $rows->sum('unidades'),
+                'valor'    => $rows->sum('valor'),
+            ])
+            ->sortByDesc('valor')
+            ->values();
+
+        // Sin stock (foto actual): activo y sin unidades ni en simple ni en
+        // variantes. Sin ventas en el período (estancados).
+        $idsConStockSimple = DB::table('sucursal_articulo as sa')
             ->join('productos as p', 'p.idarticulo', '=', 'sa.articulo_id')
             ->where('sa.activo', 1)->where('p.estado', 'Activo')
-            ->select('p.idarticulo')
             ->groupBy('p.idarticulo')
-            ->havingRaw('SUM(sa.stock) <= 0')
+            ->havingRaw('SUM(sa.stock) > 0')
+            ->pluck('p.idarticulo');
+
+        $idsConStockVariante = DB::table('sucursal_combinacion as sc')
+            ->join('producto_combinaciones as pc', 'pc.idcombinacion', '=', 'sc.combinacion_id')
+            ->join('productos as p', 'p.idarticulo', '=', 'pc.producto_id')
+            ->where('sc.activo', 1)->where('p.estado', 'Activo')
+            ->groupBy('p.idarticulo')
+            ->havingRaw('SUM(sc.stock) > 0')
+            ->pluck('p.idarticulo');
+
+        $productosSinStock = DB::table('productos')
+            ->where('estado', 'Activo')
+            ->whereNotIn('idarticulo', $idsConStockSimple->merge($idsConStockVariante)->unique())
             ->count();
 
         $productosSinMovimiento = DB::table('productos as p')
