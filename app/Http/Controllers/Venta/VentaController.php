@@ -200,15 +200,37 @@ class VentaController extends Controller
     {
         $venta = Venta::findOrFail($idventa);
 
+        if ($venta->estado === 'anulada') {
+            return response()->json(['success' => true, 'mensaje' => 'Esta venta ya estaba anulada.']);
+        }
+
         $resultado = $solicitudes->ejecutarOSolicitar(
             'venta.anular',
             'Anular venta ' . ($venta->num_folio ?: '#' . $venta->idventa) . ' ($' . number_format($venta->total_con_iva, 0, ',', '.') . ')',
             ['idventa' => (int) $idventa],
             $venta,
             function () use ($idventa) {
-                $venta = Venta::findOrFail($idventa);
+                $venta = Venta::with('detalles')->findOrFail($idventa);
                 $venta->estado = 'anulada';
                 $venta->save();
+
+                // La venta se cae: la mercadería vuelve al depósito, hay que
+                // devolverle el stock (antes se anulaba pero el stock quedaba
+                // descontado para siempre).
+                foreach ($venta->detalles as $detalle) {
+                    try {
+                        app(StockController::class)->incrementarStockEnSucursal(
+                            $venta->sucursal_id,
+                            $detalle->articulo_id,
+                            $detalle->cantidad,
+                            $detalle->combinacion_id
+                        );
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning(
+                            "No se pudo devolver el stock de la venta anulada #{$idventa} (detalle {$detalle->id_detalle}): " . $e->getMessage()
+                        );
+                    }
+                }
 
                 // Si la venta tenía comisión de revendedor sin pagar, se anula con ella
                 RevendedorComision::where('venta_id', $idventa)
