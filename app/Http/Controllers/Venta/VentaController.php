@@ -33,7 +33,7 @@ class VentaController extends Controller
     public function index()
     {
         // Tablero por estados (como el de fletes): a cobrar / cobradas / anuladas
-        $base = fn () => Venta::with(['cliente', 'revendedor', 'movimientos.cuenta', 'tipoComprobante', 'sucursal']);
+        $base = fn () => Venta::with(['cliente', 'revendedor', 'movimientos.cuenta', 'tipoComprobante', 'sucursal', 'detalles.articulo', 'detalles.combinacion']);
 
         $aCobrar = $base()->where('estado', 'a cobrar')
             ->orderByDesc('fecha')->orderByDesc('idventa')

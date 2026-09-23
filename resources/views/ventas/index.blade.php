@@ -161,20 +161,28 @@
 @php
     // Datos de cada venta para la tarjeta (los mismos que tenía la grilla)
     $cardDatos = function ($v) {
+        $productos = $v->detalles->map(function ($d) {
+            $nombre = optional($d->articulo)->nombre ?: 'Producto eliminado';
+            $medida = optional($d->combinacion)->combinacion;
+            return (int) $d->cantidad . 'x ' . $nombre . ($medida ? ' — ' . $medida : '');
+        })->all();
+
         return [
-            'cliente'  => trim(optional($v->cliente)->nombre . ' ' . optional($v->cliente)->paterno) ?: '—',
-            'telefono' => optional($v->cliente)->telefono,
-            'compSuc'  => trim(implode(' · ', array_filter([
+            'cliente'   => trim(optional($v->cliente)->nombre . ' ' . optional($v->cliente)->paterno) ?: '—',
+            'telefono'  => optional($v->cliente)->telefono,
+            'compSuc'   => trim(implode(' · ', array_filter([
                 optional($v->tipoComprobante)->descripcion,
                 optional($v->sucursal)->nombre,
             ]))),
-            'buscar'   => mb_strtolower(implode(' ', array_filter([
+            'productos' => $productos,
+            'buscar'    => mb_strtolower(implode(' ', array_filter([
                 $v->num_folio, 'venta #' . $v->idventa,
                 optional($v->cliente)->nombre, optional($v->cliente)->paterno,
                 optional($v->cliente)->telefono,
                 optional($v->cliente)->dni_cuit,
                 optional($v->tipoComprobante)->descripcion,
                 optional($v->sucursal)->nombre,
+                implode(' ', $productos),
             ]))),
         ];
     };
@@ -203,6 +211,12 @@
                 @if(optional($v->cliente)->dni_cuit)<div class="dato"><i class="fas fa-id-card"></i> {{ $v->cliente->dni_cuit }}</div>@endif
                 <div class="dato"><i class="fas fa-calendar"></i> {{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y') }}</div>
                 @if($d['compSuc'])<div class="dato"><i class="fas fa-file-alt"></i> {{ $d['compSuc'] }}</div>@endif
+                @if(!empty($d['productos']))
+                <div class="dato" style="line-height:1.7;">
+                    <i class="fas fa-box"></i>
+                    @foreach($d['productos'] as $p){{ $p }}@if(!$loop->last)<br>@endif @endforeach
+                </div>
+                @endif
                 @php $cobradoV = (float) $v->movimientos->sum('total'); @endphp
                 @if($cobradoV > 0.009)
                     <div class="monto" style="color:#0d8a4f;">${{ number_format($cobradoV, 2, ',', '.') }} <span style="color:#6E7A96;font-weight:400;font-size:12px;">de ${{ number_format($v->total_con_iva, 2, ',', '.') }}</span></div>
@@ -244,6 +258,12 @@
                 <div class="dato"><i class="fas fa-user"></i> {{ $d['cliente'] }}</div>
                 <div class="dato"><i class="fas fa-calendar"></i> {{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y') }}</div>
                 @if($d['compSuc'])<div class="dato"><i class="fas fa-file-alt"></i> {{ $d['compSuc'] }}</div>@endif
+                @if(!empty($d['productos']))
+                <div class="dato" style="line-height:1.7;">
+                    <i class="fas fa-box"></i>
+                    @foreach($d['productos'] as $p){{ $p }}@if(!$loop->last)<br>@endif @endforeach
+                </div>
+                @endif
                 <div class="monto">${{ number_format($v->total_con_iva, 2, ',', '.') }}</div>
                 @if($v->movimientos->isNotEmpty())
                 <div class="vb-plata">
@@ -273,6 +293,12 @@
                 <div class="dato"><i class="fas fa-user"></i> {{ $d['cliente'] }}</div>
                 <div class="dato"><i class="fas fa-calendar"></i> {{ \Carbon\Carbon::parse($v->fecha)->format('d/m/Y') }}</div>
                 @if($d['compSuc'])<div class="dato"><i class="fas fa-file-alt"></i> {{ $d['compSuc'] }}</div>@endif
+                @if(!empty($d['productos']))
+                <div class="dato" style="line-height:1.7;">
+                    <i class="fas fa-box"></i>
+                    @foreach($d['productos'] as $p){{ $p }}@if(!$loop->last)<br>@endif @endforeach
+                </div>
+                @endif
                 <div class="monto" style="text-decoration:line-through;">${{ number_format($v->total_con_iva, 2, ',', '.') }}</div>
                 <div class="vb-btns">
                     <button class="vb-btn" onclick="getDetailVenta({{ $v->idventa }})"><i class="fas fa-eye"></i> Ver</button>
