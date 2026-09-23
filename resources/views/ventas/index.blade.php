@@ -161,10 +161,20 @@
 @php
     // Datos de cada venta para la tarjeta (los mismos que tenía la grilla)
     $cardDatos = function ($v) {
-        $productos = $v->detalles->map(function ($d) {
+        $costoTotal = 0;
+        $productos = $v->detalles->map(function ($d) use (&$costoTotal) {
             $nombre = optional($d->articulo)->nombre ?: 'Producto eliminado';
             $medida = optional($d->combinacion)->combinacion;
-            return (int) $d->cantidad . 'x ' . $nombre . ($medida ? ' — ' . $medida : '');
+            // Costo actual del producto/variante (no queda guardado el costo
+            // del momento de la venta): la ganancia es una estimación a
+            // precio de compra de hoy, no un costeo histórico exacto.
+            $costoUnitario = $d->combinacion_id
+                ? (float) optional($d->combinacion)->pcompra_variante
+                : (float) optional($d->articulo)->pcompra_con_iva;
+            $costoTotal += $costoUnitario * $d->cantidad;
+
+            return (int) $d->cantidad . 'x ' . $nombre . ($medida ? ' — ' . $medida : '')
+                . ' — $' . number_format($d->subtotal_con_iva, 0, ',', '.');
         })->all();
 
         return [
@@ -175,6 +185,7 @@
                 optional($v->sucursal)->nombre,
             ]))),
             'productos' => $productos,
+            'ganancia'  => (float) $v->total_con_iva - $costoTotal,
             'buscar'    => mb_strtolower(implode(' ', array_filter([
                 $v->num_folio, 'venta #' . $v->idventa,
                 optional($v->cliente)->nombre, optional($v->cliente)->paterno,
@@ -234,6 +245,9 @@
                     @endif
                 </div>
                 @endif
+                <div class="dato" style="color:{{ $d['ganancia'] >= 0 ? '#0d8a4f' : '#b4552d' }};font-weight:600;">
+                    <i class="fas fa-chart-line"></i> Ganancia: ${{ number_format($d['ganancia'], 2, ',', '.') }}
+                </div>
                 <div class="vb-btns">
                     <button class="vb-btn cobrar" onclick="openPagoModal({{ $v->idventa }}, {{ $v->sucursal_id ?: 'null' }})"><i class="fas fa-dollar-sign"></i> Cobrar</button>
                     <button class="vb-btn" onclick="getDetailVenta({{ $v->idventa }})"><i class="fas fa-eye"></i> Ver</button>
@@ -265,6 +279,9 @@
                 </div>
                 @endif
                 <div class="monto">${{ number_format($v->total_con_iva, 2, ',', '.') }}</div>
+                <div class="dato" style="color:{{ $d['ganancia'] >= 0 ? '#0d8a4f' : '#b4552d' }};font-weight:600;">
+                    <i class="fas fa-chart-line"></i> Ganancia: ${{ number_format($d['ganancia'], 2, ',', '.') }}
+                </div>
                 @if($v->movimientos->isNotEmpty())
                 <div class="vb-plata">
                     <b><i class="fas fa-piggy-bank"></i> Dónde está la plata</b>
