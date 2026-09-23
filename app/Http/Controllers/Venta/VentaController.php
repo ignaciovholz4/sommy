@@ -236,6 +236,26 @@ class VentaController extends Controller
                 RevendedorComision::where('venta_id', $idventa)
                     ->whereIn('estado', ['pendiente', 'aprobada'])
                     ->update(['estado' => 'anulada']);
+
+                // Si ya tenía un flete asignado, no puede seguir en el tablero de
+                // Envíos como si nada: la venta que lo originó ya no existe.
+                $envio = \App\Models\Envio::where('venta_id', $idventa)->with('gasto')->first();
+                if ($envio) {
+                    if ($envio->gasto && $envio->gasto->estado === 'pagado') {
+                        // El flete ya se pagó: no se borra el gasto (es plata real
+                        // que ya salió), solo se marca el envío como fallido para
+                        // que salga de "en camino"/"para despachar".
+                        $envio->estado = 'fallido';
+                        $envio->notas = trim(($envio->notas ?? '') . "\nVenta anulada el " . now()->format('d/m/Y H:i') . ': el flete ya estaba pagado, revisar a mano.');
+                        $envio->save();
+                    } else {
+                        $gasto = $envio->gasto;
+                        $envio->delete();
+                        if ($gasto && $gasto->estado === 'pendiente' && !$gasto->movimiento_id) {
+                            $gasto->delete();
+                        }
+                    }
+                }
             }
         );
 

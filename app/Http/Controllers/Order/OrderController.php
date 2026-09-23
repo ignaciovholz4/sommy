@@ -510,8 +510,47 @@ class OrderController extends Controller
 
             // 🔹 Si el estado es anulado (6)
             if ((int)$request->statusId === 6) {
+                // Si el stock ya se había descontado (pago confirmado o flete
+                // despachado), hay que devolverlo ANTES de borrar las
+                // asignaciones — si no, la mercadería queda descontada para
+                // siempre aunque el pedido se anule.
+                if ($order->stock_descontado_at) {
+                    foreach (order_stock_asignacion::where('order_id', $order->order_id)->get() as $asig) {
+                        try {
+                            app(StockController::class)->incrementarStockEnSucursal(
+                                $asig->sucursal_id,
+                                $asig->product_id,
+                                $asig->cantidad,
+                                $asig->combinacion_id
+                            );
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning(
+                                "No se pudo devolver stock del pedido anulado #{$order->order_id}: " . $e->getMessage()
+                            );
+                        }
+                    }
+                    $order->stock_descontado_at = null;
+                }
+
                 // Eliminar todas las asignaciones de stock de esta orden
                 order_stock_asignacion::where('order_id', $order->order_id)->delete();
+
+                // Cancelar el flete asociado si lo tenía (mismo criterio que
+                // al anular una venta manual).
+                $envio = \App\Models\Envio::where('order_ecommerce_id', $order->order_id)->with('gasto')->first();
+                if ($envio) {
+                    if ($envio->gasto && $envio->gasto->estado === 'pagado') {
+                        $envio->estado = 'fallido';
+                        $envio->notas = trim(($envio->notas ?? '') . "\nPedido anulado el " . now()->format('d/m/Y H:i') . ': el flete ya estaba pagado, revisar a mano.');
+                        $envio->save();
+                    } else {
+                        $gasto = $envio->gasto;
+                        $envio->delete();
+                        if ($gasto && $gasto->estado === 'pendiente' && !$gasto->movimiento_id) {
+                            $gasto->delete();
+                        }
+                    }
+                }
             }
 
             // 🤝 Comisión del revendedor: se aprueba al entregar y se anula si se cae el pedido.
