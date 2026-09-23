@@ -102,7 +102,13 @@ if (addArticuloBtn) {
 
         const id = selected.value;
         const nombre = selected.text;
-        const precio = parseFloat(selected.dataset.precio);
+        const precioMinorista = parseFloat(selected.dataset.precio) || 0;
+        const precioMayorista = parseFloat(selected.dataset.precioMayorista) || 0;
+        // Si el tipo de venta ya está en "mayorista" al agregar el artículo, arranca
+        // con ese precio (si el producto tiene uno cargado); si no, el minorista de siempre.
+        const tipoVentaSelect = document.querySelector("#tipo_venta");
+        const esMayorista = tipoVentaSelect && tipoVentaSelect.value === 'mayorista';
+        const precio = (esMayorista && precioMayorista > 0) ? precioMayorista : precioMinorista;
         const ivaDefault = selected.dataset.iva;
         const descuento = parseFloat(selected.dataset.descuento) || 0;
         const stockDisponible = parseInt(selected.dataset.stock) || 0;
@@ -129,6 +135,8 @@ if (addArticuloBtn) {
         row.setAttribute("data-combinacion", selected.dataset.combinacion || '');
         row.setAttribute("data-tipo", selected.dataset.tipo || 1);
         row.setAttribute("data-stock", stockDisponible);
+        row.setAttribute("data-precio-minorista", precioMinorista);
+        row.setAttribute("data-precio-mayorista", precioMayorista);
 
         row.innerHTML = `
             <td>
@@ -188,9 +196,35 @@ if (addArticuloBtn) {
     });
 }
 
+/**
+ * Al cambiar "Tipo de venta" entre minorista/mayorista, recalcula el precio
+ * de TODAS las filas ya cargadas según el precio mayorista guardado en cada
+ * artículo (si no tiene precio mayorista cargado, se queda con el minorista).
+ */
+function aplicarTipoVentaAFilas() {
+    const tipoVentaSelect = document.querySelector("#tipo_venta");
+    if (!tipoVentaSelect) return;
+    const esMayorista = tipoVentaSelect.value === 'mayorista';
+
+    document.querySelectorAll("#ventaItems tr").forEach(row => {
+        const precioMinorista = parseFloat(row.dataset.precioMinorista) || 0;
+        const precioMayorista = parseFloat(row.dataset.precioMayorista) || 0;
+        const precioInput = row.querySelector(".precio");
+        if (!precioInput) return;
+        precioInput.value = (esMayorista && precioMayorista > 0) ? precioMayorista : precioMinorista;
+    });
+
+    calcularTotal();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const sucursalSelect = document.querySelector("#sucursal_id");
     const articuloSelect = document.querySelector("#articuloSelect");
+
+    const tipoVentaSelect = document.querySelector("#tipo_venta");
+    if (tipoVentaSelect) {
+        tipoVentaSelect.addEventListener("change", aplicarTipoVentaAFilas);
+    }
 
     if (sucursalSelect) {
         sucursalSelect.addEventListener("change", function() {
@@ -213,6 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     data.articulos.forEach(a => {
                         const opt = new Option(`${a.nombre} (${a.codigo})`, a.idarticulo, false, false);
                         opt.dataset.precio = a.pventa_con_iva;
+                        opt.dataset.precioMayorista = a.pventa_mayorista || '';
                         opt.dataset.iva = a.iva_venta;
                         opt.dataset.descuento = a.descuento;
                         opt.dataset.stock = a.stock;
@@ -225,6 +260,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         opt.dataset.combinacion = c.idcombinacion;
                         opt.dataset.tipo = "2";
                         opt.dataset.precio = c.pventa_con_iva;
+                        opt.dataset.precioMayorista = c.pventa_mayorista || '';
                         opt.dataset.iva = c.iva_venta;
                         opt.dataset.stock = c.stock;
                         opt.dataset.descuento = 0;
