@@ -90,6 +90,11 @@
     .pub-hist-row .prompt-txt { color: #6E7A96; font-weight: 300; margin-top: 3px; white-space: pre-wrap; }
     .pub-hist-row .estado-ok { color: #166534; font-weight: 600; }
     .pub-hist-row .estado-error { color: #b45309; font-weight: 600; }
+    .pub-galeria-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 65vh; overflow-y: auto; }
+    .pub-galeria-item { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; background: #F8FAFC; border: 1px solid #E7EAF2; }
+    .pub-galeria-item img { width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block; transition: transform .15s; }
+    .pub-galeria-item:hover img { transform: scale(1.04); }
+    .pub-galeria-item .fecha { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, rgba(14,23,48,.75), rgba(14,23,48,0)); color: #fff; font-size: 9.5px; font-weight: 600; padding: 12px 8px 5px; }
 
     /* Variantes (5 opciones para elegir) */
     .pub-variantes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 10px; }
@@ -202,6 +207,7 @@
                 <button class="pub-btn sec chico" onclick="renderReferencias(); $('#modalReferencias').modal('show')"><i class="fas fa-images"></i> Imágenes de referencia</button>
                 <button class="pub-btn sec chico" onclick="$('#modalBrief').modal('show')"><i class="fas fa-list-check"></i> Brief de campaña</button>
                 <button class="pub-btn sec chico" onclick="abrirHistorial()"><i class="fas fa-clock-rotate-left"></i> Historial</button>
+                <button class="pub-btn sec chico" onclick="abrirGaleria()"><i class="fas fa-images"></i> Galería</button>
                 <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
             </div>
         </div>
@@ -454,6 +460,22 @@
                 <div id="histCargando" class="pub-aviso">Cargando...</div>
                 <div id="histConversaciones" class="pub-hist-lista"></div>
                 <div id="histPrompts" class="pub-hist-lista" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Galería: TODAS las imágenes generadas alguna vez --}}
+<div class="modal fade" id="modalGaleria" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-images" style="color:#2563EB;"></i> Galería de imágenes generadas</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="galeriaCargando" class="pub-aviso">Cargando...</div>
+                <div id="galeriaGrid" class="pub-galeria-grid"></div>
             </div>
         </div>
     </div>
@@ -1320,6 +1342,37 @@ function abrirHistorial() {
         })
         .catch(() => { document.getElementById('histCargando').textContent = 'No se pudo cargar el historial.'; })
         .finally(() => { document.getElementById('histCargando').style.display = 'none'; });
+}
+
+/* ── Galería: todas las imágenes generadas alguna vez, con acceso directo a cada una ── */
+let GALERIA_CACHE = null;
+
+function abrirGaleria() {
+    $('#modalGaleria').modal('show');
+    if (GALERIA_CACHE) { renderGaleria(); return; }
+    document.getElementById('galeriaCargando').style.display = '';
+    fetch('{{ route('publicaciones.galeria') }}', { headers: { 'Accept': 'application/json' } })
+        .then(r => r.json())
+        .then(data => {
+            GALERIA_CACHE = data.imagenes || [];
+            renderGaleria();
+        })
+        .catch(() => { document.getElementById('galeriaCargando').textContent = 'No se pudo cargar la galería.'; })
+        .finally(() => { document.getElementById('galeriaCargando').style.display = 'none'; });
+}
+
+function renderGaleria() {
+    const grid = document.getElementById('galeriaGrid');
+    grid.innerHTML = GALERIA_CACHE.length ? '' : '<div class="pub-aviso" style="padding:14px;">Todavía no se generó ninguna imagen.</div>';
+    GALERIA_CACHE.forEach(img => {
+        const fecha = new Date(img.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const item = document.createElement('div');
+        item.className = 'pub-galeria-item';
+        item.title = 'Abrir imagen completa';
+        item.innerHTML = '<img src="' + img.url + '" loading="lazy"><div class="fecha">' + fecha + '</div>';
+        item.onclick = () => window.open(img.url, '_blank');
+        grid.appendChild(item);
+    });
 }
 
 function cambiarTabHistorial(tab) {

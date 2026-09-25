@@ -276,6 +276,26 @@ class PublicacionController extends Controller
         }
     }
 
+    /** Galería: TODAS las imágenes generadas alguna vez (ok), para verlas y entrar a cualquiera sin buscar en el chat. */
+    public function galeria()
+    {
+        $imagenes = DB::table('publicaciones_generaciones')
+            ->where('estado', 'ok')
+            ->whereNotNull('imagen_path')
+            ->orderByDesc('id')
+            ->limit(300)
+            ->get(['id', 'imagen_path', 'prompt_final', 'formato', 'created_at'])
+            ->map(fn ($g) => [
+                'id'         => $g->id,
+                'url'        => asset($g->imagen_path),
+                'prompt'     => $g->prompt_final,
+                'formato'    => $g->formato,
+                'created_at' => $g->created_at,
+            ]);
+
+        return response()->json(['status' => 1, 'imagenes' => $imagenes]);
+    }
+
     /** Historial de conversaciones del chat + prompts de imagen generados, para revisar qué se pidió y qué salió. */
     public function historial()
     {

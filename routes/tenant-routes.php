@@ -979,6 +979,7 @@ Route::post('/publicaciones/campanas', [\App\Http\Controllers\Publicaciones\Publ
 Route::post('/publicaciones/brief', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'interpretarBrief'])->name('publicaciones.brief')->middleware(['auth','verified']);
 Route::post('/publicaciones/feed/orden', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'reordenarFeed'])->name('publicaciones.feed-orden')->middleware(['auth','verified']);
 Route::get('/publicaciones/historial', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'historial'])->name('publicaciones.historial')->middleware(['auth','verified']);
+Route::get('/publicaciones/galeria', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'galeria'])->name('publicaciones.galeria')->middleware(['auth','verified']);
 Route::post('/publicaciones/recursos', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'guardarRecurso'])->name('publicaciones.recursos')->middleware(['auth','verified']);
 Route::delete('/publicaciones/recursos/{id}', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'eliminarRecurso'])->name('publicaciones.recursos.eliminar')->middleware(['auth','verified']);
 
