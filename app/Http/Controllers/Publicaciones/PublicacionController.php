@@ -119,6 +119,21 @@ class PublicacionController extends Controller
         }
     }
 
+    /** Feed Planner: guarda el nuevo orden manual (drag&drop) de las piezas visibles en el simulador de feed. */
+    public function reordenarFeed(Request $request)
+    {
+        $request->validate([
+            'orden'   => 'required|array|min:1',
+            'orden.*' => 'integer',
+        ]);
+
+        foreach ($request->orden as $posicion => $id) {
+            DB::table('publicaciones')->where('id', $id)->update(['orden_feed' => $posicion]);
+        }
+
+        return response()->json(['status' => 1]);
+    }
+
     /** Entrenamiento: guarda la voz de marca (textos) y el estilo visual (imágenes). */
     public function guardarAjustes(Request $request)
     {

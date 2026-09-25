@@ -44,7 +44,7 @@ class ImagenIaService
         $rutasReferencia = $this->rutasReferencia();
         $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, $promptLibre);
 
-        $resultado = $this->provider->generateScene($prompt, $rutaFotoProducto, $rutasReferencia, $formato, 1);
+        $resultado = $this->generarYRegistrar($prompt, $rutaFotoProducto, $rutasReferencia, $formato, 1);
 
         if (isset($resultado[0]['error'])) {
             throw new \RuntimeException($resultado[0]['error']);
@@ -66,7 +66,7 @@ class ImagenIaService
         $escena = 'dormitorio'; // único ambiente base: homogeneidad de feed
         $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia);
 
-        return $this->provider->generateScene($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
     }
 
     /**
@@ -82,7 +82,7 @@ class ImagenIaService
         $rutasReferencia = $this->rutasReferencia();
         $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia);
 
-        return $this->provider->generateScene($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
     }
 
     /**
@@ -98,7 +98,44 @@ class ImagenIaService
         $rutasReferencia = $this->rutasReferencia();
         $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia);
 
-        return $this->provider->generateScene($prompt, null, $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, null, $rutasReferencia, $formato, $cantidad);
+    }
+
+    /** Genera y deja registro en publicaciones_generaciones (historial/reproducibilidad) de cada resultado, ok o error. */
+    protected function generarYRegistrar(string $prompt, ?string $rutaFotoProducto, array $rutasReferencia, string $formato, int $cantidad): array
+    {
+        $modelo = config('services.gemini.image_model', 'gemini-3.1-flash-lite-image');
+
+        try {
+            $resultados = $this->provider->generateScene($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
+        } catch (\Throwable $e) {
+            $this->registrarGeneracion($modelo, $formato, $prompt, 'error', $e->getMessage(), null);
+            throw $e;
+        }
+
+        foreach ($resultados as $r) {
+            $this->registrarGeneracion($modelo, $formato, $prompt, isset($r['error']) ? 'error' : 'ok', $r['error'] ?? null, $r['path'] ?? null);
+        }
+
+        return $resultados;
+    }
+
+    protected function registrarGeneracion(string $modelo, string $formato, string $prompt, string $estado, ?string $error, ?string $imagenPath): void
+    {
+        try {
+            DB::table('publicaciones_generaciones')->insert([
+                'modelo'       => $modelo,
+                'formato'      => $formato,
+                'prompt_final' => $prompt,
+                'estado'       => $estado,
+                'error'        => $error,
+                'imagen_path'  => $imagenPath,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ]);
+        } catch (\Throwable $e) {
+            // El historial nunca debe romper una generación real.
+        }
     }
 
     protected function extraConInstrucciones(?string $extraEscena, string $instrucciones): ?string

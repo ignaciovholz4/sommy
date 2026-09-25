@@ -108,7 +108,13 @@
     .pub-feed-item .badge-prog { position: absolute; bottom: 4px; left: 4px; right: 4px; background: rgba(27,43,90,.85); color: #fff; font-size: 8.5px; font-weight: 600; text-align: center; border-radius: 6px; padding: 2px 4px; }
     .pub-feed-item.preview { outline: 2px solid #2563EB; outline-offset: -2px; }
     .pub-feed-item .badge-preview { position: absolute; top: 4px; left: 4px; right: 4px; background: rgba(37,99,235,.9); color: #fff; font-size: 8.5px; font-weight: 600; text-align: center; border-radius: 6px; padding: 2px 4px; }
+    .pub-feed-item[draggable=true] { cursor: grab; }
+    .pub-feed-item.arrastrando { opacity: .4; }
+    .pub-feed-item.sobre-drop { outline: 2px dashed #2563EB; outline-offset: -2px; }
     .pub-feed-empty { font-size: 12.5px; color: #6E7A96; padding: 20px 0; }
+    .pub-feed-count { display: flex; gap: 6px; margin-bottom: 10px; }
+    .pub-feed-count-btn { border: 1.5px solid #E7EAF2; background: #fff; color: #47536F; border-radius: 999px; width: 30px; height: 26px; font-size: 11.5px; font-weight: 600; cursor: pointer; }
+    .pub-feed-count-btn.activo { background: #E0F2FE; border-color: #7FD4F5; color: #1B2B5A; }
 
     /* Chat + feed en vivo, lado a lado */
     .pub-chat-feed-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; margin-top: 12px; height: calc(100vh - 175px); min-height: 460px; }
@@ -184,7 +190,13 @@
             </div>
             <div class="pub-feed-header">
                 <img src="{{ asset('imagenes/marca/sommy-logo-header.png') }}" class="pub-feed-avatar" onerror="this.style.display='none'">
-                <div><strong id="pubFeedHandle">&#64;sommy_colchoneria</strong><div class="pub-aviso" style="margin:0;">Así se va viendo tu feed a medida que generás, guardás y programás</div></div>
+                <div><strong id="pubFeedHandle">&#64;sommy_colchoneria</strong><div class="pub-aviso" style="margin:0;">Arrastrá para reordenar. Así se va viendo tu feed a medida que generás, guardás y programás</div></div>
+            </div>
+            <div class="pub-feed-count">
+                <button class="pub-feed-count-btn activo" data-n="9" onclick="cambiarCantidadFeed(9, this)">9</button>
+                <button class="pub-feed-count-btn" data-n="12" onclick="cambiarCantidadFeed(12, this)">12</button>
+                <button class="pub-feed-count-btn" data-n="18" onclick="cambiarCantidadFeed(18, this)">18</button>
+                <button class="pub-feed-count-btn" data-n="24" onclick="cambiarCantidadFeed(24, this)">24</button>
             </div>
             <div style="flex:1; overflow-y:auto;">
                 <div class="pub-feed-grid" id="pubFeedGrid"></div>
@@ -1273,10 +1285,21 @@ function cambiarRedFeed(red, btn) {
     renderFeedSimulado();
 }
 
+let feedCantidad = 9;
+function cambiarCantidadFeed(n, btn) {
+    feedCantidad = n;
+    document.querySelectorAll('.pub-feed-count-btn').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    renderFeedSimulado();
+}
+
 function renderFeedSimulado() {
-    const items = BIBLIOTECA.filter(b => b.estado === 'publicada' || b.estado === 'programada')
-        .filter(b => b.imagen_url || b.imagen_final)
+    const conOrden = BIBLIOTECA.filter(b => (b.estado === 'publicada' || b.estado === 'programada') && (b.imagen_url || b.imagen_final) && b.orden_feed !== null && b.orden_feed !== undefined)
+        .sort((a, b) => a.orden_feed - b.orden_feed);
+    const sinOrden = BIBLIOTECA.filter(b => (b.estado === 'publicada' || b.estado === 'programada') && (b.imagen_url || b.imagen_final) && (b.orden_feed === null || b.orden_feed === undefined))
         .sort((a, b) => new Date(b.programado_para || b.created_at) - new Date(a.programado_para || a.created_at));
+    const items = conOrden.concat(sinOrden);
+
     const cont = document.getElementById('pubFeedGrid');
     cont.innerHTML = '';
 
@@ -1289,14 +1312,41 @@ function renderFeedSimulado() {
     }
 
     document.getElementById('pubFeedEmpty').style.display = (items.length || (varianteElegida && !pubGuardadaId)) ? 'none' : '';
-    items.slice(0, 23).forEach(b => {
+    items.slice(0, feedCantidad).forEach(b => {
         const url = b.imagen_url || (BASE_URL + '/' + b.imagen_final);
         const item = document.createElement('div');
         item.className = 'pub-feed-item';
+        item.draggable = true;
+        item.dataset.id = b.id;
         item.innerHTML = '<img src="' + url + '">' +
             (b.estado === 'programada' ? '<div class="badge-prog">Programada · ' + new Date(b.programado_para).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) + '</div>' : '');
+        item.addEventListener('dragstart', () => item.classList.add('arrastrando'));
+        item.addEventListener('dragend', () => item.classList.remove('arrastrando'));
+        item.addEventListener('dragover', e => { e.preventDefault(); item.classList.add('sobre-drop'); });
+        item.addEventListener('dragleave', () => item.classList.remove('sobre-drop'));
+        item.addEventListener('drop', e => {
+            e.preventDefault();
+            item.classList.remove('sobre-drop');
+            const origen = cont.querySelector('.arrastrando');
+            if (!origen || origen === item) return;
+            const nodos = Array.from(cont.children).filter(n => n.dataset && n.dataset.id);
+            const idxOrigen = nodos.indexOf(origen), idxDestino = nodos.indexOf(item);
+            if (idxOrigen < idxDestino) item.after(origen); else item.before(origen);
+            guardarOrdenFeed();
+        });
         cont.appendChild(item);
     });
+}
+
+function guardarOrdenFeed() {
+    const ids = Array.from(document.getElementById('pubFeedGrid').children)
+        .filter(n => n.dataset && n.dataset.id)
+        .map(n => parseInt(n.dataset.id, 10));
+    ids.forEach((id, i) => {
+        const b = BIBLIOTECA.find(x => x.id === id);
+        if (b) b.orden_feed = i;
+    });
+    postJson('{{ route('publicaciones.feed-orden') }}', { orden: ids }).catch(() => {});
 }
 
 /* ── Configurar (producto/combo + formato + precio) ── */
