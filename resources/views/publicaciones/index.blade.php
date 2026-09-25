@@ -1248,12 +1248,24 @@ function renderHistorialListas() {
     HISTORIAL_CACHE.conversaciones.forEach(c => {
         const nombre = c.producto_id ? ((PRODUCTOS.find(p => p.id === c.producto_id) || {}).nombre || 'Producto') : 'Contenido de marca';
         const tags = (c.genero_imagenes ? '<span>Imágenes</span>' : '') + (c.genero_textos ? '<span>Texto</span>' : '');
+        let imagenesHtml = '';
+        if (c.imagenes_json) {
+            try {
+                const imgs = JSON.parse(c.imagenes_json).filter(v => !v.error);
+                if (imgs.length) {
+                    imagenesHtml = '<div class="pub-msg-imagenes">' + imgs.map(v =>
+                        '<div class="pub-variante chica" onclick="window.open(\'' + v.url + '\', \'_blank\')"><img src="' + v.url + '"></div>'
+                    ).join('') + '</div>';
+                }
+            } catch (e) {}
+        }
         const row = document.createElement('div');
         row.className = 'pub-hist-row';
         row.innerHTML =
             '<div class="fecha">' + new Date(c.created_at).toLocaleString('es-AR') + ' · ' + nombre + '</div>' +
             '<div class="msg-user">' + String(c.mensaje_usuario).replace(/</g, '&lt;') + '</div>' +
             '<div class="msg-resp">' + String(c.respuesta_asistente || '').replace(/</g, '&lt;') + '</div>' +
+            imagenesHtml +
             (tags ? '<div class="tags">' + tags + '</div>' : '');
         contConv.appendChild(row);
     });

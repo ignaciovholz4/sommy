@@ -265,6 +265,7 @@ class PublicacionController extends Controller
                 'respuesta_asistente'  => $resultado['reply'] ?? null,
                 'genero_imagenes'      => isset($resultado['imagenes']),
                 'genero_textos'        => isset($resultado['textos']),
+                'imagenes_json'        => isset($resultado['imagenes']) ? json_encode($resultado['imagenes'], JSON_UNESCAPED_UNICODE) : null,
                 'created_at'           => now(),
                 'updated_at'           => now(),
             ]);
