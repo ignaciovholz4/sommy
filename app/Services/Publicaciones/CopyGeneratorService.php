@@ -96,6 +96,53 @@ TXT;
         ];
     }
 
+    /**
+     * Textos para contenido de marca SIN producto puntual (tips de descanso,
+     * estilo de vida, informativo). No hay ficha de producto ni precio.
+     *
+     * @return array{titulo_ml: string, desc_ml: string, caption: string, texto_wa: string}
+     */
+    public function generarMarca(string $instrucciones): array
+    {
+        $vozMarca = DB::table('publicaciones_ajustes')->value('voz_marca') ?: self::BRAND_VOICE;
+
+        $system = "Sos el redactor publicitario de Sommy.\n\n" . $vozMarca . "\n\n"
+            . "Vas a escribir contenido de marca que NO promociona un producto puntual (ej: un tip de descanso, "
+            . "contenido informativo o de estilo de vida). No inventes ni menciones precios, medidas ni modelos.\n\n"
+            . "Respondes UNICAMENTE un objeto JSON valido, sin markdown ni texto extra, con estas claves:\n"
+            . "- titulo_ml: un titulo corto (uso interno, maximo 60 caracteres).\n"
+            . "- desc_ml: un texto breve de apoyo (2-3 lineas), sin emojis.\n"
+            . "- caption: caption para Instagram/Facebook con emojis moderados y 5-8 hashtags al final (#descanso #sommy y afines).\n"
+            . "- texto_wa: version corta del mismo mensaje para difusion por WhatsApp (2-4 lineas).";
+
+        $ejemplos = $this->ejemplosPrevios();
+
+        $user = "PEDIDO DEL USUARIO PARA ESTA PIEZA DE CONTENIDO DE MARCA: " . trim($instrucciones);
+
+        if ($ejemplos) {
+            $user .= "\n\nEJEMPLOS DE PUBLICACIONES ANTERIORES DE LA MARCA (imitar tono y estructura, no copiar literal):\n" . $ejemplos;
+        }
+
+        $contextos = DB::table('publicaciones_recursos')
+            ->where('tipo', 'contexto')->where('activo', 1)
+            ->get(['titulo', 'contenido']);
+        if ($contextos->isNotEmpty()) {
+            $user .= "\n\nINFORMACIÓN DE LA MARCA (usala cuando sume; no inventar nada que no esté acá):\n"
+                . $contextos->map(fn ($c) => "- {$c->titulo}: {$c->contenido}")->implode("\n");
+        }
+
+        $response = $this->client->chat($system, [['role' => 'user', 'content' => $user]], [], config('services.publicaciones.copy_model', 'gpt-4o-mini'), 0.8);
+
+        $json = $this->extraerJson((string) $response->text);
+
+        return [
+            'titulo_ml' => mb_substr(trim($json['titulo_ml'] ?? 'Sommy'), 0, 60),
+            'desc_ml'   => trim($json['desc_ml'] ?? ''),
+            'caption'   => trim($json['caption'] ?? ''),
+            'texto_wa'  => trim($json['texto_wa'] ?? ''),
+        ];
+    }
+
     /** Ultimas publicaciones guardadas, como referencia de tono para la IA. */
     protected function ejemplosPrevios(int $max = 3): string
     {

@@ -161,7 +161,7 @@ class PublicacionController extends Controller
     public function chat(Request $request, ChatEstudioService $chat)
     {
         $request->validate([
-            'producto_id' => 'required|integer',
+            'producto_id' => 'nullable|integer',
             'es_combo'    => 'nullable|boolean',
             'formato'     => 'required|string|in:feed,story,ml',
             'con_precio'  => 'required|boolean',
@@ -172,9 +172,13 @@ class PublicacionController extends Controller
         ]);
 
         $esCombo = (bool) $request->boolean('es_combo');
-        $ficha = $this->fichaParaGeneracion((int) $request->producto_id, $esCombo);
-        $articulo = Articulo::findOrFail($request->producto_id);
-        $rutaFoto = public_path('imagenes/articulos/' . $articulo->imagen);
+        $ficha = null;
+        $rutaFoto = null;
+        if ($request->filled('producto_id')) {
+            $ficha = $this->fichaParaGeneracion((int) $request->producto_id, $esCombo);
+            $articulo = Articulo::findOrFail($request->producto_id);
+            $rutaFoto = public_path('imagenes/articulos/' . $articulo->imagen);
+        }
 
         try {
             $resultado = $chat->responder(
@@ -283,7 +287,7 @@ class PublicacionController extends Controller
     public function guardar(Request $request)
     {
         $request->validate([
-            'producto_id'         => 'required|integer',
+            'producto_id'         => 'nullable|integer',
             'formato'             => 'required|string|max:20',
             'estilo'              => 'nullable|string|max:30',
             'titulo_ml'           => 'nullable|string|max:120',
@@ -309,7 +313,7 @@ class PublicacionController extends Controller
         if (!is_dir($dir)) {
             mkdir($dir, 0775, true);
         }
-        $nombre = 'pub-' . $request->producto_id . '-' . uniqid() . '.png';
+        $nombre = 'pub-' . ($request->producto_id ?: 'marca') . '-' . uniqid() . '.png';
         file_put_contents($dir . DIRECTORY_SEPARATOR . $nombre, base64_decode($m[1]));
 
         $programado = $request->filled('programado_para') ? \Carbon\Carbon::parse($request->programado_para) : null;

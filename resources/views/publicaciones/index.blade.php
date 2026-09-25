@@ -61,6 +61,8 @@
     .pub-chat-input { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
     .pub-chat-input input[type=text] { flex: 1; border: 1px solid #E7EAF2; border-radius: 999px; padding: 10px 16px; font-size: 13.5px; font-family: 'Poppins', sans-serif; }
     .pub-chat-input .pub-btn { border-radius: 999px; padding: 10px 16px; }
+    .pub-chat-input #btnAdjuntar { padding: 10px 13px; }
+    .pub-chat-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
     /* Variantes (5 opciones para elegir) */
     .pub-variantes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 10px; }
@@ -132,10 +134,6 @@
 <div class="pub-wrap">
     <div class="pub-title">
         <span><i class="fas fa-bullhorn" style="color:#2563EB;"></i> Estudio de Publicaciones</span>
-        <button class="pub-btn sec chico" id="btnConfig" onclick="$('#modalConfig').modal('show')"><i class="fas fa-sliders-h"></i> <span id="pubConfigResumen">Configurar</span></button>
-        <button class="pub-btn sec chico" onclick="$('#modalEntrenar').modal('show')"><i class="fas fa-graduation-cap"></i> Mi marca</button>
-        <button class="pub-btn sec chico" onclick="$('#modalRecursos').modal('show')"><i class="fas fa-box-open"></i> Recursos</button>
-        <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
     </div>
 
     {{-- Chat (izquierda) + simulador de feed en vivo (derecha) --}}
@@ -147,16 +145,22 @@
                 @else
                     <div class="pub-aviso" style="margin:0;">Sigue siempre el Manual de Identidad Sommy. Lo que le pidas se suma a esa base, no la reemplaza.</div>
                 @endif
-                <button class="pub-btn sec chico" id="btnAdjuntar" onclick="document.getElementById('pubArchivoChat').click()" title="Adjuntar imagen de referencia a Recursos de marca">
-                    <i class="fas fa-paperclip"></i>
-                </button>
-                <input type="file" id="pubArchivoChat" accept="image/*" style="display:none;" onchange="adjuntarArchivoChat(this)">
             </div>
 
             <div class="pub-chat" id="pubChat"></div>
             <div class="pub-chat-input">
+                <button class="pub-btn sec chico" id="btnAdjuntar" onclick="document.getElementById('pubArchivoChat').click()" title="Adjuntar imagen de referencia a Recursos de marca">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input type="file" id="pubArchivoChat" accept="image/*" style="display:none;" onchange="adjuntarArchivoChat(this)">
                 <input type="text" id="pubMensajeChat" placeholder="Ej: generame 10 imágenes de contenido creativo para el feed..." onkeydown="if(event.key==='Enter'){event.preventDefault();enviarChat();}">
                 <button class="pub-btn ia" id="btnEnviarChat" onclick="enviarChat()" @if(!$capacidades['copys']) disabled title="Configurá OPENAI_API_KEY" @endif><i class="fas fa-paper-plane"></i></button>
+            </div>
+            <div class="pub-chat-tools">
+                <button class="pub-btn sec chico" id="btnConfig" onclick="$('#modalConfig').modal('show')"><i class="fas fa-sliders-h"></i> <span id="pubConfigResumen">Configurar</span></button>
+                <button class="pub-btn sec chico" onclick="$('#modalEntrenar').modal('show')"><i class="fas fa-graduation-cap"></i> Mi marca</button>
+                <button class="pub-btn sec chico" onclick="$('#modalRecursos').modal('show')"><i class="fas fa-box-open"></i> Recursos</button>
+                <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
             </div>
         </div>
 
@@ -252,23 +256,33 @@
                 <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
-                <label style="margin-top:0;">Producto o combo</label>
-                <select id="pubProducto"></select>
-                <a id="pubLinkConocimiento" href="#" class="pub-aviso" style="display:inline-block;color:#2563EB;margin-top:6px;">
-                    <i class="fas fa-brain"></i> Conocimiento del producto (contexto para la IA)
-                </a>
-                <div id="pubHistorial" class="pub-hist"></div>
+                <label style="margin-top:0;">Tipo de contenido</label>
+                <div class="pub-opts">
+                    <label class="pub-opt"><input type="radio" name="pubModo" value="producto" checked onchange="cambiarModoContenido()"><span><i class="fas fa-bed"></i> Producto o combo</span></label>
+                    <label class="pub-opt"><input type="radio" name="pubModo" value="marca" onchange="cambiarModoContenido()"><span><i class="fas fa-wand-magic-sparkles"></i> Contenido de marca (sin producto)</span></label>
+                </div>
+                <div class="pub-aviso" id="pubModoAviso" style="display:none;">Ideal para contenido de estilo de vida, informativo o con personas — no hace falta que sea sobre un producto puntual.</div>
+
+                <div id="pubModoProducto">
+                    <label>Producto o combo</label>
+                    <select id="pubProducto"></select>
+                    <a id="pubLinkConocimiento" href="#" class="pub-aviso" style="display:inline-block;color:#2563EB;margin-top:6px;">
+                        <i class="fas fa-brain"></i> Conocimiento del producto (contexto para la IA)
+                    </a>
+                    <div id="pubHistorial" class="pub-hist"></div>
+
+                    <label>Mostrar precio</label>
+                    <div class="pub-opts">
+                        <label class="pub-opt"><input type="radio" name="pubPrecio" value="si" checked><span>Sí</span></label>
+                        <label class="pub-opt"><input type="radio" name="pubPrecio" value="no"><span>No</span></label>
+                    </div>
+                </div>
 
                 <label>Formato</label>
                 <div class="pub-opts">
                     <label class="pub-opt"><input type="radio" name="pubFormato" value="feed" checked><span>Feed 4:5</span></label>
                     <label class="pub-opt"><input type="radio" name="pubFormato" value="story"><span>Historia 9:16</span></label>
                     <label class="pub-opt"><input type="radio" name="pubFormato" value="ml"><span>MercadoLibre 1:1</span></label>
-                </div>
-                <label>Mostrar precio</label>
-                <div class="pub-opts">
-                    <label class="pub-opt"><input type="radio" name="pubPrecio" value="si" checked><span>Sí</span></label>
-                    <label class="pub-opt"><input type="radio" name="pubPrecio" value="no"><span>No</span></label>
                 </div>
             </div>
             <div class="modal-footer" style="border-top:1px solid #E7EAF2;">
@@ -389,6 +403,22 @@ const money = v => '$' + Number(v).toLocaleString('es-AR', { maximumFractionDigi
 const prod = () => PRODUCTOS[parseInt(sel.value, 10)] || PRODUCTOS[0];
 const opcion = name => document.querySelector('input[name=' + name + ']:checked').value;
 
+let modoContenido = 'producto'; // 'producto' | 'marca' (contenido de marca sin producto puntual)
+const productoActual = () => modoContenido === 'producto' ? prod() : null;
+
+function cambiarModoContenido() {
+    modoContenido = opcion('pubModo');
+    document.getElementById('pubModoProducto').style.display = modoContenido === 'producto' ? '' : 'none';
+    document.getElementById('pubModoAviso').style.display = modoContenido === 'marca' ? '' : 'none';
+    variantes = []; varianteElegida = null; textosIA = null; pubGuardadaId = null; historialChat = [];
+    document.getElementById('panelVariantes').style.display = 'none';
+    document.getElementById('panelResultado').style.display = 'none';
+    renderHistorial();
+    renderFeedSimulado();
+    actualizarResumenConfig();
+    saludoInicial();
+}
+
 function postJson(url, body) {
     return fetch(url, {
         method: 'POST',
@@ -424,15 +454,19 @@ function bubbleChat(role, texto) {
 function saludoInicial() {
     const cont = document.getElementById('pubChat');
     if (cont) cont.innerHTML = '';
-    const p = prod();
-    if (p) bubbleChat('assistant', '¡Hola! Contame qué contenido querés para "' + p.nombre + '". Por ejemplo: "generame una imagen con luz cálida de atardecer" o "escribime un caption corto y con humor". El estilo de marca y los datos del producto se respetan siempre, no hace falta que los repitas.');
+    const p = productoActual();
+    if (p) {
+        bubbleChat('assistant', '¡Hola! Contame qué contenido querés para "' + p.nombre + '". Por ejemplo: "generame una imagen con luz cálida de atardecer" o "escribime un caption corto y con humor". El estilo de marca y los datos del producto se respetan siempre, no hace falta que los repitas.');
+    } else {
+        bubbleChat('assistant', '¡Hola! Estás en modo "Contenido de marca": no hace falta que sea sobre un producto puntual. Por ejemplo: "generame una imagen de una persona despertando descansada" o "escribime un tip sobre higiene del sueño". El estilo de marca se respeta siempre.');
+    }
 }
 
 function enviarChat() {
     const input = document.getElementById('pubMensajeChat');
     const mensaje = input.value.trim();
     if (!mensaje) return;
-    const p = prod();
+    const p = productoActual();
     bubbleChat('user', mensaje);
     historialChat.push({ role: 'user', content: mensaje });
     input.value = '';
@@ -442,8 +476,8 @@ function enviarChat() {
     pensando.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i>';
 
     postJson('{{ route('publicaciones.chat') }}', {
-        producto_id: p.id, es_combo: !!p.esCombo,
-        formato: opcion('pubFormato'), con_precio: opcion('pubPrecio') === 'si',
+        producto_id: p ? p.id : null, es_combo: p ? !!p.esCombo : false,
+        formato: opcion('pubFormato'), con_precio: p ? opcion('pubPrecio') === 'si' : false,
         mensaje, historial: historialChat.slice(-16)
     }).then(data => {
         pensando.remove();
@@ -524,8 +558,9 @@ function elegirVariante(i, card) {
     img.onload = () => {
         varianteElegida = { img, url: v.url, path: v.path, prompt: v.prompt };
         pubGuardadaId = null;
-        document.getElementById('btnStoryExtra').style.display = opcion('pubFormato') === 'story' ? 'none' : '';
-        document.getElementById('btnFeedExtra').style.display = opcion('pubFormato') === 'story' ? '' : 'none';
+        const conProducto = !!productoActual();
+        document.getElementById('btnStoryExtra').style.display = (conProducto && opcion('pubFormato') !== 'story') ? '' : 'none';
+        document.getElementById('btnFeedExtra').style.display = (conProducto && opcion('pubFormato') === 'story') ? '' : 'none';
         document.getElementById('panelResultado').style.display = '';
         cargarLogo(() => {
             dibujar();
@@ -582,9 +617,9 @@ function generarFormatoExtra(formato, btn) {
 function dibujar() { if (varianteElegida) dibujarConVariante(varianteElegida, opcion('pubFormato')); }
 
 function dibujarConVariante(v, formato) {
-    const p = prod();
+    const p = productoActual();
     const [W, H] = FORMATOS[formato] || FORMATOS.feed;
-    const conPrecio = opcion('pubPrecio') === 'si';
+    const conPrecio = p && opcion('pubPrecio') === 'si';
     canvas.width = W; canvas.height = H;
 
     const im = v.img;
@@ -606,6 +641,16 @@ function dibujarConVariante(v, formato) {
     }
 
     const baseY = H - (formato === 'story' ? H * .30 : H * .32);
+
+    if (!p) {
+        // Contenido de marca sin producto: la imagen habla sola, solo la firma abajo.
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#7FD4F5';
+        ctx.font = '500 ' + (W * .03) + 'px Poppins, sans-serif';
+        ctx.fillText('LIVIANO COMO UNA PLUMA', W / 2, H - H * .06);
+        renderHistorial();
+        return;
+    }
 
     ctx.textAlign = 'center';
     ctx.fillStyle = '#FFFFFF';
@@ -770,9 +815,9 @@ function renderRecursos() {
 
 /* ── Guardar / publicar / programar ── */
 function payloadBase() {
-    const p = prod();
+    const p = productoActual();
     return {
-        producto_id: p.id, es_combo: !!p.esCombo,
+        producto_id: p ? p.id : null, es_combo: p ? !!p.esCombo : false,
         formato: opcion('pubFormato'), estilo: 'ia',
         titulo_ml: document.getElementById('txtTituloML').value,
         desc_ml: document.getElementById('txtDescML').value,
@@ -789,8 +834,8 @@ function guardarBorrador(btn) {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Guardando...'; }
     return postJson('{{ route('publicaciones.guardar') }}', payloadBase()).then(data => {
         pubGuardadaId = data.id;
-        const p = prod();
-        BIBLIOTECA.unshift({ id: data.id, producto_id: p.id, imagen_url: data.imagen_url, estado: 'borrador', programado_para: null, created_at: new Date().toISOString() });
+        const p = productoActual();
+        BIBLIOTECA.unshift({ id: data.id, producto_id: p ? p.id : null, imagen_url: data.imagen_url, estado: 'borrador', programado_para: null, created_at: new Date().toISOString() });
         renderFeedSimulado(); renderProximas();
         if (btn) { btn.innerHTML = '✓ Guardado'; document.getElementById('avisoAccion').textContent = 'Guardado como borrador en la biblioteca.'; setTimeout(() => btn.innerHTML = original, 1500); }
         return data.id;
@@ -805,11 +850,13 @@ function publicarAhora(btn) {
     asegurar.then(id =>
         postJson('{{ route('publicaciones.publicar') }}', { publicacion_id: id, canales: ['facebook', 'instagram'] })
     ).then(data => {
-        const p = prod();
-        (data.publicados || []).forEach(canal => {
-            if (!REGISTROS[p.id]) REGISTROS[p.id] = [];
-            REGISTROS[p.id].unshift({ canal, created_at: new Date().toISOString().slice(0, 10) });
-        });
+        const p = productoActual();
+        if (p) {
+            (data.publicados || []).forEach(canal => {
+                if (!REGISTROS[p.id]) REGISTROS[p.id] = [];
+                REGISTROS[p.id].unshift({ canal, created_at: new Date().toISOString().slice(0, 10) });
+            });
+        }
         renderHistorial();
         const item = BIBLIOTECA.find(b => b.id === pubGuardadaId);
         if (item) item.estado = 'publicada';
@@ -836,8 +883,8 @@ function programar(btn) {
         programado_para: fecha, canales_programados: ['facebook', 'instagram']
     })).then(data => {
         pubGuardadaId = data.id;
-        const p = prod();
-        BIBLIOTECA.unshift({ id: data.id, producto_id: p.id, imagen_url: data.imagen_url, estado: 'programada', programado_para: fecha, created_at: new Date().toISOString() });
+        const p = productoActual();
+        BIBLIOTECA.unshift({ id: data.id, producto_id: p ? p.id : null, imagen_url: data.imagen_url, estado: 'programada', programado_para: fecha, created_at: new Date().toISOString() });
         renderFeedSimulado(); renderProximas();
         document.getElementById('avisoAccion').textContent = 'Programado para el ' + new Date(fecha).toLocaleString('es-AR') + '. Se publica solo.';
         btn.innerHTML = '✓ Programado';
@@ -854,8 +901,8 @@ function copiarTexto(id, btn) {
 }
 
 function descargarContenido() {
-    const p = prod();
-    const slug = 'sommy-' + p.nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const p = productoActual();
+    const slug = p ? 'sommy-' + p.nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'sommy-contenido-marca';
     const a = document.createElement('a');
     a.download = slug + '-' + opcion('pubFormato') + '.png';
     a.href = canvas.toDataURL('image/png');
@@ -863,9 +910,10 @@ function descargarContenido() {
 }
 
 function renderHistorial() {
-    const p = prod();
-    document.getElementById('pubLinkConocimiento').href = BASE_URL + '/articulo/' + p.id + '/conocimiento';
+    const p = productoActual();
     const cont = document.getElementById('pubHistorial');
+    if (!p) { cont.innerHTML = ''; return; }
+    document.getElementById('pubLinkConocimiento').href = BASE_URL + '/articulo/' + p.id + '/conocimiento';
     const regs = REGISTROS[p.id] || [];
     cont.innerHTML = regs.length ? '<label style="width:100%;">Historial de este producto</label>' : '';
     regs.slice(0, 8).forEach(r => {
@@ -883,7 +931,7 @@ function renderProximas() {
     const cont = document.getElementById('pubProximas');
     cont.innerHTML = '';
     prog.forEach(b => {
-        const nombre = (PRODUCTOS.find(p => p.id === b.producto_id) || {}).nombre || 'Producto';
+        const nombre = b.producto_id ? ((PRODUCTOS.find(p => p.id === b.producto_id) || {}).nombre || 'Producto') : 'Contenido de marca';
         const url = b.imagen_url || (b.imagen_final ? BASE_URL + '/' + b.imagen_final : null);
         const row = document.createElement('div');
         row.className = 'pub-proxima';
@@ -932,9 +980,9 @@ function renderFeedSimulado() {
 /* ── Configurar (producto/combo + formato + precio) ── */
 const FORMATO_LBL = { feed: 'Feed 4:5', story: 'Historia 9:16', ml: 'MercadoLibre 1:1' };
 function actualizarResumenConfig() {
-    const p = prod();
-    if (!p) return;
-    document.getElementById('pubConfigResumen').textContent = p.nombre + ' · ' + FORMATO_LBL[opcion('pubFormato')];
+    const p = productoActual();
+    const nombre = p ? p.nombre : 'Contenido de marca';
+    document.getElementById('pubConfigResumen').textContent = nombre + ' · ' + FORMATO_LBL[opcion('pubFormato')];
 }
 
 /* ── Eventos ── */

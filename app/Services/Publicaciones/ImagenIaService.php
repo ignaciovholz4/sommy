@@ -145,6 +145,65 @@ class ImagenIaService
         return $resultados;
     }
 
+    /**
+     * Contenido de marca SIN producto puntual (ej. estilo de vida, una persona
+     * despertando descansada, un tip de descanso ilustrado). No hay foto real
+     * que respetar, así que Gemini genera 100% desde texto — igual sigue el
+     * estilo de marca fijo (Mi marca) para mantener el feed homogéneo.
+     *
+     * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
+     */
+    public function generarVariantesMarca(string $formato, int $cantidad, string $instrucciones): array
+    {
+        $estilo = \Illuminate\Support\Facades\DB::table('publicaciones_ajustes')->value('estilo_imagen');
+        $cuerpo = trim((string) $estilo) !== ''
+            ? 'Estilo de la marca: ' . trim($estilo)
+            : 'Estilo: fotografia comercial realista de alta calidad, colores serenos (azules, celestes, blancos).';
+
+        $prompt = 'Foto de contenido de marca para redes sociales de Sommy (fabrica argentina de colchones), '
+            . 'SIN mostrar ningun producto puntual ni logo dentro de la escena. '
+            . trim($instrucciones) . '. ' . $cuerpo . ' '
+            . $this->orientacion($formato)
+            . ' Fotografia realista, personas reales de aspecto argentino si corresponde, nada de texto ni marca de agua en la imagen.';
+
+        $model = config('services.gemini.image_model', 'gemini-3.1-flash-lite-image');
+
+        $respuestas = Http::pool(fn ($pool) => collect(range(1, max(1, $cantidad)))
+            ->map(fn () => $pool->withHeaders(['x-goog-api-key' => config('services.gemini.api_key')])
+                ->timeout(120)
+                ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'contents' => [['parts' => [['text' => $prompt]]]],
+                ]))
+            ->all());
+
+        $resultados = [];
+        foreach ($respuestas as $response) {
+            try {
+                if ($response instanceof \Throwable) {
+                    throw $response;
+                }
+                if ($response->failed()) {
+                    throw new \RuntimeException($response->json('error.message') ?? $response->body());
+                }
+                $imagen = collect($response->json('candidates.0.content.parts', []))
+                    ->first(fn ($p) => isset($p['inlineData']['data']) || isset($p['inline_data']['data']));
+                if (!$imagen) {
+                    throw new \RuntimeException('Gemini no devolvio imagen (posible bloqueo de contenido).');
+                }
+                $data = base64_decode($imagen['inlineData']['data'] ?? $imagen['inline_data']['data']);
+                $resultados[] = $this->guardarImagen($data, 'marca', $prompt);
+            } catch (\Throwable $e) {
+                $resultados[] = ['error' => $e->getMessage()];
+            }
+        }
+
+        if (!array_filter($resultados, fn ($r) => !isset($r['error']))) {
+            throw new \RuntimeException($resultados[0]['error'] ?? 'Gemini no devolvio ninguna imagen.');
+        }
+
+        return $resultados;
+    }
+
     protected function llamarGemini(string $prompt, string $rutaFotoProducto): string
     {
         $model = config('services.gemini.image_model', 'gemini-3.1-flash-lite-image');
