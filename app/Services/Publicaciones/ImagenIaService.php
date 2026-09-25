@@ -109,9 +109,10 @@ class ImagenIaService
 
     /**
      * Todas las fotos reales a respetar para esta generación: la foto principal del
-     * colchón, hasta 2 ángulos extra de su propia galería (producto_imagenes) y —si
-     * existe cargada en el catálogo— la foto real de la base/sommier de Sommy. Nunca
-     * se inventa ninguna: si no hay archivo real, no se manda nada de más.
+     * colchón, hasta 3 ángulos extra reales (galería producto_imagenes + fotos
+     * cargadas en "Conocimiento del producto") y —si existe cargada en el
+     * catálogo— la foto real de la base/sommier de Sommy. Nunca se inventa
+     * ninguna: si no hay archivo real, no se manda nada de más.
      *
      * @return array<int, string>
      */
@@ -119,8 +120,14 @@ class ImagenIaService
     {
         $rutas = [$rutaFotoProducto];
 
-        foreach ($this->productos->rutasAngulosExtra($productoId, $rutaFotoProducto) as $ruta) {
-            $rutas[] = $ruta;
+        $angulosExtra = array_merge(
+            $this->productos->rutasAngulosExtra($productoId, $rutaFotoProducto),
+            $this->productos->rutasConocimientoImagenes($productoId)
+        );
+        foreach (array_slice(array_unique($angulosExtra), 0, 3) as $ruta) {
+            if (!in_array($ruta, $rutas, true)) {
+                $rutas[] = $ruta;
+            }
         }
 
         $sommier = $this->productos->rutaSommierReal();

@@ -75,6 +75,46 @@ class ProductLibraryService
     }
 
     /**
+     * Fotos reales cargadas en "Conocimiento del producto" (tipo imagen) — el lugar
+     * pensado para subir MUCHAS fotos reales juntas de un producto. Se usan como
+     * fidelidad adicional en el Estudio de Publicaciones, igual que la galería.
+     *
+     * @return array<int, string> rutas absolutas
+     */
+    public function rutasConocimientoImagenes(?int $productoId, int $max = 3): array
+    {
+        if (!$productoId) {
+            return [];
+        }
+
+        $items = DB::table('articulo_conocimiento')
+            ->where('articulo_id', $productoId)
+            ->where('tipo', 'imagen')->where('activo', 1)
+            ->whereNotNull('archivo')
+            ->orderByDesc('prioridad')->orderByDesc('id')
+            ->get(['archivo']);
+
+        $disk = \Illuminate\Support\Facades\Storage::disk(config('services.conocimiento.disk', 'public'));
+
+        $rutas = [];
+        foreach ($items as $item) {
+            try {
+                $ruta = $disk->path($item->archivo);
+            } catch (\Throwable $e) {
+                continue; // disco remoto (ej. s3): sin ruta local usable, se omite sin romper la generación.
+            }
+            if (is_file($ruta)) {
+                $rutas[] = $ruta;
+            }
+            if (count($rutas) >= $max) {
+                break;
+            }
+        }
+
+        return $rutas;
+    }
+
+    /**
      * Foto real de la base/sommier de Sommy (si está cargada en el catálogo), para
      * que la IA use la base real en vez de inventar un sommier/cama genérica.
      * Nunca inventa: si no encuentra ningún producto de sommier con foto, null.

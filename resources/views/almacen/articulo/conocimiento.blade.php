@@ -113,9 +113,10 @@
                 </div>
 
                 <div id="conCampoArchivo" style="display:none;">
-                    <label>Archivo</label>
+                    <label id="conArchivoLabel">Archivo</label>
                     <input type="file" name="archivo" id="conArchivo">
-                    <div class="con-aviso">Imágenes, videos (mp4/mov/webm), audios (mp3/wav/ogg/m4a) o PDF. Hasta 50 MB.</div>
+                    <input type="file" name="archivos[]" id="conArchivos" multiple style="display:none;">
+                    <div class="con-aviso" id="conArchivoAviso">Imágenes, videos (mp4/mov/webm), audios (mp3/wav/ogg/m4a) o PDF. Hasta 50 MB.</div>
                 </div>
 
                 <label>Prioridad para el bot</label>
@@ -186,10 +187,24 @@ const TIPOS_TEXTO = ['instrucciones', 'caracteristicas', 'faq', 'nota'];
 function conCambiarTipo() {
     const tipo = document.getElementById('conTipo').value;
     const esTexto = TIPOS_TEXTO.includes(tipo);
+    const esImagen = tipo === 'imagen';
     document.getElementById('conCampoTexto').style.display = esTexto ? '' : 'none';
     document.getElementById('conCampoArchivo').style.display = esTexto ? 'none' : '';
-    const acepta = { imagen: 'image/*', video: 'video/*', audio: 'audio/*', documento: '.pdf' };
+
+    // Imagen: multi-carga real (subís muchas fotos juntas, quedan todas disponibles
+    // como fotos reales del producto para el Estudio de Publicaciones).
+    document.getElementById('conArchivo').style.display = esImagen ? 'none' : '';
+    document.getElementById('conArchivo').disabled = esImagen;
+    document.getElementById('conArchivos').style.display = esImagen ? '' : 'none';
+    document.getElementById('conArchivos').disabled = !esImagen;
+    document.getElementById('conArchivoLabel').textContent = esImagen ? 'Imágenes (podés elegir varias a la vez)' : 'Archivo';
+
+    const acepta = { video: 'video/*', audio: 'audio/*', documento: '.pdf' };
     document.getElementById('conArchivo').accept = acepta[tipo] || '';
+    document.getElementById('conArchivos').accept = 'image/*';
+    document.getElementById('conArchivoAviso').textContent = esImagen
+        ? 'Seleccioná una o varias fotos reales del producto (jpg/png/webp) — el Estudio de Publicaciones las usa como fidelidad para generar imágenes con IA.'
+        : 'Videos (mp4/mov/webm), audios (mp3/wav/ogg/m4a) o PDF. Hasta 50 MB.';
 }
 
 function conEliminar(id, btn) {
