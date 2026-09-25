@@ -105,6 +105,50 @@ class PromptBuilder
             : 'fotografia comercial realista de alta calidad, colores serenos (azules, celestes, blancos), sin personas';
     }
 
+    /**
+     * Instrucción para que Gemini dibuje DIRECTAMENTE el banner/sticker promocional
+     * con el texto real (nunca inventado) sobre la escena, imitando el estilo de las
+     * imágenes de referencia (cinta diagonal, tipografía gruesa con contorno, colores
+     * promocionales). Reemplaza la regla de "no agregar texto" cuando se pide.
+     *
+     * @param array $producto ficha real (mapProducto/mapCombo): nombre, precio, precioFinal, descuento, altura, firmeza...
+     */
+    protected static function bloqueGraficaPromocional(array $producto, bool $conPrecio, ?string $headline = null, bool $conReferencias = false): string
+    {
+        $headline = trim((string) $headline) !== '' ? trim($headline) : mb_strtoupper((string) ($producto['nombre'] ?? 'SOMMY'));
+        $piezas = ['Titular en letras grandes: "' . $headline . '"'];
+
+        if ($conPrecio) {
+            $descuento = (float) ($producto['descuento'] ?? 0);
+            $precioFinal = '$' . number_format((float) ($producto['precioFinal'] ?? 0), 0, ',', '.');
+            if ($descuento > 0) {
+                $piezas[] = 'callout de descuento: "' . round($descuento) . '% OFF"';
+                $piezas[] = 'precio final: "' . $precioFinal . '"';
+            } else {
+                $piezas[] = 'precio: "' . $precioFinal . '"';
+            }
+        }
+
+        $specs = array_filter([
+            !empty($producto['altura']) ? $producto['altura'] . ' CM DE DESCANSO' : null,
+            !empty($producto['firmeza']) ? 'FIRMEZA ' . mb_strtoupper((string) $producto['firmeza']) : null,
+        ]);
+        if ($specs) {
+            $piezas[] = 'dato técnico real: "' . implode(' · ', $specs) . '"';
+        }
+
+        $listado = implode('. ', $piezas) . '.';
+
+        return 'ADEMAS: esto no es una foto de producto pelada, es una PIEZA PUBLICITARIA TERMINADA lista para publicar en Instagram. '
+            . 'Incluí directamente en la imagen un banner o cinta diagonal tipo sticker/ribbon (rotado levemente, no perfectamente horizontal), '
+            . 'con tipografía gruesa, redondeada, tipo display/comic con contorno grueso de color contrastante, en los colores promocionales de la marca '
+            . '(amarillo eléctrico y fucsia, sobre fondo azul noche o blanco)'
+            . ($conReferencias ? ', imitando EXACTAMENTE el estilo gráfico (forma de cinta, grosor de letra, composición) de las imágenes de referencia adjuntas al final. ' : '. ')
+            . 'Escribí en la imagen, EXACTAMENTE como está acá (sin inventar, sin cambiar ni un número ni una palabra): ' . $listado . ' '
+            . 'No agregues ningún otro precio, porcentaje o dato que no esté en esta lista. No agregues el logo (se agrega después por separado): '
+            . 'dejá un espacio limpio y libre de elementos importantes en la esquina superior izquierda para superponerlo.';
+    }
+
     protected static function orientacion(string $formato): string
     {
         return match ($formato) {
@@ -120,7 +164,7 @@ class PromptBuilder
      * @param string|null $extra indicación puntual del usuario o de un preset (escena/cámara/composición/text safe zone)
      * @param bool $conReferencias si hay imágenes de referencia de estilo adjuntas
      */
-    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null): string
+    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): string
     {
         if (trim((string) $promptLibre) !== '') {
             $cuerpo = trim($promptLibre);
@@ -132,8 +176,7 @@ class PromptBuilder
 
         $prompt = 'Foto publicitaria profesional: colocar este colchon (mantener EXACTAMENTE su forma, tela, costuras, etiqueta y colores reales) sobre una base o sommier en '
             . $cuerpo . ' '
-            . self::orientacion($formato)
-            . ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen. '
+            . self::orientacion($formato) . ' '
             . NegativeRulesBuilder::paraProducto();
 
         $reglasExtra = NegativeRulesBuilder::extra();
@@ -141,8 +184,13 @@ class PromptBuilder
             $prompt .= ' ' . $reglasExtra;
         }
 
+        $prompt .= $producto !== null
+            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias)
+            : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
+
         if ($conReferencias) {
-            $prompt .= ' Ademas, imita el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera) '
+            $prompt .= ' Ademas, imita el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera '
+                . ($producto !== null ? 'Y EL ESTILO DEL BANNER/TEXTO' : '') . ') '
                 . 'de las imagenes de referencia adjuntas al final, sin copiar literalmente su contenido ni ningun producto que aparezca en ellas.';
         }
 
@@ -156,7 +204,7 @@ class PromptBuilder
      *
      * @param array{objetivo?:string,intensidad?:string,escena?:string,densidad?:string,iluminacion?:string,camara?:string,composicion?:string,zona_texto?:string,personas?:string} $opciones
      */
-    public static function paraProductoStudio(string $formato, array $opciones, bool $conReferencias = false): string
+    public static function paraProductoStudio(string $formato, array $opciones, bool $conReferencias = false, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): string
     {
         $escena = $opciones['escena'] ?? 'dormitorio';
 
@@ -177,8 +225,7 @@ class PromptBuilder
 
         $prompt = 'Foto publicitaria profesional: colocar este colchon (mantener EXACTAMENTE su forma, tela, costuras, etiqueta y colores reales) sobre una base o sommier en '
             . $cuerpo . ' '
-            . self::orientacion($formato)
-            . ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen. '
+            . self::orientacion($formato) . ' '
             . NegativeRulesBuilder::paraProducto();
 
         $reglasExtra = NegativeRulesBuilder::extra();
@@ -186,8 +233,13 @@ class PromptBuilder
             $prompt .= ' ' . $reglasExtra;
         }
 
+        $prompt .= $producto !== null
+            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias)
+            : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
+
         if ($conReferencias) {
-            $prompt .= ' Ademas, imita el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera) '
+            $prompt .= ' Ademas, imita el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera '
+                . ($producto !== null ? 'Y EL ESTILO DEL BANNER/TEXTO' : '') . ') '
                 . 'de las imagenes de referencia adjuntas al final, sin copiar literalmente su contenido ni ningun producto que aparezca en ellas.';
         }
 

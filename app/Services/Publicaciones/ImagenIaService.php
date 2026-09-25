@@ -39,10 +39,10 @@ class ImagenIaService
         return $cuerpo;
     }
 
-    public function generarEscena(string $rutaFotoProducto, string $escena, string $formato, string $instrucciones = '', ?string $promptLibre = null, ?string $extraEscena = null): array
+    public function generarEscena(string $rutaFotoProducto, string $escena, string $formato, string $instrucciones = '', ?string $promptLibre = null, ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): array
     {
         $rutasReferencia = $this->rutasReferencia();
-        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, $promptLibre);
+        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, $promptLibre, $producto, $conPrecio, $headline);
 
         $resultado = $this->generarYRegistrar($prompt, $rutaFotoProducto, $rutasReferencia, $formato, 1);
 
@@ -60,11 +60,11 @@ class ImagenIaService
      *
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null): array
+    public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): array
     {
         $rutasReferencia = $this->rutasReferencia();
         $escena = 'dormitorio'; // único ambiente base: homogeneidad de feed
-        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia);
+        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline);
 
         return $this->generarYRegistrar($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
     }
@@ -77,10 +77,10 @@ class ImagenIaService
      * @param array $opciones ver PromptBuilder::paraProductoStudio()
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generarVariantesStudio(string $rutaFotoProducto, string $formato, int $cantidad, array $opciones): array
+    public function generarVariantesStudio(string $rutaFotoProducto, string $formato, int $cantidad, array $opciones, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): array
     {
         $rutasReferencia = $this->rutasReferencia();
-        $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia);
+        $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia, $producto, $conPrecio, $headline);
 
         return $this->generarYRegistrar($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
     }

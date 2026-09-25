@@ -3,6 +3,9 @@
 @section('title', 'Publicaciones')
 
 @section('contenido')
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
 <style>
     .pub-wrap { font-family: 'Poppins', sans-serif; color: #1B2B5A; padding: 18px 6px; max-width: 1150px; margin: 0 auto; }
     .pub-title { font-size: 21px; font-weight: 600; margin-bottom: 2px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -266,6 +269,11 @@
                             </div>
                         </div>
                         <div>
+                            <label style="margin-top:0;">Estilo del diseño</label>
+                            <div class="pub-opts">
+                                <label class="pub-opt"><input type="radio" name="pubEstiloOverlay" value="promocional" checked><span>Promocional (sticker)</span></label>
+                                <label class="pub-opt"><input type="radio" name="pubEstiloOverlay" value="institucional"><span>Institucional (suave)</span></label>
+                            </div>
                             <details class="pub-mas" open>
                                 <summary>Textos sobre la imagen (capas, no generadas por IA)</summary>
                                 <label style="margin-top:6px;">Titular</label>
@@ -798,6 +806,20 @@ function dibujarConVariante(v, formato) {
     const im = v.img;
     const r = Math.max(W / im.naturalWidth, H / im.naturalHeight);
     const iw = im.naturalWidth * r, ih = im.naturalHeight * r;
+
+    const estiloPromo = document.querySelector('input[name=pubEstiloOverlay]:checked') ? opcion('pubEstiloOverlay') === 'promocional' : true;
+
+    if (estiloPromo) {
+        rRect(0, 0, W, H, W * .04);
+        ctx.save();
+        ctx.clip();
+        ctx.drawImage(im, (W - iw) / 2, (H - ih) / 2, iw, ih);
+        ctx.restore();
+        dibujarOverlayPromocional(p, W, H, formato, conPrecio);
+        renderHistorial();
+        return;
+    }
+
     ctx.drawImage(im, (W - iw) / 2, (H - ih) / 2, iw, ih);
     const g = ctx.createLinearGradient(0, H * .55, 0, H);
     g.addColorStop(0, 'rgba(14,23,48,0)');
@@ -910,6 +932,55 @@ function rRect(x, y, w, h, r) {
     ctx.arcTo(x, y + h, x, y, r);
     ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
+}
+
+/**
+ * Overlay promocional: el banner con titular/precio/descuento/specs ya lo
+ * dibuja Gemini DENTRO de la foto (ver PromptBuilder::bloqueGraficaPromocional),
+ * así que acá solo se agrega lo que la IA no conoce: el logo real de la marca
+ * (en el hueco que la IA dejó libre arriba a la izquierda) y los campos que el
+ * usuario carga aparte en el editor (condición/CTA, badge, sitio web).
+ */
+function dibujarOverlayPromocional(p, W, H, formato, conPrecio) {
+    const FUCSIA = '#FF1F8F', NAVY = '#1B2B5A';
+
+    // Logo chico arriba a la izquierda, sobre placa blanca.
+    if (imgLogo && imgLogo.naturalWidth) {
+        const lw = W * .20, lh = lw * imgLogo.naturalHeight / imgLogo.naturalWidth;
+        const lx = W * .055, ly = H * .04;
+        rRect(lx - W * .02, ly - lh * .22, lw + W * .04, lh * 1.44, lh * .35);
+        ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fill();
+        ctx.drawImage(imgLogo, lx, ly, lw, lh);
+    }
+
+    ctx.textAlign = 'center';
+
+    // CTA / condición chica abajo del todo (solo si el usuario la escribió — nunca inventada).
+    const ctaEl = document.getElementById('ovCta');
+    const cta = ctaEl ? ctaEl.value.trim() : '';
+    if (cta) {
+        const fh = W * .026;
+        ctx.font = '600 ' + fh + 'px Poppins, sans-serif';
+        const tw = ctx.measureText(cta.toUpperCase()).width;
+        rRect(W / 2 - tw / 2 - W * .035, H - H * .045 - fh * .9, tw + W * .07, fh * 1.5, fh * .75);
+        ctx.fillStyle = '#FFFFFF'; ctx.fill();
+        ctx.fillStyle = NAVY;
+        ctx.fillText(cta.toUpperCase(), W / 2, H - H * .045 + fh * .18);
+    }
+
+    const badgeEl = document.getElementById('ovBadge');
+    const badge = badgeEl ? badgeEl.value.trim() : '';
+    if (badge) {
+        const fh = W * .024;
+        ctx.font = '700 ' + fh + 'px Poppins, sans-serif';
+        const bw = ctx.measureText(badge.toUpperCase()).width;
+        const padX = W * .03, pillW = bw + padX * 2, pillH = fh * 1.7;
+        const bx = W - W * .05 - pillW, by = H * .04;
+        rRect(bx, by, pillW, pillH, pillH / 2);
+        ctx.fillStyle = FUCSIA; ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(badge.toUpperCase(), bx + pillW / 2, by + pillH * .68);
+    }
 }
 
 function envolverTexto(texto, x, y, maxW, lineH) {
@@ -1511,6 +1582,7 @@ document.querySelectorAll('input[name=pubFormato]').forEach(el => el.addEventLis
 
 ['ovHeadline', 'ovCta', 'ovBadge'].forEach(id => document.getElementById(id).addEventListener('input', () => { if (varianteElegida) { dibujar(); document.getElementById('pubPreview').src = canvas.toDataURL('image/png'); } }));
 document.getElementById('ovWebsite').addEventListener('change', () => { if (varianteElegida) { dibujar(); document.getElementById('pubPreview').src = canvas.toDataURL('image/png'); } });
+document.querySelectorAll('input[name=pubEstiloOverlay]').forEach(el => el.addEventListener('change', () => { if (varianteElegida) { dibujar(); document.getElementById('pubPreview').src = canvas.toDataURL('image/png'); renderFeedSimulado(); } }));
 
 document.fonts.ready.then(() => {
     cargarLogo(() => {});

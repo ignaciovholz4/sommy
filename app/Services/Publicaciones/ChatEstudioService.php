@@ -95,7 +95,10 @@ TXT;
                                 $args['formato'] ?? $formato,
                                 max(1, min(10, (int) ($args['cantidad'] ?? 5))),
                                 (string) ($args['instrucciones'] ?? ''),
-                                $extraEscena
+                                $extraEscena,
+                                $producto,
+                                (bool) ($args['con_precio'] ?? $conPrecio),
+                                isset($args['titular']) ? (string) $args['titular'] : null
                             );
                         }
                         $imagenesGeneradas = $resultado;
@@ -139,7 +142,7 @@ TXT;
             [
                 'name' => 'generar_imagenes',
                 'description' => $conProducto
-                    ? 'Genera variantes de la foto del producto ambientada, para que el usuario elija una. Usar cuando pida una imagen, una foto, una escena, o cambios visuales (luz, ambiente, fondo, hora del día, etc).'
+                    ? 'Genera variantes de la PIEZA PUBLICITARIA completa y lista para publicar (foto del producto ambientada + banner/cinta promocional con titular y precio real dibujados directamente en la imagen, estilo sticker), para que el usuario elija una. Usar cuando pida una imagen, una foto, una escena, o cambios visuales (luz, ambiente, fondo, hora del día, etc).'
                     : 'Genera variantes de una imagen de contenido de marca (SIN producto puntual: estilo de vida, una persona, algo informativo), para que el usuario elija una.',
                 'parameters' => [
                     'type' => 'object',
@@ -149,6 +152,8 @@ TXT;
                             : 'En español: describí la escena/idea pedida (ej: "una persona despertando feliz con luz de mañana", "ilustración de un tip para dormir mejor"). Se suma al estilo de marca fijo.'],
                         'formato' => ['type' => 'string', 'enum' => ['feed', 'story', 'ml'], 'description' => 'Formato pedido. Si no lo aclara, usar el que ya está seleccionado.'],
                         'cantidad' => ['type' => 'integer', 'description' => 'Cuántas variantes generar (1 a 10). Por defecto 5. Si el usuario pide una tanda grande para el feed (ej: "generame 10 imágenes"), usar el número que pidió, hasta 10.'],
+                        'con_precio' => ['type' => 'boolean', 'description' => 'Si hay que dibujar precio/descuento REAL directamente en la imagen como banner promocional (estilo sticker/cinta). Si no lo aclara, usar el valor ya seleccionado.'],
+                        'titular' => ['type' => 'string', 'description' => 'Texto corto y llamativo para el banner principal de la imagen (ej: "MES DEL DESCANSO", "ECLIPSE 30"). Si no lo aclara, se usa el nombre del producto.'],
                     ],
                     'required' => ['instrucciones'],
                 ],
