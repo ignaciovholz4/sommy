@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Publicaciones;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Ecommerce\EcommerceController;
 use App\Models\Articulo;
+use App\Services\CreativeStudio\CampaignBriefService;
 use App\Services\CreativeStudio\ProductLibraryService;
 use App\Services\Publicaciones\ChatEstudioService;
 use App\Services\Publicaciones\CopyGeneratorService;
@@ -88,6 +89,34 @@ class PublicacionController extends Controller
         ]);
 
         return response()->json(['status' => 1, 'id' => $id, 'nombre' => $request->nombre]);
+    }
+
+    /**
+     * Interpreta un brief de campaña pegado por el usuario (lista de piezas de
+     * contenido) y devuelve items estructurados para revisar antes de generar
+     * nada. No dispara ninguna generación de imagen: eso lo hace el frontend,
+     * item por item, reusando generar-variantes/generar-copy/guardar.
+     */
+    public function interpretarBrief(Request $request, CampaignBriefService $brief)
+    {
+        $request->validate([
+            'brief' => 'required|string|max:8000',
+        ]);
+
+        $catalogo = Articulo::where('estado', 'Activo')->orderBy('nombre')->get()
+            ->map(fn ($p) => ['id' => $p->idarticulo, 'nombre' => $p->nombre, 'esCombo' => false])
+            ->values();
+
+        $combos = app(EcommerceController::class)->combosDisponibles()
+            ->map(fn ($c) => ['id' => $c->producto->idarticulo, 'nombre' => 'Combo ' . $c->producto->nombre, 'esCombo' => true])
+            ->values();
+
+        try {
+            $items = $brief->interpretar($request->brief, $catalogo->concat($combos)->all());
+            return response()->json(['status' => 1, 'items' => $items]);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 0, 'error' => $e->getMessage()], 422);
+        }
     }
 
     /** Entrenamiento: guarda la voz de marca (textos) y el estilo visual (imágenes). */

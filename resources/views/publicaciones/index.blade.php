@@ -64,6 +64,16 @@
     .pub-chat-input #btnAdjuntar { padding: 10px 13px; }
     .pub-chat-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
+    /* Brief de campaña */
+    .pub-brief-lista { max-height: 340px; overflow-y: auto; border: 1px solid #E7EAF2; border-radius: 12px; }
+    .pub-brief-item { display: grid; grid-template-columns: 30px 1fr 90px; gap: 10px; align-items: start; padding: 10px 12px; border-bottom: 1px solid #F1F4F9; font-size: 12px; }
+    .pub-brief-item:last-child { border-bottom: none; }
+    .pub-brief-item .num { font-weight: 700; color: #94A3B8; }
+    .pub-brief-item .tit { font-weight: 600; color: #1B2B5A; }
+    .pub-brief-item .badge-modo { font-weight: 400; font-size: 10.5px; color: #2563EB; background: #E0F2FE; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
+    .pub-brief-item .desc { color: #6E7A96; font-weight: 300; margin-top: 2px; }
+    .pub-brief-item .estado-item { font-size: 10.5px; font-weight: 600; color: #6E7A96; text-align: right; }
+
     /* Variantes (5 opciones para elegir) */
     .pub-variantes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 10px; }
     .pub-variante { position: relative; border-radius: 12px; overflow: hidden; border: 3px solid transparent; cursor: pointer; background: #F8FAFC; }
@@ -162,6 +172,7 @@
                 <button class="pub-btn sec chico" onclick="$('#modalEntrenar').modal('show')"><i class="fas fa-graduation-cap"></i> Mi marca</button>
                 <button class="pub-btn sec chico" onclick="$('#modalRecursos').modal('show')"><i class="fas fa-box-open"></i> Recursos</button>
                 <button class="pub-btn sec chico" onclick="renderReferencias(); $('#modalReferencias').modal('show')"><i class="fas fa-images"></i> Imágenes de referencia</button>
+                <button class="pub-btn sec chico" onclick="$('#modalBrief').modal('show')"><i class="fas fa-list-check"></i> Brief de campaña</button>
                 <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
             </div>
         </div>
@@ -348,6 +359,40 @@
                 <div class="pub-aviso" style="margin-top:0;">Subí ejemplos de fotos/anuncios a los que querés que se parezcan tus publicaciones (paleta de color, luz, composición). La IA va a imitar ese estilo visual sin copiar su contenido ni el producto que aparezca ahí.</div>
                 <input type="file" id="refArchivo" accept="image/*" multiple style="margin-top:10px;" onchange="subirReferencias(this)">
                 <div class="pub-rec-grid" id="pubReferencias" style="margin-top:14px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Brief de campaña --}}
+<div class="modal fade" id="modalBrief" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-list-check" style="color:#2563EB;"></i> Brief de campaña</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="pub-aviso" style="margin-top:0;">Pegá tu lista de piezas de contenido (una por línea o bloque). La IA la interpreta usando SOLO tu catálogo real — revisá antes de generar nada.</div>
+                <textarea id="briefTexto" style="width:100%;min-height:140px;border:1px solid #E7EAF2;border-radius:10px;padding:10px;font-size:12.5px;font-family:'Poppins',sans-serif;" placeholder="01 Eclipse 30 - foto real, fondo oscuro...&#10;02 Oferta del mes - producto + precio, CTA...&#10;..."></textarea>
+                <div class="pub-btns" style="justify-content:flex-start;margin-top:8px;">
+                    <button class="pub-btn ia" id="btnInterpretarBrief" onclick="interpretarBriefTexto(this)" @if(!$capacidades['copys']) disabled title="Configurá OPENAI_API_KEY" @endif><i class="fas fa-wand-magic-sparkles"></i> Interpretar</button>
+                </div>
+
+                <div id="briefResultado" style="display:none;margin-top:16px;">
+                    <div class="pub-aviso" id="briefResumen" style="margin:0 0 8px;"></div>
+                    <div id="briefLista" class="pub-brief-lista"></div>
+
+                    <label style="margin-top:12px;">Campaña destino</label>
+                    <div class="pub-btns" style="justify-content:flex-start;flex-wrap:wrap;">
+                        <select id="briefCampana" style="max-width:220px;"></select>
+                        <button class="pub-btn sec chico" onclick="nuevaCampana()"><i class="fas fa-plus"></i> Nueva</button>
+                    </div>
+                    <div class="pub-aviso">Cada pieza se genera con 1 imagen (no varias), se guarda como borrador en esta campaña — nada se publica solo.</div>
+                    <div class="pub-btns" style="justify-content:flex-start;margin-top:10px;">
+                        <button class="pub-btn" id="btnGenerarBrief" onclick="generarBriefTodo(this)"><i class="fas fa-play"></i> Generar todo</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -965,11 +1010,14 @@ function payloadBase() {
 
 /* ── Campañas ── */
 function renderCampanas() {
-    const s = document.getElementById('pubCampana');
-    const actual = s.value;
-    s.innerHTML = '<option value="">— Sin campaña —</option>';
-    CAMPANAS.forEach(c => { s.innerHTML += '<option value="' + c.id + '">' + c.nombre + '</option>'; });
-    s.value = actual;
+    ['pubCampana', 'briefCampana'].forEach(id => {
+        const s = document.getElementById(id);
+        if (!s) return;
+        const actual = s.value;
+        s.innerHTML = '<option value="">— Sin campaña —</option>';
+        CAMPANAS.forEach(c => { s.innerHTML += '<option value="' + c.id + '">' + c.nombre + '</option>'; });
+        s.value = actual;
+    });
 }
 
 function nuevaCampana() {
@@ -979,7 +1027,113 @@ function nuevaCampana() {
         CAMPANAS.unshift({ id: data.id, nombre: data.nombre });
         renderCampanas();
         document.getElementById('pubCampana').value = data.id;
+        if (document.getElementById('briefCampana')) document.getElementById('briefCampana').value = data.id;
     }).catch(e => alert('No se pudo crear la campaña: ' + e.message));
+}
+
+/* ── Brief de campaña: interpreta y genera en serie ── */
+let BRIEF_ITEMS = [];
+
+function interpretarBriefTexto(btn) {
+    const texto = document.getElementById('briefTexto').value.trim();
+    if (!texto) return;
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Interpretando...';
+    postJson('{{ route('publicaciones.brief') }}', { brief: texto }).then(data => {
+        BRIEF_ITEMS = data.items || [];
+        renderBriefItems();
+        document.getElementById('briefResultado').style.display = BRIEF_ITEMS.length ? '' : 'none';
+    }).catch(e => alert('No se pudo interpretar el brief: ' + e.message))
+      .finally(() => { btn.disabled = false; btn.innerHTML = original; });
+}
+
+function renderBriefItems() {
+    document.getElementById('briefResumen').textContent = BRIEF_ITEMS.length + ' piezas interpretadas. Revisá el producto detectado antes de generar — nada se generó todavía.';
+    const cont = document.getElementById('briefLista');
+    cont.innerHTML = '';
+    BRIEF_ITEMS.forEach((it, i) => {
+        const esCombo = it.modo === 'combo';
+        const prod = it.producto_id ? PRODUCTOS.find(p => p.id === it.producto_id && !!p.esCombo === esCombo) : null;
+        const row = document.createElement('div');
+        row.className = 'pub-brief-item';
+        row.innerHTML =
+            '<span class="num">' + (it.numero ?? (i + 1)) + '</span>' +
+            '<div><div class="tit">' + it.titulo + '<span class="badge-modo">' + it.modo + (prod ? ' · ' + prod.nombre : '') + '</span></div>' +
+            '<div class="desc">' + it.instrucciones + (it.menciona_tambien ? ' <em>(también: ' + it.menciona_tambien + ')</em>' : '') + '</div></div>' +
+            '<span class="estado-item" id="briefEstado' + i + '">Pendiente</span>';
+        cont.appendChild(row);
+    });
+}
+
+function generarBriefTodo(btn) {
+    if (!BRIEF_ITEMS.length) return;
+    if (!confirm('Se van a generar ' + BRIEF_ITEMS.length + ' piezas, una por una (puede tardar varios minutos). ¿Continuar?')) return;
+    btn.disabled = true;
+    const campanaId = document.getElementById('briefCampana').value || null;
+
+    let cadena = Promise.resolve();
+    BRIEF_ITEMS.forEach((it, i) => {
+        cadena = cadena.then(() => {
+            const estadoEl = document.getElementById('briefEstado' + i);
+            estadoEl.textContent = 'Generando...';
+            return generarUnItemBrief(it, campanaId)
+                .then(() => { estadoEl.textContent = '✓ Lista'; })
+                .catch(e => { estadoEl.textContent = '⚠️ Falló'; console.error(it.titulo, e); });
+        });
+    });
+    cadena.then(() => {
+        btn.disabled = false;
+        renderFeedSimulado(); renderProximas();
+        alert('Listo. Se procesaron las ' + BRIEF_ITEMS.length + ' piezas — revisalas en la biblioteca/simulador de feed antes de publicar.');
+    });
+}
+
+function generarUnItemBrief(it, campanaId) {
+    const esCombo = it.modo === 'combo';
+    const prodIdx = it.producto_id ? PRODUCTOS.findIndex(p => p.id === it.producto_id && !!p.esCombo === esCombo) : -1;
+    const formato = it.formato === 'story' ? 'story' : 'feed';
+
+    return postJson('{{ route('publicaciones.chat') }}', {
+        producto_id: it.producto_id || null,
+        es_combo: esCombo,
+        formato: formato,
+        con_precio: true,
+        mensaje: 'Generá 1 sola imagen y el texto para esta pieza de campaña: "' + it.titulo + '". ' + it.instrucciones,
+        historial: []
+    }).then(data => {
+        const v = data.imagenes && data.imagenes[0];
+        if (!v || v.error) throw new Error(v ? v.error : 'No se generó ninguna imagen para esta pieza.');
+
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                if (prodIdx >= 0) { sel.value = prodIdx; modoContenido = 'producto'; }
+                else { modoContenido = 'marca'; }
+                document.querySelector('input[name=pubFormato][value="' + formato + '"]').checked = true;
+                document.querySelector('input[name=pubPrecio][value="si"]').checked = true;
+                varianteElegida = { img, url: v.url, path: v.path, prompt: v.prompt };
+                pubGuardadaId = null;
+                ['ovHeadline', 'ovCta', 'ovBadge'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('ovWebsite').checked = false;
+                if (data.textos) {
+                    document.getElementById('txtCaption').value = data.textos.caption || '';
+                    document.getElementById('txtTituloML').value = data.textos.titulo_ml || it.titulo;
+                    document.getElementById('txtDescML').value = data.textos.desc_ml || '';
+                    document.getElementById('txtWa').value = data.textos.texto_wa || '';
+                }
+                cargarLogo(() => {
+                    dibujar();
+                    postJson('{{ route('publicaciones.guardar') }}', Object.assign(payloadBase(), { campana_id: campanaId }))
+                        .then(() => resolve())
+                        .catch(reject);
+                });
+            };
+            img.onerror = () => reject(new Error('No se pudo cargar la imagen generada.'));
+            img.src = v.url;
+        });
+    });
 }
 
 /* ── Export a tamaños fijos (no cambia el formato elegido, solo exporta) ── */
