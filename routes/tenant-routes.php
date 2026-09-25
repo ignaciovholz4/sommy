@@ -968,6 +968,7 @@ Route::get('/publicaciones', [\App\Http\Controllers\Publicaciones\PublicacionCon
 Route::post('/publicaciones/registrar', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'registrar'])->name('publicaciones.registrar')->middleware(['auth','verified']);
 Route::post('/publicaciones/generar-copy', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'generarCopy'])->name('publicaciones.generar-copy')->middleware(['auth','verified']);
 Route::post('/publicaciones/generar-imagen', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'generarImagen'])->name('publicaciones.generar-imagen')->middleware(['auth','verified']);
+Route::post('/publicaciones/generar-variantes', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'generarVariantes'])->name('publicaciones.generar-variantes')->middleware(['auth','verified']);
 Route::post('/publicaciones/guardar', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'guardar'])->name('publicaciones.guardar')->middleware(['auth','verified']);
 Route::post('/publicaciones/publicar', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'publicar'])->name('publicaciones.publicar')->middleware(['auth','verified']);
 Route::get('/publicaciones/catalogo', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'catalogoPdf'])->name('publicaciones.catalogo')->middleware(['auth','verified']);

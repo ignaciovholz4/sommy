@@ -49,28 +49,105 @@ class ImagenIaService
         return $cuerpo;
     }
 
-    public function generarEscena(string $rutaFotoProducto, string $escena, string $formato, string $instrucciones = '', ?string $promptLibre = null): array
+    /** Orientación fija por formato: feed (4:5, default), story (9:16) o ml (1:1). */
+    protected function orientacion(string $formato): string
+    {
+        return match ($formato) {
+            'story' => 'Encuadre vertical 9:16 (historia de Instagram/Facebook), con aire libre arriba y abajo para superponer textos.',
+            'ml'    => 'Encuadre cuadrado 1:1 (ficha de MercadoLibre), con aire en el tercio superior e inferior para superponer textos.',
+            default => 'Encuadre vertical 4:5 (post de feed de Instagram/Facebook), con aire en el tercio superior e inferior para superponer textos.',
+        };
+    }
+
+    protected function construirPrompt(string $rutaFotoProducto, string $formato, string $instrucciones, ?string $promptLibre, string $escena = 'dormitorio', ?string $extraEscena = null): string
+    {
+        $cuerpo = trim((string) $promptLibre) !== ''
+            ? trim($promptLibre)
+            : self::cuerpoPrompt($escena, \Illuminate\Support\Facades\DB::table('publicaciones_ajustes')->value('estilo_imagen'))
+                . (trim((string) $extraEscena) !== '' ? ' ' . trim($extraEscena) : '')
+                . (trim($instrucciones) !== '' ? ' Indicacion extra: ' . trim($instrucciones) : '');
+
+        return 'Foto publicitaria profesional: colocar este colchon (mantener EXACTAMENTE su forma, tela, costuras, etiqueta y colores reales) sobre una base o sommier en '
+            . $cuerpo . ' '
+            . $this->orientacion($formato)
+            . ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
+    }
+
+    public function generarEscena(string $rutaFotoProducto, string $escena, string $formato, string $instrucciones = '', ?string $promptLibre = null, ?string $extraEscena = null): array
     {
         if (!is_file($rutaFotoProducto)) {
             throw new \RuntimeException('No se encontro la imagen del producto: ' . basename($rutaFotoProducto));
         }
 
-        $orientacion = $formato === 'story'
-            ? 'Encuadre vertical 9:16 (historia de Instagram), con aire libre arriba y abajo para superponer textos.'
-            : 'Encuadre cuadrado 1:1, con aire en el tercio superior e inferior para superponer textos.';
+        $prompt = $this->construirPrompt($rutaFotoProducto, $formato, $instrucciones, $promptLibre, $escena, $extraEscena);
+        $data = $this->llamarGemini($prompt, $rutaFotoProducto);
 
-        // Estructura fija de marca: [producto fiel] + [cuerpo editable] + [encuadre] + [prohibiciones]
-        $cuerpo = trim((string) $promptLibre) !== ''
-            ? trim($promptLibre)
-            : self::cuerpoPrompt($escena, \Illuminate\Support\Facades\DB::table('publicaciones_ajustes')->value('estilo_imagen'))
-                . (trim($instrucciones) !== '' ? ' Indicacion extra: ' . trim($instrucciones) : '');
+        return $this->guardarImagen($data, $escena, $prompt);
+    }
 
-        $prompt = 'Foto publicitaria profesional: colocar este colchon (mantener EXACTAMENTE su forma, tela, costuras, etiqueta y colores reales) sobre una base o sommier en '
-            . $cuerpo . ' '
-            . $orientacion
-            . ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
+    /**
+     * Genera $cantidad variantes de la MISMA escena de marca (para elegir),
+     * en paralelo. Cada llamada usa exactamente el mismo prompt fijo: la
+     * variedad la da el propio muestreo de Gemini, no el texto.
+     *
+     * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
+     */
+    public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null): array
+    {
+        if (!is_file($rutaFotoProducto)) {
+            throw new \RuntimeException('No se encontro la imagen del producto: ' . basename($rutaFotoProducto));
+        }
 
-        $model = config('services.gemini.image_model', 'gemini-2.5-flash-image');
+        $escena = 'dormitorio'; // único ambiente base: homogeneidad de feed
+        $prompt = $this->construirPrompt($rutaFotoProducto, $formato, $instrucciones, null, $escena, $extraEscena);
+        $model = config('services.gemini.image_model', 'gemini-3.1-flash-lite-image');
+        $mime = $this->mime($rutaFotoProducto);
+        $b64 = base64_encode(file_get_contents($rutaFotoProducto));
+
+        $respuestas = Http::pool(fn ($pool) => collect(range(1, max(1, $cantidad)))
+            ->map(fn () => $pool->withHeaders(['x-goog-api-key' => config('services.gemini.api_key')])
+                ->timeout(120)
+                ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                    'contents' => [[
+                        'parts' => [
+                            ['text' => $prompt],
+                            ['inline_data' => ['mime_type' => $mime, 'data' => $b64]],
+                        ],
+                    ]],
+                ]))
+            ->all());
+
+        $resultados = [];
+        foreach ($respuestas as $response) {
+            try {
+                if ($response instanceof \Throwable) {
+                    throw $response;
+                }
+                if ($response->failed()) {
+                    throw new \RuntimeException($response->json('error.message') ?? $response->body());
+                }
+                $imagen = collect($response->json('candidates.0.content.parts', []))
+                    ->first(fn ($p) => isset($p['inlineData']['data']) || isset($p['inline_data']['data']));
+                if (!$imagen) {
+                    throw new \RuntimeException('Gemini no devolvio imagen (posible bloqueo de contenido).');
+                }
+                $data = base64_decode($imagen['inlineData']['data'] ?? $imagen['inline_data']['data']);
+                $resultados[] = $this->guardarImagen($data, $escena, $prompt);
+            } catch (\Throwable $e) {
+                $resultados[] = ['error' => $e->getMessage()];
+            }
+        }
+
+        if (!array_filter($resultados, fn ($r) => !isset($r['error']))) {
+            throw new \RuntimeException($resultados[0]['error'] ?? 'Gemini no devolvio ninguna imagen.');
+        }
+
+        return $resultados;
+    }
+
+    protected function llamarGemini(string $prompt, string $rutaFotoProducto): string
+    {
+        $model = config('services.gemini.image_model', 'gemini-3.1-flash-lite-image');
 
         $response = Http::withHeaders(['x-goog-api-key' => config('services.gemini.api_key')])
             ->timeout(120)
@@ -97,14 +174,17 @@ class ImagenIaService
             throw new \RuntimeException('Gemini no devolvio imagen (posible bloqueo de contenido). Proba con otra foto o escena.');
         }
 
-        $data = base64_decode($imagen['inlineData']['data'] ?? $imagen['inline_data']['data']);
+        return base64_decode($imagen['inlineData']['data'] ?? $imagen['inline_data']['data']);
+    }
 
+    protected function guardarImagen(string $data, string $escena, string $prompt): array
+    {
         $dir = public_path('imagenes/publicaciones/escenas');
         if (!is_dir($dir)) {
             mkdir($dir, 0775, true);
         }
 
-        $nombre = 'escena-' . $escena . '-' . uniqid() . '.png';
+        $nombre = 'escena-' . $escena . '-' . uniqid('', true) . '.png';
         file_put_contents($dir . DIRECTORY_SEPARATOR . $nombre, $data);
 
         $relativo = 'imagenes/publicaciones/escenas/' . $nombre;

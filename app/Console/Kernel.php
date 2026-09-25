@@ -63,6 +63,9 @@ class Kernel extends ConsoleKernel
 
         // Ecommerce: avisa por mail a clientes que dejaron el carrito abandonado (una vez por abandono)
         $schedule->command('carrito:avisar-abandonados')->everyThirtyMinutes();
+
+        // Estudio de Publicaciones: calendario de contenido, publica lo programado cuando llega la hora
+        $schedule->command('publicaciones:auto-publicar')->everyFiveMinutes();
     }
 
     /**

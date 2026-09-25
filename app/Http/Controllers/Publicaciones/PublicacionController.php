@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Publicaciones;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Ecommerce\EcommerceController;
 use App\Models\Articulo;
 use App\Services\Publicaciones\CopyGeneratorService;
 use App\Services\Publicaciones\ImagenIaService;
@@ -28,14 +29,19 @@ class PublicacionController extends Controller
             ->map(fn ($p) => $this->mapProducto($p))
             ->values();
 
+        $combos = app(EcommerceController::class)->combosDisponibles()
+            ->map(fn ($c) => $this->mapCombo($c))
+            ->values();
+
         $registros = DB::table('publicaciones_registro')
             ->orderByDesc('created_at')
             ->get()
             ->groupBy('producto_id');
 
         $biblioteca = DB::table('publicaciones')
-            ->orderByDesc('id')
-            ->limit(24)
+            ->whereNull('padre_id')
+            ->orderByRaw('COALESCE(programado_para, created_at) DESC')
+            ->limit(40)
             ->get();
 
         $capacidades = [
@@ -51,6 +57,7 @@ class PublicacionController extends Controller
 
         return view('publicaciones.index', [
             'productos'   => $productos,
+            'combos'      => $combos,
             'registros'   => $registros,
             'biblioteca'  => $biblioteca,
             'escenas'     => array_keys(ImagenIaService::ESCENAS),
@@ -136,38 +143,72 @@ class PublicacionController extends Controller
             'producto_id'   => 'required|integer',
             'con_precio'    => 'required|boolean',
             'instrucciones' => 'nullable|string|max:500',
+            'es_combo'      => 'nullable|boolean',
         ]);
 
-        $producto = Articulo::findOrFail($request->producto_id);
+        $ficha = $this->fichaParaGeneracion((int) $request->producto_id, (bool) $request->es_combo);
 
         try {
-            $textos = $copys->generar($this->mapProducto($producto), (bool) $request->con_precio, (string) $request->instrucciones);
+            $textos = $copys->generar($ficha, (bool) $request->con_precio, (string) $request->instrucciones);
             return response()->json(['status' => 1, 'textos' => $textos]);
         } catch (\Throwable $e) {
             return response()->json(['status' => 0, 'error' => $e->getMessage()], 422);
         }
     }
 
-    /** Escena IA: ambienta la foto real del producto (Gemini). */
+    /** Escena IA: 5 variantes de la misma ambientación de marca, en paralelo (Gemini). */
+    public function generarVariantes(Request $request, ImagenIaService $imagenIa)
+    {
+        $request->validate([
+            'producto_id'   => 'required|integer',
+            'formato'       => 'required|string|in:feed,story,ml',
+            'instrucciones' => 'nullable|string|max:500',
+            'es_combo'      => 'nullable|boolean',
+            'cantidad'      => 'nullable|integer|min:1|max:6',
+        ]);
+
+        $producto = Articulo::findOrFail($request->producto_id);
+        $extraEscena = $request->boolean('es_combo')
+            ? 'Mostrar también, junto al colchón, una base sommier a tono y un par de almohadas prolijamente acomodadas, como parte natural de la ambientación.'
+            : null;
+
+        try {
+            $resultados = $imagenIa->generarVariantes(
+                public_path('imagenes/articulos/' . $producto->imagen),
+                $request->formato,
+                (int) $request->input('cantidad', 5),
+                (string) $request->instrucciones,
+                $extraEscena
+            );
+            return response()->json(['status' => 1, 'variantes' => $resultados]);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 0, 'error' => $e->getMessage()], 422);
+        }
+    }
+
+    /** Escena IA: una sola ambientación (usada para generar el formato extra tras aprobar el diseño). */
     public function generarImagen(Request $request, ImagenIaService $imagenIa)
     {
         $request->validate([
             'producto_id'   => 'required|integer',
-            'escena'        => 'required|string|in:' . implode(',', array_keys(ImagenIaService::ESCENAS)),
-            'formato'       => 'required|string|max:20',
+            'formato'       => 'required|string|in:feed,story,ml',
             'instrucciones' => 'nullable|string|max:500',
-            'prompt_libre'  => 'nullable|string|max:2000',
+            'es_combo'      => 'nullable|boolean',
         ]);
 
         $producto = Articulo::findOrFail($request->producto_id);
+        $extraEscena = $request->boolean('es_combo')
+            ? 'Mostrar también, junto al colchón, una base sommier a tono y un par de almohadas prolijamente acomodadas, como parte natural de la ambientación.'
+            : null;
 
         try {
             $resultado = $imagenIa->generarEscena(
                 public_path('imagenes/articulos/' . $producto->imagen),
-                $request->escena,
+                'dormitorio',
                 $request->formato,
                 (string) $request->instrucciones,
-                $request->prompt_libre
+                null,
+                $extraEscena
             );
             return response()->json(['status' => 1] + $resultado);
         } catch (\Throwable $e) {
@@ -202,21 +243,26 @@ class PublicacionController extends Controller
         }
     }
 
-    /** Guarda la publicacion (copys + imagen final del canvas) en la biblioteca. */
+    /** Guarda la publicacion (copys + imagen final del canvas) en la biblioteca, opcionalmente programada. */
     public function guardar(Request $request)
     {
         $request->validate([
-            'producto_id'   => 'required|integer',
-            'formato'       => 'required|string|max:20',
-            'estilo'        => 'nullable|string|max:30',
-            'titulo_ml'     => 'nullable|string|max:120',
-            'desc_ml'       => 'nullable|string',
-            'caption'       => 'nullable|string',
-            'texto_wa'      => 'nullable|string',
-            'imagen_escena' => 'nullable|string|max:255',
-            'prompt_escena' => 'nullable|string',
-            'imagen_base64' => 'required|string',
-            'video_final'   => 'nullable|string|max:255',
+            'producto_id'         => 'required|integer',
+            'formato'             => 'required|string|max:20',
+            'estilo'              => 'nullable|string|max:30',
+            'titulo_ml'           => 'nullable|string|max:120',
+            'desc_ml'             => 'nullable|string',
+            'caption'             => 'nullable|string',
+            'texto_wa'            => 'nullable|string',
+            'imagen_escena'       => 'nullable|string|max:255',
+            'prompt_escena'       => 'nullable|string',
+            'imagen_base64'       => 'required|string',
+            'video_final'         => 'nullable|string|max:255',
+            'es_combo'            => 'nullable|boolean',
+            'padre_id'            => 'nullable|integer',
+            'programado_para'     => 'nullable|date',
+            'canales_programados' => 'nullable|array',
+            'canales_programados.*' => 'in:facebook,instagram',
         ]);
 
         if (!preg_match('/^data:image\/png;base64,(.+)$/s', $request->imagen_base64, $m)) {
@@ -230,21 +276,27 @@ class PublicacionController extends Controller
         $nombre = 'pub-' . $request->producto_id . '-' . uniqid() . '.png';
         file_put_contents($dir . DIRECTORY_SEPARATOR . $nombre, base64_decode($m[1]));
 
+        $programado = $request->filled('programado_para') ? \Carbon\Carbon::parse($request->programado_para) : null;
+
         $id = DB::table('publicaciones')->insertGetId([
-            'producto_id'   => $request->producto_id,
-            'formato'       => $request->formato,
-            'estilo'        => $request->estilo,
-            'titulo_ml'     => $request->titulo_ml,
-            'desc_ml'       => $request->desc_ml,
-            'caption'       => $request->caption,
-            'texto_wa'      => $request->texto_wa,
-            'imagen_escena' => $request->imagen_escena,
-            'prompt_escena' => $request->prompt_escena,
-            'imagen_final'  => 'imagenes/publicaciones/finales/' . $nombre,
-            'video_final'   => $request->video_final,
-            'estado'        => 'borrador',
-            'created_at'    => now(),
-            'updated_at'    => now(),
+            'producto_id'         => $request->producto_id,
+            'padre_id'            => $request->padre_id,
+            'es_combo'            => (bool) $request->boolean('es_combo'),
+            'formato'             => $request->formato,
+            'estilo'              => $request->estilo,
+            'titulo_ml'           => $request->titulo_ml,
+            'desc_ml'             => $request->desc_ml,
+            'caption'             => $request->caption,
+            'texto_wa'            => $request->texto_wa,
+            'imagen_escena'       => $request->imagen_escena,
+            'prompt_escena'       => $request->prompt_escena,
+            'imagen_final'        => 'imagenes/publicaciones/finales/' . $nombre,
+            'video_final'         => $request->video_final,
+            'estado'              => $programado ? 'programada' : 'borrador',
+            'programado_para'     => $programado,
+            'canales_programados' => $request->canales_programados ? implode(',', $request->canales_programados) : null,
+            'created_at'          => now(),
+            'updated_at'          => now(),
         ]);
 
         return response()->json(['status' => 1, 'id' => $id, 'imagen_url' => asset('imagenes/publicaciones/finales/' . $nombre)]);
@@ -264,15 +316,29 @@ class PublicacionController extends Controller
             return response()->json(['status' => 0, 'error' => 'Publicacion no encontrada o sin imagen final'], 404);
         }
 
+        [$resultados, $errores] = self::publicarEnCanales($pub, $request->canales, $meta);
+
+        return response()->json([
+            'status'     => $resultados ? 1 : 0,
+            'publicados' => $resultados,
+            'errores'    => $errores,
+        ], $resultados ? 200 : 422);
+    }
+
+    /**
+     * Núcleo de "publicar en Meta", compartido entre el endpoint manual y el
+     * comando programado (publicaciones:auto-publicar). Devuelve [canalesOk, errores].
+     */
+    public static function publicarEnCanales(object $pub, array $canales, MetaPublisherService $meta): array
+    {
         $caption = (string) ($pub->caption ?: $pub->titulo_ml);
         $resultados = [];
         $errores = [];
         $update = [];
 
-        foreach ($request->canales as $canal) {
+        foreach ($canales as $canal) {
             try {
                 if ($canal === 'facebook') {
-                    // Si la publicación tiene video IA, a Facebook va el video; si no, la imagen
                     $update['fb_post_id'] = $pub->video_final
                         ? $meta->publicarFacebookVideo(public_path($pub->video_final), $caption)
                         : $meta->publicarFacebook(public_path($pub->imagen_final), $caption);
@@ -301,11 +367,7 @@ class PublicacionController extends Controller
             ]);
         }
 
-        return response()->json([
-            'status'     => $resultados ? 1 : 0,
-            'publicados' => $resultados,
-            'errores'    => $errores,
-        ], $resultados ? 200 : 422);
+        return [$resultados, $errores];
     }
 
     /** Catalogo PDF con precios, directo desde el ERP. */
@@ -349,6 +411,49 @@ class PublicacionController extends Controller
         ]);
 
         return response()->json(['status' => 1]);
+    }
+
+    /** Combo (colchón ancla + relacionados) mapeado al mismo shape que un producto, para el selector unificado. */
+    protected function mapCombo(object $c): array
+    {
+        $ancla = $this->mapProducto($c->producto);
+        $incluye = $c->incluye ?: [];
+
+        return [
+            'id'         => $ancla['id'], // producto_id real: el colchón ancla (la foto real generada es la de él)
+            'nombre'     => 'Combo ' . $c->producto->nombre . ($incluye ? ' + ' . implode(' + ', $incluye) : ''),
+            'imagen'     => $ancla['imagen'],
+            'precio'     => round((float) $c->precio_separado, 2),
+            'precioFinal'=> round((float) $c->display_price, 2),
+            'descuento'  => $c->precio_separado > 0 ? round(($c->ahorro / $c->precio_separado) * 100, 1) : 0,
+            'tipo'       => $ancla['tipo'],
+            'firmeza'    => $ancla['firmeza'],
+            'plazas'     => $ancla['plazas'],
+            'altura'     => $ancla['altura'],
+            'pillow'     => $ancla['pillow'],
+            'tela'       => $ancla['tela'],
+            'garantia'   => $ancla['garantia'],
+            'noches'     => $ancla['noches'],
+            'descripcion'=> $ancla['descripcion'],
+            'incluye'    => $incluye,
+            'regalos'    => $c->regalos ?: [],
+            'esCombo'    => true,
+        ];
+    }
+
+    /** Ficha real (server-side, no confía en lo que mande el cliente) para generar copys de un producto o de un combo. */
+    protected function fichaParaGeneracion(int $productoId, bool $esCombo): array
+    {
+        $producto = Articulo::findOrFail($productoId);
+
+        if (!$esCombo) {
+            return $this->mapProducto($producto);
+        }
+
+        $combo = app(EcommerceController::class)->combosDisponibles()
+            ->first(fn ($c) => $c->producto->idarticulo === $productoId);
+
+        return $combo ? $this->mapCombo($combo) : $this->mapProducto($producto);
     }
 
     protected function mapProducto(Articulo $p): array

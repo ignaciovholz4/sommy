@@ -129,7 +129,7 @@ class EcommerceController extends Controller
      * "ahorrás $X" compara contra comprar cada cosa suelta al precio de
      * lista, regalos incluidos a precio de lista.
      */
-    private function combosDisponibles()
+    public function combosDisponibles()
     {
         return \App\Models\Articulo::where('estado', 'Activo')
             ->where('tipo_producto_id', 2)

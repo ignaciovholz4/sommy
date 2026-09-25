@@ -8,33 +8,17 @@
     .pub-title { font-size: 21px; font-weight: 600; margin-bottom: 2px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .pub-sub { font-size: 13.5px; color: #6E7A96; font-weight: 300; margin-bottom: 18px; }
 
-    .pub-stepper { display: flex; align-items: center; margin-bottom: 20px; }
-    .pub-step { display: flex; align-items: center; gap: 9px; cursor: pointer; user-select: none; }
-    .pub-step .circ {
-        width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
-        background: #fff; border: 2px solid #E7EAF2; color: #94A3B8; font-weight: 600; font-size: 14px; transition: all .2s;
-    }
-    .pub-step .lbl { font-size: 12.5px; font-weight: 500; color: #94A3B8; white-space: nowrap; }
-    .pub-step.activo .circ { background: #1B2B5A; border-color: #1B2B5A; color: #fff; box-shadow: 0 6px 18px rgba(27,43,90,.25); }
-    .pub-step.activo .lbl { color: #1B2B5A; font-weight: 600; }
-    .pub-step.hecho .circ { background: #E0F2FE; border-color: #7FD4F5; color: #2563EB; }
-    .pub-step.hecho .lbl { color: #47536F; }
-    .pub-step-linea { flex: 1; height: 2px; background: #E7EAF2; margin: 0 12px; min-width: 24px; }
-    @media (max-width: 767px) { .pub-step .lbl { display: none; } }
-
     .pub-panel {
         background: #fff; border: 1px solid #E7EAF2; border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(27,43,90,.08); padding: 20px;
+        box-shadow: 0 10px 30px rgba(27,43,90,.08); padding: 20px; margin-top: 16px;
     }
+    .pub-panel:first-of-type { margin-top: 0; }
     .pub-panel h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #47536F; margin-bottom: 12px; }
     .pub-panel label { font-size: 13px; font-weight: 500; margin: 10px 0 4px; display: block; }
-    .pub-panel select, .pub-panel input[type=text], .pub-panel textarea {
+    .pub-panel select, .pub-panel input[type=text], .pub-panel input[type=datetime-local], .pub-panel textarea {
         width: 100%; border: 1px solid #E7EAF2; border-radius: 10px; padding: 9px 12px; font-size: 13.5px; color: #1B2B5A; font-family: 'Poppins', sans-serif;
     }
     .pub-panel textarea { min-height: 110px; line-height: 1.55; resize: vertical; }
-
-    .pub-paso { display: none; }
-    .pub-paso.activo { display: block; }
 
     .pub-cols2 { display: grid; grid-template-columns: 360px 1fr; gap: 16px; align-items: start; }
     @media (max-width: 991px) { .pub-cols2 { grid-template-columns: 1fr; } }
@@ -47,11 +31,6 @@
     }
     .pub-opt input:checked + span { background: #1B2B5A; border-color: #1B2B5A; color: #fff; }
 
-    .pub-canvas-box { text-align: center; }
-    #pubCanvas, #pubVideoPreview {
-        max-width: 100%; max-height: 520px; border-radius: 12px;
-        border: 1px solid #E7EAF2; box-shadow: 0 10px 30px rgba(27,43,90,.10);
-    }
     .pub-btns { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
     .pub-btn {
         border: none; border-radius: 999px; padding: 10px 22px; font-size: 13.5px; font-weight: 500;
@@ -65,13 +44,7 @@
     .pub-btn.chico { padding: 6px 14px; font-size: 12px; }
     .pub-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-    .pub-nav { display: flex; justify-content: space-between; margin-top: 18px; }
-
-    .pub-texto {
-        background: #F8FAFC; border: 1px solid #E7EAF2; border-radius: 12px;
-        padding: 12px; font-size: 13px; color: #47536F; white-space: pre-wrap;
-        max-height: 170px; overflow-y: auto; margin-bottom: 8px; line-height: 1.6;
-    }
+    .pub-texto { width: 100%; min-height: 130px; }
     .pub-copy { font-size: 12px; }
     .pub-hist { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
     .pub-hist .badge { border-radius: 999px; font-weight: 500; font-size: 11px; padding: 5px 10px; }
@@ -79,20 +52,42 @@
     .pub-aviso { font-size: 11.5px; color: #6E7A96; margin-top: 6px; font-weight: 300; }
     .pub-aviso.warn { color: #b45309; }
 
-    .pub-final-grid { display: grid; grid-template-columns: 280px 1fr; gap: 18px; align-items: start; }
-    @media (max-width: 767px) { .pub-final-grid { grid-template-columns: 1fr; } }
-    #pubMini, #pubMiniVideo { width: 100%; border-radius: 12px; border: 1px solid #E7EAF2; box-shadow: 0 8px 24px rgba(27,43,90,.10); }
+    /* Variantes (5 opciones para elegir) */
+    .pub-variantes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 10px; }
+    .pub-variante { position: relative; border-radius: 12px; overflow: hidden; border: 3px solid transparent; cursor: pointer; background: #F8FAFC; }
+    .pub-variante img { width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block; }
+    .pub-variante.seleccionada { border-color: #2563EB; box-shadow: 0 6px 18px rgba(37,99,235,.25); }
+    .pub-variante .check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 999px; background: #2563EB; color: #fff; display: none; align-items: center; justify-content: center; font-size: 11px; }
+    .pub-variante.seleccionada .check { display: flex; }
+    .pub-variante.error { display: flex; align-items: center; justify-content: center; aspect-ratio: 4/5; font-size: 11px; color: #b45309; text-align: center; padding: 8px; cursor: default; }
 
-    .pub-biblio { margin-top: 16px; }
-    .pub-biblio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 6px; }
-    .pub-biblio-card { border: 1px solid #E7EAF2; border-radius: 12px; overflow: hidden; background: #F8FAFC; text-align: center; }
-    .pub-biblio-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; cursor: pointer; }
-    .pub-biblio-card .meta { font-size: 10.5px; color: #47536F; padding: 6px 4px; }
-    .pub-biblio-card .estado { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 9.5px; font-weight: 600; }
-    .pub-biblio-card .estado.publicada { background: #DCFCE7; color: #166534; }
-    .pub-biblio-card .estado.borrador { background: #E0F2FE; color: #1B2B5A; }
+    .pub-final-grid { display: grid; grid-template-columns: 300px 1fr; gap: 18px; align-items: start; }
+    @media (max-width: 767px) { .pub-final-grid { grid-template-columns: 1fr; } }
+    #pubPreview { width: 100%; border-radius: 12px; border: 1px solid #E7EAF2; box-shadow: 0 8px 24px rgba(27,43,90,.10); }
+    #pubCanvas { display: none; }
+
+    details.pub-mas summary { cursor: pointer; font-size: 12.5px; color: #2563EB; font-weight: 500; margin-top: 10px; }
+
+    /* Próximas programadas */
+    .pub-proxima { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #F1F4F9; font-size: 12.5px; }
+    .pub-proxima:last-child { border-bottom: none; }
+    .pub-proxima img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; }
+    .pub-proxima .cuando { font-weight: 600; color: #1B2B5A; min-width: 130px; }
+
+    /* Simulador de feed */
+    .pub-feed-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .pub-feed-tab { border: 1.5px solid #E7EAF2; background: #fff; color: #47536F; border-radius: 999px; padding: 6px 16px; font-size: 12.5px; font-weight: 500; cursor: pointer; }
+    .pub-feed-tab.activo { background: #1B2B5A; border-color: #1B2B5A; color: #fff; }
+    .pub-feed-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .pub-feed-avatar { width: 48px; height: 48px; border-radius: 999px; object-fit: cover; border: 1px solid #E7EAF2; background: #1B2B5A; }
+    .pub-feed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; max-width: 480px; }
+    .pub-feed-item { position: relative; aspect-ratio: 4/5; background: #F1F4F9; overflow: hidden; }
+    .pub-feed-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pub-feed-item .badge-prog { position: absolute; bottom: 4px; left: 4px; right: 4px; background: rgba(27,43,90,.85); color: #fff; font-size: 8.5px; font-weight: 600; text-align: center; border-radius: 6px; padding: 2px 4px; }
+    .pub-feed-empty { font-size: 12.5px; color: #6E7A96; padding: 20px 0; }
 
     /* Recursos de marca */
+    .pub-biblio { margin-top: 16px; }
     .pub-rec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 10px; }
     .pub-rec-card {
         border: 1px solid #E7EAF2; border-radius: 12px; background: #F8FAFC; padding: 10px 12px;
@@ -119,248 +114,135 @@
 <div class="pub-wrap">
     <div class="pub-title">
         <span><i class="fas fa-bullhorn" style="color:#2563EB;"></i> Estudio de Publicaciones</span>
-        <button class="pub-btn sec chico" onclick="$('#modalEntrenar').modal('show')"><i class="fas fa-graduation-cap"></i> Entrenar IA</button>
+        <button class="pub-btn sec chico" onclick="$('#modalEntrenar').modal('show')"><i class="fas fa-graduation-cap"></i> Mi marca</button>
     </div>
-    <div class="pub-sub">Creá el contenido paso a paso y subilo a tus redes — todo con los datos reales del ERP.</div>
+    <div class="pub-sub">Elegí un producto o combo, generá el contenido con tu branding y publicalo o programalo — todo desde acá.</div>
 
-    {{-- Stepper --}}
-    <div class="pub-stepper">
-        <div class="pub-step activo" data-paso="1" onclick="irPaso(1)"><span class="circ">1</span><span class="lbl">Producto</span></div>
-        <div class="pub-step-linea"></div>
-        <div class="pub-step" data-paso="2" onclick="irPaso(2)"><span class="circ">2</span><span class="lbl">Contenido</span></div>
-        <div class="pub-step-linea"></div>
-        <div class="pub-step" data-paso="3" onclick="irPaso(3)"><span class="circ">3</span><span class="lbl">Textos</span></div>
-        <div class="pub-step-linea"></div>
-        <div class="pub-step" data-paso="4" onclick="irPaso(4)"><span class="circ">4</span><span class="lbl">Publicar</span></div>
-    </div>
-
-    {{-- PASO 1 --}}
-    <div class="pub-paso activo" id="paso1">
-        <div class="pub-panel">
-            <h3>1 · Elegí el producto y el formato</h3>
-            <div class="pub-cols2">
-                <div>
-                    <label>Producto</label>
-                    <select id="pubProducto"></select>
-                    <a id="pubLinkConocimiento" href="#" class="pub-aviso" style="display:inline-block;color:#2563EB;margin-top:6px;">
-                        <i class="fas fa-brain"></i> Conocimiento del producto (contexto para la IA)
-                    </a>
-                    <div id="pubHistorial" class="pub-hist"></div>
-                </div>
-                <div>
-                    <label style="margin-top:0;">Formato</label>
-                    <div class="pub-opts" id="pubFormatos">
-                        <label class="pub-opt"><input type="radio" name="pubFormato" value="ml" checked><span>MercadoLibre 1:1</span></label>
-                        <label class="pub-opt"><input type="radio" name="pubFormato" value="post"><span>Post IG/FB 1:1</span></label>
-                        <label class="pub-opt"><input type="radio" name="pubFormato" value="story"><span>Historia 9:16</span></label>
-                    </div>
-
-                    <label>Estilo</label>
-                    <div class="pub-opts">
-                        <label class="pub-opt"><input type="radio" name="pubEstilo" value="claro" checked><span>Claro (catálogo)</span></label>
-                        <label class="pub-opt"><input type="radio" name="pubEstilo" value="noche"><span>Noche (premium)</span></label>
-                    </div>
-
-                    <label>Mostrar precio</label>
-                    <div class="pub-opts">
-                        <label class="pub-opt"><input type="radio" name="pubPrecio" value="si" checked><span>Sí</span></label>
-                        <label class="pub-opt"><input type="radio" name="pubPrecio" value="no"><span>No</span></label>
-                    </div>
-                </div>
+    {{-- 1 · Producto/combo + generar --}}
+    <div class="pub-panel">
+        <h3>1 · Elegí qué vas a promocionar</h3>
+        <div class="pub-cols2">
+            <div>
+                <label>Producto o combo</label>
+                <select id="pubProducto"></select>
+                <a id="pubLinkConocimiento" href="#" class="pub-aviso" style="display:inline-block;color:#2563EB;margin-top:6px;">
+                    <i class="fas fa-brain"></i> Conocimiento del producto (contexto para la IA)
+                </a>
+                <div id="pubHistorial" class="pub-hist"></div>
             </div>
-            <div class="pub-nav">
-                <span></span>
-                <button class="pub-btn" onclick="irPaso(2)">Siguiente: Contenido <i class="fas fa-arrow-right"></i></button>
+            <div>
+                <label style="margin-top:0;">Formato</label>
+                <div class="pub-opts">
+                    <label class="pub-opt"><input type="radio" name="pubFormato" value="feed" checked><span>Feed 4:5</span></label>
+                    <label class="pub-opt"><input type="radio" name="pubFormato" value="story"><span>Historia 9:16</span></label>
+                    <label class="pub-opt"><input type="radio" name="pubFormato" value="ml"><span>MercadoLibre 1:1</span></label>
+                </div>
+                <label>Mostrar precio</label>
+                <div class="pub-opts">
+                    <label class="pub-opt"><input type="radio" name="pubPrecio" value="si" checked><span>Sí</span></label>
+                    <label class="pub-opt"><input type="radio" name="pubPrecio" value="no"><span>No</span></label>
+                </div>
+                <div class="pub-btns" style="justify-content:flex-start;margin-top:16px;">
+                    <button class="pub-btn ia" id="btnGenerar" onclick="generarContenido(this)" @if(!$capacidades['escenas']) disabled @endif>
+                        <i class="fas fa-wand-magic-sparkles"></i> Generar contenido
+                    </button>
+                </div>
+                @if(!$capacidades['escenas'])
+                    <div class="pub-aviso warn">Configurá GEMINI_API_KEY en el .env para generar contenido con IA.</div>
+                @else
+                    <div class="pub-aviso">Genera 5 imágenes con tu estilo de marca fijo (así tu feed queda homogéneo) + el texto, todo junto.</div>
+                @endif
             </div>
         </div>
     </div>
 
-    {{-- PASO 2 · Contenido (imagen o video) --}}
-    <div class="pub-paso" id="paso2">
-        <div class="pub-panel">
-            <h3>2 · Armá el contenido</h3>
-
-            <div class="pub-opts" style="margin-bottom:12px;">
-                <label class="pub-opt"><input type="radio" name="pubTipoContenido" value="imagen" checked onchange="cambiarTipoContenido()"><span><i class="fas fa-image"></i> Imagen</span></label>
-                <label class="pub-opt"><input type="radio" name="pubTipoContenido" value="video" onchange="cambiarTipoContenido()"><span><i class="fas fa-video"></i> Video IA (persona vendiendo)</span></label>
-            </div>
-
-            <div class="pub-cols2">
-                <div>
-                    {{-- MODO IMAGEN --}}
-                    <div id="modoImagen">
-                        <label style="margin-top:0;">Escena base <i class="fas fa-magic" style="color:#0EA5E9;"></i></label>
-                        <div class="pub-opts">
-                            <label class="pub-opt"><input type="radio" name="pubEscena" value="dormitorio" checked onchange="armarPromptEscena()"><span>Dormitorio</span></label>
-                            <label class="pub-opt"><input type="radio" name="pubEscena" value="noche" onchange="armarPromptEscena()"><span>Noche</span></label>
-                            <label class="pub-opt"><input type="radio" name="pubEscena" value="minimal" onchange="armarPromptEscena()"><span>Minimalista</span></label>
-                            <label class="pub-opt"><input type="radio" name="pubEscena" value="familia" onchange="armarPromptEscena()"><span>Familiar</span></label>
-                        </div>
-
-                        <label>Prompt guardado</label>
-                        <select id="pubPromptGuardado" onchange="usarPromptGuardado(this, 'pubPromptEscena')"></select>
-
-                        <label>Prompt de la escena (editalo a gusto)</label>
-                        <textarea id="pubPromptEscena"></textarea>
-                        <div class="pub-aviso">El sistema siempre agrega solo: mantener el producto fiel a la foto, el encuadre del formato y la prohibición de textos/logos. El precio y el logo los pone el editor, exactos.</div>
-
-                        <div class="pub-btns" style="justify-content:flex-start;">
-                            <button class="pub-btn ia" id="btnEscena" onclick="generarEscenaIA(this)" @if(!$capacidades['escenas']) disabled @endif>
-                                <i class="fas fa-magic"></i> Generar escena
-                            </button>
-                            <button class="pub-btn sec" id="btnQuitarEscena" onclick="quitarEscena()" style="display:none;">Quitar escena</button>
-                        </div>
-                        @if(!$capacidades['escenas'])
-                            <div class="pub-aviso warn">Configurá GEMINI_API_KEY en el .env para generar escenas con IA.</div>
-                        @endif
-                    </div>
-
-                    {{-- MODO VIDEO --}}
-                    <div id="modoVideo" style="display:none;">
-                        <label style="margin-top:0;">Guión del video (editalo a gusto) <i class="fas fa-video" style="color:#0EA5E9;"></i></label>
-                        <select id="pubPromptGuardadoVideo" onchange="usarPromptGuardado(this, 'pubPromptVideo')" style="margin-bottom:6px;"></select>
-                        <textarea id="pubPromptVideo" style="min-height:180px;"></textarea>
-                        <div class="pub-aviso">Video corto (≈8 seg) con una persona presentando el producto a cámara, con voz, estilo selfie/UGC. La foto real del producto se usa como referencia. Tarda 1 a 3 minutos y tiene costo por video en Google AI.</div>
-
-                        <div class="pub-btns" style="justify-content:flex-start;">
-                            <button class="pub-btn ia" id="btnVideo" onclick="generarVideoIA(this)" @if(!$capacidades['video']) disabled @endif>
-                                <i class="fas fa-video"></i> Generar video
-                            </button>
-                            <button class="pub-btn sec" id="btnQuitarVideo" onclick="quitarVideo()" style="display:none;">Quitar video</button>
-                        </div>
-                        @if(!$capacidades['video'])
-                            <div class="pub-aviso warn">Configurá GEMINI_API_KEY en el .env para generar videos con IA.</div>
-                        @endif
-                    </div>
-                </div>
-
-                <div class="pub-canvas-box">
-                    <canvas id="pubCanvas" width="1200" height="1200"></canvas>
-                    <video id="pubVideoPreview" controls style="display:none;"></video>
-                    <div class="pub-btns">
-                        <button class="pub-btn sec" id="btnDescargar" onclick="descargarContenido()"><i class="fas fa-download"></i> Descargar</button>
-                    </div>
-                </div>
-            </div>
-            <div class="pub-nav">
-                <button class="pub-btn sec" onclick="irPaso(1)"><i class="fas fa-arrow-left"></i> Atrás</button>
-                <button class="pub-btn" onclick="irPaso(3)">Siguiente: Textos <i class="fas fa-arrow-right"></i></button>
-            </div>
-        </div>
+    {{-- 2 · Elegir variante --}}
+    <div class="pub-panel" id="panelVariantes" style="display:none;">
+        <h3>2 · Elegí la imagen que más te gusta</h3>
+        <div id="pubVariantesEstado" class="pub-aviso"></div>
+        <div class="pub-variantes" id="pubVariantes"></div>
     </div>
 
-    {{-- PASO 3 · Textos --}}
-    <div class="pub-paso" id="paso3">
-        <div class="pub-panel">
-            <h3>3 · Escribí los textos</h3>
-
-            <div class="pub-cols2">
-                <div>
-                    <input type="text" id="pubInstCopy" placeholder="Instrucción para la IA (ej: enfocar en el Día de la Madre)">
-                    <div class="pub-btns" style="justify-content:flex-start; margin-top:8px;">
-                        <button class="pub-btn ia" id="btnCopys" onclick="generarCopysIA(this)" @if(!$capacidades['copys']) disabled title="Configurá OPENAI_API_KEY" @endif>
-                            <i class="fas fa-magic"></i> Generar textos con IA
-                        </button>
-                    </div>
-                    @if(!$capacidades['copys'])
-                        <div class="pub-aviso warn">Configurá OPENAI_API_KEY en el .env para generar textos con IA.</div>
-                    @else
-                        <div class="pub-aviso">La IA usa tu voz de marca entrenada, la información de contexto de la biblioteca y aprende de las publicaciones guardadas.</div>
-                    @endif
+    {{-- 3 · Revisar y subir --}}
+    <div class="pub-panel" id="panelResultado" style="display:none;">
+        <h3>3 · Revisá y subí</h3>
+        <canvas id="pubCanvas" width="1080" height="1350"></canvas>
+        <div class="pub-final-grid">
+            <div>
+                <img id="pubPreview" alt="Vista previa">
+                <div class="pub-btns">
+                    <button class="pub-btn sec chico" onclick="descargarContenido()"><i class="fas fa-download"></i> Descargar</button>
+                    <button class="pub-btn sec chico" id="btnStoryExtra" onclick="generarFormatoExtra('story', this)"><i class="fas fa-plus"></i> Versión Historia 9:16</button>
+                    <button class="pub-btn sec chico" id="btnFeedExtra" onclick="generarFormatoExtra('feed', this)" style="display:none;"><i class="fas fa-plus"></i> Versión Feed 4:5</button>
                 </div>
-                <div>
-                    <label style="margin-top:0;">Título MercadoLibre <span id="mlTituloLen" style="color:#6E7A96;font-weight:300;"></span></label>
-                    <div class="pub-texto" id="txtTituloML" style="max-height:60px;"></div>
-                    <button class="pub-btn sec pub-copy" onclick="copiarTexto('txtTituloML', this)">Copiar título</button>
+            </div>
+            <div>
+                <label style="margin-top:0;">Caption (Instagram / Facebook)</label>
+                <textarea id="txtCaption" class="pub-texto"></textarea>
 
+                <details class="pub-mas">
+                    <summary>Ver título/descripción MercadoLibre y mensaje de WhatsApp</summary>
+                    <label>Título MercadoLibre <span id="mlTituloLen" style="color:#6E7A96;font-weight:300;"></span></label>
+                    <input type="text" id="txtTituloML">
                     <label>Descripción MercadoLibre</label>
-                    <div class="pub-texto" id="txtDescML"></div>
-                    <button class="pub-btn sec pub-copy" onclick="copiarTexto('txtDescML', this)">Copiar descripción</button>
-
-                    <label>Caption Instagram / Facebook</label>
-                    <div class="pub-texto" id="txtCaption"></div>
-                    <button class="pub-btn sec pub-copy" onclick="copiarTexto('txtCaption', this)">Copiar caption</button>
-
+                    <textarea id="txtDescML" class="pub-texto"></textarea>
                     <label>Mensaje WhatsApp</label>
-                    <div class="pub-texto" id="txtWa" style="max-height:110px;"></div>
-                    <button class="pub-btn sec pub-copy" onclick="copiarTexto('txtWa', this)">Copiar mensaje</button>
-                </div>
-            </div>
+                    <textarea id="txtWa" style="min-height:80px;"></textarea>
+                </details>
 
-            <div class="pub-nav">
-                <button class="pub-btn sec" onclick="irPaso(2)"><i class="fas fa-arrow-left"></i> Atrás</button>
-                <button class="pub-btn" onclick="irPaso(4)">Siguiente: Publicar <i class="fas fa-arrow-right"></i></button>
+                <label>Publicar</label>
+                <div class="pub-btns" style="justify-content:flex-start;">
+                    <button class="pub-btn" id="btnPublicarAhora" onclick="publicarAhora(this)" @if(!$capacidades['facebook'] && !$capacidades['instagram']) disabled title="Configurá las claves de Meta" @endif>
+                        <i class="fas fa-paper-plane"></i> Publicar ahora (Instagram + Facebook)
+                    </button>
+                    <button class="pub-btn sec" id="btnGuardar" onclick="guardarBorrador(this)"><i class="fas fa-save"></i> Guardar borrador</button>
+                </div>
+
+                <label>Programar para más adelante</label>
+                <div class="pub-btns" style="justify-content:flex-start;flex-wrap:wrap;">
+                    <input type="datetime-local" id="pubFecha" style="max-width:220px;">
+                    <button class="pub-btn sec" id="btnProgramar" onclick="programar(this)"><i class="fas fa-calendar-plus"></i> Programar</button>
+                </div>
+                <div class="pub-aviso" id="avisoAccion"></div>
             </div>
         </div>
     </div>
 
-    {{-- PASO 4 · Publicar --}}
-    <div class="pub-paso" id="paso4">
-        <div class="pub-panel">
-            <h3>4 · Guardá y subí a tus redes</h3>
-            <div class="pub-final-grid">
-                <div>
-                    <img id="pubMini" alt="Vista previa">
-                    <video id="pubMiniVideo" controls style="display:none;"></video>
-                    <div class="pub-aviso" style="text-align:center;">Así queda tu publicación</div>
-                </div>
-                <div>
-                    <label style="margin-top:0;">1 · Guardala en la biblioteca (alimenta a la IA)</label>
-                    <div class="pub-btns" style="justify-content:flex-start;">
-                        <button class="pub-btn sec" id="btnGuardar" onclick="guardarPublicacion(this)"><i class="fas fa-save"></i> Guardar en biblioteca</button>
-                        <button class="pub-btn sec" onclick="descargarContenido()"><i class="fas fa-download"></i> Descargar</button>
-                    </div>
-
-                    <label>2 · Publicá directo</label>
-                    <div class="pub-btns" style="justify-content:flex-start;">
-                        <button class="pub-btn" id="btnPubFb" onclick="publicarMeta('facebook', this)" @if(!$capacidades['facebook']) disabled title="Configurá FB_PAGE_ID y FB_PAGE_TOKEN" @endif><i class="fab fa-facebook"></i> Facebook</button>
-                        <button class="pub-btn" id="btnPubIg" onclick="publicarMeta('instagram', this)" @if(!$capacidades['instagram']) disabled title="Configurá IG_ACCOUNT_ID" @endif><i class="fab fa-instagram"></i> Instagram</button>
-                    </div>
-                    <div class="pub-aviso" id="avisoPublicar">Publica la imagen con el caption del paso 3. Instagram requiere el sitio accesible desde internet.</div>
-
-                    <label>3 · ¿Publicaste a mano? Marcalo</label>
-                    <div class="pub-btns" style="justify-content:flex-start;">
-                        <button class="pub-btn sec pub-copy" onclick="marcarPublicado('meli', this)">MercadoLibre</button>
-                        <button class="pub-btn sec pub-copy" onclick="marcarPublicado('whatsapp', this)">WhatsApp</button>
-                        <button class="pub-btn sec pub-copy" onclick="marcarPublicado('google', this)">Google</button>
-                    </div>
-
-                    <label>Extra · Catálogo completo</label>
-                    <div class="pub-btns" style="justify-content:flex-start;">
-                        <a class="pub-btn sec" href="{{ route('publicaciones.catalogo') }}" target="_blank"><i class="fas fa-file-pdf"></i> Catálogo PDF con precios</a>
-                        <a class="pub-btn sec" href="{{ route('publicaciones.catalogo', ['precios' => 0]) }}" target="_blank"><i class="fas fa-file-pdf"></i> Sin precios</a>
-                    </div>
-                </div>
-            </div>
-            <div class="pub-nav">
-                <button class="pub-btn sec" onclick="irPaso(3)"><i class="fas fa-arrow-left"></i> Atrás</button>
-                <button class="pub-btn" onclick="irPaso(1)"><i class="fas fa-plus"></i> Nueva publicación</button>
-            </div>
-        </div>
+    {{-- Próximas publicaciones programadas --}}
+    <div class="pub-panel pub-biblio" id="panelProximas" style="display:none;">
+        <h3><i class="fas fa-calendar-days" style="color:#2563EB;"></i> Próximas publicaciones</h3>
+        <div id="pubProximas"></div>
     </div>
 
-    {{-- Biblioteca de publicaciones --}}
+    {{-- Simulador de feed --}}
     <div class="pub-panel pub-biblio">
-        <h3><i class="fas fa-images" style="color:#2563EB;"></i> Biblioteca de publicaciones</h3>
-        <div class="pub-aviso">Las publicaciones guardadas alimentan a la IA como referencia de tono para las próximas.</div>
-        <div class="pub-biblio-grid" id="pubBiblioteca"></div>
+        <h3><i class="fas fa-table-cells" style="color:#2563EB;"></i> Simulá tu feed</h3>
+        <div class="pub-feed-tabs">
+            <button class="pub-feed-tab activo" data-red="instagram" onclick="cambiarRedFeed('instagram', this)">Instagram</button>
+            <button class="pub-feed-tab" data-red="facebook" onclick="cambiarRedFeed('facebook', this)">Facebook</button>
+        </div>
+        <div class="pub-feed-header">
+            <img src="{{ asset('imagenes/marca/sommy-logo-header.png') }}" class="pub-feed-avatar" onerror="this.style.display='none'">
+            <div><strong id="pubFeedHandle">&#64;sommy_colchoneria</strong><div class="pub-aviso" style="margin:0;">Así se va viendo tu perfil a medida que subís y programás</div></div>
+        </div>
+        <div class="pub-feed-grid" id="pubFeedGrid"></div>
+        <div class="pub-feed-empty" id="pubFeedEmpty" style="display:none;">Todavía no generaste publicaciones. Las que guardes, programes o publiques van a aparecer acá, en el orden en que se van a ver en tu perfil.</div>
     </div>
 
     {{-- Biblioteca de recursos de marca --}}
     <div class="pub-panel pub-biblio">
         <h3><i class="fas fa-box-open" style="color:#2563EB;"></i> Recursos de marca</h3>
-        <div class="pub-aviso">Imágenes y logos para tus piezas, prompts guardados para las escenas, e información de contexto (direcciones, promos, datos del negocio) que la IA usa al escribir.</div>
+        <div class="pub-aviso">Información de contexto (direcciones, promos, datos del negocio) que la IA usa al escribir, y logos/imágenes de referencia.</div>
 
         <div class="pub-cols2" style="margin-top:10px;">
             <div>
                 <label style="margin-top:0;">Agregar recurso</label>
                 <select id="recTipo" onchange="cambiarTipoRecurso()">
                     <option value="contexto">Información de contexto (la usa la IA)</option>
-                    <option value="prompt">Prompt guardado (para escenas/videos)</option>
                     <option value="imagen">Imagen</option>
                     <option value="logo">Logo</option>
                 </select>
-                <input type="text" id="recTitulo" placeholder="Título (ej: Local y horarios / Prompt verano)" style="margin-top:8px;">
+                <input type="text" id="recTitulo" placeholder="Título (ej: Local y horarios)" style="margin-top:8px;">
                 <textarea id="recContenido" placeholder="Contenido del recurso..." style="margin-top:8px;"></textarea>
                 <input type="file" id="recArchivo" accept="image/*" style="display:none; margin-top:8px; width:100%;">
                 <div class="pub-btns" style="justify-content:flex-start;">
@@ -374,12 +256,12 @@
     </div>
 </div>
 
-{{-- Modal Entrenar IA --}}
+{{-- Modal Mi Marca --}}
 <div class="modal fade" id="modalEntrenar" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
-                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-graduation-cap" style="color:#2563EB;"></i> Entrenar la IA con tu estilo</h5>
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-graduation-cap" style="color:#2563EB;"></i> Mi marca</h5>
                 <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
             <div class="modal-body">
@@ -387,13 +269,13 @@
                 <textarea id="entVoz" placeholder="Ej: Tono cercano y sereno, trato de vos, sin gritos de oferta. Siempre mencionar que somos fabricantes...">{{ $ajustes->voz_marca ?? '' }}</textarea>
                 <div class="pub-aviso">Se usa en cada generación de textos. Dejalo vacío para usar la voz Sommy por defecto.</div>
 
-                <label>Cómo se ven tus imágenes (estilo visual de las escenas)</label>
-                <textarea id="entEstilo" placeholder="Ej: Luz cálida de mañana, tonos celestes y blancos, dormitorios reales argentinos, nada de lujo exagerado...">{{ $ajustes->estilo_imagen ?? '' }}</textarea>
-                <div class="pub-aviso">Se suma al prompt de cada escena que generes. También podés guardar prompts completos en Recursos de marca.</div>
+                <label>Estilo visual fijo de tus publicaciones</label>
+                <textarea id="entEstilo" placeholder="Ej: Dormitorio real prolijo, luz natural, paleta azul noche/blanco/dorado sutil...">{{ $ajustes->estilo_imagen ?? '' }}</textarea>
+                <div class="pub-aviso">Este es el ÚNICO estilo que usa la IA para ambientar tus fotos: se aplica siempre igual, para que tu feed se vea homogéneo. Cambialo cuando quieras — se usa desde la próxima generación.</div>
             </div>
             <div class="modal-footer" style="border-top:1px solid #E7EAF2;">
                 <button type="button" class="pub-btn sec" data-dismiss="modal" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="pub-btn" onclick="guardarAjustes(this)"><i class="fas fa-save"></i> Guardar entrenamiento</button>
+                <button type="button" class="pub-btn" onclick="guardarAjustes(this)"><i class="fas fa-save"></i> Guardar</button>
             </div>
         </div>
     </div>
@@ -402,122 +284,39 @@
 
 @section('scripts')
 <script>
-const PRODUCTOS = @json($productos);
+const PRODUCTOS = [...@json($productos), ...@json($combos)];
 const REGISTROS = @json($registros);
 const BIBLIOTECA = @json($biblioteca);
 const RECURSOS = @json($recursos);
-const ESCENAS_TXT = @json($escenasTexto);
 let ESTILO_IMG = @json($ajustes->estilo_imagen ?? '');
 const LOGO_URL = '{{ asset('imagenes/marca/sommy-logo-magia.png') }}';
 const BASE_URL = '{{ url('/') }}';
 const CSRF = '{{ csrf_token() }}';
 
-const FORMATOS = { ml: [1200, 1200], post: [1080, 1080], story: [1080, 1920] };
-const CANAL_LBL = { meli: 'MercadoLibre', instagram: 'Instagram', facebook: 'Facebook', whatsapp: 'WhatsApp', google: 'Google' };
+const FORMATOS = { feed: [1080, 1350], story: [1080, 1920], ml: [1200, 1200] };
 const REC_LBL = { imagen: 'Imagen', logo: 'Logo', prompt: 'Prompt', contexto: 'Contexto' };
 const REC_ICO = { imagen: 'fa-image', logo: 'fa-star', prompt: 'fa-terminal', contexto: 'fa-info-circle' };
 
 const canvas = document.getElementById('pubCanvas');
 const ctx = canvas.getContext('2d');
 const sel = document.getElementById('pubProducto');
-let imgProducto = null, imgLogo = null;
-let escenaIA = null;
-let videoIA = null;   // { path, url, prompt }
+let imgLogo = null;
+let variantes = [];
+let varianteElegida = null; // { img, url, path, prompt }
 let textosIA = null;
 let pubGuardadaId = null;
-let pasoActual = 1;
+let redFeedActiva = 'instagram';
 
 PRODUCTOS.forEach((p, i) => {
     const o = document.createElement('option');
     o.value = i;
-    o.textContent = p.nombre;
+    o.textContent = (p.esCombo ? '🎁 ' : '') + p.nombre;
     sel.appendChild(o);
 });
 
 const money = v => '$' + Number(v).toLocaleString('es-AR', { maximumFractionDigits: 0 });
 const prod = () => PRODUCTOS[parseInt(sel.value, 10)] || PRODUCTOS[0];
 const opcion = name => document.querySelector('input[name=' + name + ']:checked').value;
-const esVideo = () => opcion('pubTipoContenido') === 'video';
-
-/* ── Stepper ── */
-function irPaso(n) {
-    pasoActual = n;
-    document.querySelectorAll('.pub-paso').forEach(p => p.classList.remove('activo'));
-    document.getElementById('paso' + n).classList.add('activo');
-    document.querySelectorAll('.pub-step').forEach(s => {
-        const num = parseInt(s.dataset.paso, 10);
-        s.classList.toggle('activo', num === n);
-        s.classList.toggle('hecho', num < n);
-    });
-    if (n === 2) { dibujar(); }
-    if (n === 3) generarTextos();
-    if (n === 4) {
-        const conVideo = videoIA && esVideo();
-        document.getElementById('pubMini').style.display = conVideo ? 'none' : '';
-        document.getElementById('pubMiniVideo').style.display = conVideo ? '' : 'none';
-        document.getElementById('avisoPublicar').textContent = conVideo
-            ? 'A Facebook va el video con el caption del paso 3. Para Instagram descargalo y subilo como Reel.'
-            : 'Publica la imagen con el caption del paso 3. Instagram requiere el sitio accesible desde internet.';
-        if (conVideo) {
-            document.getElementById('pubMiniVideo').src = videoIA.url;
-        } else {
-            dibujar();
-            document.getElementById('pubMini').src = canvas.toDataURL('image/png');
-        }
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/* ── Prompts editables ── */
-function armarPromptEscena() {
-    let cuerpo = (ESCENAS_TXT[opcion('pubEscena')] || '') + '.';
-    cuerpo += ESTILO_IMG && ESTILO_IMG.trim()
-        ? ' Estilo de la marca: ' + ESTILO_IMG.trim()
-        : ' Estilo: fotografía comercial realista de alta calidad, colores serenos (azules, celestes, blancos), sin personas.';
-    document.getElementById('pubPromptEscena').value = cuerpo;
-}
-
-function armarPromptVideo() {
-    const p = prod();
-    const conPrecio = opcion('pubPrecio') === 'si';
-    const specs = [p.plazas, p.firmeza ? 'firmeza ' + p.firmeza.toLowerCase() : null, p.pillow ? 'pillow top' : null, p.noches ? p.noches + ' noches de prueba' : null].filter(Boolean).join(', ');
-    let g = 'Video selfie vertical estilo UGC: una persona argentina de unos 35 años, real y cercana, ';
-    g += 'se graba a sí misma en primera persona con el celular en su dormitorio luminoso, mostrando el colchón de la imagen (mantener el colchón fiel a la foto). ';
-    g += 'Habla a cámara en español argentino, con entusiasmo genuino y sin sobreactuar: ';
-    g += '"Chicos, tengo que mostrarles el ' + p.nombre + '. ' + (specs ? specs.charAt(0).toUpperCase() + specs.slice(1) + '. ' : '');
-    g += 'Es directo de fábrica, sin intermediarios.';
-    if (conPrecio) g += ' Cuesta ' + money(p.precioFinal) + (p.descuento > 0 ? ' con ' + Math.round(p.descuento) + '% de descuento' : '') + '.';
-    g += ' Se los recomiendo de verdad, duermo increíble." ';
-    g += 'Al final palmea el colchón sonriendo. Estética casera de video para redes: cámara en mano, luz natural, un solo plano.';
-    document.getElementById('pubPromptVideo').value = g;
-}
-
-function cargarPromptsGuardados() {
-    const prompts = RECURSOS.filter(r => r.tipo === 'prompt');
-    ['pubPromptGuardado', 'pubPromptGuardadoVideo'].forEach(id => {
-        const s = document.getElementById(id);
-        s.innerHTML = '<option value="">— Usar prompt guardado —</option>';
-        prompts.forEach(r => { s.innerHTML += `<option value="${r.id}">${r.titulo}</option>`; });
-        s.style.display = prompts.length ? '' : 'none';
-    });
-}
-
-function usarPromptGuardado(selEl, destinoId) {
-    const r = RECURSOS.find(x => x.id === parseInt(selEl.value, 10));
-    if (r) document.getElementById(destinoId).value = r.contenido || '';
-    selEl.value = '';
-}
-
-function cambiarTipoContenido() {
-    const video = esVideo();
-    document.getElementById('modoImagen').style.display = video ? 'none' : '';
-    document.getElementById('modoVideo').style.display = video ? '' : 'none';
-    canvas.style.display = (video && videoIA) ? 'none' : '';
-    const vp = document.getElementById('pubVideoPreview');
-    vp.style.display = (video && videoIA) ? '' : 'none';
-    if (video && !document.getElementById('pubPromptVideo').value) armarPromptVideo();
-    if (video && videoIA) vp.src = videoIA.url;
-}
 
 function postJson(url, body) {
     return fetch(url, {
@@ -531,118 +330,188 @@ function postJson(url, body) {
     });
 }
 
-function cargarImagenes(cb) {
-    const p = prod();
-    let pend = 2;
-    const done = () => { if (--pend === 0) cb(); };
-    imgProducto = new Image();
-    imgProducto.crossOrigin = 'anonymous';
-    imgProducto.onload = done; imgProducto.onerror = done;
-    imgProducto.src = p.imagen;
-    if (imgLogo) { done(); return; }
+function cargarLogo(cb) {
+    if (imgLogo) { cb(); return; }
     imgLogo = new Image();
-    imgLogo.onload = done; imgLogo.onerror = done;
+    imgLogo.onload = cb; imgLogo.onerror = cb;
     imgLogo.src = LOGO_URL;
 }
 
-function dibujar() {
+/* ── 1 · Generar contenido (imagen x5 + copy, juntos) ── */
+function generarContenido(btn) {
     const p = prod();
-    const [W, H] = FORMATOS[opcion('pubFormato')];
-    const estilo = opcion('pubEstilo');
+    const formato = opcion('pubFormato');
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Generando (30-90 seg)...';
+
+    variantes = []; varianteElegida = null; textosIA = null; pubGuardadaId = null;
+    document.getElementById('panelResultado').style.display = 'none';
+    document.getElementById('panelVariantes').style.display = '';
+    document.getElementById('pubVariantesEstado').textContent = 'Generando 5 opciones con tu estilo de marca y escribiendo el texto...';
+    document.getElementById('pubVariantes').innerHTML = '';
+    window.scrollTo({ top: document.getElementById('panelVariantes').offsetTop - 20, behavior: 'smooth' });
+
+    const pImagenes = postJson('{{ route('publicaciones.generar-variantes') }}', {
+        producto_id: p.id, formato, es_combo: !!p.esCombo, cantidad: 5
+    });
+    const pTextos = postJson('{{ route('publicaciones.generar-copy') }}', {
+        producto_id: p.id, con_precio: opcion('pubPrecio') === 'si', es_combo: !!p.esCombo
+    }).catch(e => ({ error: e.message }));
+
+    Promise.all([pImagenes, pTextos]).then(([dataImgs, dataTxt]) => {
+        variantes = dataImgs.variantes || [];
+        if (dataTxt && !dataTxt.error) { textosIA = dataTxt.textos; pintarTextos(); }
+        renderVariantes();
+    }).catch(e => {
+        document.getElementById('pubVariantesEstado').textContent = '';
+        alert('No se pudo generar el contenido: ' + e.message);
+    }).finally(() => { btn.disabled = false; btn.innerHTML = original; });
+}
+
+function renderVariantes() {
+    const ok = variantes.filter(v => !v.error).length;
+    document.getElementById('pubVariantesEstado').textContent = ok
+        ? 'Elegí la imagen que más te guste (' + ok + ' de ' + variantes.length + ' generadas).'
+        : 'No se pudo generar ninguna imagen. Probá de nuevo.';
+    const cont = document.getElementById('pubVariantes');
+    cont.innerHTML = '';
+    variantes.forEach((v, i) => {
+        const card = document.createElement('div');
+        if (v.error) {
+            card.className = 'pub-variante error';
+            card.textContent = 'Falló esta opción';
+        } else {
+            card.className = 'pub-variante';
+            card.innerHTML = '<img src="' + v.url + '"><div class="check"><i class="fas fa-check"></i></div>';
+            card.onclick = () => elegirVariante(i, card);
+        }
+        cont.appendChild(card);
+    });
+}
+
+function elegirVariante(i, card) {
+    document.querySelectorAll('.pub-variante').forEach(c => c.classList.remove('seleccionada'));
+    card.classList.add('seleccionada');
+    const v = variantes[i];
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+        varianteElegida = { img, url: v.url, path: v.path, prompt: v.prompt };
+        pubGuardadaId = null;
+        document.getElementById('btnStoryExtra').style.display = opcion('pubFormato') === 'story' ? 'none' : '';
+        document.getElementById('btnFeedExtra').style.display = opcion('pubFormato') === 'story' ? '' : 'none';
+        document.getElementById('panelResultado').style.display = '';
+        cargarLogo(() => { dibujar(); document.getElementById('pubPreview').src = canvas.toDataURL('image/png'); });
+        window.scrollTo({ top: document.getElementById('panelResultado').offsetTop - 20, behavior: 'smooth' });
+    };
+    img.src = v.url;
+}
+
+/* + Historia 9:16 / + Feed 4:5 una vez aprobado el diseño */
+function generarFormatoExtra(formato, btn) {
+    const p = prod();
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Generando...';
+    postJson('{{ route('publicaciones.generar-imagen') }}', { producto_id: p.id, formato, es_combo: !!p.esCombo })
+        .then(data => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                const asegurar = pubGuardadaId ? Promise.resolve(pubGuardadaId) : guardarBorrador(null);
+                asegurar.then(padreId => {
+                    const wOld = canvas.width, hOld = canvas.height, formatoOld = document.querySelector('input[name=pubFormato]:checked').value;
+                    document.querySelector('input[name=pubFormato][value="' + formato + '"]').checked = true;
+                    const ve = { img, url: data.url, path: data.path, prompt: data.prompt };
+                    dibujarConVariante(ve, formato);
+                    postJson('{{ route('publicaciones.guardar') }}', {
+                        producto_id: p.id, padre_id: padreId, es_combo: !!p.esCombo,
+                        formato, estilo: 'ia',
+                        titulo_ml: document.getElementById('txtTituloML').value,
+                        desc_ml: document.getElementById('txtDescML').value,
+                        caption: document.getElementById('txtCaption').value,
+                        texto_wa: document.getElementById('txtWa').value,
+                        imagen_escena: data.path, prompt_escena: data.prompt,
+                        imagen_base64: canvas.toDataURL('image/png')
+                    }).then(() => {
+                        document.getElementById('avisoAccion').textContent = 'Versión ' + (formato === 'story' ? 'Historia 9:16' : 'Feed 4:5') + ' guardada en la biblioteca.';
+                        document.querySelector('input[name=pubFormato][value="' + formatoOld + '"]').checked = true;
+                        dibujar();
+                        document.getElementById('pubPreview').src = canvas.toDataURL('image/png');
+                        btn.style.display = 'none';
+                    });
+                });
+            };
+            img.src = data.url;
+        })
+        .catch(e => alert('No se pudo generar: ' + e.message))
+        .finally(() => { btn.disabled = false; btn.innerHTML = original; });
+}
+
+/* ── Canvas: compone la variante elegida + logo/precio exactos del ERP ── */
+function dibujar() { if (varianteElegida) dibujarConVariante(varianteElegida, opcion('pubFormato')); }
+
+function dibujarConVariante(v, formato) {
+    const p = prod();
+    const [W, H] = FORMATOS[formato] || FORMATOS.feed;
     const conPrecio = opcion('pubPrecio') === 'si';
-    const conEscena = escenaIA && escenaIA.img && escenaIA.img.naturalWidth;
     canvas.width = W; canvas.height = H;
 
-    if (conEscena) {
-        const im = escenaIA.img;
-        const r = Math.max(W / im.naturalWidth, H / im.naturalHeight);
-        const iw = im.naturalWidth * r, ih = im.naturalHeight * r;
-        ctx.drawImage(im, (W - iw) / 2, (H - ih) / 2, iw, ih);
-        const g = ctx.createLinearGradient(0, H * .55, 0, H);
-        g.addColorStop(0, 'rgba(14,23,48,0)');
-        g.addColorStop(1, 'rgba(14,23,48,.82)');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, H * .55, W, H * .45);
-    } else if (estilo === 'noche') {
-        const g = ctx.createLinearGradient(0, 0, W, H);
-        g.addColorStop(0, '#0E1730'); g.addColorStop(.55, '#1B2B5A'); g.addColorStop(1, '#24356B');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, W, H);
-    } else {
-        const g = ctx.createLinearGradient(0, 0, 0, H);
-        g.addColorStop(0, '#F8FAFC'); g.addColorStop(1, '#E0F2FE');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, W, H);
-    }
-
-    const oscuro = conEscena || estilo === 'noche';
-    const navy = oscuro ? '#FFFFFF' : '#1B2B5A';
-    const sub  = oscuro ? '#C7D0E8' : '#47536F';
-
-    if (!conEscena) {
-        ctx.fillStyle = estilo === 'noche' ? '#0EA5E9' : '#7FB8E6';
-        dibujarDestello(W * .88, H * .10, W * .012);
-
-        const areaImg = { x: W * .10, y: H * (opcion('pubFormato') === 'story' ? .16 : .17), w: W * .80, h: H * (opcion('pubFormato') === 'story' ? .38 : .46) };
-        if (estilo === 'noche') {
-            rRect(areaImg.x - W * .02, areaImg.y - W * .02, areaImg.w + W * .04, areaImg.h + W * .04, W * .03);
-            ctx.fillStyle = '#FFFFFF'; ctx.fill();
-        }
-        if (imgProducto && imgProducto.naturalWidth) {
-            const r = Math.min(areaImg.w / imgProducto.naturalWidth, areaImg.h / imgProducto.naturalHeight);
-            const iw = imgProducto.naturalWidth * r, ih = imgProducto.naturalHeight * r;
-            ctx.drawImage(imgProducto, areaImg.x + (areaImg.w - iw) / 2, areaImg.y + (areaImg.h - ih) / 2, iw, ih);
-        }
-    }
+    const im = v.img;
+    const r = Math.max(W / im.naturalWidth, H / im.naturalHeight);
+    const iw = im.naturalWidth * r, ih = im.naturalHeight * r;
+    ctx.drawImage(im, (W - iw) / 2, (H - ih) / 2, iw, ih);
+    const g = ctx.createLinearGradient(0, H * .55, 0, H);
+    g.addColorStop(0, 'rgba(14,23,48,0)');
+    g.addColorStop(1, 'rgba(14,23,48,.82)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, H * .55, W, H * .45);
 
     if (imgLogo && imgLogo.naturalWidth) {
         const lw = W * .22, lh = lw * imgLogo.naturalHeight / imgLogo.naturalWidth;
         const lx = W * .06, ly = H * .045;
-        if (oscuro) {
-            rRect(lx - W*.02, ly - lh*.25, lw + W*.04, lh * 1.5, lh);
-            ctx.fillStyle = '#FFFFFF'; ctx.fill();
-        }
+        rRect(lx - W * .02, ly - lh * .25, lw + W * .04, lh * 1.5, lh);
+        ctx.fillStyle = '#FFFFFF'; ctx.fill();
         ctx.drawImage(imgLogo, lx, ly, lw, lh);
     }
 
-    const baseY = conEscena
-        ? H - (opcion('pubFormato') === 'story' ? H * .30 : H * .32)
-        : (H * (opcion('pubFormato') === 'story' ? .16 : .17) + H * (opcion('pubFormato') === 'story' ? .38 : .46) + H * .07);
+    const baseY = H - (formato === 'story' ? H * .30 : H * .32);
 
     ctx.textAlign = 'center';
-    ctx.fillStyle = navy;
+    ctx.fillStyle = '#FFFFFF';
     ctx.font = '600 ' + (W * .048) + 'px Poppins, sans-serif';
     envolverTexto(p.nombre, W / 2, baseY, W * .84, W * .06);
 
     const specs = [p.plazas, p.firmeza ? 'Firmeza ' + p.firmeza.toLowerCase() : null, p.altura ? p.altura + ' cm' : null, p.pillow ? 'Pillow top' : null].filter(Boolean).join('  ·  ');
     if (specs) {
-        ctx.fillStyle = sub;
+        ctx.fillStyle = '#C7D0E8';
         ctx.font = '400 ' + (W * .028) + 'px Poppins, sans-serif';
         ctx.fillText(specs, W / 2, baseY + W * .095);
     }
 
     if (conPrecio) {
-        const py = baseY + W * (conEscena ? .17 : (opcion('pubFormato') === 'story' ? .19 : .17));
+        const py = baseY + W * .17;
         if (p.descuento > 0) {
-            ctx.fillStyle = sub;
+            ctx.fillStyle = '#C7D0E8';
             ctx.font = '400 ' + (W * .030) + 'px Poppins, sans-serif';
             const vOld = money(p.precio);
             ctx.fillText(vOld, W / 2, py - W * .055);
             const tw = ctx.measureText(vOld).width;
-            ctx.strokeStyle = sub; ctx.lineWidth = W * .003;
-            ctx.beginPath(); ctx.moveTo(W/2 - tw/2, py - W * .065); ctx.lineTo(W/2 + tw/2, py - W * .065); ctx.stroke();
+            ctx.strokeStyle = '#C7D0E8'; ctx.lineWidth = W * .003;
+            ctx.beginPath(); ctx.moveTo(W / 2 - tw / 2, py - W * .065); ctx.lineTo(W / 2 + tw / 2, py - W * .065); ctx.stroke();
         }
-        ctx.fillStyle = navy;
+        ctx.fillStyle = '#FFFFFF';
         ctx.font = '700 ' + (W * .075) + 'px Poppins, sans-serif';
         ctx.fillText(money(p.precioFinal), W / 2, py);
         if (p.descuento > 0) {
-            ctx.fillStyle = '#0EA5E9';
+            ctx.fillStyle = '#7FD4F5';
             ctx.font = '600 ' + (W * .03) + 'px Poppins, sans-serif';
             ctx.fillText('-' + Math.round(p.descuento) + '% OFF', W / 2, py + W * .05);
         }
     }
 
-    ctx.fillStyle = oscuro ? '#7FD4F5' : '#2563EB';
+    ctx.fillStyle = '#7FD4F5';
     ctx.font = '500 ' + (W * .026) + 'px Poppins, sans-serif';
     ctx.fillText('DIRECTO DE FÁBRICA  ·  ENVÍO A DOMICILIO', W / 2, H - H * .045);
 
@@ -659,16 +528,6 @@ function rRect(x, y, w, h, r) {
     ctx.closePath();
 }
 
-function dibujarDestello(x, y, r) {
-    ctx.save(); ctx.translate(x, y); ctx.beginPath();
-    for (let i = 0; i < 8; i++) {
-        const a = i * Math.PI / 4;
-        const rr = i % 2 === 0 ? r : r * .38;
-        ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
-    }
-    ctx.closePath(); ctx.fill(); ctx.restore();
-}
-
 function envolverTexto(texto, x, y, maxW, lineH) {
     const palabras = texto.split(' ');
     let linea = '', yy = y;
@@ -681,130 +540,15 @@ function envolverTexto(texto, x, y, maxW, lineH) {
     ctx.fillText(linea, x, yy);
 }
 
-/* ── IA: escena ── */
-function generarEscenaIA(btn) {
-    const p = prod();
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Generando (30-60 seg)...';
-    postJson('{{ route('publicaciones.generar-imagen') }}', {
-        producto_id: p.id,
-        escena: opcion('pubEscena'),
-        formato: opcion('pubFormato'),
-        prompt_libre: document.getElementById('pubPromptEscena').value
-    }).then(data => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            escenaIA = { path: data.path, url: data.url, prompt: data.prompt, img: img };
-            pubGuardadaId = null;
-            document.getElementById('btnQuitarEscena').style.display = '';
-            dibujar();
-        };
-        img.src = data.url;
-    }).catch(e => alert('No se pudo generar la escena: ' + e.message))
-      .finally(() => { btn.disabled = false; btn.innerHTML = original; });
-}
-
-function quitarEscena() {
-    escenaIA = null;
-    pubGuardadaId = null;
-    document.getElementById('btnQuitarEscena').style.display = 'none';
-    dibujar();
-}
-
-/* ── IA: video ── */
-function generarVideoIA(btn) {
-    const p = prod();
-    if (!confirm('Generar el video tarda 1 a 3 minutos y tiene costo en Google AI. ¿Continuar?')) return;
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Generando video (1-3 min)...';
-    postJson('{{ route('publicaciones.generar-video') }}', {
-        producto_id: p.id,
-        formato: opcion('pubFormato'),
-        prompt_libre: document.getElementById('pubPromptVideo').value
-    }).then(data => {
-        videoIA = { path: data.path, url: data.url, prompt: data.prompt };
-        pubGuardadaId = null;
-        document.getElementById('btnQuitarVideo').style.display = '';
-        cambiarTipoContenido();
-    }).catch(e => alert('No se pudo generar el video: ' + e.message))
-      .finally(() => { btn.disabled = false; btn.innerHTML = original; });
-}
-
-function quitarVideo() {
-    videoIA = null;
-    pubGuardadaId = null;
-    document.getElementById('btnQuitarVideo').style.display = 'none';
-    cambiarTipoContenido();
-}
-
-/* ── IA: textos ── */
-function generarCopysIA(btn) {
-    const p = prod();
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Escribiendo...';
-    postJson('{{ route('publicaciones.generar-copy') }}', {
-        producto_id: p.id,
-        con_precio: opcion('pubPrecio') === 'si',
-        instrucciones: document.getElementById('pubInstCopy').value
-    }).then(data => {
-        textosIA = data.textos;
-        pubGuardadaId = null;
-        pintarTextos();
-    }).catch(e => alert('No se pudieron generar los textos: ' + e.message))
-      .finally(() => { btn.disabled = false; btn.innerHTML = original; });
-}
-
 /* ── Textos ── */
-function generarTextos() {
-    if (textosIA) { pintarTextos(); return; }
-    const p = prod();
-    const specsTit = [p.plazas, p.tipo, p.altura ? p.altura + 'cm' : null, p.pillow ? 'Pillow Top' : null].filter(Boolean);
-
-    let titulo = p.nombre;
-    specsTit.forEach(s => { if ((titulo + ' ' + s).length <= 55 && !titulo.toLowerCase().includes(String(s).toLowerCase())) titulo += ' ' + s; });
-    if ((titulo + ' Fábrica').length <= 60) titulo += ' Fábrica';
-
-    let desc = p.nombre.toUpperCase() + '\n\n';
-    if (p.descripcion) desc += p.descripcion + '\n\n';
-    desc += 'CARACTERÍSTICAS\n';
-    if (p.tipo) desc += '• Tipo: ' + p.tipo + '\n';
-    if (p.plazas) desc += '• Medida: ' + p.plazas + '\n';
-    if (p.firmeza) desc += '• Firmeza: ' + p.firmeza + '\n';
-    if (p.altura) desc += '• Altura: ' + p.altura + ' cm\n';
-    if (p.pillow) desc += '• Pillow top incorporado\n';
-    if (p.tela) desc += '• Tela: ' + p.tela + '\n';
-    if (p.garantia) desc += '• Garantía: ' + p.garantia + ' años\n';
-    if (p.noches) desc += '• ' + p.noches + ' noches de prueba\n';
-    desc += '\nSOMOS FABRICANTES: comprás directo de fábrica, sin intermediarios.\nEnvío a domicilio coordinado. Consultanos por medios de pago y promociones.';
-
-    let cap = '😴 ' + p.nombre + '\n\n';
-    cap += 'Dormí liviano, despertá mejor. ';
-    if (p.tipo) cap += p.tipo + (p.pillow ? ' con pillow top' : '') + ', ';
-    if (p.firmeza) cap += 'firmeza ' + p.firmeza.toLowerCase() + ', ';
-    cap += 'hecho en nuestra fábrica y directo a tu casa 🏭➡️🏠\n\n';
-    if (opcion('pubPrecio') === 'si') cap += '💙 ' + money(p.precioFinal) + (p.descuento > 0 ? ' (' + Math.round(p.descuento) + '% OFF)' : '') + '\n';
-    cap += '🚚 Envío a domicilio\n📲 Pedilo por WhatsApp o en nuestra tienda online\n\n';
-    cap += '#colchones #descanso #sommy #dormibien #colchon' + (p.plazas ? ' #' + p.plazas.replace(/[^a-z0-9]/gi, '').toLowerCase() : '');
-
-    let wa = '😴 *' + p.nombre + '*\n';
-    if (opcion('pubPrecio') === 'si') wa += '💙 ' + money(p.precioFinal) + (p.descuento > 0 ? ' (' + Math.round(p.descuento) + '% OFF)' : '') + '\n';
-    wa += '🏭 Directo de fábrica, envío a domicilio.\n¿Te paso más info?';
-
-    pintarTextos({ titulo_ml: titulo, desc_ml: desc, caption: cap, texto_wa: wa });
-}
-
-function pintarTextos(base) {
-    const t = textosIA || base;
+function pintarTextos() {
+    const t = textosIA;
     if (!t) return;
-    document.getElementById('txtTituloML').textContent = t.titulo_ml || '';
+    document.getElementById('txtTituloML').value = t.titulo_ml || '';
     document.getElementById('mlTituloLen').textContent = '(' + (t.titulo_ml || '').length + '/60)';
-    document.getElementById('txtDescML').textContent = t.desc_ml || '';
-    document.getElementById('txtCaption').textContent = t.caption || '';
-    document.getElementById('txtWa').textContent = t.texto_wa || '';
+    document.getElementById('txtDescML').value = t.desc_ml || '';
+    document.getElementById('txtCaption').value = t.caption || '';
+    document.getElementById('txtWa').value = t.texto_wa || '';
 }
 
 /* ── Entrenamiento y recursos ── */
@@ -816,7 +560,6 @@ function guardarAjustes(btn) {
         estilo_imagen: document.getElementById('entEstilo').value
     }).then(() => {
         ESTILO_IMG = document.getElementById('entEstilo').value;
-        armarPromptEscena();
         btn.innerHTML = '✓ Guardado';
         setTimeout(() => { btn.innerHTML = original; $('#modalEntrenar').modal('hide'); }, 900);
     }).catch(e => alert('No se pudo guardar: ' + e.message))
@@ -863,7 +606,6 @@ function guardarRecurso(btn) {
         document.getElementById('recContenido').value = '';
         document.getElementById('recArchivo').value = '';
         renderRecursos();
-        cargarPromptsGuardados();
     }).catch(e => alert('No se pudo guardar el recurso: ' + e.message))
       .finally(() => { btn.disabled = false; btn.innerHTML = original; });
 }
@@ -877,7 +619,6 @@ function eliminarRecurso(id) {
         const i = RECURSOS.findIndex(r => r.id === id);
         if (i >= 0) RECURSOS.splice(i, 1);
         renderRecursos();
-        cargarPromptsGuardados();
     });
 }
 
@@ -898,66 +639,86 @@ function renderRecursos() {
     });
 }
 
-/* ── Guardar y publicar ── */
-function textosActuales() {
+/* ── Guardar / publicar / programar ── */
+function payloadBase() {
+    const p = prod();
     return {
-        titulo_ml: document.getElementById('txtTituloML').textContent,
-        desc_ml: document.getElementById('txtDescML').textContent,
-        caption: document.getElementById('txtCaption').textContent,
-        texto_wa: document.getElementById('txtWa').textContent
+        producto_id: p.id, es_combo: !!p.esCombo,
+        formato: opcion('pubFormato'), estilo: 'ia',
+        titulo_ml: document.getElementById('txtTituloML').value,
+        desc_ml: document.getElementById('txtDescML').value,
+        caption: document.getElementById('txtCaption').value,
+        texto_wa: document.getElementById('txtWa').value,
+        imagen_escena: varianteElegida ? varianteElegida.path : null,
+        prompt_escena: varianteElegida ? varianteElegida.prompt : null,
+        imagen_base64: canvas.toDataURL('image/png')
     };
 }
 
-function guardarPublicacion(btn, silencioso) {
-    const p = prod();
-    const t = textosActuales();
-    const conVideo = videoIA && esVideo();
+function guardarBorrador(btn) {
     const original = btn ? btn.innerHTML : null;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Guardando...'; }
-    return postJson('{{ route('publicaciones.guardar') }}', {
-        producto_id: p.id,
-        formato: opcion('pubFormato'),
-        estilo: conVideo ? 'video-ugc' : (escenaIA ? 'escena-' + opcion('pubEscena') : opcion('pubEstilo')),
-        titulo_ml: t.titulo_ml, desc_ml: t.desc_ml, caption: t.caption, texto_wa: t.texto_wa,
-        imagen_escena: escenaIA ? escenaIA.path : null,
-        prompt_escena: conVideo ? videoIA.prompt : (escenaIA ? escenaIA.prompt : null),
-        imagen_base64: canvas.toDataURL('image/png'),
-        video_final: conVideo ? videoIA.path : null
-    }).then(data => {
+    return postJson('{{ route('publicaciones.guardar') }}', payloadBase()).then(data => {
         pubGuardadaId = data.id;
-        BIBLIOTECA.unshift({ id: data.id, producto_id: p.id, imagen_final: null, imagen_url: data.imagen_url, estado: 'borrador', created_at: new Date().toISOString() });
-        renderBiblioteca();
-        if (!silencioso && btn) { btn.innerHTML = '✓ Guardada'; setTimeout(() => btn.innerHTML = original, 1500); }
+        const p = prod();
+        BIBLIOTECA.unshift({ id: data.id, producto_id: p.id, imagen_url: data.imagen_url, estado: 'borrador', programado_para: null, created_at: new Date().toISOString() });
+        renderFeedSimulado(); renderProximas();
+        if (btn) { btn.innerHTML = '✓ Guardado'; document.getElementById('avisoAccion').textContent = 'Guardado como borrador en la biblioteca.'; setTimeout(() => btn.innerHTML = original, 1500); }
         return data.id;
     }).finally(() => { if (btn) { btn.disabled = false; if (btn.innerHTML.includes('Guardando')) btn.innerHTML = original; } });
 }
 
-function publicarMeta(canal, btn) {
+function publicarAhora(btn) {
     const original = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Publicando...';
-    const asegurarGuardada = pubGuardadaId ? Promise.resolve(pubGuardadaId) : guardarPublicacion(null, true);
-    asegurarGuardada.then(id =>
-        postJson('{{ route('publicaciones.publicar') }}', { publicacion_id: id, canales: [canal] })
+    const asegurar = pubGuardadaId ? Promise.resolve(pubGuardadaId) : guardarBorrador(null);
+    asegurar.then(id =>
+        postJson('{{ route('publicaciones.publicar') }}', { publicacion_id: id, canales: ['facebook', 'instagram'] })
     ).then(data => {
-        if (data.errores && data.errores[canal]) throw new Error(data.errores[canal]);
         const p = prod();
-        if (!REGISTROS[p.id]) REGISTROS[p.id] = [];
-        REGISTROS[p.id].unshift({ canal: canal, created_at: new Date().toISOString().slice(0, 10) });
+        (data.publicados || []).forEach(canal => {
+            if (!REGISTROS[p.id]) REGISTROS[p.id] = [];
+            REGISTROS[p.id].unshift({ canal, created_at: new Date().toISOString().slice(0, 10) });
+        });
         renderHistorial();
         const item = BIBLIOTECA.find(b => b.id === pubGuardadaId);
         if (item) item.estado = 'publicada';
-        renderBiblioteca();
+        renderFeedSimulado();
+        const errMsgs = Object.values(data.errores || {});
+        document.getElementById('avisoAccion').textContent = errMsgs.length
+            ? 'Publicado en ' + (data.publicados || []).join(', ') + '. Falló: ' + errMsgs.join(' | ')
+            : 'Publicado en Instagram y Facebook.';
         btn.innerHTML = '✓ Publicado';
         setTimeout(() => btn.innerHTML = original, 2000);
     }).catch(e => {
-        alert('No se pudo publicar en ' + CANAL_LBL[canal] + ': ' + e.message);
+        alert('No se pudo publicar: ' + e.message);
         btn.innerHTML = original;
     }).finally(() => { btn.disabled = false; });
 }
 
+function programar(btn) {
+    const fecha = document.getElementById('pubFecha').value;
+    if (!fecha) { alert('Elegí fecha y hora.'); return; }
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Programando...';
+    postJson('{{ route('publicaciones.guardar') }}', Object.assign(payloadBase(), {
+        programado_para: fecha, canales_programados: ['facebook', 'instagram']
+    })).then(data => {
+        pubGuardadaId = data.id;
+        const p = prod();
+        BIBLIOTECA.unshift({ id: data.id, producto_id: p.id, imagen_url: data.imagen_url, estado: 'programada', programado_para: fecha, created_at: new Date().toISOString() });
+        renderFeedSimulado(); renderProximas();
+        document.getElementById('avisoAccion').textContent = 'Programado para el ' + new Date(fecha).toLocaleString('es-AR') + '. Se publica solo.';
+        btn.innerHTML = '✓ Programado';
+        setTimeout(() => btn.innerHTML = original, 2000);
+    }).catch(e => alert('No se pudo programar: ' + e.message))
+      .finally(() => { btn.disabled = false; });
+}
+
 function copiarTexto(id, btn) {
-    navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
+    navigator.clipboard.writeText(document.getElementById(id).value || document.getElementById(id).textContent).then(() => {
         const t = btn.textContent; btn.textContent = '¡Copiado!';
         setTimeout(() => btn.textContent = t, 1500);
     });
@@ -967,26 +728,9 @@ function descargarContenido() {
     const p = prod();
     const slug = 'sommy-' + p.nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const a = document.createElement('a');
-    if (videoIA && esVideo()) {
-        a.download = slug + '-video.mp4';
-        a.href = videoIA.url;
-    } else {
-        a.download = slug + '-' + opcion('pubFormato') + '.png';
-        a.href = canvas.toDataURL('image/png');
-    }
+    a.download = slug + '-' + opcion('pubFormato') + '.png';
+    a.href = canvas.toDataURL('image/png');
     a.click();
-}
-
-function marcarPublicado(canal, btn) {
-    const p = prod();
-    postJson('{{ route('publicaciones.registrar') }}', { producto_id: p.id, canal: canal, formato: opcion('pubFormato') })
-    .then(() => {
-        if (!REGISTROS[p.id]) REGISTROS[p.id] = [];
-        REGISTROS[p.id].unshift({ canal: canal, created_at: new Date().toISOString().slice(0, 10) });
-        renderHistorial();
-        const t = btn.textContent; btn.textContent = '✓ Registrado';
-        setTimeout(() => btn.textContent = t, 1500);
-    });
 }
 
 function renderHistorial() {
@@ -997,48 +741,70 @@ function renderHistorial() {
     cont.innerHTML = regs.length ? '<label style="width:100%;">Historial de este producto</label>' : '';
     regs.slice(0, 8).forEach(r => {
         cont.innerHTML += '<span class="badge" style="background:#E0F2FE;color:#1B2B5A;">' +
-            (CANAL_LBL[r.canal] || r.canal) + ' · ' + String(r.created_at).slice(0, 10) + '</span>';
+            r.canal + ' · ' + String(r.created_at).slice(0, 10) + '</span>';
     });
 }
 
-function renderBiblioteca() {
-    const cont = document.getElementById('pubBiblioteca');
+/* ── Próximas programadas ── */
+function renderProximas() {
+    const prog = BIBLIOTECA.filter(b => b.estado === 'programada' && b.programado_para)
+        .sort((a, b) => new Date(a.programado_para) - new Date(b.programado_para));
+    document.getElementById('panelProximas').style.display = prog.length ? '' : 'none';
+    const cont = document.getElementById('pubProximas');
     cont.innerHTML = '';
-    BIBLIOTECA.slice(0, 24).forEach(b => {
-        const url = b.imagen_url || (b.imagen_final ? BASE_URL + '/' + b.imagen_final : null);
-        if (!url) return;
+    prog.forEach(b => {
         const nombre = (PRODUCTOS.find(p => p.id === b.producto_id) || {}).nombre || 'Producto';
-        const esVideoPub = !!b.video_final;
-        const card = document.createElement('div');
-        card.className = 'pub-biblio-card';
-        card.innerHTML = '<img src="' + url + '" title="' + nombre + '" onclick="window.open(\'' + (esVideoPub ? BASE_URL + '/' + b.video_final : url) + '\')">' +
-            '<div class="meta">' + (esVideoPub ? '<i class="fas fa-video" style="color:#2563EB;"></i> ' : '') + String(b.created_at).slice(0, 10) +
-            ' <span class="estado ' + b.estado + '">' + b.estado + '</span></div>';
-        cont.appendChild(card);
+        const url = b.imagen_url || (b.imagen_final ? BASE_URL + '/' + b.imagen_final : null);
+        const row = document.createElement('div');
+        row.className = 'pub-proxima';
+        row.innerHTML = (url ? '<img src="' + url + '">' : '') +
+            '<span class="cuando">' + new Date(b.programado_para).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + '</span>' +
+            '<span>' + nombre + '</span>';
+        cont.appendChild(row);
+    });
+}
+
+/* ── Simulador de feed ── */
+function cambiarRedFeed(red, btn) {
+    redFeedActiva = red;
+    document.querySelectorAll('.pub-feed-tab').forEach(t => t.classList.remove('activo'));
+    btn.classList.add('activo');
+    document.getElementById('pubFeedHandle').textContent = red === 'instagram' ? '@sommy_colchoneria' : 'Sommy';
+    renderFeedSimulado();
+}
+
+function renderFeedSimulado() {
+    const items = BIBLIOTECA.filter(b => b.estado === 'publicada' || b.estado === 'programada')
+        .filter(b => b.imagen_url || b.imagen_final)
+        .sort((a, b) => new Date(b.programado_para || b.created_at) - new Date(a.programado_para || a.created_at));
+    const cont = document.getElementById('pubFeedGrid');
+    cont.innerHTML = '';
+    document.getElementById('pubFeedEmpty').style.display = items.length ? 'none' : '';
+    items.slice(0, 24).forEach(b => {
+        const url = b.imagen_url || (BASE_URL + '/' + b.imagen_final);
+        const item = document.createElement('div');
+        item.className = 'pub-feed-item';
+        item.innerHTML = '<img src="' + url + '">' +
+            (b.estado === 'programada' ? '<div class="badge-prog">Programada · ' + new Date(b.programado_para).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) + '</div>' : '');
+        cont.appendChild(item);
     });
 }
 
 /* ── Eventos ── */
 sel.addEventListener('change', () => {
-    escenaIA = null; textosIA = null; videoIA = null; pubGuardadaId = null;
-    document.getElementById('btnQuitarEscena').style.display = 'none';
-    document.getElementById('btnQuitarVideo').style.display = 'none';
-    document.getElementById('pubPromptVideo').value = '';
-    if (esVideo()) armarPromptVideo();
-    cambiarTipoContenido();
-    cargarImagenes(dibujar);
+    variantes = []; varianteElegida = null; textosIA = null; pubGuardadaId = null;
+    document.getElementById('panelVariantes').style.display = 'none';
+    document.getElementById('panelResultado').style.display = 'none';
+    renderHistorial();
 });
-document.querySelectorAll('input[name=pubFormato], input[name=pubEstilo], input[name=pubPrecio]')
-    .forEach(el => el.addEventListener('change', () => { pubGuardadaId = null; dibujar(); }));
+document.querySelectorAll('input[name=pubPrecio]').forEach(el => el.addEventListener('change', dibujar));
 
-// Esperar a que la fuente Poppins esté disponible para el canvas
 document.fonts.ready.then(() => {
-    cargarImagenes(dibujar);
-    renderBiblioteca();
+    cargarLogo(() => {});
+    renderHistorial();
     renderRecursos();
-    cargarPromptsGuardados();
-    armarPromptEscena();
-    generarTextos();
+    renderFeedSimulado();
+    renderProximas();
     cambiarTipoRecurso();
 });
 </script>
