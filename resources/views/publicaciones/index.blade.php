@@ -52,6 +52,16 @@
     .pub-aviso { font-size: 11.5px; color: #6E7A96; margin-top: 6px; font-weight: 300; }
     .pub-aviso.warn { color: #b45309; }
 
+    /* Chat */
+    .pub-chat { max-height: 380px; overflow-y: auto; border: 1px solid #E7EAF2; border-radius: 12px; padding: 14px; background: #F8FAFC; display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .pub-msg { max-width: 82%; padding: 9px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+    .pub-msg.user { align-self: flex-end; background: #1B2B5A; color: #fff; border-bottom-right-radius: 4px; }
+    .pub-msg.assistant { align-self: flex-start; background: #fff; border: 1px solid #E7EAF2; color: #1B2B5A; border-bottom-left-radius: 4px; }
+    .pub-msg.sistema { align-self: center; background: #E0F2FE; color: #1B2B5A; font-size: 11.5px; border-radius: 999px; padding: 5px 12px; max-width: 100%; }
+    .pub-chat-input { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+    .pub-chat-input input[type=text] { flex: 1; border: 1px solid #E7EAF2; border-radius: 999px; padding: 10px 16px; font-size: 13.5px; font-family: 'Poppins', sans-serif; }
+    .pub-chat-input .pub-btn { border-radius: 999px; padding: 10px 16px; }
+
     /* Variantes (5 opciones para elegir) */
     .pub-variantes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 10px; }
     .pub-variante { position: relative; border-radius: 12px; overflow: hidden; border: 3px solid transparent; cursor: pointer; background: #F8FAFC; }
@@ -118,12 +128,12 @@
     </div>
     <div class="pub-sub">Elegí un producto o combo, generá el contenido con tu branding y publicalo o programalo — todo desde acá.</div>
 
-    {{-- 1 · Producto/combo + generar --}}
+    {{-- 1 · Producto/combo + chat --}}
     <div class="pub-panel">
-        <h3>1 · Elegí qué vas a promocionar</h3>
-        <div class="pub-cols2">
+        <h3>1 · Elegí qué vas a promocionar y pedile a la IA lo que quieras</h3>
+        <div class="pub-cols2" style="margin-bottom:6px;">
             <div>
-                <label>Producto o combo</label>
+                <label style="margin-top:0;">Producto o combo</label>
                 <select id="pubProducto"></select>
                 <a id="pubLinkConocimiento" href="#" class="pub-aviso" style="display:inline-block;color:#2563EB;margin-top:6px;">
                     <i class="fas fa-brain"></i> Conocimiento del producto (contexto para la IA)
@@ -142,17 +152,21 @@
                     <label class="pub-opt"><input type="radio" name="pubPrecio" value="si" checked><span>Sí</span></label>
                     <label class="pub-opt"><input type="radio" name="pubPrecio" value="no"><span>No</span></label>
                 </div>
-                <div class="pub-btns" style="justify-content:flex-start;margin-top:16px;">
-                    <button class="pub-btn ia" id="btnGenerar" onclick="generarContenido(this)" @if(!$capacidades['escenas']) disabled @endif>
-                        <i class="fas fa-wand-magic-sparkles"></i> Generar contenido
-                    </button>
-                </div>
-                @if(!$capacidades['escenas'])
-                    <div class="pub-aviso warn">Configurá GEMINI_API_KEY en el .env para generar contenido con IA.</div>
-                @else
-                    <div class="pub-aviso">Genera 5 imágenes con tu estilo de marca fijo (así tu feed queda homogéneo) + el texto, todo junto.</div>
-                @endif
             </div>
+        </div>
+
+        @if(!$capacidades['copys'] && !$capacidades['escenas'])
+            <div class="pub-aviso warn">Configurá OPENAI_API_KEY y GEMINI_API_KEY en el .env para usar el chat.</div>
+        @else
+            <div class="pub-aviso">Reglas fijas de marca (estilo visual, fidelidad del producto) se aplican solo. Lo que le pidas al chat se suma a eso, no lo reemplaza.</div>
+        @endif
+
+        <div class="pub-chat" id="pubChat"></div>
+        <div class="pub-chat-input">
+            <button class="pub-btn sec chico" id="btnAdjuntar" onclick="document.getElementById('pubArchivoChat').click()" title="Adjuntar imagen de referencia a Recursos de marca"><i class="fas fa-paperclip"></i></button>
+            <input type="file" id="pubArchivoChat" accept="image/*" style="display:none;" onchange="adjuntarArchivoChat(this)">
+            <input type="text" id="pubMensajeChat" placeholder="Ej: generame una imagen con luz cálida de atardecer, sin precio..." onkeydown="if(event.key==='Enter'){event.preventDefault();enviarChat();}">
+            <button class="pub-btn ia" id="btnEnviarChat" onclick="enviarChat()" @if(!$capacidades['copys']) disabled title="Configurá OPENAI_API_KEY" @endif><i class="fas fa-paper-plane"></i></button>
         </div>
     </div>
 
@@ -337,36 +351,82 @@ function cargarLogo(cb) {
     imgLogo.src = LOGO_URL;
 }
 
-/* ── 1 · Generar contenido (imagen x5 + copy, juntos) ── */
-function generarContenido(btn) {
+/* ── 1 · Chat: pedile a la IA lo que quieras (imagen y/o texto) ── */
+let historialChat = [];
+
+function bubbleChat(role, texto) {
+    const cont = document.getElementById('pubChat');
+    const div = document.createElement('div');
+    div.className = 'pub-msg ' + role;
+    div.textContent = texto;
+    cont.appendChild(div);
+    cont.scrollTop = cont.scrollHeight;
+    return div;
+}
+
+function saludoInicial() {
+    const cont = document.getElementById('pubChat');
+    if (cont) cont.innerHTML = '';
     const p = prod();
-    const formato = opcion('pubFormato');
-    const original = btn.innerHTML;
+    if (p) bubbleChat('assistant', '¡Hola! Contame qué contenido querés para "' + p.nombre + '". Por ejemplo: "generame una imagen con luz cálida de atardecer" o "escribime un caption corto y con humor". El estilo de marca y los datos del producto se respetan siempre, no hace falta que los repitas.');
+}
+
+function enviarChat() {
+    const input = document.getElementById('pubMensajeChat');
+    const mensaje = input.value.trim();
+    if (!mensaje) return;
+    const p = prod();
+    bubbleChat('user', mensaje);
+    historialChat.push({ role: 'user', content: mensaje });
+    input.value = '';
+    const btn = document.getElementById('btnEnviarChat');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i> Generando (30-90 seg)...';
+    const pensando = bubbleChat('assistant', '');
+    pensando.innerHTML = '<i class="fas fa-circle-notch pub-spin"></i>';
 
-    variantes = []; varianteElegida = null; textosIA = null; pubGuardadaId = null;
-    document.getElementById('panelResultado').style.display = 'none';
-    document.getElementById('panelVariantes').style.display = '';
-    document.getElementById('pubVariantesEstado').textContent = 'Generando 5 opciones con tu estilo de marca y escribiendo el texto...';
-    document.getElementById('pubVariantes').innerHTML = '';
-    window.scrollTo({ top: document.getElementById('panelVariantes').offsetTop - 20, behavior: 'smooth' });
-
-    const pImagenes = postJson('{{ route('publicaciones.generar-variantes') }}', {
-        producto_id: p.id, formato, es_combo: !!p.esCombo, cantidad: 5
-    });
-    const pTextos = postJson('{{ route('publicaciones.generar-copy') }}', {
-        producto_id: p.id, con_precio: opcion('pubPrecio') === 'si', es_combo: !!p.esCombo
-    }).catch(e => ({ error: e.message }));
-
-    Promise.all([pImagenes, pTextos]).then(([dataImgs, dataTxt]) => {
-        variantes = dataImgs.variantes || [];
-        if (dataTxt && !dataTxt.error) { textosIA = dataTxt.textos; pintarTextos(); }
-        renderVariantes();
+    postJson('{{ route('publicaciones.chat') }}', {
+        producto_id: p.id, es_combo: !!p.esCombo,
+        formato: opcion('pubFormato'), con_precio: opcion('pubPrecio') === 'si',
+        mensaje, historial: historialChat.slice(-16)
+    }).then(data => {
+        pensando.remove();
+        bubbleChat('assistant', data.reply);
+        historialChat.push({ role: 'assistant', content: data.reply });
+        if (data.imagenes) {
+            variantes = data.imagenes;
+            varianteElegida = null;
+            document.getElementById('panelVariantes').style.display = '';
+            renderVariantes();
+            window.scrollTo({ top: document.getElementById('panelVariantes').offsetTop - 20, behavior: 'smooth' });
+        }
+        if (data.textos) {
+            textosIA = data.textos;
+            pintarTextos();
+        }
     }).catch(e => {
-        document.getElementById('pubVariantesEstado').textContent = '';
-        alert('No se pudo generar el contenido: ' + e.message);
-    }).finally(() => { btn.disabled = false; btn.innerHTML = original; });
+        pensando.remove();
+        bubbleChat('assistant', '⚠️ ' + e.message);
+    }).finally(() => { btn.disabled = false; });
+}
+
+function adjuntarArchivoChat(input) {
+    const f = input.files[0];
+    if (!f) return;
+    const fd = new FormData();
+    fd.append('tipo', 'imagen');
+    fd.append('titulo', f.name);
+    fd.append('archivo', f);
+    bubbleChat('sistema', 'Subiendo ' + f.name + '...');
+    fetch('{{ route('publicaciones.recursos') }}', {
+        method: 'POST', headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }, body: fd
+    }).then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || data.status === 0) throw new Error(data.error || (data.errors ? Object.values(data.errors).flat().join(' ') : 'Error del servidor'));
+        RECURSOS.unshift({ id: data.id, tipo: 'imagen', titulo: f.name, contenido: null, archivo: null, archivo_url: data.archivo_url });
+        renderRecursos();
+        bubbleChat('sistema', '📎 ' + f.name + ' agregado a Recursos de marca.');
+    }).catch(e => bubbleChat('sistema', '⚠️ No se pudo subir: ' + e.message))
+      .finally(() => { input.value = ''; });
 }
 
 function renderVariantes() {
@@ -792,10 +852,11 @@ function renderFeedSimulado() {
 
 /* ── Eventos ── */
 sel.addEventListener('change', () => {
-    variantes = []; varianteElegida = null; textosIA = null; pubGuardadaId = null;
+    variantes = []; varianteElegida = null; textosIA = null; pubGuardadaId = null; historialChat = [];
     document.getElementById('panelVariantes').style.display = 'none';
     document.getElementById('panelResultado').style.display = 'none';
     renderHistorial();
+    saludoInicial();
 });
 document.querySelectorAll('input[name=pubPrecio]').forEach(el => el.addEventListener('change', dibujar));
 
@@ -806,6 +867,7 @@ document.fonts.ready.then(() => {
     renderFeedSimulado();
     renderProximas();
     cambiarTipoRecurso();
+    saludoInicial();
 });
 </script>
 @endsection

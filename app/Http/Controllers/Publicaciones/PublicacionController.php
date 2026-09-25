@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Publicaciones;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Ecommerce\EcommerceController;
 use App\Models\Articulo;
+use App\Services\Publicaciones\ChatEstudioService;
 use App\Services\Publicaciones\CopyGeneratorService;
 use App\Services\Publicaciones\ImagenIaService;
 use App\Services\Publicaciones\MetaPublisherService;
@@ -151,6 +152,41 @@ class PublicacionController extends Controller
         try {
             $textos = $copys->generar($ficha, (bool) $request->con_precio, (string) $request->instrucciones);
             return response()->json(['status' => 1, 'textos' => $textos]);
+        } catch (\Throwable $e) {
+            return response()->json(['status' => 0, 'error' => $e->getMessage()], 422);
+        }
+    }
+
+    /** Chat del Estudio: el usuario pide en lenguaje natural, la IA llama a generar imágenes y/o textos. */
+    public function chat(Request $request, ChatEstudioService $chat)
+    {
+        $request->validate([
+            'producto_id' => 'required|integer',
+            'es_combo'    => 'nullable|boolean',
+            'formato'     => 'required|string|in:feed,story,ml',
+            'con_precio'  => 'required|boolean',
+            'mensaje'     => 'required|string|max:800',
+            'historial'   => 'nullable|array|max:20',
+            'historial.*.role'    => 'required_with:historial|in:user,assistant',
+            'historial.*.content' => 'required_with:historial|string',
+        ]);
+
+        $esCombo = (bool) $request->boolean('es_combo');
+        $ficha = $this->fichaParaGeneracion((int) $request->producto_id, $esCombo);
+        $articulo = Articulo::findOrFail($request->producto_id);
+        $rutaFoto = public_path('imagenes/articulos/' . $articulo->imagen);
+
+        try {
+            $resultado = $chat->responder(
+                $ficha,
+                $rutaFoto,
+                $esCombo,
+                $request->formato,
+                (bool) $request->con_precio,
+                $request->mensaje,
+                $request->input('historial', [])
+            );
+            return response()->json(['status' => 1] + $resultado);
         } catch (\Throwable $e) {
             return response()->json(['status' => 0, 'error' => $e->getMessage()], 422);
         }
