@@ -212,13 +212,30 @@
                         <div>
                             <img id="pubPreview" alt="Vista previa">
                             <div class="pub-btns">
-                                <button class="pub-btn sec chico" onclick="descargarContenido()"><i class="fas fa-download"></i> Descargar</button>
                                 <button class="pub-btn sec chico" id="btnStoryExtra" onclick="generarFormatoExtra('story', this)"><i class="fas fa-plus"></i> Versión Historia 9:16</button>
                                 <button class="pub-btn sec chico" id="btnFeedExtra" onclick="generarFormatoExtra('feed', this)" style="display:none;"><i class="fas fa-plus"></i> Versión Feed 4:5</button>
                             </div>
+                            <label style="margin-top:10px;">Exportar</label>
+                            <div class="pub-btns" style="justify-content:flex-start;">
+                                <button class="pub-btn sec chico" onclick="exportarPreset('feed')">Feed 1080×1350</button>
+                                <button class="pub-btn sec chico" onclick="exportarPreset('square')">Cuadrado 1080×1080</button>
+                                <button class="pub-btn sec chico" onclick="exportarPreset('story')">Historia 1080×1920</button>
+                                <button class="pub-btn sec chico" onclick="exportarPreset('reel')">Reel cover 1080×1920</button>
+                            </div>
                         </div>
                         <div>
-                            <label style="margin-top:0;">Caption (Instagram / Facebook)</label>
+                            <details class="pub-mas" open>
+                                <summary>Textos sobre la imagen (capas, no generadas por IA)</summary>
+                                <label style="margin-top:6px;">Titular</label>
+                                <input type="text" id="ovHeadline" placeholder="Nombre del producto por defecto">
+                                <label>Llamado a la acción (CTA)</label>
+                                <input type="text" id="ovCta" placeholder="Ej: Consultá stock, Comprá ahora...">
+                                <label>Badge (etiqueta chica)</label>
+                                <input type="text" id="ovBadge" placeholder="Ej: Envío gratis, Nuevo...">
+                                <label style="margin-top:8px;font-weight:400;"><input type="checkbox" id="ovWebsite" style="width:auto;margin-right:6px;"> Mostrar sommy.com.ar</label>
+                            </details>
+
+                            <label style="margin-top:10px;">Caption (Instagram / Facebook)</label>
                             <textarea id="txtCaption" class="pub-texto"></textarea>
 
                             <details class="pub-mas">
@@ -230,6 +247,12 @@
                                 <label>Mensaje WhatsApp</label>
                                 <textarea id="txtWa" style="min-height:80px;"></textarea>
                             </details>
+
+                            <label>Campaña (opcional)</label>
+                            <div class="pub-btns" style="justify-content:flex-start;flex-wrap:wrap;">
+                                <select id="pubCampana" style="max-width:220px;"></select>
+                                <button class="pub-btn sec chico" onclick="nuevaCampana()"><i class="fas fa-plus"></i> Nueva</button>
+                            </div>
 
                             <label>Publicar</label>
                             <div class="pub-btns" style="justify-content:flex-start;">
@@ -396,12 +419,13 @@ const PRODUCTOS = [...@json($productos), ...@json($combos)];
 const REGISTROS = @json($registros);
 const BIBLIOTECA = @json($biblioteca);
 const RECURSOS = @json($recursos);
+let CAMPANAS = @json($campanas);
 let ESTILO_IMG = @json($ajustes->estilo_imagen ?? '');
 const LOGO_URL = '{{ asset('imagenes/marca/sommy-logo-magia.png') }}';
 const BASE_URL = '{{ url('/') }}';
 const CSRF = '{{ csrf_token() }}';
 
-const FORMATOS = { feed: [1080, 1350], story: [1080, 1920], ml: [1200, 1200] };
+const FORMATOS = { feed: [1080, 1350], story: [1080, 1920], ml: [1200, 1200], square: [1080, 1080], reel: [1080, 1920] };
 const REC_LBL = { imagen: 'Imagen', logo: 'Logo', prompt: 'Prompt', contexto: 'Contexto' };
 const REC_ICO = { imagen: 'fa-image', logo: 'fa-star', prompt: 'fa-terminal', contexto: 'fa-info-circle' };
 
@@ -665,7 +689,7 @@ function dibujarConVariante(v, formato) {
         ctx.drawImage(imgLogo, lx, ly, lw, lh);
     }
 
-    const baseY = H - (formato === 'story' ? H * .30 : H * .32);
+    const baseY = H - ((formato === 'story' || formato === 'reel') ? H * .30 : H * .32);
 
     if (!p) {
         // Contenido de marca sin producto: la imagen habla sola, solo la firma abajo.
@@ -677,10 +701,13 @@ function dibujarConVariante(v, formato) {
         return;
     }
 
+    const headlineEl = document.getElementById('ovHeadline');
+    const headline = (headlineEl && headlineEl.value.trim()) ? headlineEl.value.trim() : p.nombre;
+
     ctx.textAlign = 'center';
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '600 ' + (W * .048) + 'px Poppins, sans-serif';
-    envolverTexto(p.nombre, W / 2, baseY, W * .84, W * .06);
+    envolverTexto(headline, W / 2, baseY, W * .84, W * .06);
 
     const specs = [p.plazas, p.firmeza ? 'Firmeza ' + p.firmeza.toLowerCase() : null, p.altura ? p.altura + ' cm' : null, p.pillow ? 'Pillow top' : null].filter(Boolean).join('  ·  ');
     if (specs) {
@@ -710,9 +737,43 @@ function dibujarConVariante(v, formato) {
         }
     }
 
-    ctx.fillStyle = '#7FD4F5';
-    ctx.font = '500 ' + (W * .026) + 'px Poppins, sans-serif';
-    ctx.fillText('DIRECTO DE FÁBRICA  ·  ENVÍO A DOMICILIO', W / 2, H - H * .045);
+    const ctaEl = document.getElementById('ovCta');
+    const cta = ctaEl ? ctaEl.value.trim() : '';
+    const websiteOn = document.getElementById('ovWebsite') && document.getElementById('ovWebsite').checked;
+
+    if (cta) {
+        ctx.font = '700 ' + (W * .032) + 'px Poppins, sans-serif';
+        const tw = ctx.measureText(cta.toUpperCase()).width;
+        const padX = W * .045, pillW = tw + padX * 2, pillH = W * .09;
+        const py = H - H * .07 - pillH / 2;
+        rRect(W / 2 - pillW / 2, py - pillH / 2, pillW, pillH, pillH / 2);
+        ctx.fillStyle = '#2563EB'; ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(cta.toUpperCase(), W / 2, py + W * .011);
+    } else {
+        ctx.fillStyle = '#7FD4F5';
+        ctx.font = '500 ' + (W * .026) + 'px Poppins, sans-serif';
+        ctx.fillText('DIRECTO DE FÁBRICA  ·  ENVÍO A DOMICILIO', W / 2, H - H * .07);
+    }
+
+    if (websiteOn) {
+        ctx.fillStyle = '#C7D0E8';
+        ctx.font = '400 ' + (W * .020) + 'px Poppins, sans-serif';
+        ctx.fillText('sommy.com.ar', W / 2, H - H * .022);
+    }
+
+    const badgeEl = document.getElementById('ovBadge');
+    const badge = badgeEl ? badgeEl.value.trim() : '';
+    if (badge) {
+        ctx.font = '700 ' + (W * .026) + 'px Poppins, sans-serif';
+        const bw = ctx.measureText(badge.toUpperCase()).width;
+        const padX = W * .035, pillW = bw + padX * 2, pillH = W * .065;
+        const bx = W - W * .06 - pillW, by = H * .045;
+        rRect(bx, by, pillW, pillH, pillH / 2);
+        ctx.fillStyle = '#2563EB'; ctx.fill();
+        ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center';
+        ctx.fillText(badge.toUpperCase(), bx + pillW / 2, by + pillH * .68);
+    }
 
     renderHistorial();
 }
@@ -891,8 +952,49 @@ function payloadBase() {
         texto_wa: document.getElementById('txtWa').value,
         imagen_escena: varianteElegida ? varianteElegida.path : null,
         prompt_escena: varianteElegida ? varianteElegida.prompt : null,
-        imagen_base64: canvas.toDataURL('image/png')
+        imagen_base64: canvas.toDataURL('image/png'),
+        campana_id: document.getElementById('pubCampana').value || null,
+        overlay: {
+            headline: document.getElementById('ovHeadline').value.trim() || null,
+            cta: document.getElementById('ovCta').value.trim() || null,
+            badge: document.getElementById('ovBadge').value.trim() || null,
+            website: document.getElementById('ovWebsite').checked
+        }
     };
+}
+
+/* ── Campañas ── */
+function renderCampanas() {
+    const s = document.getElementById('pubCampana');
+    const actual = s.value;
+    s.innerHTML = '<option value="">— Sin campaña —</option>';
+    CAMPANAS.forEach(c => { s.innerHTML += '<option value="' + c.id + '">' + c.nombre + '</option>'; });
+    s.value = actual;
+}
+
+function nuevaCampana() {
+    const nombre = prompt('Nombre de la campaña (ej: Ofertas Octubre, Eclipse, Hot Sale):');
+    if (!nombre || !nombre.trim()) return;
+    postJson('{{ route('publicaciones.campanas') }}', { nombre: nombre.trim() }).then(data => {
+        CAMPANAS.unshift({ id: data.id, nombre: data.nombre });
+        renderCampanas();
+        document.getElementById('pubCampana').value = data.id;
+    }).catch(e => alert('No se pudo crear la campaña: ' + e.message));
+}
+
+/* ── Export a tamaños fijos (no cambia el formato elegido, solo exporta) ── */
+function exportarPreset(preset) {
+    if (!varianteElegida) return;
+    const formatoActual = opcion('pubFormato');
+    dibujarConVariante(varianteElegida, preset);
+    const p = productoActual();
+    const slug = p ? 'sommy-' + p.nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'sommy-contenido-marca';
+    const a = document.createElement('a');
+    a.download = slug + '-' + preset + '.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    dibujarConVariante(varianteElegida, formatoActual);
+    document.getElementById('pubPreview').src = canvas.toDataURL('image/png');
 }
 
 function guardarBorrador(btn) {
@@ -1064,12 +1166,16 @@ sel.addEventListener('change', () => {
 document.querySelectorAll('input[name=pubPrecio]').forEach(el => el.addEventListener('change', () => { dibujar(); renderFeedSimulado(); }));
 document.querySelectorAll('input[name=pubFormato]').forEach(el => el.addEventListener('change', actualizarResumenConfig));
 
+['ovHeadline', 'ovCta', 'ovBadge'].forEach(id => document.getElementById(id).addEventListener('input', () => { if (varianteElegida) { dibujar(); document.getElementById('pubPreview').src = canvas.toDataURL('image/png'); } }));
+document.getElementById('ovWebsite').addEventListener('change', () => { if (varianteElegida) { dibujar(); document.getElementById('pubPreview').src = canvas.toDataURL('image/png'); } });
+
 document.fonts.ready.then(() => {
     cargarLogo(() => {});
     renderHistorial();
     renderRecursos();
     renderFeedSimulado();
     renderProximas();
+    renderCampanas();
     actualizarResumenConfig();
     cambiarTipoRecurso();
     saludoInicial();

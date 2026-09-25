@@ -151,9 +151,27 @@
             </div>
 
             <div class="cs-panel" id="csAcciones" style="display:none;">
+                <h4>Textos sobre la imagen (capas)</h4>
+                <input type="text" id="csOvHeadline" placeholder="Titular (nombre del producto por defecto)">
+                <input type="text" id="csOvCta" placeholder="CTA, ej: Consultá stock" style="margin-top:6px;">
+                <input type="text" id="csOvBadge" placeholder="Badge, ej: Envío gratis" style="margin-top:6px;">
+                <label style="font-weight:400;margin-top:6px;display:block;"><input type="checkbox" id="csOvWebsite" style="width:auto;margin-right:6px;"> Mostrar sommy.com.ar</label>
+
                 <h4>Texto</h4>
                 <textarea id="csCaption" style="width:100%;min-height:100px;border:1px solid #E7EAF2;border-radius:10px;padding:8px;font-size:12.5px;font-family:'Poppins',sans-serif;" placeholder="Caption..."></textarea>
                 <button class="cs-btn sec chico" onclick="generarCaptionStudio(this)" style="margin-top:6px;">Generar texto con IA</button>
+
+                <h4>Campaña</h4>
+                <select id="csCampana"></select>
+                <button class="cs-btn sec chico" onclick="nuevaCampanaStudio()" style="margin-top:6px;">+ Nueva campaña</button>
+
+                <h4>Exportar</h4>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="cs-btn sec chico" onclick="exportarPresetStudio('feed')">Feed</button>
+                    <button class="cs-btn sec chico" onclick="exportarPresetStudio('square')">Cuadrado</button>
+                    <button class="cs-btn sec chico" onclick="exportarPresetStudio('story')">Historia</button>
+                    <button class="cs-btn sec chico" onclick="exportarPresetStudio('reel')">Reel</button>
+                </div>
 
                 <h4>Publicar</h4>
                 <div style="display:flex;flex-direction:column;gap:8px;">
@@ -173,9 +191,10 @@
 @section('scripts')
 <script>
 const PRODUCTOS = @json($productos);
+let CAMPANAS = @json($campanas);
 const LOGO_URL = '{{ asset('imagenes/marca/sommy-logo-magia.png') }}';
 const CSRF = '{{ csrf_token() }}';
-const FORMATOS = { feed: [1080, 1350], story: [1080, 1920], ml: [1200, 1200] };
+const FORMATOS = { feed: [1080, 1350], story: [1080, 1920], ml: [1200, 1200], square: [1080, 1080], reel: [1080, 1920] };
 
 const OBJETIVOS = { producto: 'Producto', oferta: 'Oferta', lifestyle: 'Lifestyle', fabricacion: 'Fabricación', educativo: 'Educativo', combo: 'Combo', institucional: 'Institucional', comparativa: 'Comparativa', testimonial: 'Testimonial', lanzamiento: 'Lanzamiento' };
 const INTENSIDADES = { institucional: 'Institucional', equilibrado: 'Equilibrado', comercial: 'Comercial', promo_fuerte: 'Promo fuerte' };
@@ -340,10 +359,10 @@ function elegirVarianteStudio(i, card) {
 }
 
 /* ── Canvas ── */
-function dibujarStudio() {
+function dibujarStudio(formatoForzado) {
     if (!varianteElegida) return;
     const p = prod();
-    const formato = opcion('csFormato');
+    const formato = formatoForzado || opcion('csFormato');
     const [W, H] = FORMATOS[formato] || FORMATOS.feed;
     const conPrecio = opcion('csPrecio') === 'si';
     canvas.width = W; canvas.height = H;
@@ -364,10 +383,11 @@ function dibujarStudio() {
         ctx.drawImage(imgLogo, lx, ly, lw, lh);
     }
 
-    const baseY = H - (formato === 'story' ? H * .30 : H * .32);
+    const baseY = H - ((formato === 'story' || formato === 'reel') ? H * .30 : H * .32);
+    const headline = document.getElementById('csOvHeadline').value.trim() || p.nombre;
     ctx.textAlign = 'center'; ctx.fillStyle = '#FFFFFF';
     ctx.font = '600 ' + (W * .048) + 'px Poppins, sans-serif';
-    envolverTextoStudio(p.nombre, W / 2, baseY, W * .84, W * .06);
+    envolverTextoStudio(headline, W / 2, baseY, W * .84, W * .06);
 
     const specs = [p.plazas, p.firmeza ? 'Firmeza ' + p.firmeza.toLowerCase() : null, p.altura ? p.altura + ' cm' : null, p.pillow ? 'Pillow top' : null].filter(Boolean).join('  ·  ');
     if (specs) { ctx.fillStyle = '#C7D0E8'; ctx.font = '400 ' + (W * .028) + 'px Poppins, sans-serif'; ctx.fillText(specs, W / 2, baseY + W * .095); }
@@ -389,8 +409,36 @@ function dibujarStudio() {
         }
     }
 
-    ctx.fillStyle = '#7FD4F5'; ctx.font = '500 ' + (W * .026) + 'px Poppins, sans-serif';
-    ctx.fillText('DIRECTO DE FÁBRICA  ·  ENVÍO A DOMICILIO', W / 2, H - H * .045);
+    const cta = document.getElementById('csOvCta').value.trim();
+    const websiteOn = document.getElementById('csOvWebsite').checked;
+    if (cta) {
+        ctx.font = '700 ' + (W * .032) + 'px Poppins, sans-serif';
+        const tw = ctx.measureText(cta.toUpperCase()).width;
+        const padX = W * .045, pillW = tw + padX * 2, pillH = W * .09;
+        const py = H - H * .07 - pillH / 2;
+        rRectStudio(W / 2 - pillW / 2, py - pillH / 2, pillW, pillH, pillH / 2);
+        ctx.fillStyle = '#2563EB'; ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(cta.toUpperCase(), W / 2, py + W * .011);
+    } else {
+        ctx.fillStyle = '#7FD4F5'; ctx.font = '500 ' + (W * .026) + 'px Poppins, sans-serif';
+        ctx.fillText('DIRECTO DE FÁBRICA  ·  ENVÍO A DOMICILIO', W / 2, H - H * .07);
+    }
+    if (websiteOn) {
+        ctx.fillStyle = '#C7D0E8'; ctx.font = '400 ' + (W * .020) + 'px Poppins, sans-serif';
+        ctx.fillText('sommy.com.ar', W / 2, H - H * .022);
+    }
+    const badge = document.getElementById('csOvBadge').value.trim();
+    if (badge) {
+        ctx.font = '700 ' + (W * .026) + 'px Poppins, sans-serif';
+        const bw = ctx.measureText(badge.toUpperCase()).width;
+        const padX = W * .035, pillW = bw + padX * 2, pillH = W * .065;
+        const bx = W - W * .06 - pillW, by = H * .045;
+        rRectStudio(bx, by, pillW, pillH, pillH / 2);
+        ctx.fillStyle = '#2563EB'; ctx.fill();
+        ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center';
+        ctx.fillText(badge.toUpperCase(), bx + pillW / 2, by + pillH * .68);
+    }
 }
 
 function rRectStudio(x, y, w, h, r) {
@@ -426,8 +474,44 @@ function payloadStudio() {
         titulo_ml: p.nombre, desc_ml: '', caption: document.getElementById('csCaption').value, texto_wa: '',
         imagen_escena: varianteElegida ? varianteElegida.path : null,
         prompt_escena: varianteElegida ? varianteElegida.prompt : null,
-        imagen_base64: canvas.toDataURL('image/png')
+        imagen_base64: canvas.toDataURL('image/png'),
+        campana_id: document.getElementById('csCampana').value || null,
+        overlay: {
+            headline: document.getElementById('csOvHeadline').value.trim() || null,
+            cta: document.getElementById('csOvCta').value.trim() || null,
+            badge: document.getElementById('csOvBadge').value.trim() || null,
+            website: document.getElementById('csOvWebsite').checked
+        }
     };
+}
+
+/* ── Campañas ── */
+function renderCampanasStudio() {
+    const s = document.getElementById('csCampana');
+    s.innerHTML = '<option value="">— Sin campaña —</option>';
+    CAMPANAS.forEach(c => { s.innerHTML += '<option value="' + c.id + '">' + c.nombre + '</option>'; });
+}
+function nuevaCampanaStudio() {
+    const nombre = prompt('Nombre de la campaña:');
+    if (!nombre || !nombre.trim()) return;
+    postJson('{{ route('publicaciones.campanas') }}', { nombre: nombre.trim() }).then(data => {
+        CAMPANAS.unshift({ id: data.id, nombre: data.nombre });
+        renderCampanasStudio();
+        document.getElementById('csCampana').value = data.id;
+    }).catch(e => alert('No se pudo crear la campaña: ' + e.message));
+}
+
+/* ── Export a tamaños fijos (no cambia el formato elegido, solo exporta) ── */
+function exportarPresetStudio(preset) {
+    if (!varianteElegida) return;
+    dibujarStudio(preset);
+    const p = prod();
+    const a = document.createElement('a');
+    a.download = 'sommy-' + p.nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + preset + '.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    dibujarStudio();
+    document.getElementById('csPreview').src = canvas.toDataURL('image/png');
 }
 
 function guardarStudio(btn) {
@@ -489,6 +573,13 @@ document.fonts.ready.then(() => {
     poblarSelect('csPersonas', PERSONAS);
     renderGaleria();
     cargarLogo(() => {});
+    renderCampanasStudio();
+    ['csOvHeadline', 'csOvCta', 'csOvBadge'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+        if (varianteElegida) { dibujarStudio(); document.getElementById('csPreview').src = canvas.toDataURL('image/png'); }
+    }));
+    document.getElementById('csOvWebsite').addEventListener('change', () => {
+        if (varianteElegida) { dibujarStudio(); document.getElementById('csPreview').src = canvas.toDataURL('image/png'); }
+    });
 });
 </script>
 @endsection

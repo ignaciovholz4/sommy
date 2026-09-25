@@ -56,6 +56,7 @@ class PublicacionController extends Controller
 
         $ajustes = DB::table('publicaciones_ajustes')->first();
         $recursos = DB::table('publicaciones_recursos')->orderBy('tipo')->orderByDesc('id')->get();
+        $campanas = DB::table('publicaciones_campanas')->orderByDesc('id')->get();
 
         return view('publicaciones.index', [
             'productos'   => $productos,
@@ -67,7 +68,26 @@ class PublicacionController extends Controller
             'capacidades' => $capacidades,
             'ajustes'     => $ajustes,
             'recursos'    => $recursos,
+            'campanas'    => $campanas,
         ]);
+    }
+
+    /** Alta rápida de una campaña (agrupa publicaciones para Feed Planner / consistencia). */
+    public function guardarCampana(Request $request)
+    {
+        $request->validate([
+            'nombre'   => 'required|string|max:120',
+            'objetivo' => 'nullable|string|max:40',
+        ]);
+
+        $id = DB::table('publicaciones_campanas')->insertGetId([
+            'nombre'     => $request->nombre,
+            'objetivo'   => $request->objetivo,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['status' => 1, 'id' => $id, 'nombre' => $request->nombre]);
     }
 
     /** Entrenamiento: guarda la voz de marca (textos) y el estilo visual (imágenes). */
@@ -312,6 +332,8 @@ class PublicacionController extends Controller
             'video_final'         => 'nullable|string|max:255',
             'es_combo'            => 'nullable|boolean',
             'padre_id'            => 'nullable|integer',
+            'campana_id'          => 'nullable|integer',
+            'overlay'             => 'nullable|array',
             'programado_para'     => 'nullable|date',
             'canales_programados' => 'nullable|array',
             'canales_programados.*' => 'in:facebook,instagram',
@@ -344,6 +366,8 @@ class PublicacionController extends Controller
             'prompt_escena'       => $request->prompt_escena,
             'imagen_final'        => 'imagenes/publicaciones/finales/' . $nombre,
             'video_final'         => $request->video_final,
+            'campana_id'          => $request->campana_id,
+            'overlay_json'        => $request->overlay ? json_encode($request->overlay, JSON_UNESCAPED_UNICODE) : null,
             'estado'              => $programado ? 'programada' : 'borrador',
             'programado_para'     => $programado,
             'canales_programados' => $request->canales_programados ? implode(',', $request->canales_programados) : null,

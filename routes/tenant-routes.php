@@ -975,6 +975,7 @@ Route::post('/publicaciones/publicar', [\App\Http\Controllers\Publicaciones\Publ
 Route::get('/publicaciones/catalogo', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'catalogoPdf'])->name('publicaciones.catalogo')->middleware(['auth','verified']);
 Route::post('/publicaciones/generar-video', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'generarVideo'])->name('publicaciones.generar-video')->middleware(['auth','verified']);
 Route::post('/publicaciones/ajustes', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'guardarAjustes'])->name('publicaciones.ajustes')->middleware(['auth','verified']);
+Route::post('/publicaciones/campanas', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'guardarCampana'])->name('publicaciones.campanas')->middleware(['auth','verified']);
 Route::post('/publicaciones/recursos', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'guardarRecurso'])->name('publicaciones.recursos')->middleware(['auth','verified']);
 Route::delete('/publicaciones/recursos/{id}', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'eliminarRecurso'])->name('publicaciones.recursos.eliminar')->middleware(['auth','verified']);
 

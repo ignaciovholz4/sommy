@@ -44,9 +44,12 @@ class StudioController extends Controller
             'instagram' => $meta->instagramConfigurado(),
         ];
 
+        $campanas = \Illuminate\Support\Facades\DB::table('publicaciones_campanas')->orderByDesc('id')->get();
+
         return view('creative-studio.create', [
             'productos'   => $productosData,
             'capacidades' => $capacidades,
+            'campanas'    => $campanas,
         ]);
     }
 
