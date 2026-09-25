@@ -74,6 +74,19 @@
     .pub-brief-item .desc { color: #6E7A96; font-weight: 300; margin-top: 2px; }
     .pub-brief-item .estado-item { font-size: 10.5px; font-weight: 600; color: #6E7A96; text-align: right; }
 
+    /* Historial */
+    .pub-hist-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .pub-hist-lista { max-height: 420px; overflow-y: auto; border: 1px solid #E7EAF2; border-radius: 12px; }
+    .pub-hist-row { padding: 10px 14px; border-bottom: 1px solid #F1F4F9; font-size: 12.5px; }
+    .pub-hist-row:last-child { border-bottom: none; }
+    .pub-hist-row .fecha { font-size: 10.5px; color: #94A3B8; font-weight: 600; }
+    .pub-hist-row .msg-user { color: #1B2B5A; font-weight: 600; margin-top: 3px; }
+    .pub-hist-row .msg-resp { color: #47536F; margin-top: 3px; }
+    .pub-hist-row .tags span { display: inline-block; font-size: 9.5px; font-weight: 600; color: #2563EB; background: #E0F2FE; border-radius: 999px; padding: 1px 8px; margin-top: 4px; margin-right: 4px; }
+    .pub-hist-row .prompt-txt { color: #6E7A96; font-weight: 300; margin-top: 3px; white-space: pre-wrap; }
+    .pub-hist-row .estado-ok { color: #166534; font-weight: 600; }
+    .pub-hist-row .estado-error { color: #b45309; font-weight: 600; }
+
     /* Variantes (5 opciones para elegir) */
     .pub-variantes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 10px; }
     .pub-variante { position: relative; border-radius: 12px; overflow: hidden; border: 3px solid transparent; cursor: pointer; background: #F8FAFC; }
@@ -82,6 +95,11 @@
     .pub-variante .check { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 999px; background: #2563EB; color: #fff; display: none; align-items: center; justify-content: center; font-size: 11px; }
     .pub-variante.seleccionada .check { display: flex; }
     .pub-variante.error { display: flex; align-items: center; justify-content: center; aspect-ratio: 4/5; font-size: 11px; color: #b45309; text-align: center; padding: 8px; cursor: default; }
+
+    /* Miniaturas de imagen embebidas en la burbuja del chat */
+    .pub-msg-imagenes { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; margin-top: 8px; max-width: 320px; }
+    .pub-variante.chica { border-width: 2px; border-radius: 8px; }
+    .pub-variante.chica .check { width: 16px; height: 16px; font-size: 8px; top: 3px; right: 3px; }
 
     .pub-final-grid { display: grid; grid-template-columns: 300px 1fr; gap: 18px; align-items: start; }
     @media (max-width: 767px) { .pub-final-grid { grid-template-columns: 1fr; } }
@@ -179,6 +197,7 @@
                 <button class="pub-btn sec chico" onclick="$('#modalRecursos').modal('show')"><i class="fas fa-box-open"></i> Recursos</button>
                 <button class="pub-btn sec chico" onclick="renderReferencias(); $('#modalReferencias').modal('show')"><i class="fas fa-images"></i> Imágenes de referencia</button>
                 <button class="pub-btn sec chico" onclick="$('#modalBrief').modal('show')"><i class="fas fa-list-check"></i> Brief de campaña</button>
+                <button class="pub-btn sec chico" onclick="abrirHistorial()"><i class="fas fa-clock-rotate-left"></i> Historial</button>
                 <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
             </div>
         </div>
@@ -410,6 +429,27 @@
     </div>
 </div>
 
+{{-- Modal Historial (conversaciones + prompts de imagen) --}}
+<div class="modal fade" id="modalHistorial" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-clock-rotate-left" style="color:#2563EB;"></i> Historial</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="pub-hist-tabs">
+                    <button class="pub-feed-tab activo" id="histTabConv" onclick="cambiarTabHistorial('conversaciones')">Conversaciones</button>
+                    <button class="pub-feed-tab" id="histTabPrompts" onclick="cambiarTabHistorial('prompts')">Prompts de imagen</button>
+                </div>
+                <div id="histCargando" class="pub-aviso">Cargando...</div>
+                <div id="histConversaciones" class="pub-hist-lista"></div>
+                <div id="histPrompts" class="pub-hist-lista" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Modal Recursos de marca --}}
 <div class="modal fade" id="modalRecursos" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
@@ -585,7 +625,7 @@ function enviarChat() {
         mensaje, historial: historialChat.slice(-16)
     }).then(data => {
         pensando.remove();
-        bubbleChat('assistant', data.reply);
+        const bubble = bubbleChat('assistant', data.reply);
         historialChat.push({ role: 'assistant', content: data.reply });
         if (data.imagenes) {
             variantes = data.imagenes;
@@ -593,7 +633,7 @@ function enviarChat() {
             document.getElementById('panelResultado').style.display = 'none';
             document.getElementById('panelVariantes').style.display = '';
             renderVariantes();
-            $('#modalContenido').modal('show');
+            renderVariantesEnChat(bubble, data.imagenes);
         }
         if (data.textos) {
             textosIA = data.textos;
@@ -653,6 +693,33 @@ function renderVariantes() {
     });
     const primeraOk = variantes.find(v => !v.error);
     document.getElementById('pubPromptDebug').textContent = primeraOk ? primeraOk.prompt : '';
+}
+
+/* Miniaturas embebidas directo en la burbuja del chat (además del modal) — para que se vean sin tener que abrir nada. */
+function renderVariantesEnChat(bubble, imagenes) {
+    const grid = document.createElement('div');
+    grid.className = 'pub-msg-imagenes';
+    imagenes.forEach((v, i) => {
+        const card = document.createElement('div');
+        if (v.error) {
+            card.className = 'pub-variante chica error';
+            card.textContent = 'Falló';
+        } else {
+            card.className = 'pub-variante chica';
+            card.innerHTML = '<img src="' + v.url + '">';
+            card.onclick = () => elegirVarianteDesdeChat(i, card);
+        }
+        grid.appendChild(card);
+    });
+    bubble.appendChild(grid);
+    const cont = document.getElementById('pubChat');
+    cont.scrollTop = cont.scrollHeight;
+}
+
+function elegirVarianteDesdeChat(i, card) {
+    $('#modalContenido').modal('show');
+    document.getElementById('panelVariantes').style.display = 'none';
+    elegirVariante(i, card);
 }
 
 function elegirVariante(i, card) {
@@ -1145,6 +1212,63 @@ function generarUnItemBrief(it, campanaId) {
             img.onerror = () => reject(new Error('No se pudo cargar la imagen generada.'));
             img.src = v.url;
         });
+    });
+}
+
+/* ── Historial de conversaciones y prompts ── */
+let HISTORIAL_CACHE = null;
+
+function abrirHistorial() {
+    $('#modalHistorial').modal('show');
+    cambiarTabHistorial('conversaciones');
+    if (HISTORIAL_CACHE) { renderHistorialListas(); return; }
+    document.getElementById('histCargando').style.display = '';
+    fetch('{{ route('publicaciones.historial') }}', { headers: { 'Accept': 'application/json' } })
+        .then(r => r.json())
+        .then(data => {
+            HISTORIAL_CACHE = data;
+            renderHistorialListas();
+        })
+        .catch(() => { document.getElementById('histCargando').textContent = 'No se pudo cargar el historial.'; })
+        .finally(() => { document.getElementById('histCargando').style.display = 'none'; });
+}
+
+function cambiarTabHistorial(tab) {
+    document.getElementById('histTabConv').classList.toggle('activo', tab === 'conversaciones');
+    document.getElementById('histTabPrompts').classList.toggle('activo', tab === 'prompts');
+    document.getElementById('histConversaciones').style.display = tab === 'conversaciones' ? '' : 'none';
+    document.getElementById('histPrompts').style.display = tab === 'prompts' ? '' : 'none';
+}
+
+function renderHistorialListas() {
+    if (!HISTORIAL_CACHE) return;
+
+    const contConv = document.getElementById('histConversaciones');
+    contConv.innerHTML = HISTORIAL_CACHE.conversaciones.length ? '' : '<div class="pub-aviso" style="padding:14px;">Todavía no hay conversaciones registradas.</div>';
+    HISTORIAL_CACHE.conversaciones.forEach(c => {
+        const nombre = c.producto_id ? ((PRODUCTOS.find(p => p.id === c.producto_id) || {}).nombre || 'Producto') : 'Contenido de marca';
+        const tags = (c.genero_imagenes ? '<span>Imágenes</span>' : '') + (c.genero_textos ? '<span>Texto</span>' : '');
+        const row = document.createElement('div');
+        row.className = 'pub-hist-row';
+        row.innerHTML =
+            '<div class="fecha">' + new Date(c.created_at).toLocaleString('es-AR') + ' · ' + nombre + '</div>' +
+            '<div class="msg-user">' + String(c.mensaje_usuario).replace(/</g, '&lt;') + '</div>' +
+            '<div class="msg-resp">' + String(c.respuesta_asistente || '').replace(/</g, '&lt;') + '</div>' +
+            (tags ? '<div class="tags">' + tags + '</div>' : '');
+        contConv.appendChild(row);
+    });
+
+    const contProm = document.getElementById('histPrompts');
+    contProm.innerHTML = HISTORIAL_CACHE.generaciones.length ? '' : '<div class="pub-aviso" style="padding:14px;">Todavía no hay generaciones registradas.</div>';
+    HISTORIAL_CACHE.generaciones.forEach(g => {
+        const row = document.createElement('div');
+        row.className = 'pub-hist-row';
+        row.innerHTML =
+            '<div class="fecha">' + new Date(g.created_at).toLocaleString('es-AR') + ' · ' + g.modelo + ' · ' + g.formato +
+            ' · <span class="' + (g.estado === 'ok' ? 'estado-ok' : 'estado-error') + '">' + g.estado + '</span></div>' +
+            '<div class="prompt-txt">' + String(g.prompt_final || '').replace(/</g, '&lt;') + '</div>' +
+            (g.error ? '<div class="prompt-txt estado-error">' + String(g.error).replace(/</g, '&lt;') + '</div>' : '');
+        contProm.appendChild(row);
     });
 }
 

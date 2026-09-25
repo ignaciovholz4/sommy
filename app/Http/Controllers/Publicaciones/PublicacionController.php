@@ -258,10 +258,37 @@ class PublicacionController extends Controller
                 $request->mensaje,
                 $request->input('historial', [])
             );
+
+            DB::table('publicaciones_conversaciones')->insert([
+                'producto_id'          => $request->producto_id,
+                'mensaje_usuario'      => $request->mensaje,
+                'respuesta_asistente'  => $resultado['reply'] ?? null,
+                'genero_imagenes'      => isset($resultado['imagenes']),
+                'genero_textos'        => isset($resultado['textos']),
+                'created_at'           => now(),
+                'updated_at'           => now(),
+            ]);
+
             return response()->json(['status' => 1] + $resultado);
         } catch (\Throwable $e) {
             return response()->json(['status' => 0, 'error' => $e->getMessage()], 422);
         }
+    }
+
+    /** Historial de conversaciones del chat + prompts de imagen generados, para revisar qué se pidió y qué salió. */
+    public function historial()
+    {
+        $conversaciones = DB::table('publicaciones_conversaciones')
+            ->orderByDesc('id')->limit(60)->get();
+
+        $generaciones = DB::table('publicaciones_generaciones')
+            ->orderByDesc('id')->limit(60)->get();
+
+        return response()->json([
+            'status'         => 1,
+            'conversaciones' => $conversaciones,
+            'generaciones'   => $generaciones,
+        ]);
     }
 
     /** Escena IA: 5 variantes de la misma ambientación de marca, en paralelo (Gemini). */
