@@ -149,6 +149,37 @@ class PromptBuilder
             . 'dejá un espacio limpio y libre de elementos importantes en la esquina superior izquierda para superponerlo.';
     }
 
+    /**
+     * Instrucción de fidelidad de producto: dice explícitamente que la PRIMERA
+     * imagen adjunta es la foto real (única fuente válida del colchón), para
+     * que Gemini no la confunda con las imágenes de referencia de estilo que
+     * se adjuntan después.
+     */
+    protected static function fidelidadProducto(): string
+    {
+        return 'Foto publicitaria profesional. La PRIMERA imagen adjunta a este mensaje es una FOTO REAL de un colchon Sommy: '
+            . 'es el UNICO producto que puede aparecer en el resultado. Colocar ESE colchon real (manteniendo EXACTAMENTE su forma, '
+            . 'tela, costuras, etiqueta, pillow top y colores tal cual se ven en esa foto, sin rediseñarlo ni modificarlo) sobre una base o sommier en ';
+    }
+
+    /**
+     * Aclaración obligatoria cuando hay imágenes de referencia adjuntas: son SOLO
+     * guía de estilo gráfico de campaña, nunca de producto. Sin esto, Gemini tiende
+     * a mezclar el colchón real con el que aparece en las fotos de referencia.
+     */
+    protected static function bloqueReferenciasEstilo(bool $conProducto): string
+    {
+        $productoClause = $conProducto
+            ? ' El unico colchon real que puede aparecer en el resultado final es el de la primera imagen adjunta: '
+                . 'cualquier colchon, cama o mueble que se vea en las imagenes de referencia tiene que ser ignorado por completo '
+                . '(no copiar su forma, tela, color, textura ni diseño), esas fotos no son productos Sommy.'
+            : '';
+
+        return ' Las imagenes adjuntas DESPUES de la foto del producto (si las hay) son SOLO una referencia grafica de estilo de '
+            . 'campaña (forma del banner/cinta, tipografia, paleta de colores, composicion del texto), no son productos Sommy ni '
+            . 'le pertenecen a la marca.' . $productoClause;
+    }
+
     protected static function orientacion(string $formato): string
     {
         return match ($formato) {
@@ -174,7 +205,7 @@ class PromptBuilder
                 . (trim((string) $extra) !== '' ? ' ' . trim($extra) : '');
         }
 
-        $prompt = 'Foto publicitaria profesional: colocar este colchon (mantener EXACTAMENTE su forma, tela, costuras, etiqueta y colores reales) sobre una base o sommier en '
+        $prompt = self::fidelidadProducto()
             . $cuerpo . ' '
             . self::orientacion($formato) . ' '
             . NegativeRulesBuilder::paraProducto();
@@ -189,9 +220,9 @@ class PromptBuilder
             : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
 
         if ($conReferencias) {
-            $prompt .= ' Ademas, imita el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera '
-                . ($producto !== null ? 'Y EL ESTILO DEL BANNER/TEXTO' : '') . ') '
-                . 'de las imagenes de referencia adjuntas al final, sin copiar literalmente su contenido ni ningun producto que aparezca en ellas.';
+            $prompt .= self::bloqueReferenciasEstilo($producto !== null)
+                . ' Imitá unicamente el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera'
+                . ($producto !== null ? ' y el estilo del banner/texto' : '') . ') de esas imagenes de referencia.';
         }
 
         return $prompt;
@@ -223,7 +254,7 @@ class PromptBuilder
 
         $cuerpo = implode(' ', $fragmentos);
 
-        $prompt = 'Foto publicitaria profesional: colocar este colchon (mantener EXACTAMENTE su forma, tela, costuras, etiqueta y colores reales) sobre una base o sommier en '
+        $prompt = self::fidelidadProducto()
             . $cuerpo . ' '
             . self::orientacion($formato) . ' '
             . NegativeRulesBuilder::paraProducto();
@@ -238,9 +269,9 @@ class PromptBuilder
             : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
 
         if ($conReferencias) {
-            $prompt .= ' Ademas, imita el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera '
-                . ($producto !== null ? 'Y EL ESTILO DEL BANNER/TEXTO' : '') . ') '
-                . 'de las imagenes de referencia adjuntas al final, sin copiar literalmente su contenido ni ningun producto que aparezca en ellas.';
+            $prompt .= self::bloqueReferenciasEstilo($producto !== null)
+                . ' Imitá unicamente el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera'
+                . ($producto !== null ? ' y el estilo del banner/texto' : '') . ') de esas imagenes de referencia.';
         }
 
         return $prompt;
