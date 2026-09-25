@@ -13,6 +13,7 @@
     /* Tipografía */
     --ec-font:          'Poppins', sans-serif;
     --ec-heading-font:  'Poppins', sans-serif;
+    --ec-promo-font:    'Titan One', 'Poppins', sans-serif;
 
     /* Paleta Sommy */
     --sm-navy:          #1B2B5A;
@@ -21,6 +22,11 @@
     --sm-breeze:        #E0F2FE;
     --sm-cotton:        #F8FAFC;
     --sm-border:        #E7EAF2;
+
+    /* Paleta promocional (uso temporal en piezas de oferta, NO reemplaza la paleta institucional) */
+    --sm-promo-yellow:  #FFE600;
+    --sm-promo-fucsia:  #FF1F8F;
+    --sm-promo-celeste: #BFE3FF;
     /* Textos oscurecidos respecto del brandbook para cumplir contraste AA sobre fondos claros */
     --sm-text-2:        #47536F;
     --sm-text-3:        #6E7A96;
@@ -2018,4 +2024,58 @@ a:not(.btn):hover { color: var(--sm-blue); }
     .sommy-reels-arrow { display: none; }
     .sommy-reel-card { width: 220px; height: 400px; }
     .sommy-reel-card--embed iframe { height: 400px; }
+}
+
+/* ================================================================
+   SOMMY — Expresión Promocional (Manual de Identidad, sección
+   "Sistema Gráfico Comercial"). Registro secundario para piezas de
+   oferta/combos: más visible y dinámico que la tipografía institucional.
+   La paleta amarillo/fucsia/celeste es temporal y NO reemplaza la
+   paleta institucional ni se usa nunca sobre el logo.
+   ================================================================ */
+
+.sommy-promo-eyebrow {
+    display: inline-block;
+    font-family: var(--ec-promo-font);
+    font-size: 12px;
+    letter-spacing: .04em;
+    color: var(--sm-navy);
+    background: #fff;
+    border: 2px solid var(--sm-navy);
+    border-radius: 999px;
+    padding: 5px 16px;
+    margin-bottom: 12px;
+    transform: rotate(-1deg);
+}
+
+.sommy-promo-title {
+    font-family: var(--ec-promo-font);
+    font-weight: 400; /* Titan One tiene un único peso, ya nace "Black" */
+    text-transform: uppercase;
+    line-height: 1;
+    color: #fff;
+    -webkit-text-stroke: 1.5px var(--sm-navy);
+    paint-order: stroke fill;
+    text-shadow: 3px 3px 0 var(--sm-navy);
+    font-size: clamp(26px, 4.2vw, 42px);
+    margin: 0;
+}
+
+.sommy-promo-title .sommy-promo-hl {
+    display: inline-block;
+    background: var(--sm-promo-yellow);
+    color: #fff;
+    -webkit-text-stroke: 1.5px var(--sm-navy);
+    padding: 2px 10px;
+    transform: rotate(-2deg);
+    box-shadow: 4px 4px 0 var(--sm-navy);
+}
+
+.sommy-promo-title .sommy-promo-hl--fucsia {
+    background: var(--sm-promo-fucsia);
+}
+
+@media (max-width: 576px) {
+    .sommy-promo-title { font-size: clamp(22px, 7vw, 30px); -webkit-text-stroke: 1px var(--sm-navy); }
+    .sommy-promo-title .sommy-promo-hl { -webkit-text-stroke: 1px var(--sm-navy); box-shadow: 3px 3px 0 var(--sm-navy); }
 }

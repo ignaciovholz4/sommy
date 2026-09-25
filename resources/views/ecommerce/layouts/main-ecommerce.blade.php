@@ -146,8 +146,8 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    {{-- Tipografías Sommy: Lora (titulares, precios) + Poppins (cuerpo, fichas, formularios) --}}
-    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+    {{-- Tipografías Sommy: Lora (titulares, precios) + Poppins (cuerpo, fichas, formularios) + Titan One (piezas promocionales/oferta) --}}
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Poppins:wght@300;400;500&family=Titan+One&display=swap" rel="stylesheet">
 
   </head>
   <body class="@yield('bodyClass')">

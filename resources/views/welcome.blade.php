@@ -291,8 +291,11 @@
       <div class="container-fluid">
         <div class="row">
           <div class="col-md-12">
-            <div class="tabs-header d-flex justify-content-between border-bottom my-5" data-aos="fade-up">
-              <h3>Combos en oferta</h3>
+            <div class="tabs-header d-flex justify-content-between align-items-center border-bottom my-5" data-aos="fade-up">
+              <div>
+                <span class="sommy-promo-eyebrow">Renová tu cama completa</span>
+                <h3 class="sommy-promo-title mb-0">Combos <span class="sommy-promo-hl">en oferta</span></h3>
+              </div>
               <a href="{{ route('ecommerce.combos') }}" class="ec-nav-link" style="font-size:13px;">Ver todos →</a>
             </div>
             <p class="text-muted mb-4" data-aos="fade-up">Colchón + base sommier + almohadas: armando el combo te sale más barato que comprando todo por separado.</p>
