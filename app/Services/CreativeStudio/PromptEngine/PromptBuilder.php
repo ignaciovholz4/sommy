@@ -145,8 +145,10 @@ class PromptBuilder
             . '(amarillo eléctrico y fucsia, sobre fondo azul noche o blanco)'
             . ($conReferencias ? ', imitando EXACTAMENTE el estilo gráfico (forma de cinta, grosor de letra, composición) de las imágenes de referencia adjuntas al final. ' : '. ')
             . 'Escribí en la imagen, EXACTAMENTE como está acá (sin inventar, sin cambiar ni un número ni una palabra): ' . $listado . ' '
-            . 'No agregues ningún otro precio, porcentaje o dato que no esté en esta lista. No agregues el logo (se agrega después por separado): '
-            . 'dejá un espacio limpio y libre de elementos importantes en la esquina superior izquierda para superponerlo.';
+            . 'No agregues ningún otro precio, porcentaje o dato que no esté en esta lista. '
+            . 'PROHIBIDO dibujar ningún logo, isotipo ni marca de agua: NO escribas la palabra "Sommy" ni ninguna variante en ningún lugar de la imagen '
+            . '(ni como logo, ni como texto suelto, ni integrada al banner) — el logo real se superpone después por separado, en software, '
+            . 'con el archivo de marca real. Dejá un espacio limpio y libre de elementos importantes en la esquina superior izquierda para superponerlo.';
     }
 
     /**

@@ -35,7 +35,7 @@ class FlatCardGenerator
 
         $font = storage_path('fonts/TitanOne-Regular.ttf');
         $this->dibujarTextoCentrado($im, mb_strtoupper($texto), $fg, $font, $w, $h);
-        $this->dibujarFirma($im, $fg, $font, $w, $h);
+        (new LogoCompositor())->pegarDirecto($im, $w, $h, $colores['fondo'] === '#1B2B5A');
 
         $dir = public_path('imagenes/publicaciones/escenas');
         if (!is_dir($dir)) {
@@ -74,15 +74,6 @@ class FlatCardGenerator
             imagettftext($im, $size, 0, (int) (($w - $lineWidth) / 2), (int) $y, $color, $font, $linea);
             $y += $lineHeight;
         }
-    }
-
-    protected function dibujarFirma($im, int $color, string $font, int $w, int $h): void
-    {
-        $size = $w * 0.026;
-        $texto = 'SOMMY';
-        $bbox = imagettfbbox($size, 0, $font, $texto);
-        $lineWidth = abs($bbox[4] - $bbox[0]);
-        imagettftext($im, $size, 0, (int) (($w - $lineWidth) / 2), (int) ($h - $h * 0.055), $color, $font, $texto);
     }
 
     protected function envolver(string $texto, string $font, float $size, float $maxWidth): array
