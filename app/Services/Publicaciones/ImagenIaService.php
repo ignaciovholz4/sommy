@@ -156,6 +156,6 @@ class ImagenIaService
             ->whereNotNull('archivo')
             ->orderByDesc('id')->limit($max)->get(['archivo']);
 
-        return $refs->map(fn ($r) => public_path($r->archivo))->filter('is_file')->values()->all();
+        return $refs->map(fn ($r) => public_path($r->archivo))->filter(fn ($ruta) => is_file($ruta))->values()->all();
     }
 }
