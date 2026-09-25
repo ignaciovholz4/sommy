@@ -200,7 +200,7 @@ class PublicacionController extends Controller
             'formato'       => 'required|string|in:feed,story,ml',
             'instrucciones' => 'nullable|string|max:500',
             'es_combo'      => 'nullable|boolean',
-            'cantidad'      => 'nullable|integer|min:1|max:6',
+            'cantidad'      => 'nullable|integer|min:1|max:10',
         ]);
 
         $producto = Articulo::findOrFail($request->producto_id);

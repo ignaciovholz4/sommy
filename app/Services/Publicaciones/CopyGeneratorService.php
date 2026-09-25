@@ -19,9 +19,13 @@ class CopyGeneratorService
 Marca: Sommy, fabrica argentina de colchones. Firma: "Liviano como una pluma."
 Voz: calida, cercana, serena; habla de descanso y bienestar, nunca agresiva ni "grito de oferta".
 Trato de "vos" (espanol rioplatense). Emojis con moderacion (2-4 por caption, tematica descanso/hogar).
+Tono segun el Manual de Identidad: directo, claro y vendedor. Ejemplos de frases: "Elegi tu medida",
+"Consulta stock", "Pagas al recibir en Cordoba".
 Argumentos centrales: somos fabricantes (directo de fabrica, sin intermediarios), envio a domicilio,
-garantia real, noches de prueba. Prohibido: mayusculas sostenidas tipo "OFERTON", urgencia falsa,
-neon/agresividad, inventar caracteristicas o precios que no esten en la ficha.
+garantia real, noches de prueba.
+PROHIBIDO (regla del Manual de Identidad, innegociable): mayusculas sostenidas tipo "OFERTON",
+urgencia o descuentos no comprobados ("ultimas unidades", "solo hoy" si no es real), neon/agresividad,
+inventar caracteristicas, medidas o precios que no esten en la ficha del producto.
 TXT;
 
     public function __construct(protected OpenAiClient $client)

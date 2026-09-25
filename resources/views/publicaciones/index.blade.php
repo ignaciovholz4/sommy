@@ -53,7 +53,7 @@
     .pub-aviso.warn { color: #b45309; }
 
     /* Chat */
-    .pub-chat { max-height: 380px; overflow-y: auto; border: 1px solid #E7EAF2; border-radius: 12px; padding: 14px; background: #F8FAFC; display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .pub-chat { flex: 1; min-height: 460px; max-height: 620px; overflow-y: auto; border: 1px solid #E7EAF2; border-radius: 12px; padding: 14px; background: #F8FAFC; display: flex; flex-direction: column; gap: 10px; }
     .pub-msg { max-width: 82%; padding: 9px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
     .pub-msg.user { align-self: flex-end; background: #1B2B5A; color: #fff; border-bottom-right-radius: 4px; }
     .pub-msg.assistant { align-self: flex-start; background: #fff; border: 1px solid #E7EAF2; color: #1B2B5A; border-bottom-left-radius: 4px; }
@@ -90,11 +90,19 @@
     .pub-feed-tab.activo { background: #1B2B5A; border-color: #1B2B5A; color: #fff; }
     .pub-feed-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .pub-feed-avatar { width: 48px; height: 48px; border-radius: 999px; object-fit: cover; border: 1px solid #E7EAF2; background: #1B2B5A; }
-    .pub-feed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; max-width: 480px; }
+    .pub-feed-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
     .pub-feed-item { position: relative; aspect-ratio: 4/5; background: #F1F4F9; overflow: hidden; }
     .pub-feed-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .pub-feed-item .badge-prog { position: absolute; bottom: 4px; left: 4px; right: 4px; background: rgba(27,43,90,.85); color: #fff; font-size: 8.5px; font-weight: 600; text-align: center; border-radius: 6px; padding: 2px 4px; }
+    .pub-feed-item.preview { outline: 2px solid #2563EB; outline-offset: -2px; }
+    .pub-feed-item .badge-preview { position: absolute; top: 4px; left: 4px; right: 4px; background: rgba(37,99,235,.9); color: #fff; font-size: 8.5px; font-weight: 600; text-align: center; border-radius: 6px; padding: 2px 4px; }
     .pub-feed-empty { font-size: 12.5px; color: #6E7A96; padding: 20px 0; }
+
+    /* Chat + feed en vivo, lado a lado */
+    .pub-chat-feed-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; margin-top: 16px; }
+    @media (max-width: 991px) { .pub-chat-feed-row { grid-template-columns: 1fr; } }
+    .pub-chat-card { display: flex; flex-direction: column; margin-top: 0; }
+    .pub-chat-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 
     /* Recursos de marca */
     .pub-biblio { margin-top: 16px; }
@@ -128,10 +136,10 @@
     </div>
     <div class="pub-sub">Elegí un producto o combo, generá el contenido con tu branding y publicalo o programalo — todo desde acá.</div>
 
-    {{-- 1 · Producto/combo + chat --}}
+    {{-- Producto/combo + formato --}}
     <div class="pub-panel">
-        <h3>1 · Elegí qué vas a promocionar y pedile a la IA lo que quieras</h3>
-        <div class="pub-cols2" style="margin-bottom:6px;">
+        <h3>Elegí qué vas a promocionar</h3>
+        <div class="pub-cols2">
             <div>
                 <label style="margin-top:0;">Producto o combo</label>
                 <select id="pubProducto"></select>
@@ -154,19 +162,46 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        @if(!$capacidades['copys'] && !$capacidades['escenas'])
-            <div class="pub-aviso warn">Configurá OPENAI_API_KEY y GEMINI_API_KEY en el .env para usar el chat.</div>
-        @else
-            <div class="pub-aviso">Reglas fijas de marca (estilo visual, fidelidad del producto) se aplican solo. Lo que le pidas al chat se suma a eso, no lo reemplaza.</div>
-        @endif
+    {{-- Chat (izquierda) + simulador de feed en vivo (derecha) --}}
+    <div class="pub-chat-feed-row">
+        <div class="pub-panel pub-chat-card">
+            <div class="pub-chat-head">
+                <div>
+                    <h3 style="margin-bottom:2px;">Asistente de contenido</h3>
+                    @if(!$capacidades['copys'] && !$capacidades['escenas'])
+                        <div class="pub-aviso warn" style="margin:0;">Configurá OPENAI_API_KEY y GEMINI_API_KEY.</div>
+                    @else
+                        <div class="pub-aviso" style="margin:0;">Sigue siempre el Manual de Identidad Sommy. Lo que le pidas se suma a esa base, no la reemplaza.</div>
+                    @endif
+                </div>
+                <button class="pub-btn sec chico" id="btnAdjuntar" onclick="document.getElementById('pubArchivoChat').click()" title="Adjuntar imagen de referencia a Recursos de marca">
+                    <i class="fas fa-paperclip"></i> Recursos
+                </button>
+                <input type="file" id="pubArchivoChat" accept="image/*" style="display:none;" onchange="adjuntarArchivoChat(this)">
+            </div>
 
-        <div class="pub-chat" id="pubChat"></div>
-        <div class="pub-chat-input">
-            <button class="pub-btn sec chico" id="btnAdjuntar" onclick="document.getElementById('pubArchivoChat').click()" title="Adjuntar imagen de referencia a Recursos de marca"><i class="fas fa-paperclip"></i></button>
-            <input type="file" id="pubArchivoChat" accept="image/*" style="display:none;" onchange="adjuntarArchivoChat(this)">
-            <input type="text" id="pubMensajeChat" placeholder="Ej: generame una imagen con luz cálida de atardecer, sin precio..." onkeydown="if(event.key==='Enter'){event.preventDefault();enviarChat();}">
-            <button class="pub-btn ia" id="btnEnviarChat" onclick="enviarChat()" @if(!$capacidades['copys']) disabled title="Configurá OPENAI_API_KEY" @endif><i class="fas fa-paper-plane"></i></button>
+            <div class="pub-chat" id="pubChat"></div>
+            <div class="pub-chat-input">
+                <input type="text" id="pubMensajeChat" placeholder="Ej: generame 10 imágenes de contenido creativo para el feed..." onkeydown="if(event.key==='Enter'){event.preventDefault();enviarChat();}">
+                <button class="pub-btn ia" id="btnEnviarChat" onclick="enviarChat()" @if(!$capacidades['copys']) disabled title="Configurá OPENAI_API_KEY" @endif><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+
+        <div class="pub-panel pub-chat-card">
+            <div class="pub-feed-tabs">
+                <button class="pub-feed-tab activo" data-red="instagram" onclick="cambiarRedFeed('instagram', this)">Instagram</button>
+                <button class="pub-feed-tab" data-red="facebook" onclick="cambiarRedFeed('facebook', this)">Facebook</button>
+            </div>
+            <div class="pub-feed-header">
+                <img src="{{ asset('imagenes/marca/sommy-logo-header.png') }}" class="pub-feed-avatar" onerror="this.style.display='none'">
+                <div><strong id="pubFeedHandle">&#64;sommy_colchoneria</strong><div class="pub-aviso" style="margin:0;">Así se va viendo tu feed a medida que generás, guardás y programás</div></div>
+            </div>
+            <div style="flex:1; overflow-y:auto;">
+                <div class="pub-feed-grid" id="pubFeedGrid"></div>
+                <div class="pub-feed-empty" id="pubFeedEmpty" style="display:none;">Todavía no generaste publicaciones. Lo que vayas generando, guardando o programando va apareciendo acá, en el orden en que se ve en tu perfil.</div>
+            </div>
         </div>
     </div>
 
@@ -226,21 +261,6 @@
     <div class="pub-panel pub-biblio" id="panelProximas" style="display:none;">
         <h3><i class="fas fa-calendar-days" style="color:#2563EB;"></i> Próximas publicaciones</h3>
         <div id="pubProximas"></div>
-    </div>
-
-    {{-- Simulador de feed --}}
-    <div class="pub-panel pub-biblio">
-        <h3><i class="fas fa-table-cells" style="color:#2563EB;"></i> Simulá tu feed</h3>
-        <div class="pub-feed-tabs">
-            <button class="pub-feed-tab activo" data-red="instagram" onclick="cambiarRedFeed('instagram', this)">Instagram</button>
-            <button class="pub-feed-tab" data-red="facebook" onclick="cambiarRedFeed('facebook', this)">Facebook</button>
-        </div>
-        <div class="pub-feed-header">
-            <img src="{{ asset('imagenes/marca/sommy-logo-header.png') }}" class="pub-feed-avatar" onerror="this.style.display='none'">
-            <div><strong id="pubFeedHandle">&#64;sommy_colchoneria</strong><div class="pub-aviso" style="margin:0;">Así se va viendo tu perfil a medida que subís y programás</div></div>
-        </div>
-        <div class="pub-feed-grid" id="pubFeedGrid"></div>
-        <div class="pub-feed-empty" id="pubFeedEmpty" style="display:none;">Todavía no generaste publicaciones. Las que guardes, programes o publiques van a aparecer acá, en el orden en que se van a ver en tu perfil.</div>
     </div>
 
     {{-- Biblioteca de recursos de marca --}}
@@ -462,7 +482,11 @@ function elegirVariante(i, card) {
         document.getElementById('btnStoryExtra').style.display = opcion('pubFormato') === 'story' ? 'none' : '';
         document.getElementById('btnFeedExtra').style.display = opcion('pubFormato') === 'story' ? '' : 'none';
         document.getElementById('panelResultado').style.display = '';
-        cargarLogo(() => { dibujar(); document.getElementById('pubPreview').src = canvas.toDataURL('image/png'); });
+        cargarLogo(() => {
+            dibujar();
+            document.getElementById('pubPreview').src = canvas.toDataURL('image/png');
+            renderFeedSimulado();
+        });
         window.scrollTo({ top: document.getElementById('panelResultado').offsetTop - 20, behavior: 'smooth' });
     };
     img.src = v.url;
@@ -839,8 +863,17 @@ function renderFeedSimulado() {
         .sort((a, b) => new Date(b.programado_para || b.created_at) - new Date(a.programado_para || a.created_at));
     const cont = document.getElementById('pubFeedGrid');
     cont.innerHTML = '';
-    document.getElementById('pubFeedEmpty').style.display = items.length ? 'none' : '';
-    items.slice(0, 24).forEach(b => {
+
+    // Vista previa en vivo: lo que se está armando ahora, todavía sin guardar.
+    if (varianteElegida && !pubGuardadaId) {
+        const previo = document.createElement('div');
+        previo.className = 'pub-feed-item preview';
+        previo.innerHTML = '<img src="' + canvas.toDataURL('image/png') + '"><div class="badge-preview">Vista previa</div>';
+        cont.appendChild(previo);
+    }
+
+    document.getElementById('pubFeedEmpty').style.display = (items.length || (varianteElegida && !pubGuardadaId)) ? 'none' : '';
+    items.slice(0, 23).forEach(b => {
         const url = b.imagen_url || (BASE_URL + '/' + b.imagen_final);
         const item = document.createElement('div');
         item.className = 'pub-feed-item';
@@ -856,9 +889,10 @@ sel.addEventListener('change', () => {
     document.getElementById('panelVariantes').style.display = 'none';
     document.getElementById('panelResultado').style.display = 'none';
     renderHistorial();
+    renderFeedSimulado();
     saludoInicial();
 });
-document.querySelectorAll('input[name=pubPrecio]').forEach(el => el.addEventListener('change', dibujar));
+document.querySelectorAll('input[name=pubPrecio]').forEach(el => el.addEventListener('change', () => { dibujar(); renderFeedSimulado(); }));
 
 document.fonts.ready.then(() => {
     cargarLogo(() => {});
