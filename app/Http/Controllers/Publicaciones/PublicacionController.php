@@ -90,10 +90,10 @@ class PublicacionController extends Controller
     public function guardarRecurso(Request $request)
     {
         $request->validate([
-            'tipo'      => 'required|in:imagen,logo,prompt,contexto',
+            'tipo'      => 'required|in:imagen,logo,prompt,contexto,referencia',
             'titulo'    => 'required|string|max:120',
             'contenido' => 'required_if:tipo,prompt,contexto|nullable|string|max:3000',
-            'archivo'   => 'required_if:tipo,imagen,logo|nullable|file|mimes:jpg,jpeg,png,webp,svg|max:8192',
+            'archivo'   => 'required_if:tipo,imagen,logo,referencia|nullable|file|mimes:jpg,jpeg,png,webp,svg|max:8192',
         ], [
             'titulo.required'       => 'Poné un título al recurso.',
             'contenido.required_if' => 'Escribí el contenido del recurso.',

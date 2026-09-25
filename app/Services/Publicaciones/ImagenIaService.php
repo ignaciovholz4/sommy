@@ -20,6 +20,11 @@ class ImagenIaService
         'familia'    => 'un dormitorio familiar calido y acogedor con luz de tarde, manta tejida, libros en la mesa de luz, sensacion hogarena argentina',
     ];
 
+    /** Se agrega al prompt cuando hay imágenes de referencia (recurso tipo "referencia") adjuntas. */
+    protected const INSTRUCCION_REFERENCIAS = 'Ademas de lo anterior, imita el estilo visual general '
+        . '(paleta de color, iluminacion, composicion, mood/atmosfera) de las imagenes de referencia adjuntas '
+        . 'al final, sin copiar literalmente su contenido ni ningun producto que aparezca en ellas.';
+
     public function disponible(): bool
     {
         return (bool) config('services.gemini.api_key');
@@ -99,7 +104,9 @@ class ImagenIaService
         }
 
         $escena = 'dormitorio'; // único ambiente base: homogeneidad de feed
-        $prompt = $this->construirPrompt($rutaFotoProducto, $formato, $instrucciones, null, $escena, $extraEscena);
+        $refParts = $this->referenciasParts();
+        $prompt = $this->construirPrompt($rutaFotoProducto, $formato, $instrucciones, null, $escena, $extraEscena)
+            . ($refParts ? ' ' . self::INSTRUCCION_REFERENCIAS : '');
         $model = config('services.gemini.image_model', 'gemini-3.1-flash-lite-image');
         $mime = $this->mime($rutaFotoProducto);
         $b64 = base64_encode(file_get_contents($rutaFotoProducto));
@@ -109,10 +116,10 @@ class ImagenIaService
                 ->timeout(120)
                 ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
                     'contents' => [[
-                        'parts' => [
+                        'parts' => array_merge([
                             ['text' => $prompt],
                             ['inline_data' => ['mime_type' => $mime, 'data' => $b64]],
-                        ],
+                        ], $refParts),
                     ]],
                 ]))
             ->all());
@@ -160,11 +167,14 @@ class ImagenIaService
             ? 'Estilo de la marca: ' . trim($estilo)
             : 'Estilo: fotografia comercial realista de alta calidad, colores serenos (azules, celestes, blancos).';
 
+        $refParts = $this->referenciasParts();
+
         $prompt = 'Foto de contenido de marca para redes sociales de Sommy (fabrica argentina de colchones), '
             . 'SIN mostrar ningun producto puntual ni logo dentro de la escena. '
             . trim($instrucciones) . '. ' . $cuerpo . ' '
             . $this->orientacion($formato)
-            . ' Fotografia realista, personas reales de aspecto argentino si corresponde, nada de texto ni marca de agua en la imagen.';
+            . ' Fotografia realista, personas reales de aspecto argentino si corresponde, nada de texto ni marca de agua en la imagen.'
+            . ($refParts ? ' ' . self::INSTRUCCION_REFERENCIAS : '');
 
         $model = config('services.gemini.image_model', 'gemini-3.1-flash-lite-image');
 
@@ -172,7 +182,7 @@ class ImagenIaService
             ->map(fn () => $pool->withHeaders(['x-goog-api-key' => config('services.gemini.api_key')])
                 ->timeout(120)
                 ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
-                    'contents' => [['parts' => [['text' => $prompt]]]],
+                    'contents' => [['parts' => array_merge([['text' => $prompt]], $refParts)]],
                 ]))
             ->all());
 
@@ -234,6 +244,25 @@ class ImagenIaService
         }
 
         return base64_decode($imagen['inlineData']['data'] ?? $imagen['inline_data']['data']);
+    }
+
+    /** Imágenes de referencia activas (recurso tipo "referencia"), como inline_data listas para Gemini. */
+    protected function referenciasParts(int $max = 2): array
+    {
+        $refs = \Illuminate\Support\Facades\DB::table('publicaciones_recursos')
+            ->where('tipo', 'referencia')->where('activo', 1)
+            ->whereNotNull('archivo')
+            ->orderByDesc('id')->limit($max)->get(['archivo']);
+
+        $parts = [];
+        foreach ($refs as $r) {
+            $ruta = public_path($r->archivo);
+            if (is_file($ruta)) {
+                $parts[] = ['inline_data' => ['mime_type' => $this->mime($ruta), 'data' => base64_encode(file_get_contents($ruta))]];
+            }
+        }
+
+        return $parts;
     }
 
     protected function guardarImagen(string $data, string $escena, string $prompt): array

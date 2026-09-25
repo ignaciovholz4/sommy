@@ -160,6 +160,7 @@
                 <button class="pub-btn sec chico" id="btnConfig" onclick="$('#modalConfig').modal('show')"><i class="fas fa-sliders-h"></i> <span id="pubConfigResumen">Configurar</span></button>
                 <button class="pub-btn sec chico" onclick="$('#modalEntrenar').modal('show')"><i class="fas fa-graduation-cap"></i> Mi marca</button>
                 <button class="pub-btn sec chico" onclick="$('#modalRecursos').modal('show')"><i class="fas fa-box-open"></i> Recursos</button>
+                <button class="pub-btn sec chico" onclick="renderReferencias(); $('#modalReferencias').modal('show')"><i class="fas fa-images"></i> Imágenes de referencia</button>
                 <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
             </div>
         </div>
@@ -302,6 +303,23 @@
             </div>
             <div class="modal-body">
                 <div id="pubProximas"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Imágenes de referencia (estilo visual a imitar) --}}
+<div class="modal fade" id="modalReferencias" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-images" style="color:#2563EB;"></i> Imágenes de referencia</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="pub-aviso" style="margin-top:0;">Subí ejemplos de fotos/anuncios a los que querés que se parezcan tus publicaciones (paleta de color, luz, composición). La IA va a imitar ese estilo visual sin copiar su contenido ni el producto que aparezca ahí.</div>
+                <input type="file" id="refArchivo" accept="image/*" multiple style="margin-top:10px;" onchange="subirReferencias(this)">
+                <div class="pub-rec-grid" id="pubReferencias" style="margin-top:14px;"></div>
             </div>
         </div>
     </div>
@@ -793,13 +811,15 @@ function eliminarRecurso(id) {
         const i = RECURSOS.findIndex(r => r.id === id);
         if (i >= 0) RECURSOS.splice(i, 1);
         renderRecursos();
+        renderReferencias();
     });
 }
 
 function renderRecursos() {
     const cont = document.getElementById('pubRecursos');
-    cont.innerHTML = RECURSOS.length ? '' : '<div class="pub-aviso">Todavía no hay recursos guardados.</div>';
-    RECURSOS.forEach(r => {
+    const lista = RECURSOS.filter(r => r.tipo !== 'referencia');
+    cont.innerHTML = lista.length ? '' : '<div class="pub-aviso">Todavía no hay recursos guardados.</div>';
+    lista.forEach(r => {
         const url = r.archivo_url || (r.archivo ? BASE_URL + '/' + r.archivo : null);
         const card = document.createElement('div');
         card.className = 'pub-rec-card';
@@ -809,6 +829,45 @@ function renderRecursos() {
             ' <span class="pub-rec-tipo">' + (REC_LBL[r.tipo] || r.tipo) + '</span></div>' +
             (url ? '<img src="' + url + '" onclick="window.open(this.src)" style="cursor:pointer;">' : '') +
             (r.contenido ? '<div class="cuerpo">' + String(r.contenido).replace(/</g, '&lt;') + '</div>' : '');
+        cont.appendChild(card);
+    });
+}
+
+/* ── Imágenes de referencia (estilo visual a imitar) ── */
+function subirReferencias(input) {
+    const archivos = Array.from(input.files || []);
+    if (!archivos.length) return;
+    Promise.all(archivos.map(f => {
+        const fd = new FormData();
+        fd.append('tipo', 'referencia');
+        fd.append('titulo', f.name);
+        fd.append('archivo', f);
+        return fetch('{{ route('publicaciones.recursos') }}', {
+            method: 'POST', headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }, body: fd
+        }).then(async r => {
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok || data.status === 0) throw new Error(data.error || 'Error del servidor');
+            RECURSOS.unshift({ id: data.id, tipo: 'referencia', titulo: f.name, contenido: null, archivo: null, archivo_url: data.archivo_url });
+        });
+    })).then(() => {
+        renderReferencias();
+        bubbleChat('sistema', '🖼️ Se agregaron ' + archivos.length + ' imagen(es) de referencia. Las próximas generaciones van a imitar ese estilo.');
+    }).catch(e => alert('No se pudo subir alguna imagen: ' + e.message))
+      .finally(() => { input.value = ''; });
+}
+
+function renderReferencias() {
+    const cont = document.getElementById('pubReferencias');
+    if (!cont) return;
+    const lista = RECURSOS.filter(r => r.tipo === 'referencia');
+    cont.innerHTML = lista.length ? '' : '<div class="pub-aviso">Todavía no subiste imágenes de referencia.</div>';
+    lista.forEach(r => {
+        const url = r.archivo_url || (r.archivo ? BASE_URL + '/' + r.archivo : null);
+        const card = document.createElement('div');
+        card.className = 'pub-rec-card';
+        card.innerHTML =
+            '<button class="del" onclick="eliminarRecurso(' + r.id + ')" title="Eliminar"><i class="fas fa-trash-alt"></i></button>' +
+            (url ? '<img src="' + url + '" onclick="window.open(this.src)" style="cursor:pointer;">' : '');
         cont.appendChild(card);
     });
 }
