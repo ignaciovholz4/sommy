@@ -53,7 +53,7 @@
     .pub-aviso.warn { color: #b45309; }
 
     /* Chat */
-    .pub-chat { flex: 1; min-height: 460px; max-height: 620px; overflow-y: auto; border: 1px solid #E7EAF2; border-radius: 12px; padding: 14px; background: #F8FAFC; display: flex; flex-direction: column; gap: 10px; }
+    .pub-chat { flex: 1; min-height: 0; overflow-y: auto; border: 1px solid #E7EAF2; border-radius: 12px; padding: 14px; background: #F8FAFC; display: flex; flex-direction: column; gap: 10px; }
     .pub-msg { max-width: 82%; padding: 9px 14px; border-radius: 14px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
     .pub-msg.user { align-self: flex-end; background: #1B2B5A; color: #fff; border-bottom-right-radius: 4px; }
     .pub-msg.assistant { align-self: flex-start; background: #fff; border: 1px solid #E7EAF2; color: #1B2B5A; border-bottom-left-radius: 4px; }
@@ -99,9 +99,9 @@
     .pub-feed-empty { font-size: 12.5px; color: #6E7A96; padding: 20px 0; }
 
     /* Chat + feed en vivo, lado a lado */
-    .pub-chat-feed-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; margin-top: 16px; }
-    @media (max-width: 991px) { .pub-chat-feed-row { grid-template-columns: 1fr; } }
-    .pub-chat-card { display: flex; flex-direction: column; margin-top: 0; }
+    .pub-chat-feed-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; margin-top: 12px; height: calc(100vh - 175px); min-height: 460px; }
+    @media (max-width: 991px) { .pub-chat-feed-row { grid-template-columns: 1fr; height: auto; } }
+    .pub-chat-card { display: flex; flex-direction: column; margin-top: 0; min-height: 0; }
     .pub-chat-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 
     /* Recursos de marca */
@@ -132,52 +132,23 @@
 <div class="pub-wrap">
     <div class="pub-title">
         <span><i class="fas fa-bullhorn" style="color:#2563EB;"></i> Estudio de Publicaciones</span>
+        <button class="pub-btn sec chico" id="btnConfig" onclick="$('#modalConfig').modal('show')"><i class="fas fa-sliders-h"></i> <span id="pubConfigResumen">Configurar</span></button>
         <button class="pub-btn sec chico" onclick="$('#modalEntrenar').modal('show')"><i class="fas fa-graduation-cap"></i> Mi marca</button>
-    </div>
-    <div class="pub-sub">Elegí un producto o combo, generá el contenido con tu branding y publicalo o programalo — todo desde acá.</div>
-
-    {{-- Producto/combo + formato --}}
-    <div class="pub-panel">
-        <h3>Elegí qué vas a promocionar</h3>
-        <div class="pub-cols2">
-            <div>
-                <label style="margin-top:0;">Producto o combo</label>
-                <select id="pubProducto"></select>
-                <a id="pubLinkConocimiento" href="#" class="pub-aviso" style="display:inline-block;color:#2563EB;margin-top:6px;">
-                    <i class="fas fa-brain"></i> Conocimiento del producto (contexto para la IA)
-                </a>
-                <div id="pubHistorial" class="pub-hist"></div>
-            </div>
-            <div>
-                <label style="margin-top:0;">Formato</label>
-                <div class="pub-opts">
-                    <label class="pub-opt"><input type="radio" name="pubFormato" value="feed" checked><span>Feed 4:5</span></label>
-                    <label class="pub-opt"><input type="radio" name="pubFormato" value="story"><span>Historia 9:16</span></label>
-                    <label class="pub-opt"><input type="radio" name="pubFormato" value="ml"><span>MercadoLibre 1:1</span></label>
-                </div>
-                <label>Mostrar precio</label>
-                <div class="pub-opts">
-                    <label class="pub-opt"><input type="radio" name="pubPrecio" value="si" checked><span>Sí</span></label>
-                    <label class="pub-opt"><input type="radio" name="pubPrecio" value="no"><span>No</span></label>
-                </div>
-            </div>
-        </div>
+        <button class="pub-btn sec chico" onclick="$('#modalRecursos').modal('show')"><i class="fas fa-box-open"></i> Recursos</button>
+        <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
     </div>
 
     {{-- Chat (izquierda) + simulador de feed en vivo (derecha) --}}
     <div class="pub-chat-feed-row">
         <div class="pub-panel pub-chat-card">
             <div class="pub-chat-head">
-                <div>
-                    <h3 style="margin-bottom:2px;">Asistente de contenido</h3>
-                    @if(!$capacidades['copys'] && !$capacidades['escenas'])
-                        <div class="pub-aviso warn" style="margin:0;">Configurá OPENAI_API_KEY y GEMINI_API_KEY.</div>
-                    @else
-                        <div class="pub-aviso" style="margin:0;">Sigue siempre el Manual de Identidad Sommy. Lo que le pidas se suma a esa base, no la reemplaza.</div>
-                    @endif
-                </div>
+                @if(!$capacidades['copys'] && !$capacidades['escenas'])
+                    <div class="pub-aviso warn" style="margin:0;">Configurá OPENAI_API_KEY y GEMINI_API_KEY.</div>
+                @else
+                    <div class="pub-aviso" style="margin:0;">Sigue siempre el Manual de Identidad Sommy. Lo que le pidas se suma a esa base, no la reemplaza.</div>
+                @endif
                 <button class="pub-btn sec chico" id="btnAdjuntar" onclick="document.getElementById('pubArchivoChat').click()" title="Adjuntar imagen de referencia a Recursos de marca">
-                    <i class="fas fa-paperclip"></i> Recursos
+                    <i class="fas fa-paperclip"></i>
                 </button>
                 <input type="file" id="pubArchivoChat" accept="image/*" style="display:none;" onchange="adjuntarArchivoChat(this)">
             </div>
@@ -205,86 +176,152 @@
         </div>
     </div>
 
-    {{-- 2 · Elegir variante --}}
-    <div class="pub-panel" id="panelVariantes" style="display:none;">
-        <h3>2 · Elegí la imagen que más te gusta</h3>
-        <div id="pubVariantesEstado" class="pub-aviso"></div>
-        <div class="pub-variantes" id="pubVariantes"></div>
-    </div>
+</div>
 
-    {{-- 3 · Revisar y subir --}}
-    <div class="pub-panel" id="panelResultado" style="display:none;">
-        <h3>3 · Revisá y subí</h3>
-        <canvas id="pubCanvas" width="1080" height="1350"></canvas>
-        <div class="pub-final-grid">
-            <div>
-                <img id="pubPreview" alt="Vista previa">
-                <div class="pub-btns">
-                    <button class="pub-btn sec chico" onclick="descargarContenido()"><i class="fas fa-download"></i> Descargar</button>
-                    <button class="pub-btn sec chico" id="btnStoryExtra" onclick="generarFormatoExtra('story', this)"><i class="fas fa-plus"></i> Versión Historia 9:16</button>
-                    <button class="pub-btn sec chico" id="btnFeedExtra" onclick="generarFormatoExtra('feed', this)" style="display:none;"><i class="fas fa-plus"></i> Versión Feed 4:5</button>
-                </div>
+{{-- Modal Contenido: elegir variante + revisar y subir --}}
+<div class="modal fade" id="modalContenido" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-wand-magic-sparkles" style="color:#2563EB;"></i> Tu contenido</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
             </div>
-            <div>
-                <label style="margin-top:0;">Caption (Instagram / Facebook)</label>
-                <textarea id="txtCaption" class="pub-texto"></textarea>
-
-                <details class="pub-mas">
-                    <summary>Ver título/descripción MercadoLibre y mensaje de WhatsApp</summary>
-                    <label>Título MercadoLibre <span id="mlTituloLen" style="color:#6E7A96;font-weight:300;"></span></label>
-                    <input type="text" id="txtTituloML">
-                    <label>Descripción MercadoLibre</label>
-                    <textarea id="txtDescML" class="pub-texto"></textarea>
-                    <label>Mensaje WhatsApp</label>
-                    <textarea id="txtWa" style="min-height:80px;"></textarea>
-                </details>
-
-                <label>Publicar</label>
-                <div class="pub-btns" style="justify-content:flex-start;">
-                    <button class="pub-btn" id="btnPublicarAhora" onclick="publicarAhora(this)" @if(!$capacidades['facebook'] && !$capacidades['instagram']) disabled title="Configurá las claves de Meta" @endif>
-                        <i class="fas fa-paper-plane"></i> Publicar ahora (Instagram + Facebook)
-                    </button>
-                    <button class="pub-btn sec" id="btnGuardar" onclick="guardarBorrador(this)"><i class="fas fa-save"></i> Guardar borrador</button>
+            <div class="modal-body">
+                {{-- 2 · Elegir variante --}}
+                <div id="panelVariantes" style="display:none;">
+                    <h3>Elegí la imagen que más te gusta</h3>
+                    <div id="pubVariantesEstado" class="pub-aviso"></div>
+                    <div class="pub-variantes" id="pubVariantes"></div>
                 </div>
 
-                <label>Programar para más adelante</label>
-                <div class="pub-btns" style="justify-content:flex-start;flex-wrap:wrap;">
-                    <input type="datetime-local" id="pubFecha" style="max-width:220px;">
-                    <button class="pub-btn sec" id="btnProgramar" onclick="programar(this)"><i class="fas fa-calendar-plus"></i> Programar</button>
+                {{-- 3 · Revisar y subir --}}
+                <div id="panelResultado" style="display:none;">
+                    <h3>Revisá y subí</h3>
+                    <canvas id="pubCanvas" width="1080" height="1350"></canvas>
+                    <div class="pub-final-grid">
+                        <div>
+                            <img id="pubPreview" alt="Vista previa">
+                            <div class="pub-btns">
+                                <button class="pub-btn sec chico" onclick="descargarContenido()"><i class="fas fa-download"></i> Descargar</button>
+                                <button class="pub-btn sec chico" id="btnStoryExtra" onclick="generarFormatoExtra('story', this)"><i class="fas fa-plus"></i> Versión Historia 9:16</button>
+                                <button class="pub-btn sec chico" id="btnFeedExtra" onclick="generarFormatoExtra('feed', this)" style="display:none;"><i class="fas fa-plus"></i> Versión Feed 4:5</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label style="margin-top:0;">Caption (Instagram / Facebook)</label>
+                            <textarea id="txtCaption" class="pub-texto"></textarea>
+
+                            <details class="pub-mas">
+                                <summary>Ver título/descripción MercadoLibre y mensaje de WhatsApp</summary>
+                                <label>Título MercadoLibre <span id="mlTituloLen" style="color:#6E7A96;font-weight:300;"></span></label>
+                                <input type="text" id="txtTituloML">
+                                <label>Descripción MercadoLibre</label>
+                                <textarea id="txtDescML" class="pub-texto"></textarea>
+                                <label>Mensaje WhatsApp</label>
+                                <textarea id="txtWa" style="min-height:80px;"></textarea>
+                            </details>
+
+                            <label>Publicar</label>
+                            <div class="pub-btns" style="justify-content:flex-start;">
+                                <button class="pub-btn" id="btnPublicarAhora" onclick="publicarAhora(this)" @if(!$capacidades['facebook'] && !$capacidades['instagram']) disabled title="Configurá las claves de Meta" @endif>
+                                    <i class="fas fa-paper-plane"></i> Publicar ahora (Instagram + Facebook)
+                                </button>
+                                <button class="pub-btn sec" id="btnGuardar" onclick="guardarBorrador(this)"><i class="fas fa-save"></i> Guardar borrador</button>
+                            </div>
+
+                            <label>Programar para más adelante</label>
+                            <div class="pub-btns" style="justify-content:flex-start;flex-wrap:wrap;">
+                                <input type="datetime-local" id="pubFecha" style="max-width:220px;">
+                                <button class="pub-btn sec" id="btnProgramar" onclick="programar(this)"><i class="fas fa-calendar-plus"></i> Programar</button>
+                            </div>
+                            <div class="pub-aviso" id="avisoAccion"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="pub-aviso" id="avisoAccion"></div>
             </div>
         </div>
     </div>
+</div>
 
-    {{-- Próximas publicaciones programadas --}}
-    <div class="pub-panel pub-biblio" id="panelProximas" style="display:none;">
-        <h3><i class="fas fa-calendar-days" style="color:#2563EB;"></i> Próximas publicaciones</h3>
-        <div id="pubProximas"></div>
-    </div>
+{{-- Modal Configurar (producto/combo + formato + precio) --}}
+<div class="modal fade" id="modalConfig" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-sliders-h" style="color:#2563EB;"></i> Elegí qué vas a promocionar</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <label style="margin-top:0;">Producto o combo</label>
+                <select id="pubProducto"></select>
+                <a id="pubLinkConocimiento" href="#" class="pub-aviso" style="display:inline-block;color:#2563EB;margin-top:6px;">
+                    <i class="fas fa-brain"></i> Conocimiento del producto (contexto para la IA)
+                </a>
+                <div id="pubHistorial" class="pub-hist"></div>
 
-    {{-- Biblioteca de recursos de marca --}}
-    <div class="pub-panel pub-biblio">
-        <h3><i class="fas fa-box-open" style="color:#2563EB;"></i> Recursos de marca</h3>
-        <div class="pub-aviso">Información de contexto (direcciones, promos, datos del negocio) que la IA usa al escribir, y logos/imágenes de referencia.</div>
-
-        <div class="pub-cols2" style="margin-top:10px;">
-            <div>
-                <label style="margin-top:0;">Agregar recurso</label>
-                <select id="recTipo" onchange="cambiarTipoRecurso()">
-                    <option value="contexto">Información de contexto (la usa la IA)</option>
-                    <option value="imagen">Imagen</option>
-                    <option value="logo">Logo</option>
-                </select>
-                <input type="text" id="recTitulo" placeholder="Título (ej: Local y horarios)" style="margin-top:8px;">
-                <textarea id="recContenido" placeholder="Contenido del recurso..." style="margin-top:8px;"></textarea>
-                <input type="file" id="recArchivo" accept="image/*" style="display:none; margin-top:8px; width:100%;">
-                <div class="pub-btns" style="justify-content:flex-start;">
-                    <button class="pub-btn sec" id="btnRecGuardar" onclick="guardarRecurso(this)"><i class="fas fa-plus"></i> Agregar a la biblioteca</button>
+                <label>Formato</label>
+                <div class="pub-opts">
+                    <label class="pub-opt"><input type="radio" name="pubFormato" value="feed" checked><span>Feed 4:5</span></label>
+                    <label class="pub-opt"><input type="radio" name="pubFormato" value="story"><span>Historia 9:16</span></label>
+                    <label class="pub-opt"><input type="radio" name="pubFormato" value="ml"><span>MercadoLibre 1:1</span></label>
+                </div>
+                <label>Mostrar precio</label>
+                <div class="pub-opts">
+                    <label class="pub-opt"><input type="radio" name="pubPrecio" value="si" checked><span>Sí</span></label>
+                    <label class="pub-opt"><input type="radio" name="pubPrecio" value="no"><span>No</span></label>
                 </div>
             </div>
-            <div>
-                <div class="pub-rec-grid" id="pubRecursos"></div>
+            <div class="modal-footer" style="border-top:1px solid #E7EAF2;">
+                <button type="button" class="pub-btn" data-dismiss="modal" data-bs-dismiss="modal">Listo</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Próximas publicaciones programadas --}}
+<div class="modal fade" id="modalProximas" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-calendar-days" style="color:#2563EB;"></i> Próximas publicaciones</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="pubProximas"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Recursos de marca --}}
+<div class="modal fade" id="modalRecursos" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-box-open" style="color:#2563EB;"></i> Recursos de marca</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="pub-aviso" style="margin-top:0;">Información de contexto (direcciones, promos, datos del negocio) que la IA usa al escribir, y logos/imágenes de referencia.</div>
+                <div class="pub-cols2" style="margin-top:10px;">
+                    <div>
+                        <label style="margin-top:0;">Agregar recurso</label>
+                        <select id="recTipo" onchange="cambiarTipoRecurso()">
+                            <option value="contexto">Información de contexto (la usa la IA)</option>
+                            <option value="imagen">Imagen</option>
+                            <option value="logo">Logo</option>
+                        </select>
+                        <input type="text" id="recTitulo" placeholder="Título (ej: Local y horarios)" style="margin-top:8px;">
+                        <textarea id="recContenido" placeholder="Contenido del recurso..." style="margin-top:8px;"></textarea>
+                        <input type="file" id="recArchivo" accept="image/*" style="display:none; margin-top:8px; width:100%;">
+                        <div class="pub-btns" style="justify-content:flex-start;">
+                            <button class="pub-btn sec" id="btnRecGuardar" onclick="guardarRecurso(this)"><i class="fas fa-plus"></i> Agregar a la biblioteca</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="pub-rec-grid" id="pubRecursos"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -415,13 +452,21 @@ function enviarChat() {
         if (data.imagenes) {
             variantes = data.imagenes;
             varianteElegida = null;
+            document.getElementById('panelResultado').style.display = 'none';
             document.getElementById('panelVariantes').style.display = '';
             renderVariantes();
-            window.scrollTo({ top: document.getElementById('panelVariantes').offsetTop - 20, behavior: 'smooth' });
+            $('#modalContenido').modal('show');
         }
         if (data.textos) {
             textosIA = data.textos;
             pintarTextos();
+            // Si ya había una imagen elegida, mostramos directo la revisión con el texto nuevo.
+            // Si todavía no eligió imagen, el texto queda listo y se ve apenas elija una.
+            if (!data.imagenes && varianteElegida) {
+                document.getElementById('panelVariantes').style.display = 'none';
+                document.getElementById('panelResultado').style.display = '';
+                $('#modalContenido').modal('show');
+            }
         }
     }).catch(e => {
         pensando.remove();
@@ -487,7 +532,7 @@ function elegirVariante(i, card) {
             document.getElementById('pubPreview').src = canvas.toDataURL('image/png');
             renderFeedSimulado();
         });
-        window.scrollTo({ top: document.getElementById('panelResultado').offsetTop - 20, behavior: 'smooth' });
+        document.querySelector('#modalContenido .modal-body').scrollTo({ top: document.getElementById('panelResultado').offsetTop - 10, behavior: 'smooth' });
     };
     img.src = v.url;
 }
@@ -833,7 +878,8 @@ function renderHistorial() {
 function renderProximas() {
     const prog = BIBLIOTECA.filter(b => b.estado === 'programada' && b.programado_para)
         .sort((a, b) => new Date(a.programado_para) - new Date(b.programado_para));
-    document.getElementById('panelProximas').style.display = prog.length ? '' : 'none';
+    document.getElementById('btnAbrirProximas').style.display = prog.length ? '' : 'none';
+    document.getElementById('pubProximasCount').textContent = prog.length ? '(' + prog.length + ')' : '';
     const cont = document.getElementById('pubProximas');
     cont.innerHTML = '';
     prog.forEach(b => {
@@ -883,6 +929,14 @@ function renderFeedSimulado() {
     });
 }
 
+/* ── Configurar (producto/combo + formato + precio) ── */
+const FORMATO_LBL = { feed: 'Feed 4:5', story: 'Historia 9:16', ml: 'MercadoLibre 1:1' };
+function actualizarResumenConfig() {
+    const p = prod();
+    if (!p) return;
+    document.getElementById('pubConfigResumen').textContent = p.nombre + ' · ' + FORMATO_LBL[opcion('pubFormato')];
+}
+
 /* ── Eventos ── */
 sel.addEventListener('change', () => {
     variantes = []; varianteElegida = null; textosIA = null; pubGuardadaId = null; historialChat = [];
@@ -890,9 +944,11 @@ sel.addEventListener('change', () => {
     document.getElementById('panelResultado').style.display = 'none';
     renderHistorial();
     renderFeedSimulado();
+    actualizarResumenConfig();
     saludoInicial();
 });
 document.querySelectorAll('input[name=pubPrecio]').forEach(el => el.addEventListener('change', () => { dibujar(); renderFeedSimulado(); }));
+document.querySelectorAll('input[name=pubFormato]').forEach(el => el.addEventListener('change', actualizarResumenConfig));
 
 document.fonts.ready.then(() => {
     cargarLogo(() => {});
@@ -900,6 +956,7 @@ document.fonts.ready.then(() => {
     renderRecursos();
     renderFeedSimulado();
     renderProximas();
+    actualizarResumenConfig();
     cambiarTipoRecurso();
     saludoInicial();
 });
