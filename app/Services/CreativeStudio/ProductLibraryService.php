@@ -4,6 +4,7 @@ namespace App\Services\CreativeStudio;
 
 use App\Models\Articulo;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Envoltorio de lectura sobre el catálogo real (Articulo + producto_imagenes +
