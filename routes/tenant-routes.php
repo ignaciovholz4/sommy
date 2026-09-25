@@ -978,6 +978,10 @@ Route::post('/publicaciones/ajustes', [\App\Http\Controllers\Publicaciones\Publi
 Route::post('/publicaciones/recursos', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'guardarRecurso'])->name('publicaciones.recursos')->middleware(['auth','verified']);
 Route::delete('/publicaciones/recursos/{id}', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'eliminarRecurso'])->name('publicaciones.recursos.eliminar')->middleware(['auth','verified']);
 
+// Sommy Creative Studio — modo "Create" (pro): comparte guardar/publicar/programar con /publicaciones
+Route::get('/creative-studio/create', [\App\Http\Controllers\CreativeStudio\StudioController::class, 'create'])->name('creative-studio.create')->middleware(['auth','verified']);
+Route::post('/creative-studio/generar', [\App\Http\Controllers\CreativeStudio\StudioController::class, 'generar'])->name('creative-studio.generar')->middleware(['auth','verified']);
+
 Route::get('/clarity', [\App\Http\Controllers\ClarityController::class, 'index'])->name('clarity.index')->middleware(['auth','verified']);
 Route::post('/clarity/sincronizar', [\App\Http\Controllers\ClarityController::class, 'sincronizarAhora'])->name('clarity.sincronizar')->middleware(['auth','verified']);
 Route::post('/orders/manual', [OrderController::class, 'storeManual'])->name('order.manual.post')->middleware(['auth','verified']);

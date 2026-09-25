@@ -18,6 +18,82 @@ class PromptBuilder
         'noche'      => 'un dormitorio premium de noche, iluminacion calida tenue de veladores, tonos azul profundo y madera oscura, atmosfera serena de hotel boutique',
         'minimal'    => 'un estudio fotografico minimalista con fondo liso en degrade celeste muy suave (#E0F2FE a #F8FAFC), sombra suave debajo del producto, estetica de catalogo premium',
         'familia'    => 'un dormitorio familiar calido y acogedor con luz de tarde, manta tejida, libros en la mesa de luz, sensacion hogarena argentina',
+        'estudio'    => 'un estudio fotografico publicitario profesional, fondo neutro, iluminacion controlada de producto',
+        'fabrica'    => 'un entorno de fabrica textil prolijo y luminoso, telas y materiales de colchoneria a la vista, sensacion de control de calidad artesanal',
+    ];
+
+    /** Modo Create: objetivo de la pieza. */
+    public const OBJETIVOS = [
+        'producto'      => '',
+        'oferta'        => 'Enfoque comercial de oferta: dejar espacio visual claro y limpio para destacar despues un precio y una llamada a la accion, sin saturar la escena.',
+        'lifestyle'     => 'Enfoque de estilo de vida: la escena debe transmitir una rutina cotidiana real y cercana, no una foto de catalogo fria.',
+        'fabricacion'   => 'Enfoque de fabricacion: transmitir calidad y control de produccion, sin inventar procesos ni maquinaria que no se hayan indicado.',
+        'educativo'     => 'Enfoque educativo/informativo: composicion limpia y ordenada, pensada para agregar despues un texto explicativo.',
+        'combo'         => 'Enfoque de combo: la composicion debe dejar lugar para insinuar el conjunto completo (colchon + base + almohadas), sin inventar productos que no esten en la foto real.',
+        'institucional' => 'Enfoque institucional de marca: tono sobrio, sin urgencia comercial.',
+        'comparativa'   => 'Enfoque comparativo: composicion clara tipo ficha tecnica, sin elementos decorativos que distraigan.',
+        'testimonial'   => 'Enfoque testimonial: escena hogarena creible, como para acompanar la opinion real de un cliente.',
+        'lanzamiento'   => 'Enfoque de lanzamiento: composicion con protagonismo maximo del producto, tono de novedad sin urgencia falsa.',
+    ];
+
+    /** Modo Create: intensidad comercial (nunca afecta al producto, solo el tratamiento visual/espacio para textos). */
+    public const INTENSIDADES = [
+        'institucional' => 'Tratamiento visual sobrio e institucional: bajo contraste, sin elementos promocionales, prioridad a la calma visual.',
+        'equilibrado'   => 'Tratamiento visual equilibrado entre estetica de marca y necesidad comercial.',
+        'comercial'     => 'Tratamiento visual comercial: mas contraste y mas espacio reservado para precio y llamada a la accion.',
+        'promo_fuerte'  => 'Tratamiento visual de promocion fuerte: alto contraste y espacio prominente reservado para precio/CTA destacado (el texto y los colores de oferta se agregan despues en el editor, no dentro de esta imagen).',
+    ];
+
+    public const ILUMINACION = [
+        'natural_soft' => 'luz natural suave',
+        'morning'      => 'luz calida de manana',
+        'golden_hour'  => 'luz dorada de atardecer',
+        'studio'       => 'iluminacion de estudio fotografico controlada',
+        'dark_premium' => 'iluminacion oscura premium, tenue y calida',
+        'night'        => 'luz nocturna tenue de veladores',
+        'soft_window'  => 'luz suave entrando por una ventana',
+    ];
+
+    public const CAMARA = [
+        'frontal'         => 'camara frontal',
+        '3-4-izquierda'   => 'camara en tres cuartos desde la izquierda',
+        '3-4-derecha'     => 'camara en tres cuartos desde la derecha',
+        'lateral'         => 'camara lateral',
+        'close-up'        => 'primer plano de detalle del producto',
+        'top-detail'      => 'vista superior de detalle',
+        'low-angle'       => 'angulo bajo',
+    ];
+
+    public const COMPOSICION = [
+        'product-left-copy-right' => 'composicion con el producto a la izquierda y espacio libre para texto a la derecha',
+        'copy-left-product-right' => 'composicion con espacio libre para texto a la izquierda y el producto a la derecha',
+        'center-hero'              => 'composicion con el producto centrado como protagonista absoluto',
+        'product-bottom'           => 'composicion con el producto en la parte inferior y espacio libre para texto arriba',
+        'full-product'             => 'composicion con el producto ocupando todo el encuadre',
+        'split'                    => 'composicion dividida 50/50 entre producto y espacio libre',
+    ];
+
+    public const DENSIDAD = [
+        'minimal'   => 'ambientacion minimalista, con muy pocos elementos decorativos, foco total en el producto',
+        'normal'    => 'ambientacion normal, con decoracion moderada',
+        'decorated' => 'ambientacion decorada, con varios elementos de interiorismo, sin quitarle protagonismo al colchon',
+    ];
+
+    public const PERSONAS = [
+        'ninguna'   => '',
+        'una'       => 'Incluir una persona real de aspecto argentino en la escena, de forma natural, sin posar artificialmente.',
+        'pareja'    => 'Incluir una pareja real de aspecto argentino en la escena, interactuando de forma natural.',
+        'manos'     => 'Mostrar solo manos o una interaccion parcial de una persona con el producto, sin mostrar el rostro.',
+        'lifestyle' => 'Incluir una persona interactuando naturalmente con el producto en un momento cotidiano, sin posar artificialmente.',
+    ];
+
+    public const ZONAS_TEXTO = [
+        'ninguna'            => '',
+        'superior-izquierda' => 'Reservar la zona superior izquierda del encuadre libre de elementos importantes del producto, para poder superponer texto (titular/precio/CTA) ahi despues.',
+        'superior-derecha'   => 'Reservar la zona superior derecha del encuadre libre de elementos importantes del producto, para poder superponer texto (titular/precio/CTA) ahi despues.',
+        'inferior-izquierda' => 'Reservar la zona inferior izquierda del encuadre libre de elementos importantes del producto, para poder superponer texto (titular/precio/CTA) ahi despues.',
+        'inferior-derecha'   => 'Reservar la zona inferior derecha del encuadre libre de elementos importantes del producto, para poder superponer texto (titular/precio/CTA) ahi despues.',
+        'centro'             => 'Reservar una franja central del encuadre libre de elementos importantes del producto, para poder superponer texto ahi despues.',
     ];
 
     protected static function estiloMarca(): string
@@ -53,6 +129,51 @@ class PromptBuilder
                 . 'Estilo de la marca: ' . self::estiloMarca()
                 . (trim((string) $extra) !== '' ? ' ' . trim($extra) : '');
         }
+
+        $prompt = 'Foto publicitaria profesional: colocar este colchon (mantener EXACTAMENTE su forma, tela, costuras, etiqueta y colores reales) sobre una base o sommier en '
+            . $cuerpo . ' '
+            . self::orientacion($formato)
+            . ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen. '
+            . NegativeRulesBuilder::paraProducto();
+
+        $reglasExtra = NegativeRulesBuilder::extra();
+        if ($reglasExtra !== '') {
+            $prompt .= ' ' . $reglasExtra;
+        }
+
+        if ($conReferencias) {
+            $prompt .= ' Ademas, imita el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera) '
+                . 'de las imagenes de referencia adjuntas al final, sin copiar literalmente su contenido ni ningun producto que aparezca en ellas.';
+        }
+
+        return $prompt;
+    }
+
+    /**
+     * Prompt del modo Create: combina objetivo + intensidad comercial + escena +
+     * densidad + iluminacion + camara + composicion + zona de texto + personas,
+     * siempre con la misma fidelidad de producto y reglas negativas que el chat.
+     *
+     * @param array{objetivo?:string,intensidad?:string,escena?:string,densidad?:string,iluminacion?:string,camara?:string,composicion?:string,zona_texto?:string,personas?:string} $opciones
+     */
+    public static function paraProductoStudio(string $formato, array $opciones, bool $conReferencias = false): string
+    {
+        $escena = $opciones['escena'] ?? 'dormitorio';
+
+        $fragmentos = array_filter([
+            (self::ESCENAS[$escena] ?? self::ESCENAS['dormitorio']) . '.',
+            'Estilo de la marca: ' . self::estiloMarca() . '.',
+            self::OBJETIVOS[$opciones['objetivo'] ?? 'producto'] ?? null,
+            self::INTENSIDADES[$opciones['intensidad'] ?? 'equilibrado'] ?? null,
+            self::DENSIDAD[$opciones['densidad'] ?? 'normal'] ?? null,
+            isset(self::ILUMINACION[$opciones['iluminacion'] ?? '']) ? 'Iluminacion: ' . self::ILUMINACION[$opciones['iluminacion']] . '.' : null,
+            isset(self::CAMARA[$opciones['camara'] ?? '']) ? 'Camara: ' . self::CAMARA[$opciones['camara']] . '.' : null,
+            isset(self::COMPOSICION[$opciones['composicion'] ?? '']) ? ucfirst(self::COMPOSICION[$opciones['composicion']]) . '.' : null,
+            self::ZONAS_TEXTO[$opciones['zona_texto'] ?? 'ninguna'] ?? null,
+            self::PERSONAS[$opciones['personas'] ?? 'ninguna'] ?? null,
+        ]);
+
+        $cuerpo = implode(' ', $fragmentos);
 
         $prompt = 'Foto publicitaria profesional: colocar este colchon (mantener EXACTAMENTE su forma, tela, costuras, etiqueta y colores reales) sobre una base o sommier en '
             . $cuerpo . ' '

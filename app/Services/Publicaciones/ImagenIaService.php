@@ -70,6 +70,22 @@ class ImagenIaService
     }
 
     /**
+     * Modo Create (Sommy Creative Studio): genera $cantidad variantes combinando
+     * objetivo/intensidad/escena/iluminación/cámara/composición/zona de texto,
+     * con la misma fidelidad de producto y reglas negativas que el chat.
+     *
+     * @param array $opciones ver PromptBuilder::paraProductoStudio()
+     * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
+     */
+    public function generarVariantesStudio(string $rutaFotoProducto, string $formato, int $cantidad, array $opciones): array
+    {
+        $rutasReferencia = $this->rutasReferencia();
+        $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia);
+
+        return $this->provider->generateScene($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
+    }
+
+    /**
      * Contenido de marca SIN producto puntual (ej. estilo de vida, una persona
      * despertando descansada, un tip de descanso ilustrado). No hay foto real
      * que respetar, así que Gemini genera 100% desde texto — igual sigue el

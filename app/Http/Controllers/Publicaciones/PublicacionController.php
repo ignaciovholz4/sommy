@@ -508,7 +508,7 @@ class PublicacionController extends Controller
         return $combo ? $this->mapCombo($combo) : $this->mapProducto($producto);
     }
 
-    protected function mapProducto(Articulo $p): array
+    public function mapProducto(Articulo $p): array
     {
         $precio = (float) $p->pventa_con_iva;
         $precioFinal = $p->descuento > 0 ? $precio - ($precio * $p->descuento / 100) : $precio;

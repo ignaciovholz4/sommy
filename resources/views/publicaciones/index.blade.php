@@ -134,6 +134,7 @@
 <div class="pub-wrap">
     <div class="pub-title">
         <span><i class="fas fa-bullhorn" style="color:#2563EB;"></i> Estudio de Publicaciones</span>
+        <a href="{{ route('creative-studio.create') }}" class="pub-btn sec chico"><i class="fas fa-wand-magic-sparkles"></i> Modo Create (pro)</a>
     </div>
 
     {{-- Chat (izquierda) + simulador de feed en vivo (derecha) --}}
