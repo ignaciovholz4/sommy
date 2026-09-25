@@ -12,12 +12,12 @@ interface ImageProviderInterface
 {
     /**
      * Genera $cantidad variantes de una escena a partir de un prompt ya armado
-     * (por el Prompt Engine), opcionalmente con una foto de producto real y/o
+     * (por el Prompt Engine), opcionalmente con foto(s) de producto real y/o
      * imágenes de referencia de estilo, que van como partes adicionales.
      *
-     * @param string|null $rutaFotoProducto ruta absoluta a la foto real a respetar, o null (contenido sin producto)
-     * @param array<int, string> $rutasReferencia rutas absolutas a imágenes de referencia de estilo (opcional)
+     * @param array<int, string> $rutasProducto rutas absolutas a fotos reales a respetar (colchón, distintos ángulos, base/sommier real), vacío si no hay producto
+     * @param array<int, string> $rutasReferencia rutas absolutas a imágenes de referencia de estilo (opcional) — nunca fidelidad de producto
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generateScene(string $prompt, ?string $rutaFotoProducto, array $rutasReferencia, string $aspectRatio, int $cantidad): array;
+    public function generateScene(string $prompt, array $rutasProducto, array $rutasReferencia, string $aspectRatio, int $cantidad): array;
 }

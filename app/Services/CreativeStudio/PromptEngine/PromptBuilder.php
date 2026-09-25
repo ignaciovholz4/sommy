@@ -157,11 +157,16 @@ class PromptBuilder
      * que Gemini no la confunda con las imágenes de referencia de estilo que
      * se adjuntan después.
      */
-    protected static function fidelidadProducto(): string
+    protected static function fidelidadProducto(int $cantidadFidelidad = 1): string
     {
-        return 'Foto publicitaria profesional. La PRIMERA imagen adjunta a este mensaje es una FOTO REAL de un colchon Sommy: '
-            . 'es el UNICO producto que puede aparecer en el resultado. Colocar ESE colchon real (manteniendo EXACTAMENTE su forma, '
-            . 'tela, costuras, etiqueta, pillow top y colores tal cual se ven en esa foto, sin rediseñarlo ni modificarlo) sobre una base o sommier en ';
+        $orden = $cantidadFidelidad > 1
+            ? "Las PRIMERAS {$cantidadFidelidad} imagenes adjuntas a este mensaje son FOTOS REALES de productos Sommy (el colchon, posiblemente distintos angulos del mismo colchon, y/o la base/sommier real): "
+                . 'son las UNICAS fuentes validas de producto para el resultado.'
+            : 'La PRIMERA imagen adjunta a este mensaje es una FOTO REAL de un colchon Sommy: es el UNICO producto que puede aparecer en el resultado.';
+
+        return 'Foto publicitaria profesional. ' . $orden . ' Colocar ESE/ESOS producto(s) real(es) (manteniendo EXACTAMENTE su forma, '
+            . 'tela, costuras, etiqueta, pillow top y colores tal cual se ven en esas fotos, sin rediseñarlos ni modificarlos) en '
+            . ($cantidadFidelidad > 1 ? '' : 'sobre una base o sommier en ');
     }
 
     /**
@@ -169,15 +174,18 @@ class PromptBuilder
      * guía de estilo gráfico de campaña, nunca de producto. Sin esto, Gemini tiende
      * a mezclar el colchón real con el que aparece en las fotos de referencia.
      */
-    protected static function bloqueReferenciasEstilo(bool $conProducto): string
+    protected static function bloqueReferenciasEstilo(bool $conProducto, int $cantidadFidelidad = 1): string
     {
+        $referenciaPrevia = $cantidadFidelidad > 1 ? 'las fotos reales de producto' : 'la foto del producto';
+        $ordenProducto = $cantidadFidelidad > 1 ? 'de las primeras imagenes adjuntas' : 'de la primera imagen adjunta';
+
         $productoClause = $conProducto
-            ? ' El unico colchon real que puede aparecer en el resultado final es el de la primera imagen adjunta: '
+            ? " El unico/s colchon/es real/es que puede/n aparecer en el resultado final es/son el/los {$ordenProducto}: "
                 . 'cualquier colchon, cama o mueble que se vea en las imagenes de referencia tiene que ser ignorado por completo '
                 . '(no copiar su forma, tela, color, textura ni diseño), esas fotos no son productos Sommy.'
             : '';
 
-        return ' Las imagenes adjuntas DESPUES de la foto del producto (si las hay) son SOLO una referencia grafica de estilo de '
+        return " Las imagenes adjuntas DESPUES de {$referenciaPrevia} (si las hay) son SOLO una referencia grafica de estilo de "
             . 'campaña (forma del banner/cinta, tipografia, paleta de colores, composicion del texto), no son productos Sommy ni '
             . 'le pertenecen a la marca.' . $productoClause;
     }
@@ -197,7 +205,7 @@ class PromptBuilder
      * @param string|null $extra indicación puntual del usuario o de un preset (escena/cámara/composición/text safe zone)
      * @param bool $conReferencias si hay imágenes de referencia de estilo adjuntas
      */
-    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): string
+    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1): string
     {
         if (trim((string) $promptLibre) !== '') {
             $cuerpo = trim($promptLibre);
@@ -207,7 +215,7 @@ class PromptBuilder
                 . (trim((string) $extra) !== '' ? ' ' . trim($extra) : '');
         }
 
-        $prompt = self::fidelidadProducto()
+        $prompt = self::fidelidadProducto($cantidadFidelidad)
             . $cuerpo . ' '
             . self::orientacion($formato) . ' '
             . NegativeRulesBuilder::paraProducto();
@@ -222,7 +230,7 @@ class PromptBuilder
             : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
 
         if ($conReferencias) {
-            $prompt .= self::bloqueReferenciasEstilo($producto !== null)
+            $prompt .= self::bloqueReferenciasEstilo($producto !== null, $cantidadFidelidad)
                 . ' Imitá unicamente el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera'
                 . ($producto !== null ? ' y el estilo del banner/texto' : '') . ') de esas imagenes de referencia.';
         }
@@ -237,7 +245,7 @@ class PromptBuilder
      *
      * @param array{objetivo?:string,intensidad?:string,escena?:string,densidad?:string,iluminacion?:string,camara?:string,composicion?:string,zona_texto?:string,personas?:string} $opciones
      */
-    public static function paraProductoStudio(string $formato, array $opciones, bool $conReferencias = false, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): string
+    public static function paraProductoStudio(string $formato, array $opciones, bool $conReferencias = false, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1): string
     {
         $escena = $opciones['escena'] ?? 'dormitorio';
 
@@ -256,7 +264,7 @@ class PromptBuilder
 
         $cuerpo = implode(' ', $fragmentos);
 
-        $prompt = self::fidelidadProducto()
+        $prompt = self::fidelidadProducto($cantidadFidelidad)
             . $cuerpo . ' '
             . self::orientacion($formato) . ' '
             . NegativeRulesBuilder::paraProducto();
@@ -271,7 +279,7 @@ class PromptBuilder
             : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
 
         if ($conReferencias) {
-            $prompt .= self::bloqueReferenciasEstilo($producto !== null)
+            $prompt .= self::bloqueReferenciasEstilo($producto !== null, $cantidadFidelidad)
                 . ' Imitá unicamente el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera'
                 . ($producto !== null ? ' y el estilo del banner/texto' : '') . ') de esas imagenes de referencia.';
         }

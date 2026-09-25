@@ -22,15 +22,17 @@ class GeminiImageProvider implements ImageProviderInterface
         return (bool) config('services.gemini.api_key');
     }
 
-    public function generateScene(string $prompt, ?string $rutaFotoProducto, array $rutasReferencia, string $aspectRatio, int $cantidad): array
+    public function generateScene(string $prompt, array $rutasProducto, array $rutasReferencia, string $aspectRatio, int $cantidad): array
     {
-        if ($rutaFotoProducto !== null && !is_file($rutaFotoProducto)) {
-            throw new \RuntimeException('No se encontro la imagen del producto: ' . basename($rutaFotoProducto));
+        foreach ($rutasProducto as $ruta) {
+            if (!is_file($ruta)) {
+                throw new \RuntimeException('No se encontro la imagen del producto: ' . basename($ruta));
+            }
         }
 
         $parts = [['text' => $prompt]];
-        if ($rutaFotoProducto !== null) {
-            $parts[] = ['inline_data' => ['mime_type' => $this->mime($rutaFotoProducto), 'data' => base64_encode(file_get_contents($rutaFotoProducto))]];
+        foreach ($rutasProducto as $ruta) {
+            $parts[] = ['inline_data' => ['mime_type' => $this->mime($ruta), 'data' => base64_encode(file_get_contents($ruta))]];
         }
         foreach ($rutasReferencia as $ruta) {
             if (is_file($ruta)) {

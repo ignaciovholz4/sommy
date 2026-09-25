@@ -47,6 +47,53 @@ class ProductLibraryService
         return null;
     }
 
+    /**
+     * Hasta 2 ángulos reales EXTRA del mismo producto (de su propia galería
+     * producto_imagenes), sin repetir la foto principal ya usada — se mandan
+     * a la IA como fidelidad adicional para que acierte mejor forma/textura.
+     *
+     * @return array<int, string> rutas absolutas
+     */
+    public function rutasAngulosExtra(?int $productoId, string $rutaFotoPrincipal, int $max = 2): array
+    {
+        if (!$productoId) {
+            return [];
+        }
+
+        $galeria = DB::table('producto_imagenes')
+            ->where('producto_id', $productoId)
+            ->where('tipo', 'imagen')
+            ->orderByDesc('principal')->orderBy('orden')
+            ->get(['path']);
+
+        $rutas = $galeria->map(fn ($g) => public_path($g->path))
+            ->filter(fn ($ruta) => is_file($ruta) && $ruta !== $rutaFotoPrincipal)
+            ->unique()->take($max)->values()->all();
+
+        return $rutas;
+    }
+
+    /**
+     * Foto real de la base/sommier de Sommy (si está cargada en el catálogo), para
+     * que la IA use la base real en vez de inventar un sommier/cama genérica.
+     * Nunca inventa: si no encuentra ningún producto de sommier con foto, null.
+     */
+    public function rutaSommierReal(): ?string
+    {
+        $sommier = \App\Models\Articulo::where('estado', 'Activo')
+            ->where('nombre', 'like', '%sommier%')
+            ->whereNotNull('imagen')
+            ->first();
+
+        if (!$sommier) {
+            return null;
+        }
+
+        $ruta = public_path('imagenes/articulos/' . $sommier->imagen);
+
+        return is_file($ruta) ? $ruta : null;
+    }
+
     /** Características/reglas verificadas del producto (articulo_conocimiento activo). */
     public function conocimiento(Articulo $producto): Collection
     {

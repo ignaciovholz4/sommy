@@ -4,6 +4,7 @@ namespace App\Services\Publicaciones;
 
 use App\Services\CreativeStudio\AiProvider\GeminiImageProvider;
 use App\Services\CreativeStudio\PromptEngine\PromptBuilder;
+use App\Services\CreativeStudio\ProductLibraryService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -18,8 +19,10 @@ class ImagenIaService
     /** @deprecated usar PromptBuilder::ESCENAS */
     public const ESCENAS = PromptBuilder::ESCENAS;
 
-    public function __construct(protected GeminiImageProvider $provider = new GeminiImageProvider())
-    {
+    public function __construct(
+        protected GeminiImageProvider $provider = new GeminiImageProvider(),
+        protected ProductLibraryService $productos = new ProductLibraryService(),
+    ) {
     }
 
     public function disponible(): bool
@@ -41,10 +44,11 @@ class ImagenIaService
 
     public function generarEscena(string $rutaFotoProducto, string $escena, string $formato, string $instrucciones = '', ?string $promptLibre = null, ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): array
     {
+        $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
         $rutasReferencia = $this->rutasReferencia();
-        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, $promptLibre, $producto, $conPrecio, $headline);
+        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, $promptLibre, $producto, $conPrecio, $headline, count($rutasProducto));
 
-        $resultado = $this->generarYRegistrar($prompt, $rutaFotoProducto, $rutasReferencia, $formato, 1);
+        $resultado = $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, 1);
 
         if (isset($resultado[0]['error'])) {
             throw new \RuntimeException($resultado[0]['error']);
@@ -62,11 +66,12 @@ class ImagenIaService
      */
     public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): array
     {
+        $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
         $rutasReferencia = $this->rutasReferencia();
         $escena = 'dormitorio'; // único ambiente base: homogeneidad de feed
-        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline);
+        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline, count($rutasProducto));
 
-        return $this->generarYRegistrar($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, $cantidad);
     }
 
     /**
@@ -79,10 +84,11 @@ class ImagenIaService
      */
     public function generarVariantesStudio(string $rutaFotoProducto, string $formato, int $cantidad, array $opciones, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): array
     {
+        $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
         $rutasReferencia = $this->rutasReferencia();
-        $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia, $producto, $conPrecio, $headline);
+        $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia, $producto, $conPrecio, $headline, count($rutasProducto));
 
-        return $this->generarYRegistrar($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, $cantidad);
     }
 
     /**
@@ -98,16 +104,40 @@ class ImagenIaService
         $rutasReferencia = $this->rutasReferencia();
         $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia);
 
-        return $this->generarYRegistrar($prompt, null, $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, [], $rutasReferencia, $formato, $cantidad);
+    }
+
+    /**
+     * Todas las fotos reales a respetar para esta generación: la foto principal del
+     * colchón, hasta 2 ángulos extra de su propia galería (producto_imagenes) y —si
+     * existe cargada en el catálogo— la foto real de la base/sommier de Sommy. Nunca
+     * se inventa ninguna: si no hay archivo real, no se manda nada de más.
+     *
+     * @return array<int, string>
+     */
+    protected function rutasFidelidadProducto(string $rutaFotoProducto, ?int $productoId): array
+    {
+        $rutas = [$rutaFotoProducto];
+
+        foreach ($this->productos->rutasAngulosExtra($productoId, $rutaFotoProducto) as $ruta) {
+            $rutas[] = $ruta;
+        }
+
+        $sommier = $this->productos->rutaSommierReal();
+        if ($sommier !== null && !in_array($sommier, $rutas, true)) {
+            $rutas[] = $sommier;
+        }
+
+        return array_values(array_unique($rutas));
     }
 
     /** Genera y deja registro en publicaciones_generaciones (historial/reproducibilidad) de cada resultado, ok o error. */
-    protected function generarYRegistrar(string $prompt, ?string $rutaFotoProducto, array $rutasReferencia, string $formato, int $cantidad): array
+    protected function generarYRegistrar(string $prompt, array $rutasProducto, array $rutasReferencia, string $formato, int $cantidad): array
     {
         $modelo = config('services.gemini.image_model', 'gemini-3.1-flash-lite-image');
 
         try {
-            $resultados = $this->provider->generateScene($prompt, $rutaFotoProducto, $rutasReferencia, $formato, $cantidad);
+            $resultados = $this->provider->generateScene($prompt, $rutasProducto, $rutasReferencia, $formato, $cantidad);
         } catch (\Throwable $e) {
             $this->registrarGeneracion($modelo, $formato, $prompt, 'error', $e->getMessage(), null);
             throw $e;
