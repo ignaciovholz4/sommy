@@ -69,13 +69,14 @@
 
     /* Brief de campaña */
     .pub-brief-lista { max-height: 340px; overflow-y: auto; border: 1px solid #E7EAF2; border-radius: 12px; }
-    .pub-brief-item { display: grid; grid-template-columns: 30px 1fr 90px; gap: 10px; align-items: start; padding: 10px 12px; border-bottom: 1px solid #F1F4F9; font-size: 12px; }
+    .pub-brief-item { display: grid; grid-template-columns: 30px 1fr 90px 90px; gap: 10px; align-items: start; padding: 10px 12px; border-bottom: 1px solid #F1F4F9; font-size: 12px; }
     .pub-brief-item:last-child { border-bottom: none; }
     .pub-brief-item .num { font-weight: 700; color: #94A3B8; }
     .pub-brief-item .tit { font-weight: 600; color: #1B2B5A; }
     .pub-brief-item .badge-modo { font-weight: 400; font-size: 10.5px; color: #2563EB; background: #E0F2FE; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
     .pub-brief-item .desc { color: #6E7A96; font-weight: 300; margin-top: 2px; }
     .pub-brief-item .estado-item { font-size: 10.5px; font-weight: 600; color: #6E7A96; text-align: right; }
+    .pub-brief-item .badge-precio { border: none; border-radius: 999px; padding: 3px 10px; font-size: 10.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 
     /* Historial */
     .pub-hist-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -1211,9 +1212,25 @@ function renderBriefItems() {
             '<span class="num">' + (it.numero ?? (i + 1)) + '</span>' +
             '<div><div class="tit">' + it.titulo + '<span class="badge-modo">' + it.modo + (prod ? ' · ' + prod.nombre : '') + '</span></div>' +
             '<div class="desc">' + it.instrucciones + (it.menciona_tambien ? ' <em>(también: ' + it.menciona_tambien + ')</em>' : '') + '</div></div>' +
+            '<button type="button" class="badge-precio" id="briefPrecio' + i + '" onclick="toggleBriefPrecio(' + i + ')"></button>' +
             '<span class="estado-item" id="briefEstado' + i + '">Pendiente</span>';
         cont.appendChild(row);
+        pintarBriefPrecio(i);
     });
+}
+
+function pintarBriefPrecio(i) {
+    const btn = document.getElementById('briefPrecio' + i);
+    if (!btn) return;
+    const on = !!BRIEF_ITEMS[i].con_precio;
+    btn.textContent = on ? '$ con precio' : 'sin precio';
+    btn.style.background = on ? '#FFE600' : '#F1F4F9';
+    btn.style.color = '#1B2B5A';
+}
+
+function toggleBriefPrecio(i) {
+    BRIEF_ITEMS[i].con_precio = !BRIEF_ITEMS[i].con_precio;
+    pintarBriefPrecio(i);
 }
 
 function generarBriefTodo(btn) {
@@ -1248,8 +1265,9 @@ function generarUnItemBrief(it, campanaId) {
         producto_id: it.producto_id || null,
         es_combo: esCombo,
         formato: formato,
-        con_precio: true,
-        mensaje: 'Generá 1 sola imagen y el texto para esta pieza de campaña: "' + it.titulo + '". ' + it.instrucciones,
+        con_precio: !!it.con_precio,
+        mensaje: 'Generá 1 sola imagen y el texto para esta pieza de campaña: "' + it.titulo + '". ' + it.instrucciones
+            + (it.producto_id ? ' El titular del banner de la imagen tiene que ser exactamente: "' + it.titulo + '".' : ''),
         historial: []
     }).then(data => {
         const v = data.imagenes && data.imagenes[0];
@@ -1262,7 +1280,7 @@ function generarUnItemBrief(it, campanaId) {
                 if (prodIdx >= 0) { sel.value = prodIdx; modoContenido = 'producto'; }
                 else { modoContenido = 'marca'; }
                 document.querySelector('input[name=pubFormato][value="' + formato + '"]').checked = true;
-                document.querySelector('input[name=pubPrecio][value="si"]').checked = true;
+                document.querySelector('input[name=pubPrecio][value="' + (it.con_precio ? 'si' : 'no') + '"]').checked = true;
                 varianteElegida = { img, url: v.url, path: v.path, prompt: v.prompt };
                 pubGuardadaId = null;
                 ['ovHeadline', 'ovCta', 'ovBadge'].forEach(id => document.getElementById(id).value = '');

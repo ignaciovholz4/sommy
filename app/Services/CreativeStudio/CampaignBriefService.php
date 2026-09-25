@@ -24,7 +24,7 @@ class CampaignBriefService
     /**
      * @param string $brief texto pegado por el usuario (una línea o bloque por pieza)
      * @param array<int, array{id:int,nombre:string,esCombo?:bool}> $catalogo productos y combos reales disponibles
-     * @return array<int, array{numero:int,titulo:string,modo:string,producto_id:?int,menciona_tambien:string,instrucciones:string,formato:string}>
+     * @return array<int, array{numero:int,titulo:string,modo:string,producto_id:?int,menciona_tambien:string,instrucciones:string,formato:string,con_precio:bool}>
      */
     public function interpretar(string $brief, array $catalogo): array
     {
@@ -36,8 +36,9 @@ class CampaignBriefService
             . "- modo: 'producto' si es sobre UN producto real puntual, 'combo' si es claramente un combo (cama completa, colchon+base), 'marca' si es una pieza institucional/de firma sin producto puntual (ej: logo, frase de marca, cierre de campana), 'comparativo' si menciona VARIOS productos reales a la vez para comparar.\n"
             . "- producto_id: el id EXACTO del catalogo que mejor corresponda (el producto principal/ancla si es comparativo). null si modo es 'marca'. NUNCA inventes un id que no este en el catalogo — si no encontras ninguna coincidencia razonable, usa null y modo 'marca'.\n"
             . "- menciona_tambien: si modo es 'comparativo', los nombres reales del catalogo que tambien aparecen, separados por coma. Si no aplica, string vacio.\n"
-            . "- instrucciones: 1-2 frases en espanol describiendo que mostrar en la imagen y de que hablar en el texto, basadas en la descripcion original de esa pieza del brief. No inventes datos (precios, medidas) que no esten ya en el catalogo o en el brief.\n"
-            . "- formato: 'feed' salvo que el brief pida explicitamente una historia (entonces 'story').\n\n"
+            . "- instrucciones: 1-2 frases en espanol describiendo que mostrar en la imagen y de que hablar en el texto, basadas en la descripcion original de esa pieza del brief. No inventes datos (precios, medidas) que no esten ya en el catalogo o en el brief. Si modo es 'comparativo', aclara que en la IMAGEN se muestra SOLO el producto ancla real (producto_id), nunca los otros productos mencionados (esos van solo en el texto/copy).\n"
+            . "- formato: 'feed' salvo que el brief pida explicitamente una historia (entonces 'story').\n"
+            . "- con_precio: true SOLO si esa pieza puntual es de oferta/precio/descuento/venta directa (ej: menciona '\$PRECIO', 'OFF', 'promo', 'oferta', 'precio directo'). false para piezas de detalle/macro/textura, institucionales, educativas, de asesoramiento o de marca — la mayoria de las piezas NO llevan precio.\n\n"
             . "Respondes UNICAMENTE un JSON valido con la forma {\"items\": [...]}, sin texto ni markdown alrededor.";
 
         $user = "CATALOGO REAL (unicos ids validos):\n" . json_encode($catalogo, JSON_UNESCAPED_UNICODE) . "\n\n"
@@ -61,6 +62,13 @@ class CampaignBriefService
             // Sin producto_id resuelto no se puede generar fiel a un producto real: baja a "marca".
             if (in_array($item['modo'] ?? '', ['producto', 'combo', 'comparativo'], true) && empty($item['producto_id'])) {
                 $item['modo'] = 'marca';
+            }
+            $item['con_precio'] = (bool) ($item['con_precio'] ?? false);
+            // Salvaguarda: aunque la IA se olvide de aclararlo, una pieza comparativa nunca puede
+            // pedirle a Gemini que dibuje mas de un colchon real (solo tenemos la foto del ancla).
+            if (($item['modo'] ?? '') === 'comparativo') {
+                $item['instrucciones'] = trim((string) ($item['instrucciones'] ?? ''))
+                    . ' En la imagen mostrar UNICAMENTE el producto ancla real, sin representar los demas productos mencionados.';
             }
         }
 
