@@ -1294,9 +1294,10 @@ function cambiarCantidadFeed(n, btn) {
 }
 
 function renderFeedSimulado() {
-    const conOrden = BIBLIOTECA.filter(b => (b.estado === 'publicada' || b.estado === 'programada') && (b.imagen_url || b.imagen_final) && b.orden_feed !== null && b.orden_feed !== undefined)
+    const visible = b => (b.imagen_url || b.imagen_final) && ['publicada', 'programada', 'borrador'].includes(b.estado);
+    const conOrden = BIBLIOTECA.filter(b => visible(b) && b.orden_feed !== null && b.orden_feed !== undefined)
         .sort((a, b) => a.orden_feed - b.orden_feed);
-    const sinOrden = BIBLIOTECA.filter(b => (b.estado === 'publicada' || b.estado === 'programada') && (b.imagen_url || b.imagen_final) && (b.orden_feed === null || b.orden_feed === undefined))
+    const sinOrden = BIBLIOTECA.filter(b => visible(b) && (b.orden_feed === null || b.orden_feed === undefined))
         .sort((a, b) => new Date(b.programado_para || b.created_at) - new Date(a.programado_para || a.created_at));
     const items = conOrden.concat(sinOrden);
 
@@ -1318,8 +1319,10 @@ function renderFeedSimulado() {
         item.className = 'pub-feed-item';
         item.draggable = true;
         item.dataset.id = b.id;
-        item.innerHTML = '<img src="' + url + '">' +
-            (b.estado === 'programada' ? '<div class="badge-prog">Programada · ' + new Date(b.programado_para).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) + '</div>' : '');
+        const badge = b.estado === 'programada'
+            ? '<div class="badge-prog">Programada · ' + new Date(b.programado_para).toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) + '</div>'
+            : (b.estado === 'borrador' ? '<div class="badge-prog" style="background:rgba(71,83,111,.85);">Borrador</div>' : '');
+        item.innerHTML = '<img src="' + url + '">' + badge;
         item.addEventListener('dragstart', () => item.classList.add('arrastrando'));
         item.addEventListener('dragend', () => item.classList.remove('arrastrando'));
         item.addEventListener('dragover', e => { e.preventDefault(); item.classList.add('sobre-drop'); });
