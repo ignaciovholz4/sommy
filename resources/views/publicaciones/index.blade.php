@@ -197,6 +197,10 @@
                     <h3>Elegí la imagen que más te gusta</h3>
                     <div id="pubVariantesEstado" class="pub-aviso"></div>
                     <div class="pub-variantes" id="pubVariantes"></div>
+                    <details class="pub-mas">
+                        <summary>Ver prompt generado (avanzado)</summary>
+                        <div class="pub-texto" id="pubPromptDebug" style="font-size:11px;"></div>
+                    </details>
                 </div>
 
                 {{-- 3 · Revisar y subir --}}
@@ -565,6 +569,8 @@ function renderVariantes() {
         }
         cont.appendChild(card);
     });
+    const primeraOk = variantes.find(v => !v.error);
+    document.getElementById('pubPromptDebug').textContent = primeraOk ? primeraOk.prompt : '';
 }
 
 function elegirVariante(i, card) {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Publicaciones;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Ecommerce\EcommerceController;
 use App\Models\Articulo;
+use App\Services\CreativeStudio\ProductLibraryService;
 use App\Services\Publicaciones\ChatEstudioService;
 use App\Services\Publicaciones\CopyGeneratorService;
 use App\Services\Publicaciones\ImagenIaService;
@@ -158,7 +159,7 @@ class PublicacionController extends Controller
     }
 
     /** Chat del Estudio: el usuario pide en lenguaje natural, la IA llama a generar imágenes y/o textos. */
-    public function chat(Request $request, ChatEstudioService $chat)
+    public function chat(Request $request, ChatEstudioService $chat, ProductLibraryService $productos)
     {
         $request->validate([
             'producto_id' => 'nullable|integer',
@@ -177,7 +178,10 @@ class PublicacionController extends Controller
         if ($request->filled('producto_id')) {
             $ficha = $this->fichaParaGeneracion((int) $request->producto_id, $esCombo);
             $articulo = Articulo::findOrFail($request->producto_id);
-            $rutaFoto = public_path('imagenes/articulos/' . $articulo->imagen);
+            $rutaFoto = $productos->rutaImagenPrincipal($articulo);
+            if ($rutaFoto === null) {
+                return response()->json(['status' => 0, 'error' => 'Este producto no tiene ninguna foto real cargada, no se puede generar una escena fiel.'], 422);
+            }
         }
 
         try {
@@ -197,7 +201,7 @@ class PublicacionController extends Controller
     }
 
     /** Escena IA: 5 variantes de la misma ambientación de marca, en paralelo (Gemini). */
-    public function generarVariantes(Request $request, ImagenIaService $imagenIa)
+    public function generarVariantes(Request $request, ImagenIaService $imagenIa, ProductLibraryService $productos)
     {
         $request->validate([
             'producto_id'   => 'required|integer',
@@ -208,13 +212,17 @@ class PublicacionController extends Controller
         ]);
 
         $producto = Articulo::findOrFail($request->producto_id);
+        $rutaFoto = $productos->rutaImagenPrincipal($producto);
+        if ($rutaFoto === null) {
+            return response()->json(['status' => 0, 'error' => 'Este producto no tiene ninguna foto real cargada.'], 422);
+        }
         $extraEscena = $request->boolean('es_combo')
             ? 'Mostrar también, junto al colchón, una base sommier a tono y un par de almohadas prolijamente acomodadas, como parte natural de la ambientación.'
             : null;
 
         try {
             $resultados = $imagenIa->generarVariantes(
-                public_path('imagenes/articulos/' . $producto->imagen),
+                $rutaFoto,
                 $request->formato,
                 (int) $request->input('cantidad', 5),
                 (string) $request->instrucciones,
@@ -227,7 +235,7 @@ class PublicacionController extends Controller
     }
 
     /** Escena IA: una sola ambientación (usada para generar el formato extra tras aprobar el diseño). */
-    public function generarImagen(Request $request, ImagenIaService $imagenIa)
+    public function generarImagen(Request $request, ImagenIaService $imagenIa, ProductLibraryService $productos)
     {
         $request->validate([
             'producto_id'   => 'required|integer',
@@ -237,13 +245,17 @@ class PublicacionController extends Controller
         ]);
 
         $producto = Articulo::findOrFail($request->producto_id);
+        $rutaFoto = $productos->rutaImagenPrincipal($producto);
+        if ($rutaFoto === null) {
+            return response()->json(['status' => 0, 'error' => 'Este producto no tiene ninguna foto real cargada.'], 422);
+        }
         $extraEscena = $request->boolean('es_combo')
             ? 'Mostrar también, junto al colchón, una base sommier a tono y un par de almohadas prolijamente acomodadas, como parte natural de la ambientación.'
             : null;
 
         try {
             $resultado = $imagenIa->generarEscena(
-                public_path('imagenes/articulos/' . $producto->imagen),
+                $rutaFoto,
                 'dormitorio',
                 $request->formato,
                 (string) $request->instrucciones,
