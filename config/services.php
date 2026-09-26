@@ -37,7 +37,7 @@ return [
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'image_model' => env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash-lite-image'),
-        'video_model' => env('GEMINI_VIDEO_MODEL', 'veo-3.0-fast-generate-001'),
+        'video_model' => env('GEMINI_VIDEO_MODEL', 'veo-3.1-fast-generate-preview'),
         'text_model' => env('GEMINI_TEXT_MODEL', 'gemini-2.5-flash'),
     ],
 
