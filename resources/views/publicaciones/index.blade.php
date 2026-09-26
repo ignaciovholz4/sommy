@@ -99,6 +99,12 @@
     .pub-galeria-item img { width: 100%; aspect-ratio: 4/5; object-fit: cover; display: block; transition: transform .15s; }
     .pub-galeria-item:hover img { transform: scale(1.04); }
     .pub-galeria-item .fecha { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, rgba(14,23,48,.75), rgba(14,23,48,0)); color: #fff; font-size: 9.5px; font-weight: 600; padding: 12px 8px 5px; }
+    .pub-frase-cat { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #2563EB; margin: 14px 0 6px; }
+    .pub-frase-row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid #E7EAF2; margin-bottom: 6px; font-size: 13px; }
+    .pub-frase-row span { flex: 1; }
+    .pub-frase-row button { border: none; background: none; cursor: pointer; font-size: 12px; }
+    .pub-frase-row .usar { color: #2563EB; font-weight: 600; }
+    .pub-frase-row .borrar { color: #b45309; }
 
     /* Variantes (5 opciones para elegir) */
     .pub-variantes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-top: 10px; }
@@ -212,6 +218,7 @@
                 <button class="pub-btn sec chico" onclick="$('#modalBrief').modal('show')"><i class="fas fa-list-check"></i> Brief de campaña</button>
                 <button class="pub-btn sec chico" onclick="abrirHistorial()"><i class="fas fa-clock-rotate-left"></i> Historial</button>
                 <button class="pub-btn sec chico" onclick="abrirGaleria()"><i class="fas fa-images"></i> Galería</button>
+                <button class="pub-btn sec chico" onclick="abrirBancoFrases()"><i class="fas fa-book"></i> Frases</button>
                 <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
             </div>
         </div>
@@ -288,9 +295,15 @@
                             <details class="pub-mas" open>
                                 <summary>Textos sobre la imagen (capas, no generadas por IA)</summary>
                                 <label style="margin-top:6px;">Titular</label>
-                                <input type="text" id="ovHeadline" placeholder="Nombre del producto por defecto">
+                                <div style="display:flex;gap:6px;">
+                                    <input type="text" id="ovHeadline" placeholder="Nombre del producto por defecto" style="flex:1;">
+                                    <button type="button" class="pub-btn sec chico" onclick="abrirBancoFrases('ovHeadline')" title="Elegir del banco de frases"><i class="fas fa-book"></i></button>
+                                </div>
                                 <label>Llamado a la acción (CTA)</label>
-                                <input type="text" id="ovCta" placeholder="Ej: Consultá stock, Comprá ahora...">
+                                <div style="display:flex;gap:6px;">
+                                    <input type="text" id="ovCta" placeholder="Ej: Consultá stock, Comprá ahora..." style="flex:1;">
+                                    <button type="button" class="pub-btn sec chico" onclick="abrirBancoFrases('ovCta')" title="Elegir del banco de frases"><i class="fas fa-book"></i></button>
+                                </div>
                                 <label>Badge (etiqueta chica)</label>
                                 <input type="text" id="ovBadge" placeholder="Ej: Envío gratis, Nuevo...">
                                 <label style="margin-top:8px;font-weight:400;"><input type="checkbox" id="ovWebsite" style="width:auto;margin-right:6px;"> Mostrar sommy.com.ar</label>
@@ -465,6 +478,36 @@
                 <div id="histCargando" class="pub-aviso">Cargando...</div>
                 <div id="histConversaciones" class="pub-hist-lista"></div>
                 <div id="histPrompts" class="pub-hist-lista" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Banco de frases: titulares pre-escritos, siempre bien escritos --}}
+<div class="modal fade" id="modalFrases" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-book" style="color:#2563EB;"></i> Banco de frases</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="pub-aviso" style="margin-top:0;">Frases ya revisadas y bien escritas — elegí una para usarla como titular (nunca se equivoca, porque no la inventa la IA).</div>
+                <div style="display:flex;gap:8px;margin-bottom:12px;">
+                    <select id="fraseCategoriaNueva" style="max-width:160px;">
+                        <option value="comercial">Comercial</option>
+                        <option value="divertido">Divertido</option>
+                        <option value="familiar">Familiar</option>
+                        <option value="emotivo">Emotivo</option>
+                        <option value="educativo">Educativo</option>
+                        <option value="marca">Marca</option>
+                        <option value="estacional">Estacional</option>
+                    </select>
+                    <input type="text" id="fraseTextoNueva" placeholder="Agregar una frase nueva..." style="flex:1;">
+                    <button class="pub-btn sec chico" onclick="agregarFrase()"><i class="fas fa-plus"></i></button>
+                </div>
+                <div id="fraseCargando" class="pub-aviso">Cargando...</div>
+                <div id="fraseLista"></div>
             </div>
         </div>
     </div>
@@ -1553,6 +1596,75 @@ function renderGaleria() {
         item.innerHTML = '<img src="' + img.url + '" loading="lazy"><div class="fecha">' + fecha + '</div>';
         item.onclick = () => window.open(img.url, '_blank');
         grid.appendChild(item);
+    });
+}
+
+/* ── Banco de frases: titulares pre-escritos, para no depender de que la IA escriba bien ── */
+let FRASES_CACHE = null;
+let FRASE_CAMPO_DESTINO = null;
+
+function abrirBancoFrases(campoDestino) {
+    FRASE_CAMPO_DESTINO = campoDestino || null;
+    $('#modalFrases').modal('show');
+    if (FRASES_CACHE) { renderBancoFrases(); return; }
+    document.getElementById('fraseCargando').style.display = '';
+    fetch('{{ route('publicaciones.frases') }}', { headers: { 'Accept': 'application/json' } })
+        .then(r => r.json())
+        .then(data => { FRASES_CACHE = data.frases || []; renderBancoFrases(); })
+        .catch(() => { document.getElementById('fraseCargando').textContent = 'No se pudo cargar el banco de frases.'; })
+        .finally(() => { document.getElementById('fraseCargando').style.display = 'none'; });
+}
+
+function renderBancoFrases() {
+    const cont = document.getElementById('fraseLista');
+    cont.innerHTML = '';
+    const categorias = ['comercial', 'divertido', 'familiar', 'emotivo', 'educativo', 'marca', 'estacional'];
+    const etiquetas = { comercial: 'Comercial', divertido: 'Divertido', familiar: 'Familiar', emotivo: 'Emotivo', educativo: 'Educativo', marca: 'Marca', estacional: 'Estacional' };
+    categorias.forEach(cat => {
+        const frasesCat = FRASES_CACHE.filter(f => f.categoria === cat);
+        if (!frasesCat.length) return;
+        const tit = document.createElement('div');
+        tit.className = 'pub-frase-cat';
+        tit.textContent = etiquetas[cat] || cat;
+        cont.appendChild(tit);
+        frasesCat.forEach(f => {
+            const row = document.createElement('div');
+            row.className = 'pub-frase-row';
+            row.innerHTML = '<span>' + f.texto + '</span>' +
+                (FRASE_CAMPO_DESTINO ? '<button class="usar" onclick="usarFrase(' + f.id + ')">Usar</button>' : '') +
+                '<button class="borrar" onclick="borrarFrase(' + f.id + ')" title="Eliminar"><i class="fas fa-trash-alt"></i></button>';
+            cont.appendChild(row);
+        });
+    });
+}
+
+function usarFrase(id) {
+    const frase = FRASES_CACHE.find(f => f.id === id);
+    if (!frase || !FRASE_CAMPO_DESTINO) return;
+    document.getElementById(FRASE_CAMPO_DESTINO).value = frase.texto;
+    $('#modalFrases').modal('hide');
+    if (typeof dibujar === 'function') dibujar();
+}
+
+function agregarFrase() {
+    const categoria = document.getElementById('fraseCategoriaNueva').value;
+    const texto = document.getElementById('fraseTextoNueva').value.trim();
+    if (!texto) return;
+    postJson('{{ route('publicaciones.frases.guardar') }}', { categoria, texto }).then(data => {
+        FRASES_CACHE.push({ id: data.id, categoria, texto });
+        document.getElementById('fraseTextoNueva').value = '';
+        renderBancoFrases();
+    }).catch(e => alert('No se pudo guardar: ' + e.message));
+}
+
+function borrarFrase(id) {
+    if (!confirm('¿Eliminar esta frase?')) return;
+    fetch('{{ url('publicaciones/frases') }}/' + id, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+    }).then(() => {
+        FRASES_CACHE = FRASES_CACHE.filter(f => f.id !== id);
+        renderBancoFrases();
     });
 }
 

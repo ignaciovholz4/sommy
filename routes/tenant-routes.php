@@ -982,6 +982,9 @@ Route::get('/publicaciones/historial', [\App\Http\Controllers\Publicaciones\Publ
 Route::get('/publicaciones/galeria', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'galeria'])->name('publicaciones.galeria')->middleware(['auth','verified']);
 Route::post('/publicaciones/recursos', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'guardarRecurso'])->name('publicaciones.recursos')->middleware(['auth','verified']);
 Route::delete('/publicaciones/recursos/{id}', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'eliminarRecurso'])->name('publicaciones.recursos.eliminar')->middleware(['auth','verified']);
+Route::get('/publicaciones/frases', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'listarFrases'])->name('publicaciones.frases')->middleware(['auth','verified']);
+Route::post('/publicaciones/frases', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'guardarFrase'])->name('publicaciones.frases.guardar')->middleware(['auth','verified']);
+Route::delete('/publicaciones/frases/{id}', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'eliminarFrase'])->name('publicaciones.frases.eliminar')->middleware(['auth','verified']);
 
 // Sommy Creative Studio — modo "Create" (pro): comparte guardar/publicar/programar con /publicaciones
 Route::get('/creative-studio/create', [\App\Http\Controllers\CreativeStudio\StudioController::class, 'create'])->name('creative-studio.create')->middleware(['auth','verified']);

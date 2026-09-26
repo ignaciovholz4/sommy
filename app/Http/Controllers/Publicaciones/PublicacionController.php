@@ -202,6 +202,41 @@ class PublicacionController extends Controller
         return response()->json(['status' => 1]);
     }
 
+    public const CATEGORIAS_FRASES = ['comercial', 'divertido', 'familiar', 'emotivo', 'educativo', 'marca', 'estacional'];
+
+    /** Banco de frases pre-escritas (titulares siempre bien escritos, sin depender de que la IA los invente). */
+    public function listarFrases()
+    {
+        $frases = DB::table('publicaciones_frases')->where('activo', 1)->orderBy('categoria')->orderBy('id')->get();
+
+        return response()->json(['status' => 1, 'frases' => $frases]);
+    }
+
+    public function guardarFrase(Request $request)
+    {
+        $request->validate([
+            'categoria' => 'required|string|in:' . implode(',', self::CATEGORIAS_FRASES),
+            'texto'     => 'required|string|max:160',
+        ]);
+
+        $id = DB::table('publicaciones_frases')->insertGetId([
+            'categoria'  => $request->categoria,
+            'texto'      => trim($request->texto),
+            'activo'     => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return response()->json(['status' => 1, 'id' => $id]);
+    }
+
+    public function eliminarFrase($id)
+    {
+        DB::table('publicaciones_frases')->where('id', $id)->delete();
+
+        return response()->json(['status' => 1]);
+    }
+
     /** Copys IA: titulo/descripcion ML, caption IG/FB y mensaje WhatsApp. */
     public function generarCopy(Request $request, CopyGeneratorService $copys)
     {
