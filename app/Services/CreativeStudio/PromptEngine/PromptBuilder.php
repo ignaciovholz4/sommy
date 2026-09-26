@@ -301,7 +301,8 @@ class PromptBuilder
             . 'SIN mostrar ningun producto puntual ni logo dentro de la escena. '
             . trim($instrucciones) . '. Estilo de la marca: ' . self::estiloMarca() . ' '
             . self::orientacion($formato)
-            . ' Fotografia hiperrealista (no ilustracion ni render 3D), a escala real, personas reales de aspecto argentino si corresponde, nada de texto ni marca de agua en la imagen.';
+            . ' Fotografia hiperrealista (no ilustracion ni render 3D), a escala real, personas reales de aspecto argentino si corresponde. '
+            . 'PROHIBIDO escribir texto, palabras, letras, etiquetas o marcas de agua en NINGUN lugar de la imagen (ni en telas, ni en paredes, ni en carteles, ni en ninguna superficie) — ni una sola palabra, en ningun idioma.';
 
         if ($conFleteReal) {
             $prompt .= ' La(s) imagen(es) adjuntas de un vehiculo son FOTOS REALES del vehiculo de reparto de Sommy: '
