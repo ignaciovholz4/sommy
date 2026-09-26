@@ -86,7 +86,9 @@ TXT;
                             $resultado = $this->imagenIa->generarVariantesMarca(
                                 $args['formato'] ?? $formato,
                                 max(1, min(10, (int) ($args['cantidad'] ?? 5))),
-                                (string) ($args['instrucciones'] ?? '')
+                                (string) ($args['instrucciones'] ?? ''),
+                                false,
+                                isset($args['titular']) ? (string) $args['titular'] : null
                             );
                         } else {
                             $extraEscena = $esCombo

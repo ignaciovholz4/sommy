@@ -295,14 +295,19 @@ class PromptBuilder
     }
 
     /** Prompt para contenido de marca SIN producto puntual (estilo de vida, informativo). */
-    public static function sinProducto(string $formato, string $instrucciones, bool $conReferencias = false, bool $conFleteReal = false): string
+    public static function sinProducto(string $formato, string $instrucciones, bool $conReferencias = false, bool $conFleteReal = false, ?string $headline = null): string
     {
         $prompt = 'Foto de contenido de marca para redes sociales de Sommy (marca argentina de colchones vendidos directo de fabrica, sin intermediarios), '
             . 'SIN mostrar ningun producto puntual ni logo dentro de la escena. '
             . trim($instrucciones) . '. Estilo de la marca: ' . self::estiloMarca() . ' '
             . self::orientacion($formato)
-            . ' Fotografia hiperrealista (no ilustracion ni render 3D), a escala real, personas reales de aspecto argentino si corresponde. '
-            . 'PROHIBIDO escribir texto, palabras, letras, etiquetas o marcas de agua en NINGUN lugar de la imagen (ni en telas, ni en paredes, ni en carteles, ni en ninguna superficie) — ni una sola palabra, en ningun idioma.';
+            . ' Fotografia hiperrealista (no ilustracion ni render 3D), a escala real, personas reales de aspecto argentino si corresponde.';
+
+        $prompt .= trim((string) $headline) !== ''
+            ? ' ADEMAS: incluí directamente en la imagen un banner o cinta tipo sticker (amarillo electrico y fucsia, letra gruesa con contorno oscuro, '
+                . 'estilo publicitario de campaña), y escribí en ese banner EXACTAMENTE esto, sin inventar ni cambiar ninguna palabra ni letra: "' . trim($headline) . '". '
+                . 'No agregues ningun otro texto, palabra o frase que no sea esa — ni una palabra mas, en ningun otro lugar de la imagen.'
+            : ' PROHIBIDO escribir texto, palabras, letras, etiquetas o marcas de agua en NINGUN lugar de la imagen (ni en telas, ni en paredes, ni en carteles, ni en ninguna superficie) — ni una sola palabra, en ningun idioma.';
 
         if ($conFleteReal) {
             $prompt .= ' La(s) imagen(es) adjuntas de un vehiculo son FOTOS REALES del vehiculo de reparto de Sommy: '

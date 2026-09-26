@@ -106,11 +106,11 @@ class ImagenIaService
      *
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generarVariantesMarca(string $formato, int $cantidad, string $instrucciones, bool $incluirFlete = false): array
+    public function generarVariantesMarca(string $formato, int $cantidad, string $instrucciones, bool $incluirFlete = false, ?string $headline = null): array
     {
         $rutasReferencia = $this->rutasReferencia();
         $rutasFlete = $incluirFlete ? $this->productos->rutasFleteReal() : [];
-        $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia, (bool) $rutasFlete);
+        $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia, (bool) $rutasFlete, $headline);
 
         return $this->generarYRegistrar($prompt, $rutasFlete, $rutasReferencia, $formato, $cantidad);
     }
