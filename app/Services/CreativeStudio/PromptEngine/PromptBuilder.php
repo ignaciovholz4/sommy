@@ -113,7 +113,7 @@ class PromptBuilder
      *
      * @param array $producto ficha real (mapProducto/mapCombo): nombre, precio, precioFinal, descuento, altura, firmeza...
      */
-    protected static function bloqueGraficaPromocional(array $producto, bool $conPrecio, ?string $headline = null, bool $conReferencias = false): string
+    protected static function bloqueGraficaPromocional(array $producto, bool $conPrecio, ?string $headline = null, bool $conReferencias = false, string $estilo = 'cinta'): string
     {
         $headline = trim((string) $headline) !== '' ? trim($headline) : mb_strtoupper((string) ($producto['nombre'] ?? 'SOMMY'));
         $piezas = ['Titular en letras grandes: "' . $headline . '"'];
@@ -139,11 +139,17 @@ class PromptBuilder
 
         $listado = implode('. ', $piezas) . '.';
 
+        $estiloGrafico = $estilo === 'barra'
+            ? 'Incluí directamente en la imagen una barra solida rectangular en el tercio inferior (horizontal, sin rotar, sin forma de cinta ni banderines), '
+                . 'fondo azul noche solido o negro solido, con el texto en blanco en tipografia SANS-SERIF ULTRA BOLD tipo Montserrat Black / Poppins ExtraBold '
+                . '(letras rectas, geometricas, sin adornos, sin contorno decorativo grueso, sin efecto sticker ni comic), bien legible y prolija'
+            : 'Incluí directamente en la imagen un banner o cinta diagonal tipo sticker/ribbon (rotado levemente, no perfectamente horizontal), '
+                . 'con tipografía gruesa, redondeada, tipo display/comic con contorno grueso de color contrastante, en los colores promocionales de la marca '
+                . '(amarillo eléctrico y fucsia, sobre fondo azul noche o blanco)';
+
         return 'ADEMAS: esto no es una foto de producto pelada, es una PIEZA PUBLICITARIA TERMINADA lista para publicar en Instagram. '
-            . 'Incluí directamente en la imagen un banner o cinta diagonal tipo sticker/ribbon (rotado levemente, no perfectamente horizontal), '
-            . 'con tipografía gruesa, redondeada, tipo display/comic con contorno grueso de color contrastante, en los colores promocionales de la marca '
-            . '(amarillo eléctrico y fucsia, sobre fondo azul noche o blanco)'
-            . ($conReferencias ? ', imitando EXACTAMENTE el estilo gráfico (forma de cinta, grosor de letra, composición) de las imágenes de referencia adjuntas al final. ' : '. ')
+            . $estiloGrafico
+            . ($conReferencias && $estilo === 'cinta' ? ', imitando EXACTAMENTE el estilo gráfico (forma de cinta, grosor de letra, composición) de las imágenes de referencia adjuntas al final. ' : '. ')
             . 'Escribí en la imagen, EXACTAMENTE como está acá (sin inventar, sin cambiar ni un número ni una palabra): ' . $listado . ' '
             . 'Esa lista es TODO el texto permitido: no agregues ninguna otra palabra, frase, tagline, lema ni banner adicional (ni "descanso garantizado" ni nada similar que no esté ahí arriba) — '
             . 'ni ningún otro precio, porcentaje o dato que no esté en esta lista. '
@@ -207,7 +213,7 @@ class PromptBuilder
      * @param string|null $extra indicación puntual del usuario o de un preset (escena/cámara/composición/text safe zone)
      * @param bool $conReferencias si hay imágenes de referencia de estilo adjuntas
      */
-    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1, bool $sinBanner = false): string
+    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1, bool $sinBanner = false, string $estiloBanner = 'cinta'): string
     {
         if (trim((string) $promptLibre) !== '') {
             $cuerpo = trim($promptLibre);
@@ -233,7 +239,7 @@ class PromptBuilder
         }
 
         $prompt .= ($producto !== null && !$sinBanner)
-            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias)
+            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias, $estiloBanner)
             : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen -- ni siquiera el nombre del producto.';
 
         if ($conReferencias) {
@@ -295,7 +301,7 @@ class PromptBuilder
     }
 
     /** Prompt para contenido de marca SIN producto puntual (estilo de vida, informativo). */
-    public static function sinProducto(string $formato, string $instrucciones, bool $conReferencias = false, bool $conFleteReal = false, ?string $headline = null): string
+    public static function sinProducto(string $formato, string $instrucciones, bool $conReferencias = false, bool $conFleteReal = false, ?string $headline = null, string $estilo = 'cinta'): string
     {
         $prompt = 'Foto de contenido de marca para redes sociales de Sommy (marca argentina de colchones vendidos directo de fabrica, sin intermediarios), '
             . 'SIN mostrar ningun producto puntual ni logo dentro de la escena. '
@@ -303,11 +309,17 @@ class PromptBuilder
             . self::orientacion($formato)
             . ' Fotografia hiperrealista (no ilustracion ni render 3D), a escala real, personas reales de aspecto argentino si corresponde.';
 
-        $prompt .= trim((string) $headline) !== ''
-            ? ' ADEMAS: incluí directamente en la imagen un banner o cinta tipo sticker (amarillo electrico y fucsia, letra gruesa con contorno oscuro, '
-                . 'estilo publicitario de campaña), y escribí en ese banner EXACTAMENTE esto, sin inventar ni cambiar ninguna palabra ni letra: "' . trim($headline) . '". '
-                . 'No agregues ningun otro texto, palabra o frase que no sea esa — ni una palabra mas, en ningun otro lugar de la imagen.'
-            : ' PROHIBIDO escribir texto, palabras, letras, etiquetas o marcas de agua en NINGUN lugar de la imagen (ni en telas, ni en paredes, ni en carteles, ni en ninguna superficie) — ni una sola palabra, en ningun idioma.';
+        if (trim((string) $headline) !== '') {
+            $estiloGrafico = $estilo === 'barra'
+                ? 'una barra solida rectangular en el tercio inferior (horizontal, sin rotar, sin forma de cinta), fondo azul noche solido o negro solido, '
+                    . 'texto en blanco en tipografia SANS-SERIF ULTRA BOLD tipo Montserrat Black / Poppins ExtraBold (letras rectas, sin adornos, sin contorno grueso decorativo)'
+                : 'un banner o cinta tipo sticker (amarillo electrico y fucsia, letra gruesa con contorno oscuro, estilo publicitario de campaña)';
+            $prompt .= ' ADEMAS: incluí directamente en la imagen ' . $estiloGrafico
+                . ', y escribí ahi EXACTAMENTE esto, sin inventar ni cambiar ninguna palabra ni letra: "' . trim($headline) . '". '
+                . 'No agregues ningun otro texto, palabra o frase que no sea esa — ni una palabra mas, en ningun otro lugar de la imagen.';
+        } else {
+            $prompt .= ' PROHIBIDO escribir texto, palabras, letras, etiquetas o marcas de agua en NINGUN lugar de la imagen (ni en telas, ni en paredes, ni en carteles, ni en ninguna superficie) — ni una sola palabra, en ningun idioma.';
+        }
 
         if ($conFleteReal) {
             $prompt .= ' La(s) imagen(es) adjuntas de un vehiculo son FOTOS REALES del vehiculo de reparto de Sommy: '
