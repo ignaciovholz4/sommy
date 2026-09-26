@@ -165,8 +165,9 @@ class PromptBuilder
                 . 'son las UNICAS fuentes validas de producto para el resultado.'
             : 'La PRIMERA imagen adjunta a este mensaje es una FOTO REAL de un colchon Sommy: es el UNICO producto que puede aparecer en el resultado.';
 
-        return 'Foto publicitaria profesional. ' . $orden . ' Colocar ESE/ESOS producto(s) real(es) (manteniendo EXACTAMENTE su forma, '
-            . 'tela, costuras, etiqueta, pillow top y colores tal cual se ven en esas fotos, sin rediseñarlos ni modificarlos) en '
+        return 'Foto publicitaria profesional HIPERREALISTA (fotografía real, no ilustración ni render 3D). ' . $orden . ' Colocar ESE/ESOS producto(s) real(es) (manteniendo EXACTAMENTE su forma, '
+            . 'tela, costuras, etiqueta, pillow top y colores tal cual se ven en esas fotos, sin rediseñarlos ni modificarlos), '
+            . 'A ESCALA REAL respecto al resto de la escena (cama, muebles, personas): un colchón mide entre 1,90 y 2,00 m de largo, no lo agrandes ni lo achiques, en '
             . ($cantidadFidelidad > 1 ? '' : 'sobre una base o sommier en ');
     }
 
