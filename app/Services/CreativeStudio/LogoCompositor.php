@@ -35,9 +35,9 @@ class LogoCompositor
 
         $lh = (int) ($lw * imagesy($logo) / imagesx($logo));
 
-        $padX = (int) ($lw * 0.12);
-        $padY = (int) ($lh * 0.35);
-        $this->dibujarPlacaSuave($im, $lx - $padX, $ly - $padY, $lw + $padX * 2, $lh + $padY * 2, $fondoOscuro);
+        $padX = (int) ($lw * 0.45);
+        $padY = (int) ($lh * 1.1);
+        $this->dibujarPlacaSuave($im, max(0, $lx - $padX), max(0, $ly - $padY), $lw + $padX * 2, $lh + $padY * 2, $fondoOscuro);
 
         $this->pegarRedimensionado($im, $logo, $lx, $ly, $lw, $lh);
         imagedestroy($logo);
@@ -53,8 +53,8 @@ class LogoCompositor
         imagealphablending($tmp, true);
 
         $color = $fondoOscuro
-            ? imagecolorallocatealpha($tmp, 10, 15, 30, 55)
-            : imagecolorallocatealpha($tmp, 255, 255, 255, 55);
+            ? imagecolorallocatealpha($tmp, 10, 15, 30, 25)
+            : imagecolorallocatealpha($tmp, 255, 255, 255, 25);
 
         $radio = (int) min($h, $w * 0.18);
         $this->rectRedondeado($tmp, 0, 0, $w, $h, $radio, $color);
