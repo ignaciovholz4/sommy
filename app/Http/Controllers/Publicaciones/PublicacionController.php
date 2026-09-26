@@ -624,9 +624,40 @@ class PublicacionController extends Controller
         return $combo ? $this->mapCombo($combo) : $this->mapProducto($producto);
     }
 
+    /**
+     * Medida "al público" que se muestra por defecto en el contenido generado:
+     * 1,40 x 1,90 (2 plazas) — la que el negocio tiene en stock habitualmente.
+     * Configurable acá si el stock disponible cambia (ej. a "1,60 x 2,00").
+     */
+    public const MEDIDA_PUBLICA_DEFECTO = '1,40 x 1,90';
+
+    /**
+     * Precio real "al público" de un producto con variantes por medida (tabla
+     * producto_combinaciones, misma fuente que usa el ecommerce/combosDisponibles):
+     * el campo plano pventa_con_iva NO es el precio de venta real cuando el
+     * producto tiene variantes — es un valor legacy que puede no corresponder
+     * a ninguna medida vendible. Sin variantes, se usa pventa_con_iva.
+     *
+     * @return array{precio: float, medida: ?string}
+     */
+    protected function precioPublico(Articulo $p, string $medida = self::MEDIDA_PUBLICA_DEFECTO): array
+    {
+        $variantes = $p->relationLoaded('combinaciones') ? $p->combinaciones : $p->combinaciones()->get();
+
+        if ($variantes->isEmpty()) {
+            return ['precio' => (float) $p->pventa_con_iva, 'medida' => null];
+        }
+
+        $normalizar = fn ($s) => str_replace(',', '.', trim((string) $s));
+        $elegida = $variantes->first(fn ($v) => $normalizar($v->combinacion) === $normalizar($medida))
+            ?? $variantes->sortByDesc('pventa_variante')->first();
+
+        return ['precio' => (float) $elegida->pventa_variante, 'medida' => $elegida->combinacion];
+    }
+
     public function mapProducto(Articulo $p): array
     {
-        $precio = (float) $p->pventa_con_iva;
+        ['precio' => $precio, 'medida' => $medida] = $this->precioPublico($p);
         $precioFinal = $p->descuento > 0 ? $precio - ($precio * $p->descuento / 100) : $precio;
 
         return [
@@ -639,6 +670,7 @@ class PublicacionController extends Controller
             'tipo'       => $p->tipo_colchon ? (Articulo::TIPOS_COLCHON[$p->tipo_colchon] ?? $p->tipo_colchon) : null,
             'firmeza'    => $p->firmeza ? (Articulo::FIRMEZAS[$p->firmeza] ?? $p->firmeza) : null,
             'plazas'     => $p->plazas ? (Articulo::PLAZAS[$p->plazas] ?? $p->plazas) : null,
+            'medida'     => $medida,
             'altura'     => $p->altura_cm ? rtrim(rtrim(number_format($p->altura_cm, 1, '.', ''), '0'), '.') : null,
             'pillow'     => (bool) $p->pillow_top,
             'tela'       => $p->tela,
