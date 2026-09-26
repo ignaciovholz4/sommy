@@ -106,6 +106,41 @@ class PromptBuilder
     }
 
     /**
+     * Arma la frase de specs (altura/firmeza) variando la redacción entre varias
+     * plantillas para no repetir siempre "FIRMEZA FIRME" (redundante) ni la misma
+     * frase en las 40 piezas de producto — la variante se elige de forma estable
+     * segun el headline, asi la misma pieza no cambia si se regenera.
+     */
+    protected static function fraseSpecs(array $producto, ?string $headline): ?string
+    {
+        $altura = $producto['altura'] ?? null;
+        $firmeza = !empty($producto['firmeza']) ? mb_strtoupper((string) $producto['firmeza']) : null;
+
+        if (empty($altura) && $firmeza === null) {
+            return null;
+        }
+
+        $plantillas = [
+            fn () => $altura && $firmeza ? "{$altura} CM DE DESCANSO · FIRMEZA {$firmeza}" : null,
+            fn () => $altura && $firmeza ? "{$altura}CM REALES · {$firmeza}" : null,
+            fn () => $altura ? "{$altura} CM PENSADOS PARA VOS" : null,
+            fn () => $firmeza ? "FIRMEZA {$firmeza}, CONFORT REAL" : null,
+            fn () => $altura && $firmeza ? "{$altura}CM DE ALTURA · {$firmeza}" : null,
+        ];
+
+        // Evita la combinacion redundante "FIRMEZA FIRME" (cuando el valor de firmeza YA es "FIRME").
+        if ($firmeza === 'FIRME') {
+            unset($plantillas[0]);
+        }
+
+        $indice = crc32((string) $headline) % count($plantillas);
+        $opciones = array_values($plantillas);
+        $resultado = ($opciones[$indice])();
+
+        return $resultado ?? ($altura ? "{$altura} CM DE DESCANSO" : "FIRMEZA {$firmeza}");
+    }
+
+    /**
      * Instrucción para que Gemini dibuje DIRECTAMENTE el banner/sticker promocional
      * con el texto real (nunca inventado) sobre la escena, imitando el estilo de las
      * imágenes de referencia (cinta diagonal, tipografía gruesa con contorno, colores
@@ -129,12 +164,9 @@ class PromptBuilder
             }
         }
 
-        $specs = array_filter([
-            !empty($producto['altura']) ? $producto['altura'] . ' CM DE DESCANSO' : null,
-            !empty($producto['firmeza']) ? 'FIRMEZA ' . mb_strtoupper((string) $producto['firmeza']) : null,
-        ]);
-        if ($specs) {
-            $piezas[] = 'dato técnico real: "' . implode(' · ', $specs) . '"';
+        $spec = self::fraseSpecs($producto, $headline);
+        if ($spec !== null) {
+            $piezas[] = 'dato técnico real: "' . $spec . '"';
         }
 
         $listado = implode('. ', $piezas) . '.';
