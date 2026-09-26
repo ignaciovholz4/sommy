@@ -187,8 +187,10 @@ class PromptBuilder
             . 'ni ningún otro precio, porcentaje o dato que no esté en esta lista. '
             . 'PROHIBIDO dibujar ningún logo, isotipo ni marca de agua: NO escribas la palabra "Sommy" ni ninguna variante en ningún lugar de la imagen '
             . '(ni como logo, ni como texto suelto, ni integrada al banner) — el logo real se superpone después por separado, en software, '
-            . 'con el archivo de marca real. La esquina superior izquierda (aproximadamente el 25% superior-izquierdo de la imagen) tiene que quedar '
-            . 'COMPLETAMENTE VACÍA y limpia: sin logo, sin texto, sin ningún banner ni cinta duplicada ahí — el titular/precio de esta lista va SIEMPRE '
+            . 'con el archivo de marca real. IMPORTANTE: en la esquina superior izquierda (aproximadamente el 25% superior-izquierdo de la imagen) NO dibujes '
+            . 'ningún rectángulo, tarjeta, placa, panel, círculo, degradado, viñeta ni ninguna forma o bloque de color para "reservar espacio": esa zona tiene '
+            . 'que verse como una parte más de la foto real (la misma pared, cielo, techo o mueble que continúa naturalmente ahí), sin ningún objeto gráfico '
+            . 'agregado — el logo se superpone después directamente sobre esa foto tal cual, en software. El titular/precio de esta lista va SIEMPRE '
             . 'en el centro o tercio inferior de la imagen, nunca arriba a la izquierda.';
     }
 
@@ -350,7 +352,10 @@ class PromptBuilder
                 : 'un banner o cinta tipo sticker (amarillo electrico y fucsia, letra gruesa con contorno oscuro, estilo publicitario de campaña)';
             $prompt .= ' ADEMAS: incluí directamente en la imagen ' . $estiloGrafico
                 . ', y escribí ahi EXACTAMENTE esto, sin inventar ni cambiar ninguna palabra ni letra: "' . trim($headline) . '". '
-                . 'No agregues ningun otro texto, palabra o frase que no sea esa — ni una palabra mas, en ningun otro lugar de la imagen.';
+                . 'No agregues ningun otro texto, palabra o frase que no sea esa — ni una palabra mas, en ningun otro lugar de la imagen. '
+                . 'IMPORTANTE: en la esquina superior izquierda (aproximadamente el 25% superior-izquierdo) NO dibujes ningún rectángulo, tarjeta, placa, '
+                . 'panel, círculo ni ninguna forma o bloque de color para "reservar espacio": esa zona tiene que verse como una parte más de la foto real, '
+                . 'sin ningún objeto gráfico agregado — el logo real se superpone después directamente sobre esa foto tal cual, en software.';
         } else {
             $prompt .= ' PROHIBIDO escribir texto, palabras, letras, etiquetas o marcas de agua en NINGUN lugar de la imagen (ni en telas, ni en paredes, ni en carteles, ni en ninguna superficie) — ni una sola palabra, en ningun idioma.';
         }
