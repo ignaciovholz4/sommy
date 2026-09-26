@@ -434,9 +434,10 @@
                         <select id="briefCampana" style="max-width:220px;"></select>
                         <button class="pub-btn sec chico" onclick="nuevaCampana()"><i class="fas fa-plus"></i> Nueva</button>
                     </div>
-                    <div class="pub-aviso">Cada pieza se genera con 1 imagen (no varias), se guarda como borrador en esta campaña — nada se publica solo.</div>
+                    <div class="pub-aviso">Cada pieza genera 3 variantes para que elijas la mejor (click en la miniatura) — se guarda como borrador en esta campaña recién cuando confirmás, nada se publica solo.</div>
                     <div class="pub-btns" style="justify-content:flex-start;margin-top:10px;">
-                        <button class="pub-btn" id="btnGenerarBrief" onclick="generarBriefTodo(this)"><i class="fas fa-play"></i> Generar todo</button>
+                        <button class="pub-btn" id="btnGenerarBrief" onclick="generarBriefTodo(this)"><i class="fas fa-play"></i> Generar variantes</button>
+                        <button class="pub-btn" id="btnGuardarSeleccionadasBrief" onclick="guardarSeleccionadasBrief(this)" style="display:none;"><i class="fas fa-save"></i> Guardar seleccionadas</button>
                     </div>
                 </div>
             </div>
@@ -1223,6 +1224,7 @@ function interpretarBriefTexto(btn) {
 
 function renderBriefItems() {
     document.getElementById('briefResumen').textContent = BRIEF_ITEMS.length + ' piezas interpretadas. Revisá el producto detectado antes de generar — nada se generó todavía.';
+    document.getElementById('btnGuardarSeleccionadasBrief').style.display = 'none';
     const cont = document.getElementById('briefLista');
     cont.innerHTML = '';
     BRIEF_ITEMS.forEach((it, i) => {
@@ -1233,7 +1235,8 @@ function renderBriefItems() {
         row.innerHTML =
             '<span class="num">' + (it.numero ?? (i + 1)) + '</span>' +
             '<div><div class="tit">' + it.titulo + '<span class="badge-modo">' + it.modo + (prod ? ' · ' + prod.nombre : '') + '</span></div>' +
-            '<div class="desc">' + it.instrucciones + (it.menciona_tambien ? ' <em>(también: ' + it.menciona_tambien + ')</em>' : '') + '</div></div>' +
+            '<div class="desc">' + it.instrucciones + (it.menciona_tambien ? ' <em>(también: ' + it.menciona_tambien + ')</em>' : '') + '</div>' +
+            '<div class="pub-msg-imagenes" id="briefVariantes' + i + '"></div></div>' +
             '<button type="button" class="badge-precio" id="briefPrecio' + i + '" onclick="toggleBriefPrecio(' + i + ')"></button>' +
             '<span class="estado-item" id="briefEstado' + i + '">Pendiente</span>';
         cont.appendChild(row);
@@ -1257,30 +1260,29 @@ function toggleBriefPrecio(i) {
 
 function generarBriefTodo(btn) {
     if (!BRIEF_ITEMS.length) return;
-    if (!confirm('Se van a generar ' + BRIEF_ITEMS.length + ' piezas, una por una (puede tardar varios minutos). ¿Continuar?')) return;
+    if (!confirm('Se van a generar 3 variantes por cada una de las ' + BRIEF_ITEMS.length + ' piezas, una por una (puede tardar varios minutos). Después elegís la mejor de cada una antes de guardar. ¿Continuar?')) return;
     btn.disabled = true;
-    const campanaId = document.getElementById('briefCampana').value || null;
 
     let cadena = Promise.resolve();
     BRIEF_ITEMS.forEach((it, i) => {
         cadena = cadena.then(() => {
             const estadoEl = document.getElementById('briefEstado' + i);
             estadoEl.textContent = 'Generando...';
-            return generarUnItemBrief(it, campanaId)
-                .then(() => { estadoEl.textContent = '✓ Lista'; })
+            return generarVariantesItemBrief(it, i)
+                .then(() => { estadoEl.textContent = '👉 Elegí una'; })
                 .catch(e => { estadoEl.textContent = '⚠️ Falló'; console.error(it.titulo, e); });
         });
     });
     cadena.then(() => {
         btn.disabled = false;
-        renderFeedSimulado(); renderProximas();
-        alert('Listo. Se procesaron las ' + BRIEF_ITEMS.length + ' piezas — revisalas en la biblioteca/simulador de feed antes de publicar.');
+        document.getElementById('btnGuardarSeleccionadasBrief').style.display = '';
+        alert('Listo. Elegí la mejor variante de cada pieza (click en la miniatura) y después tocá "Guardar seleccionadas".');
     });
 }
 
-function generarUnItemBrief(it, campanaId) {
+/** Fase 1: genera 3 variantes de imagen + copy para una pieza, sin guardar nada todavía. */
+function generarVariantesItemBrief(it, i) {
     const esCombo = it.modo === 'combo';
-    const prodIdx = it.producto_id ? PRODUCTOS.findIndex(p => p.id === it.producto_id && !!p.esCombo === esCombo) : -1;
     const formato = it.formato === 'story' ? 'story' : 'feed';
 
     return postJson('{{ route('publicaciones.chat') }}', {
@@ -1288,41 +1290,92 @@ function generarUnItemBrief(it, campanaId) {
         es_combo: esCombo,
         formato: formato,
         con_precio: !!it.con_precio,
-        mensaje: 'Generá 1 sola imagen y el texto para esta pieza de campaña: "' + it.titulo + '". ' + it.instrucciones
+        mensaje: 'Generá 3 variantes de imagen y el texto para esta pieza de campaña: "' + it.titulo + '". ' + it.instrucciones
             + (it.producto_id ? ' El titular del banner de la imagen tiene que ser exactamente: "' + it.titulo + '".' : ''),
         historial: []
     }).then(data => {
-        const v = data.imagenes && data.imagenes[0];
-        if (!v || v.error) throw new Error(v ? v.error : 'No se generó ninguna imagen para esta pieza.');
+        const variantes = (data.imagenes || []).filter(v => !v.error);
+        if (!variantes.length) throw new Error('No se generó ninguna imagen para esta pieza.');
+        it.variantes = variantes;
+        it.textos = data.textos || null;
+        it.seleccion = 0;
+        renderVariantesBrief(i);
+    });
+}
 
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-                if (prodIdx >= 0) { sel.value = prodIdx; modoContenido = 'producto'; }
-                else { modoContenido = 'marca'; }
-                document.querySelector('input[name=pubFormato][value="' + formato + '"]').checked = true;
-                document.querySelector('input[name=pubPrecio][value="' + (it.con_precio ? 'si' : 'no') + '"]').checked = true;
-                varianteElegida = { img, url: v.url, path: v.path, prompt: v.prompt };
-                pubGuardadaId = null;
-                ['ovHeadline', 'ovCta', 'ovBadge'].forEach(id => document.getElementById(id).value = '');
-                document.getElementById('ovWebsite').checked = false;
-                if (data.textos) {
-                    document.getElementById('txtCaption').value = data.textos.caption || '';
-                    document.getElementById('txtTituloML').value = data.textos.titulo_ml || it.titulo;
-                    document.getElementById('txtDescML').value = data.textos.desc_ml || '';
-                    document.getElementById('txtWa').value = data.textos.texto_wa || '';
-                }
-                cargarLogo(() => {
-                    dibujar();
-                    postJson('{{ route('publicaciones.guardar') }}', Object.assign(payloadBase(), { campana_id: campanaId }))
-                        .then(() => resolve())
-                        .catch(reject);
-                });
-            };
-            img.onerror = () => reject(new Error('No se pudo cargar la imagen generada.'));
-            img.src = v.url;
+function renderVariantesBrief(i) {
+    const it = BRIEF_ITEMS[i];
+    const cont = document.getElementById('briefVariantes' + i);
+    cont.innerHTML = it.variantes.map((v, j) =>
+        '<div class="pub-variante chica' + (j === it.seleccion ? ' seleccionada' : '') + '" onclick="elegirVarianteBrief(' + i + ',' + j + ')">' +
+            '<img src="' + v.url + '"><div class="check"><i class="fas fa-check"></i></div>' +
+        '</div>'
+    ).join('');
+}
+
+function elegirVarianteBrief(i, j) {
+    BRIEF_ITEMS[i].seleccion = j;
+    renderVariantesBrief(i);
+}
+
+/** Fase 2: dibuja (logo + overlay real) y guarda la variante que el usuario eligió de cada pieza. */
+function guardarSeleccionadasBrief(btn) {
+    const pendientes = BRIEF_ITEMS.filter(it => it.variantes && it.variantes.length);
+    if (!pendientes.length) { alert('Primero generá las variantes.'); return; }
+    btn.disabled = true;
+    const campanaId = document.getElementById('briefCampana').value || null;
+
+    let cadena = Promise.resolve();
+    BRIEF_ITEMS.forEach((it, i) => {
+        if (!it.variantes || !it.variantes.length) return;
+        cadena = cadena.then(() => {
+            const estadoEl = document.getElementById('briefEstado' + i);
+            estadoEl.textContent = 'Guardando...';
+            return guardarUnaSeleccionBrief(it, campanaId)
+                .then(() => { estadoEl.textContent = '✓ Guardada'; })
+                .catch(e => { estadoEl.textContent = '⚠️ Falló al guardar'; console.error(it.titulo, e); });
         });
+    });
+    cadena.then(() => {
+        btn.disabled = false;
+        renderFeedSimulado(); renderProximas();
+        alert('Listo, se guardaron las piezas seleccionadas como borrador — revisalas en la Biblioteca/Feed antes de publicar.');
+    });
+}
+
+function guardarUnaSeleccionBrief(it, campanaId) {
+    const esCombo = it.modo === 'combo';
+    const prodIdx = it.producto_id ? PRODUCTOS.findIndex(p => p.id === it.producto_id && !!p.esCombo === esCombo) : -1;
+    const formato = it.formato === 'story' ? 'story' : 'feed';
+    const v = it.variantes[it.seleccion];
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            if (prodIdx >= 0) { sel.value = prodIdx; modoContenido = 'producto'; }
+            else { modoContenido = 'marca'; }
+            document.querySelector('input[name=pubFormato][value="' + formato + '"]').checked = true;
+            document.querySelector('input[name=pubPrecio][value="' + (it.con_precio ? 'si' : 'no') + '"]').checked = true;
+            varianteElegida = { img, url: v.url, path: v.path, prompt: v.prompt };
+            pubGuardadaId = null;
+            ['ovHeadline', 'ovCta', 'ovBadge'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('ovWebsite').checked = false;
+            if (it.textos) {
+                document.getElementById('txtCaption').value = it.textos.caption || '';
+                document.getElementById('txtTituloML').value = it.textos.titulo_ml || it.titulo;
+                document.getElementById('txtDescML').value = it.textos.desc_ml || '';
+                document.getElementById('txtWa').value = it.textos.texto_wa || '';
+            }
+            cargarLogo(() => {
+                dibujar();
+                postJson('{{ route('publicaciones.guardar') }}', Object.assign(payloadBase(), { campana_id: campanaId }))
+                    .then(() => resolve())
+                    .catch(reject);
+            });
+        };
+        img.onerror = () => reject(new Error('No se pudo cargar la imagen generada.'));
+        img.src = v.url;
     });
 }
 
