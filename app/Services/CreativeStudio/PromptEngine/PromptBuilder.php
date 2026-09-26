@@ -210,10 +210,15 @@ class PromptBuilder
     {
         if (trim((string) $promptLibre) !== '') {
             $cuerpo = trim($promptLibre);
+        } elseif (trim((string) $extra) !== '') {
+            // Cuando hay una indicación puntual (del chat o de una pieza de brief), ES la escena
+            // pedida — no se le antepone el preset fijo de dormitorio, para permitir diversidad
+            // real (fábrica, detalle/macro, lifestyle con personas, flete, etc.) en vez de que
+            // todo termine ambientado en el mismo dormitorio por defecto.
+            $cuerpo = trim($extra) . ' Estilo de la marca: ' . self::estiloMarca();
         } else {
             $cuerpo = (self::ESCENAS[$escena] ?? self::ESCENAS['dormitorio']) . '. '
-                . 'Estilo de la marca: ' . self::estiloMarca()
-                . (trim((string) $extra) !== '' ? ' ' . trim($extra) : '');
+                . 'Estilo de la marca: ' . self::estiloMarca();
         }
 
         $prompt = self::fidelidadProducto($cantidadFidelidad)
