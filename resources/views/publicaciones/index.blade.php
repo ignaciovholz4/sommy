@@ -220,6 +220,7 @@
                 <button class="pub-btn sec chico" onclick="abrirTerminadas()"><i class="fas fa-check-circle"></i> Piezas terminadas</button>
                 <button class="pub-btn sec chico" onclick="abrirGaleria()"><i class="fas fa-images"></i> Galería (crudas)</button>
                 <button class="pub-btn sec chico" onclick="abrirBancoFrases()"><i class="fas fa-book"></i> Frases</button>
+                <button class="pub-btn sec chico" onclick="abrirVideos()"><i class="fas fa-video"></i> Videos</button>
                 <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
             </div>
         </div>
@@ -525,6 +526,21 @@
             <div class="modal-body">
                 <div class="pub-aviso" style="margin-top:0;">Estas ya tienen el logo y el texto compuestos — son las que se van a publicar. (La "Galería (crudas)" son fotos sin terminar, solo para revisar el historial.)</div>
                 <div id="terminadasGrid" class="pub-galeria-grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Videos: piezas con video_final generado con Veo --}}
+<div class="modal fade" id="modalVideos" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-video" style="color:#2563EB;"></i> Videos terminados</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="videosGrid" class="pub-galeria-grid"></div>
             </div>
         </div>
     </div>
@@ -1607,6 +1623,29 @@ function abrirTerminadas() {
         item.title = b.caption || estadoTxt;
         item.innerHTML = '<img src="' + url + '" loading="lazy"><div class="fecha">' + estadoTxt + ' · ' + fecha + '</div>';
         item.onclick = () => window.open(url, '_blank');
+        grid.appendChild(item);
+    });
+}
+
+/* ── Videos terminados: piezas de BIBLIOTECA que tienen video_final (Veo) ── */
+function abrirVideos() {
+    $('#modalVideos').modal('show');
+    const grid = document.getElementById('videosGrid');
+    grid.innerHTML = '';
+    const items = BIBLIOTECA.filter(b => b.video_final)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    if (!items.length) {
+        grid.innerHTML = '<div class="pub-aviso" style="padding:14px;">Todavía no se generó ningún video.</div>';
+        return;
+    }
+
+    items.forEach(b => {
+        const url = BASE_URL + '/' + b.video_final;
+        const fecha = new Date(b.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const item = document.createElement('div');
+        item.className = 'pub-galeria-item';
+        item.innerHTML = '<video src="' + url + '" controls preload="metadata" style="width:100%;height:100%;object-fit:cover;"></video><div class="fecha">' + fecha + '</div>';
         grid.appendChild(item);
     });
 }
