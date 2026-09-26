@@ -30,12 +30,17 @@ class VideoIaService
             isset($p['noches']) && $p['noches'] ? $p['noches'] . ' noches de prueba' : null,
         ]));
 
-        return 'Video selfie vertical estilo UGC: una persona argentina de unos 35 años, real y cercana, '
-            . 'se graba a sí misma en primera persona con el celular en su dormitorio luminoso, mostrando el colchón de la imagen '
-            . '(mantener el colchón fiel a la foto). Habla a cámara en español argentino, con entusiasmo genuino y sin sobreactuar: '
-            . '"Chicos, tengo que mostrarles el ' . $p['nombre'] . '. ' . ($specs ? ucfirst($specs) . '. ' : '')
-            . 'Es directo de fábrica, sin intermediarios.' . $precio . ' Se los recomiendo de verdad, duermo increíble." '
-            . 'Al final palmea el colchón sonriendo. Estética casera de video para redes: cámara en mano, luz natural, un solo plano.';
+        return 'Video vertical estilo UGC HIPERREALISTA (footage real de celular filmado por otra persona, no selfie, no animación ni render, cero aspecto de video generado por IA): '
+            . 'una mujer argentina joven (25-32 años), real y cercana, pelo suelto, ropa casual prolija (campera de cuero o sweater), parada DENTRO de un depósito o local real de colchonería, '
+            . 'apoyada o al lado de colchones Sommy reales apilados y algunos todavía envueltos en plástico de fábrica (mantener el colchón de la imagen adjunta fiel a la foto, sin rediseñarlo). '
+            . 'Habla a cámara con gestos naturales de las manos mientras explica, mirando directo al lente, con energía de presentadora segura pero cercana (no de vendedora forzada). '
+            . 'ILUMINACIÓN: luz natural pareja y difusa de depósito/local (ventanales o luz de tubo suave), SIN sombras duras ni contraste marcado sobre la cara ni sobre los colchones — nada de un solo foco lateral duro ni sombras teatrales. '
+            . 'CÁMARA: la sostiene otra persona (no ella), a la altura de los ojos, con el micro-temblor natural de una mano real, sin selfie stick. '
+            . 'RITMO: hablar pausado, con una pausa natural antes del cierre, usando los 8 segundos completos sin apurar el texto. '
+            . 'Incluí un subtítulo animado quemado en el video (estilo reels, letras blancas con contorno, apareciendo en sincro con lo que dice), EXACTAMENTE con este texto, sin inventar ni cambiar palabras: '
+            . '"' . $p['nombre'] . ($specs ? '. ' . ucfirst($specs) : '') . '. Directo de fábrica, sin intermediarios.' . $precio . '" '
+            . 'Ella dice en voz alta, en español argentino, lo mismo que dice el subtítulo, con entusiasmo genuino y sin sobreactuar, y al final toca el colchón con la mano sonriendo con calma. '
+            . 'Estética real de contenido de redes: un solo plano continuo, sin cortes, sin marca de agua de ninguna otra app.';
     }
 
     /**
@@ -65,6 +70,7 @@ class VideoIaService
                 ]],
                 'parameters' => [
                     'aspectRatio' => $formato === 'story' ? '9:16' : '16:9',
+                    'durationSeconds' => 8,
                 ],
             ]);
 
