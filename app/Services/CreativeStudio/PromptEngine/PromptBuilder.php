@@ -295,13 +295,18 @@ class PromptBuilder
     }
 
     /** Prompt para contenido de marca SIN producto puntual (estilo de vida, informativo). */
-    public static function sinProducto(string $formato, string $instrucciones, bool $conReferencias = false): string
+    public static function sinProducto(string $formato, string $instrucciones, bool $conReferencias = false, bool $conFleteReal = false): string
     {
-        $prompt = 'Foto de contenido de marca para redes sociales de Sommy (fabrica argentina de colchones), '
+        $prompt = 'Foto de contenido de marca para redes sociales de Sommy (marca argentina de colchones vendidos directo de fabrica, sin intermediarios), '
             . 'SIN mostrar ningun producto puntual ni logo dentro de la escena. '
             . trim($instrucciones) . '. Estilo de la marca: ' . self::estiloMarca() . ' '
             . self::orientacion($formato)
-            . ' Fotografia realista, personas reales de aspecto argentino si corresponde, nada de texto ni marca de agua en la imagen.';
+            . ' Fotografia hiperrealista (no ilustracion ni render 3D), a escala real, personas reales de aspecto argentino si corresponde, nada de texto ni marca de agua en la imagen.';
+
+        if ($conFleteReal) {
+            $prompt .= ' La(s) imagen(es) adjuntas de un vehiculo son FOTOS REALES del vehiculo de reparto de Sommy: '
+                . 'si la escena incluye un vehiculo de entrega, tiene que ser ESE vehiculo real (mismo color, forma y detalles), nunca uno inventado.';
+        }
 
         if ($conReferencias) {
             $prompt .= ' Ademas, imita el estilo visual general (paleta de color, iluminacion, composicion, mood/atmosfera) '

@@ -64,9 +64,16 @@ class ImagenIaService
      *
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null): array
+    public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, bool $incluirFlete = false): array
     {
         $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
+        if ($incluirFlete) {
+            foreach ($this->productos->rutasFleteReal() as $ruta) {
+                if (!in_array($ruta, $rutasProducto, true)) {
+                    $rutasProducto[] = $ruta;
+                }
+            }
+        }
         $rutasReferencia = $this->rutasReferencia();
         $escena = 'dormitorio'; // único ambiente base: homogeneidad de feed
         $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline, count($rutasProducto));
@@ -99,12 +106,13 @@ class ImagenIaService
      *
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generarVariantesMarca(string $formato, int $cantidad, string $instrucciones): array
+    public function generarVariantesMarca(string $formato, int $cantidad, string $instrucciones, bool $incluirFlete = false): array
     {
         $rutasReferencia = $this->rutasReferencia();
-        $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia);
+        $rutasFlete = $incluirFlete ? $this->productos->rutasFleteReal() : [];
+        $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia, (bool) $rutasFlete);
 
-        return $this->generarYRegistrar($prompt, [], $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, $rutasFlete, $rutasReferencia, $formato, $cantidad);
     }
 
     /**

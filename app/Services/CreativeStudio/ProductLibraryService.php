@@ -145,4 +145,24 @@ class ProductLibraryService
             ->orderByDesc('prioridad')
             ->get(['tipo', 'titulo', 'contenido']);
     }
+
+    /**
+     * Fotos reales del vehículo de flete/reparto de Sommy (recurso tipo "imagen",
+     * título con "flete"), para que la IA use el vehículo real en piezas de entrega
+     * en vez de inventar una camioneta genérica. Hasta 2 ángulos.
+     *
+     * @return array<int, string> rutas absolutas
+     */
+    public function rutasFleteReal(int $max = 2): array
+    {
+        $recursos = DB::table('publicaciones_recursos')
+            ->where('tipo', 'imagen')->where('activo', 1)
+            ->where('titulo', 'like', '%flete%')
+            ->whereNotNull('archivo')
+            ->orderByDesc('id')->limit($max)
+            ->get(['archivo']);
+
+        return $recursos->map(fn ($r) => public_path($r->archivo))
+            ->filter(fn ($ruta) => is_file($ruta))->values()->all();
+    }
 }
