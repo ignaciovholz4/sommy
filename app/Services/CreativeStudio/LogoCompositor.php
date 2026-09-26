@@ -52,7 +52,7 @@ class LogoCompositor
         $w = imagesx($logo);
         $h = imagesy($logo);
         $minX = $w; $minY = $h; $maxX = 0; $maxY = 0;
-        $paso = max(1, (int) min($w, $h) / 200);
+        $paso = max(1, (int) (min($w, $h) / 200));
 
         for ($x = 0; $x < $w; $x += $paso) {
             for ($y = 0; $y < $h; $y += $paso) {
