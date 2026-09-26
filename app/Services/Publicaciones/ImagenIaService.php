@@ -64,7 +64,7 @@ class ImagenIaService
      *
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, bool $incluirFlete = false): array
+    public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, bool $incluirFlete = false, bool $sinBanner = false): array
     {
         $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
         if ($incluirFlete) {
@@ -76,7 +76,7 @@ class ImagenIaService
         }
         $rutasReferencia = $this->rutasReferencia();
         $escena = 'dormitorio'; // único ambiente base: homogeneidad de feed
-        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline, count($rutasProducto));
+        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline, count($rutasProducto), $sinBanner);
 
         return $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, $cantidad);
     }

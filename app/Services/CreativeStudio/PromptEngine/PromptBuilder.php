@@ -207,7 +207,7 @@ class PromptBuilder
      * @param string|null $extra indicación puntual del usuario o de un preset (escena/cámara/composición/text safe zone)
      * @param bool $conReferencias si hay imágenes de referencia de estilo adjuntas
      */
-    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1): string
+    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1, bool $sinBanner = false): string
     {
         if (trim((string) $promptLibre) !== '') {
             $cuerpo = trim($promptLibre);
@@ -232,9 +232,9 @@ class PromptBuilder
             $prompt .= ' ' . $reglasExtra;
         }
 
-        $prompt .= $producto !== null
+        $prompt .= ($producto !== null && !$sinBanner)
             ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias)
-            : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
+            : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen -- ni siquiera el nombre del producto.';
 
         if ($conReferencias) {
             $prompt .= self::bloqueReferenciasEstilo($producto !== null, $cantidadFidelidad)
