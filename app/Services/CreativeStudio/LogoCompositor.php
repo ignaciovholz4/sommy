@@ -13,9 +13,12 @@ use Illuminate\Support\Facades\DB;
 class LogoCompositor
 {
     /**
-     * Pegado con fondo transparente real (sin placa), arriba a la izquierda.
-     * Detecta automáticamente si esa esquina de la foto es oscura o clara y
-     * elige la variante blanca o color del logo para que siempre se vea bien.
+     * Pegado arriba a la izquierda, con una placa suave semitransparente detrás
+     * (no un rectángulo blanco duro): tapa cualquier resto de logo/texto falso
+     * que Gemini haya dibujado ahí a pesar de la instrucción de dejar esa zona
+     * vacía, sin perder el look "flotante" pedido. Detecta automáticamente si
+     * esa esquina de la foto es oscura o clara y elige la variante del logo
+     * (y el tono de la placa) que corresponda.
      */
     public function pegarConPlaca($im, int $w, int $h): void
     {
@@ -31,8 +34,46 @@ class LogoCompositor
         }
 
         $lh = (int) ($lw * imagesy($logo) / imagesx($logo));
+
+        $padX = (int) ($lw * 0.12);
+        $padY = (int) ($lh * 0.35);
+        $this->dibujarPlacaSuave($im, $lx - $padX, $ly - $padY, $lw + $padX * 2, $lh + $padY * 2, $fondoOscuro);
+
         $this->pegarRedimensionado($im, $logo, $lx, $ly, $lw, $lh);
         imagedestroy($logo);
+    }
+
+    /** Placa redondeada semitransparente (tono acorde al fondo) para asentar el logo y tapar restos de texto/logo falso debajo. */
+    protected function dibujarPlacaSuave($im, int $x, int $y, int $w, int $h, bool $fondoOscuro): void
+    {
+        $tmp = imagecreatetruecolor($w, $h);
+        imagealphablending($tmp, false);
+        imagesavealpha($tmp, true);
+        imagefilledrectangle($tmp, 0, 0, $w, $h, imagecolorallocatealpha($tmp, 0, 0, 0, 127));
+        imagealphablending($tmp, true);
+
+        $color = $fondoOscuro
+            ? imagecolorallocatealpha($tmp, 10, 15, 30, 55)
+            : imagecolorallocatealpha($tmp, 255, 255, 255, 55);
+
+        $radio = (int) min($h, $w * 0.18);
+        $this->rectRedondeado($tmp, 0, 0, $w, $h, $radio, $color);
+
+        imagealphablending($im, true);
+        imagecopy($im, $tmp, $x, $y, 0, 0, $w, $h);
+        imagedestroy($tmp);
+    }
+
+    protected function rectRedondeado($im, int $x0, int $y0, int $w, int $h, int $radio, int $color): void
+    {
+        $x1 = $x0 + $w;
+        $y1 = $y0 + $h;
+        imagefilledrectangle($im, $x0 + $radio, $y0, $x1 - $radio, $y1, $color);
+        imagefilledrectangle($im, $x0, $y0 + $radio, $x1, $y1 - $radio, $color);
+        imagefilledellipse($im, $x0 + $radio, $y0 + $radio, $radio * 2, $radio * 2, $color);
+        imagefilledellipse($im, $x1 - $radio, $y0 + $radio, $radio * 2, $radio * 2, $color);
+        imagefilledellipse($im, $x0 + $radio, $y1 - $radio, $radio * 2, $radio * 2, $color);
+        imagefilledellipse($im, $x1 - $radio, $y1 - $radio, $radio * 2, $radio * 2, $color);
     }
 
     /** Promedia el brillo de una zona de la imagen para decidir si el fondo ahí es oscuro. */

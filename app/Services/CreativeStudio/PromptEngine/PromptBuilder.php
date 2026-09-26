@@ -258,7 +258,7 @@ class PromptBuilder
      *
      * @param array{objetivo?:string,intensidad?:string,escena?:string,densidad?:string,iluminacion?:string,camara?:string,composicion?:string,zona_texto?:string,personas?:string} $opciones
      */
-    public static function paraProductoStudio(string $formato, array $opciones, bool $conReferencias = false, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1): string
+    public static function paraProductoStudio(string $formato, array $opciones, bool $conReferencias = false, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1, string $estiloBanner = 'cinta'): string
     {
         $escena = $opciones['escena'] ?? 'dormitorio';
 
@@ -288,7 +288,7 @@ class PromptBuilder
         }
 
         $prompt .= $producto !== null
-            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias)
+            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias, $estiloBanner)
             : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
 
         if ($conReferencias) {

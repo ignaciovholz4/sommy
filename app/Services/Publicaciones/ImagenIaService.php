@@ -46,7 +46,7 @@ class ImagenIaService
     {
         $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
         $rutasReferencia = $this->rutasReferencia();
-        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, $promptLibre, $producto, $conPrecio, $headline, count($rutasProducto));
+        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, $promptLibre, $producto, $conPrecio, $headline, count($rutasProducto), false, $this->estiloBannerPorDefecto($conPrecio));
 
         $resultado = $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, 1);
 
@@ -64,7 +64,7 @@ class ImagenIaService
      *
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, bool $incluirFlete = false, bool $sinBanner = false, string $estiloBanner = 'cinta'): array
+    public function generarVariantes(string $rutaFotoProducto, string $formato, int $cantidad = 5, string $instrucciones = '', ?string $extraEscena = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, bool $incluirFlete = false, bool $sinBanner = false, ?string $estiloBanner = null): array
     {
         $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
         if ($incluirFlete) {
@@ -76,7 +76,7 @@ class ImagenIaService
         }
         $rutasReferencia = $this->rutasReferencia();
         $escena = 'dormitorio'; // único ambiente base: homogeneidad de feed
-        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline, count($rutasProducto), $sinBanner, $estiloBanner);
+        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline, count($rutasProducto), $sinBanner, $estiloBanner ?? $this->estiloBannerPorDefecto($conPrecio));
 
         return $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, $cantidad);
     }
@@ -93,7 +93,7 @@ class ImagenIaService
     {
         $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
         $rutasReferencia = $this->rutasReferencia();
-        $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia, $producto, $conPrecio, $headline, count($rutasProducto));
+        $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia, $producto, $conPrecio, $headline, count($rutasProducto), $this->estiloBannerPorDefecto($conPrecio));
 
         return $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, $cantidad);
     }
@@ -106,13 +106,23 @@ class ImagenIaService
      *
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generarVariantesMarca(string $formato, int $cantidad, string $instrucciones, bool $incluirFlete = false, ?string $headline = null, string $estiloBanner = 'cinta'): array
+    public function generarVariantesMarca(string $formato, int $cantidad, string $instrucciones, bool $incluirFlete = false, ?string $headline = null, ?string $estiloBanner = null): array
     {
         $rutasReferencia = $this->rutasReferencia();
         $rutasFlete = $incluirFlete ? $this->productos->rutasFleteReal() : [];
-        $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia, (bool) $rutasFlete, $headline, $estiloBanner);
+        $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia, (bool) $rutasFlete, $headline, $estiloBanner ?? 'barra');
 
         return $this->generarYRegistrar($prompt, $rutasFlete, $rutasReferencia, $formato, $cantidad);
+    }
+
+    /**
+     * Estilo de banner por defecto: cinta/sticker (llamativo) para piezas de oferta
+     * con precio real, barra solida simple (mas prolija y legible) para el resto
+     * — decision de marca confirmada con muestras A/B reales.
+     */
+    protected function estiloBannerPorDefecto(bool $conPrecio): string
+    {
+        return $conPrecio ? 'cinta' : 'barra';
     }
 
     /**
