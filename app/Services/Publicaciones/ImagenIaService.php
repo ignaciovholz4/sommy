@@ -219,18 +219,15 @@ class ImagenIaService
     }
 
     /**
-     * Rutas absolutas al archivo REAL del logo de Sommy (recurso tipo "logo"), en sus
-     * variantes activas (normalmente color + blanco) — se adjuntan a Gemini para que
-     * dibuje ella misma el logo EXACTO en vez de superponerlo despues en software
-     * (evita que la IA invente su propio logo cuando no tiene la referencia real).
+     * Deshabilitado a proposito (probado 2026-09-26): adjuntarle el logo real a Gemini
+     * para que lo dibuje ella misma mejora la integracion visual (sin placa/fantasma),
+     * pero a veces igual comete errores de tipografia al "redibujarlo" (ej. "Sonmy").
+     * Se decidio volver a pegar el logo real por software (LogoCompositor), que
+     * garantiza el texto 100% correcto siempre. Metodo queda listo por si se
+     * quiere reintentar cuando los modelos mejoren la fidelidad de copia de imagen.
      */
     protected function rutasLogo(int $max = 2): array
     {
-        $logos = DB::table('publicaciones_recursos')
-            ->where('tipo', 'logo')->where('activo', 1)
-            ->whereNotNull('archivo')
-            ->orderByDesc('id')->limit($max)->get(['archivo']);
-
-        return $logos->map(fn ($r) => public_path($r->archivo))->filter(fn ($ruta) => is_file($ruta))->values()->all();
+        return [];
     }
 }
