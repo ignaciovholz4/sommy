@@ -17,7 +17,8 @@ interface ImageProviderInterface
      *
      * @param array<int, string> $rutasProducto rutas absolutas a fotos reales a respetar (colchón, distintos ángulos, base/sommier real), vacío si no hay producto
      * @param array<int, string> $rutasReferencia rutas absolutas a imágenes de referencia de estilo (opcional) — nunca fidelidad de producto
+     * @param array<int, string> $rutasLogo rutas absolutas al archivo REAL del logo de Sommy (color/blanco), va SIEMPRE al final para que la IA lo dibuje ella misma tal cual
      * @return array<int, array{path:string,url:string,prompt:string}|array{error:string}>
      */
-    public function generateScene(string $prompt, array $rutasProducto, array $rutasReferencia, string $aspectRatio, int $cantidad): array;
+    public function generateScene(string $prompt, array $rutasProducto, array $rutasReferencia, array $rutasLogo, string $aspectRatio, int $cantidad): array;
 }

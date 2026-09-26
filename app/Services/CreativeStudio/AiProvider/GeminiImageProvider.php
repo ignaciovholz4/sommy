@@ -22,7 +22,7 @@ class GeminiImageProvider implements ImageProviderInterface
         return (bool) config('services.gemini.api_key');
     }
 
-    public function generateScene(string $prompt, array $rutasProducto, array $rutasReferencia, string $aspectRatio, int $cantidad): array
+    public function generateScene(string $prompt, array $rutasProducto, array $rutasReferencia, array $rutasLogo, string $aspectRatio, int $cantidad): array
     {
         foreach ($rutasProducto as $ruta) {
             if (!is_file($ruta)) {
@@ -35,6 +35,12 @@ class GeminiImageProvider implements ImageProviderInterface
             $parts[] = ['inline_data' => ['mime_type' => $this->mime($ruta), 'data' => base64_encode(file_get_contents($ruta))]];
         }
         foreach ($rutasReferencia as $ruta) {
+            if (is_file($ruta)) {
+                $parts[] = ['inline_data' => ['mime_type' => $this->mime($ruta), 'data' => base64_encode(file_get_contents($ruta))]];
+            }
+        }
+        // El/los logo(s) real(es) van SIEMPRE al final: el prompt los referencia como "las ultimas imagenes adjuntas".
+        foreach ($rutasLogo as $ruta) {
             if (is_file($ruta)) {
                 $parts[] = ['inline_data' => ['mime_type' => $this->mime($ruta), 'data' => base64_encode(file_get_contents($ruta))]];
             }

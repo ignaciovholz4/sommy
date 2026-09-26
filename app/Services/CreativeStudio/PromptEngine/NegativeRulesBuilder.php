@@ -17,7 +17,7 @@ class NegativeRulesBuilder
             'no cambiar el acolchado/quilting',
             'no modificar el piping',
             'no modificar el pillow top',
-            'no agregar agarraderas ni manijas laterales (los colchones reales de Sommy no tienen)',
+            'PROHIBIDO agregar agarraderas, manijas, asas o tiradores en los laterales del colchón: NINGÚN colchón real de Sommy las tiene, revisá bien la foto real adjunta antes de dibujar el lateral',
             'no aumentar ni reducir la altura del colchón',
             'no inventar capas que no existan',
             'no inventar logos ni textos sobre el colchón',

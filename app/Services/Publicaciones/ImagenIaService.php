@@ -46,9 +46,10 @@ class ImagenIaService
     {
         $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
         $rutasReferencia = $this->rutasReferencia();
-        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, $promptLibre, $producto, $conPrecio, $headline, count($rutasProducto), false, $this->estiloBannerPorDefecto($conPrecio));
+        $rutasLogo = $this->rutasLogo();
+        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, $promptLibre, $producto, $conPrecio, $headline, count($rutasProducto), false, $this->estiloBannerPorDefecto($conPrecio), (bool) $rutasLogo);
 
-        $resultado = $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, 1);
+        $resultado = $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $rutasLogo, $formato, 1);
 
         if (isset($resultado[0]['error'])) {
             throw new \RuntimeException($resultado[0]['error']);
@@ -75,10 +76,11 @@ class ImagenIaService
             }
         }
         $rutasReferencia = $this->rutasReferencia();
+        $rutasLogo = $sinBanner ? [] : $this->rutasLogo();
         $escena = 'dormitorio'; // único ambiente base: homogeneidad de feed
-        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline, count($rutasProducto), $sinBanner, $estiloBanner ?? $this->estiloBannerPorDefecto($conPrecio));
+        $prompt = PromptBuilder::paraProducto($formato, $escena, $this->extraConInstrucciones($extraEscena, $instrucciones), (bool) $rutasReferencia, null, $producto, $conPrecio, $headline, count($rutasProducto), $sinBanner, $estiloBanner ?? $this->estiloBannerPorDefecto($conPrecio), (bool) $rutasLogo);
 
-        return $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $rutasLogo, $formato, $cantidad);
     }
 
     /**
@@ -93,9 +95,10 @@ class ImagenIaService
     {
         $rutasProducto = $this->rutasFidelidadProducto($rutaFotoProducto, $producto['id'] ?? null);
         $rutasReferencia = $this->rutasReferencia();
-        $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia, $producto, $conPrecio, $headline, count($rutasProducto), $this->estiloBannerPorDefecto($conPrecio));
+        $rutasLogo = $this->rutasLogo();
+        $prompt = PromptBuilder::paraProductoStudio($formato, $opciones, (bool) $rutasReferencia, $producto, $conPrecio, $headline, count($rutasProducto), $this->estiloBannerPorDefecto($conPrecio), (bool) $rutasLogo);
 
-        return $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, $rutasProducto, $rutasReferencia, $rutasLogo, $formato, $cantidad);
     }
 
     /**
@@ -110,9 +113,10 @@ class ImagenIaService
     {
         $rutasReferencia = $this->rutasReferencia();
         $rutasFlete = $incluirFlete ? $this->productos->rutasFleteReal() : [];
-        $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia, (bool) $rutasFlete, $headline, $estiloBanner ?? 'barra');
+        $rutasLogo = $this->rutasLogo();
+        $prompt = PromptBuilder::sinProducto($formato, $instrucciones, (bool) $rutasReferencia, (bool) $rutasFlete, $headline, $estiloBanner ?? 'barra', (bool) $rutasLogo);
 
-        return $this->generarYRegistrar($prompt, $rutasFlete, $rutasReferencia, $formato, $cantidad);
+        return $this->generarYRegistrar($prompt, $rutasFlete, $rutasReferencia, $rutasLogo, $formato, $cantidad);
     }
 
     /**
@@ -157,12 +161,12 @@ class ImagenIaService
     }
 
     /** Genera y deja registro en publicaciones_generaciones (historial/reproducibilidad) de cada resultado, ok o error. */
-    protected function generarYRegistrar(string $prompt, array $rutasProducto, array $rutasReferencia, string $formato, int $cantidad): array
+    protected function generarYRegistrar(string $prompt, array $rutasProducto, array $rutasReferencia, array $rutasLogo, string $formato, int $cantidad): array
     {
         $modelo = config('services.gemini.image_model', 'gemini-3.1-flash-lite-image');
 
         try {
-            $resultados = $this->provider->generateScene($prompt, $rutasProducto, $rutasReferencia, $formato, $cantidad);
+            $resultados = $this->provider->generateScene($prompt, $rutasProducto, $rutasReferencia, $rutasLogo, $formato, $cantidad);
         } catch (\Throwable $e) {
             $this->registrarGeneracion($modelo, $formato, $prompt, 'error', $e->getMessage(), null);
             throw $e;
@@ -212,5 +216,21 @@ class ImagenIaService
             ->orderByDesc('id')->limit($max)->get(['archivo']);
 
         return $refs->map(fn ($r) => public_path($r->archivo))->filter(fn ($ruta) => is_file($ruta))->values()->all();
+    }
+
+    /**
+     * Rutas absolutas al archivo REAL del logo de Sommy (recurso tipo "logo"), en sus
+     * variantes activas (normalmente color + blanco) — se adjuntan a Gemini para que
+     * dibuje ella misma el logo EXACTO en vez de superponerlo despues en software
+     * (evita que la IA invente su propio logo cuando no tiene la referencia real).
+     */
+    protected function rutasLogo(int $max = 2): array
+    {
+        $logos = DB::table('publicaciones_recursos')
+            ->where('tipo', 'logo')->where('activo', 1)
+            ->whereNotNull('archivo')
+            ->orderByDesc('id')->limit($max)->get(['archivo']);
+
+        return $logos->map(fn ($r) => public_path($r->archivo))->filter(fn ($ruta) => is_file($ruta))->values()->all();
     }
 }

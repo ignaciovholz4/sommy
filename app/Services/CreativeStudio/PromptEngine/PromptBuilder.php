@@ -141,6 +141,30 @@ class PromptBuilder
     }
 
     /**
+     * Instrucción para que la propia Gemini incluya el logo REAL de Sommy (adjuntado
+     * como imagen aparte, siempre al final del mensaje) en vez de inventarlo de memoria
+     * o dejarlo para superponer despues en software — evita el logo fantasma/garabateado
+     * que aparecia cuando se le pedia "no dibujes el logo" pero igual lo intentaba.
+     */
+    protected static function bloqueLogoReal(bool $conLogo): string
+    {
+        if (!$conLogo) {
+            return 'PROHIBIDO dibujar ningún logo, isotipo ni marca de agua: NO escribas la palabra "Sommy" ni ninguna variante en ningún lugar de la imagen. '
+                . 'IMPORTANTE: en la esquina superior izquierda (aproximadamente el 25% superior-izquierdo de la imagen) NO dibujes ningún rectángulo, tarjeta, '
+                . 'placa, panel, círculo, degradado, viñeta ni ninguna forma o bloque de color para "reservar espacio": esa zona tiene que verse como una parte '
+                . 'más de la foto real, sin ningún objeto gráfico agregado.';
+        }
+
+        return 'La(s) ULTIMA(S) 1 o 2 imagen(es) adjuntas a este mensaje (despues de las fotos de producto y, si las hay, las de referencia de estilo) son el '
+            . 'ARCHIVO REAL del logo de Sommy (isotipo + pluma dorada), en sus versiones oficiales para fondo claro y fondo oscuro. Tenés que incluir ESE logo '
+            . 'EXACTO en la esquina superior izquierda de la imagen final —sin redibujarlo, sin reinterpretarlo, sin cambiar tipografía, trazo, color ni '
+            . 'proporciones—, a un tamaño legible pero discreto (aproximadamente 18-22% del ancho de la imagen), integrado naturalmente sobre la foto (no como '
+            . 'sticker cuadrado ni con marco ni con placa de fondo). Elegí la versión (clara u oscura) que mejor contraste con el fondo real de esa esquina. '
+            . 'NO inventes tu propia version del logo, NO escribas la palabra "Sommy" como texto aparte, y NO dibujes ningún rectángulo ni placa detrás: usá '
+            . 'PRECISAMENTE la imagen adjunta del logo, calcada.';
+    }
+
+    /**
      * Instrucción para que Gemini dibuje DIRECTAMENTE el banner/sticker promocional
      * con el texto real (nunca inventado) sobre la escena, imitando el estilo de las
      * imágenes de referencia (cinta diagonal, tipografía gruesa con contorno, colores
@@ -148,7 +172,7 @@ class PromptBuilder
      *
      * @param array $producto ficha real (mapProducto/mapCombo): nombre, precio, precioFinal, descuento, altura, firmeza...
      */
-    protected static function bloqueGraficaPromocional(array $producto, bool $conPrecio, ?string $headline = null, bool $conReferencias = false, string $estilo = 'cinta'): string
+    protected static function bloqueGraficaPromocional(array $producto, bool $conPrecio, ?string $headline = null, bool $conReferencias = false, string $estilo = 'cinta', bool $conLogo = false): string
     {
         $headline = trim((string) $headline) !== '' ? trim($headline) : mb_strtoupper((string) ($producto['nombre'] ?? 'SOMMY'));
         $piezas = ['Titular en letras grandes: "' . $headline . '"'];
@@ -185,13 +209,8 @@ class PromptBuilder
             . 'Escribí en la imagen, EXACTAMENTE como está acá (sin inventar, sin cambiar ni un número ni una palabra): ' . $listado . ' '
             . 'Esa lista es TODO el texto permitido: no agregues ninguna otra palabra, frase, tagline, lema ni banner adicional (ni "descanso garantizado" ni nada similar que no esté ahí arriba) — '
             . 'ni ningún otro precio, porcentaje o dato que no esté en esta lista. '
-            . 'PROHIBIDO dibujar ningún logo, isotipo ni marca de agua: NO escribas la palabra "Sommy" ni ninguna variante en ningún lugar de la imagen '
-            . '(ni como logo, ni como texto suelto, ni integrada al banner) — el logo real se superpone después por separado, en software, '
-            . 'con el archivo de marca real. IMPORTANTE: en la esquina superior izquierda (aproximadamente el 25% superior-izquierdo de la imagen) NO dibujes '
-            . 'ningún rectángulo, tarjeta, placa, panel, círculo, degradado, viñeta ni ninguna forma o bloque de color para "reservar espacio": esa zona tiene '
-            . 'que verse como una parte más de la foto real (la misma pared, cielo, techo o mueble que continúa naturalmente ahí), sin ningún objeto gráfico '
-            . 'agregado — el logo se superpone después directamente sobre esa foto tal cual, en software. El titular/precio de esta lista va SIEMPRE '
-            . 'en el centro o tercio inferior de la imagen, nunca arriba a la izquierda.';
+            . self::bloqueLogoReal($conLogo) . ' '
+            . 'El titular/precio de esta lista va SIEMPRE en el centro o tercio inferior de la imagen, nunca arriba a la izquierda (esa esquina es para el logo).';
     }
 
     /**
@@ -249,7 +268,7 @@ class PromptBuilder
      * @param string|null $extra indicación puntual del usuario o de un preset (escena/cámara/composición/text safe zone)
      * @param bool $conReferencias si hay imágenes de referencia de estilo adjuntas
      */
-    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1, bool $sinBanner = false, string $estiloBanner = 'cinta'): string
+    public static function paraProducto(string $formato, string $escena = 'dormitorio', ?string $extra = null, bool $conReferencias = false, ?string $promptLibre = null, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1, bool $sinBanner = false, string $estiloBanner = 'cinta', bool $conLogo = false): string
     {
         if (trim((string) $promptLibre) !== '') {
             $cuerpo = trim($promptLibre);
@@ -275,7 +294,7 @@ class PromptBuilder
         }
 
         $prompt .= ($producto !== null && !$sinBanner)
-            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias, $estiloBanner)
+            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias, $estiloBanner, $conLogo)
             : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen -- ni siquiera el nombre del producto.';
 
         if ($conReferencias) {
@@ -294,7 +313,7 @@ class PromptBuilder
      *
      * @param array{objetivo?:string,intensidad?:string,escena?:string,densidad?:string,iluminacion?:string,camara?:string,composicion?:string,zona_texto?:string,personas?:string} $opciones
      */
-    public static function paraProductoStudio(string $formato, array $opciones, bool $conReferencias = false, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1, string $estiloBanner = 'cinta'): string
+    public static function paraProductoStudio(string $formato, array $opciones, bool $conReferencias = false, ?array $producto = null, bool $conPrecio = false, ?string $headline = null, int $cantidadFidelidad = 1, string $estiloBanner = 'cinta', bool $conLogo = false): string
     {
         $escena = $opciones['escena'] ?? 'dormitorio';
 
@@ -324,7 +343,7 @@ class PromptBuilder
         }
 
         $prompt .= $producto !== null
-            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias, $estiloBanner)
+            ? ' ' . self::bloqueGraficaPromocional($producto, $conPrecio, $headline, $conReferencias, $estiloBanner, $conLogo)
             : ' IMPORTANTE: no agregar ningun texto, logo, marca de agua ni precio a la imagen.';
 
         if ($conReferencias) {
@@ -337,10 +356,10 @@ class PromptBuilder
     }
 
     /** Prompt para contenido de marca SIN producto puntual (estilo de vida, informativo). */
-    public static function sinProducto(string $formato, string $instrucciones, bool $conReferencias = false, bool $conFleteReal = false, ?string $headline = null, string $estilo = 'cinta'): string
+    public static function sinProducto(string $formato, string $instrucciones, bool $conReferencias = false, bool $conFleteReal = false, ?string $headline = null, string $estilo = 'cinta', bool $conLogo = false): string
     {
         $prompt = 'Foto de contenido de marca para redes sociales de Sommy (marca argentina de colchones vendidos directo de fabrica, sin intermediarios), '
-            . 'SIN mostrar ningun producto puntual ni logo dentro de la escena. '
+            . 'SIN mostrar ningun producto puntual dentro de la escena. '
             . trim($instrucciones) . '. Estilo de la marca: ' . self::estiloMarca() . ' '
             . self::orientacion($formato)
             . ' Fotografia hiperrealista (no ilustracion ni render 3D), a escala real, personas reales de aspecto argentino si corresponde.';
@@ -352,13 +371,12 @@ class PromptBuilder
                 : 'un banner o cinta tipo sticker (amarillo electrico y fucsia, letra gruesa con contorno oscuro, estilo publicitario de campaña)';
             $prompt .= ' ADEMAS: incluí directamente en la imagen ' . $estiloGrafico
                 . ', y escribí ahi EXACTAMENTE esto, sin inventar ni cambiar ninguna palabra ni letra: "' . trim($headline) . '". '
-                . 'No agregues ningun otro texto, palabra o frase que no sea esa — ni una palabra mas, en ningun otro lugar de la imagen. '
-                . 'IMPORTANTE: en la esquina superior izquierda (aproximadamente el 25% superior-izquierdo) NO dibujes ningún rectángulo, tarjeta, placa, '
-                . 'panel, círculo ni ninguna forma o bloque de color para "reservar espacio": esa zona tiene que verse como una parte más de la foto real, '
-                . 'sin ningún objeto gráfico agregado — el logo real se superpone después directamente sobre esa foto tal cual, en software.';
+                . 'No agregues ningun otro texto, palabra o frase que no sea esa — ni una palabra mas, en ningun otro lugar de la imagen.';
         } else {
             $prompt .= ' PROHIBIDO escribir texto, palabras, letras, etiquetas o marcas de agua en NINGUN lugar de la imagen (ni en telas, ni en paredes, ni en carteles, ni en ninguna superficie) — ni una sola palabra, en ningun idioma.';
         }
+
+        $prompt .= ' ' . self::bloqueLogoReal($conLogo);
 
         if ($conFleteReal) {
             $prompt .= ' La(s) imagen(es) adjuntas de un vehiculo son FOTOS REALES del vehiculo de reparto de Sommy: '
