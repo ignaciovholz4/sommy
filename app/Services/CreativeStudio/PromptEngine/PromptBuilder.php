@@ -155,7 +155,9 @@ class PromptBuilder
             . 'ni ningún otro precio, porcentaje o dato que no esté en esta lista. '
             . 'PROHIBIDO dibujar ningún logo, isotipo ni marca de agua: NO escribas la palabra "Sommy" ni ninguna variante en ningún lugar de la imagen '
             . '(ni como logo, ni como texto suelto, ni integrada al banner) — el logo real se superpone después por separado, en software, '
-            . 'con el archivo de marca real. Dejá un espacio limpio y libre de elementos importantes en la esquina superior izquierda para superponerlo.';
+            . 'con el archivo de marca real. La esquina superior izquierda (aproximadamente el 25% superior-izquierdo de la imagen) tiene que quedar '
+            . 'COMPLETAMENTE VACÍA y limpia: sin logo, sin texto, sin ningún banner ni cinta duplicada ahí — el titular/precio de esta lista va SIEMPRE '
+            . 'en el centro o tercio inferior de la imagen, nunca arriba a la izquierda.';
     }
 
     /**

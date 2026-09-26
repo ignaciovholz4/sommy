@@ -35,8 +35,8 @@ class LogoCompositor
 
         $lh = (int) ($lw * imagesy($logo) / imagesx($logo));
 
-        $padX = (int) ($lw * 0.45);
-        $padY = (int) ($lh * 1.1);
+        $padX = (int) ($lw * 0.2);
+        $padY = (int) ($lh * 0.55);
         $this->dibujarPlacaSuave($im, max(0, $lx - $padX), max(0, $ly - $padY), $lw + $padX * 2, $lh + $padY * 2, $fondoOscuro);
 
         $this->pegarRedimensionado($im, $logo, $lx, $ly, $lw, $lh);
