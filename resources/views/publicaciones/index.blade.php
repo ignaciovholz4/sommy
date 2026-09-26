@@ -217,7 +217,8 @@
                 <button class="pub-btn sec chico" onclick="renderReferencias(); $('#modalReferencias').modal('show')"><i class="fas fa-images"></i> Imágenes de referencia</button>
                 <button class="pub-btn sec chico" onclick="$('#modalBrief').modal('show')"><i class="fas fa-list-check"></i> Brief de campaña</button>
                 <button class="pub-btn sec chico" onclick="abrirHistorial()"><i class="fas fa-clock-rotate-left"></i> Historial</button>
-                <button class="pub-btn sec chico" onclick="abrirGaleria()"><i class="fas fa-images"></i> Galería</button>
+                <button class="pub-btn sec chico" onclick="abrirTerminadas()"><i class="fas fa-check-circle"></i> Piezas terminadas</button>
+                <button class="pub-btn sec chico" onclick="abrirGaleria()"><i class="fas fa-images"></i> Galería (crudas)</button>
                 <button class="pub-btn sec chico" onclick="abrirBancoFrases()"><i class="fas fa-book"></i> Frases</button>
                 <button class="pub-btn sec chico" id="btnAbrirProximas" onclick="$('#modalProximas').modal('show')" style="display:none;"><i class="fas fa-calendar-days"></i> Próximas <span id="pubProximasCount"></span></button>
             </div>
@@ -508,6 +509,22 @@
                 </div>
                 <div id="fraseCargando" class="pub-aviso">Cargando...</div>
                 <div id="fraseLista"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Piezas terminadas: las que ya tienen logo+texto compuestos y están guardadas en la Biblioteca --}}
+<div class="modal fade" id="modalTerminadas" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom:1px solid #E7EAF2;">
+                <h5 class="modal-title" style="font-weight:600;"><i class="fas fa-check-circle" style="color:#166534;"></i> Piezas terminadas</h5>
+                <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="pub-aviso" style="margin-top:0;">Estas ya tienen el logo y el texto compuestos — son las que se van a publicar. (La "Galería (crudas)" son fotos sin terminar, solo para revisar el historial.)</div>
+                <div id="terminadasGrid" class="pub-galeria-grid"></div>
             </div>
         </div>
     </div>
@@ -1566,6 +1583,32 @@ function abrirHistorial() {
         })
         .catch(() => { document.getElementById('histCargando').textContent = 'No se pudo cargar el historial.'; })
         .finally(() => { document.getElementById('histCargando').style.display = 'none'; });
+}
+
+/* ── Piezas terminadas: las guardadas en Biblioteca, ya con logo+texto compuestos ── */
+function abrirTerminadas() {
+    $('#modalTerminadas').modal('show');
+    const grid = document.getElementById('terminadasGrid');
+    grid.innerHTML = '';
+    const items = BIBLIOTECA.filter(b => (b.imagen_url || b.imagen_final) && ['publicada', 'programada', 'borrador'].includes(b.estado))
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    if (!items.length) {
+        grid.innerHTML = '<div class="pub-aviso" style="padding:14px;">Todavía no guardaste ninguna pieza terminada.</div>';
+        return;
+    }
+
+    items.forEach(b => {
+        const url = b.imagen_url || (BASE_URL + '/' + b.imagen_final);
+        const fecha = new Date(b.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const estadoTxt = b.estado === 'borrador' ? 'Borrador' : (b.estado === 'programada' ? 'Programada' : 'Publicada');
+        const item = document.createElement('div');
+        item.className = 'pub-galeria-item';
+        item.title = b.caption || estadoTxt;
+        item.innerHTML = '<img src="' + url + '" loading="lazy"><div class="fecha">' + estadoTxt + ' · ' + fecha + '</div>';
+        item.onclick = () => window.open(url, '_blank');
+        grid.appendChild(item);
+    });
 }
 
 /* ── Galería: todas las imágenes generadas alguna vez, con acceso directo a cada una ── */

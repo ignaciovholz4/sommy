@@ -44,7 +44,7 @@ class PublicacionController extends Controller
         $biblioteca = DB::table('publicaciones')
             ->whereNull('padre_id')
             ->orderByRaw('COALESCE(programado_para, created_at) DESC')
-            ->limit(40)
+            ->limit(300)
             ->get();
 
         $capacidades = [
