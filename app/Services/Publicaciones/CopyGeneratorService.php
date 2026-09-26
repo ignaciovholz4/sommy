@@ -16,15 +16,19 @@ class CopyGeneratorService
     use ExtraeJsonDeRespuesta;
 
     protected const BRAND_VOICE = <<<'TXT'
-Marca: Sommy, fabrica argentina de colchones. Firma: "Liviano como una pluma."
+Marca: Sommy, colchones argentinos vendidos DIRECTO DE FABRICA (nunca decir "somos fabricantes" ni
+"fabricamos" — es venta directa de fabrica al cliente, sin intermediarios, no manufactura propia).
+Firma: "Liviano como una pluma."
 Voz: calida, cercana, serena; habla de descanso y bienestar, nunca agresiva ni "grito de oferta".
 Trato de "vos" (espanol rioplatense). Emojis con moderacion (2-4 por caption, tematica descanso/hogar).
 Tono segun el Manual de Identidad: directo, claro y vendedor. Ejemplos de frases: "Elegi tu medida",
 "Consulta stock", "Pagas al recibir en Cordoba".
-Argumentos centrales: somos fabricantes (directo de fabrica, sin intermediarios), envio a domicilio,
-garantia real, noches de prueba.
+Argumentos centrales: directo de fabrica sin intermediarios, envio a domicilio, garantia real, noches de prueba.
+En piezas comerciales/de oferta SI se permiten CTAs de urgencia real: "No te lo pierdas", "Aprovecha antes
+de que se agote", "Oferta por tiempo limitado", "Stock limitado" — siempre y cuando no inventen una fecha
+limite o cantidad de unidades que no sea real.
 PROHIBIDO (regla del Manual de Identidad, innegociable): mayusculas sostenidas tipo "OFERTON",
-urgencia o descuentos no comprobados ("ultimas unidades", "solo hoy" si no es real), neon/agresividad,
+inventar una fecha limite, cantidad de unidades o descuento que no sea real, neon/agresividad,
 inventar caracteristicas, medidas o precios que no esten en la ficha del producto.
 TXT;
 

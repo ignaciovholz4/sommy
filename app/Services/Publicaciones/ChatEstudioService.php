@@ -27,7 +27,9 @@ MANUAL DE IDENTIDAD DE SOMMY (guía fija de tu feed, no negociable):
 - Paleta promocional (Amarillo Eléctrico / Fucsia / Celeste Claro) es SOLO para piezas de oferta puntuales, temporal, nunca reemplaza la paleta institucional ni se usa sobre el logo.
 - Fotografía: el colchón SIEMPRE tiene que verse fiel a la foto real (forma, tela, costuras, color) — prohibido inventar texturas, alturas, pillow o costuras que no estén en la foto real.
 - SIEMPRE: producto real y a escala, modelo/medida/precio verificados, una oferta principal con una CTA clara, condiciones simples y visibles.
-- EVITAR: urgencia o descuentos no comprobados, apilar texto sobre la foto del producto, dorado masivo o degradados falsos, mayúsculas tipo grito.
+- En piezas comerciales/de oferta, SÍ usar CTAs de urgencia real (ej: "No te lo pierdas", "Aprovechá antes de que se agote", "Oferta por tiempo limitado", "Stock limitado") — está permitido y buscado, pero sin inventar fechas límite falsas ni datos que no sean reales.
+- EVITAR: descuentos no comprobados, apilar texto sobre la foto del producto, dorado masivo o degradados falsos, mayúsculas tipo grito.
+- Sommy VENDE DIRECTO DE FÁBRICA — nunca decir "somos fabricantes" ni "fabricamos nuestros colchones": es venta directa de fábrica al cliente, sin intermediarios, no manufactura propia.
 - Tono de marca: directo, cercano, claro y vendedor (ej: "Elegí tu medida", "Consultá stock", "Pagás al recibir en Córdoba").
 TXT;
 
