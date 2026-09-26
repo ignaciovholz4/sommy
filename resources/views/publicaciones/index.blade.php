@@ -1256,7 +1256,8 @@ function renderBriefItems() {
             '<div class="desc">' + it.instrucciones + (it.menciona_tambien ? ' <em>(también: ' + it.menciona_tambien + ')</em>' : '') + '</div>' +
             contenidoImagenes + '</div>' +
             '<button type="button" class="badge-precio" id="briefPrecio' + i + '" onclick="toggleBriefPrecio(' + i + ')"></button>' +
-            '<span class="estado-item" id="briefEstado' + i + '">Pendiente</span>';
+            '<span class="estado-item"><span id="briefEstado' + i + '">Pendiente</span> ' +
+            '<a href="#" onclick="reintentarItemBrief(' + i + ');return false;" id="briefRetry' + i + '" style="display:none;">🔁 Reintentar</a></span>';
         cont.appendChild(row);
         pintarBriefPrecio(i);
     });
@@ -1283,20 +1284,30 @@ function generarBriefTodo(btn) {
 
     let cadena = Promise.resolve();
     BRIEF_ITEMS.forEach((it, i) => {
-        cadena = cadena.then(() => {
-            const estadoEl = document.getElementById('briefEstado' + i);
-            estadoEl.textContent = 'Generando...';
-            const promesa = it.tipo === 'carrusel' ? generarVariantesCarruselBrief(it, i) : generarVariantesItemBrief(it, i);
-            return promesa
-                .then(() => { estadoEl.textContent = '👉 Elegí una'; })
-                .catch(e => { estadoEl.textContent = '⚠️ Falló'; console.error(it.titulo, e); });
-        });
+        cadena = cadena.then(() => generarItemOCarruselBrief(i));
     });
     cadena.then(() => {
         btn.disabled = false;
         document.getElementById('btnGuardarSeleccionadasBrief').style.display = '';
         alert('Listo. Elegí la mejor variante de cada pieza/slide (click en la miniatura) y después tocá "Guardar seleccionadas".');
     });
+}
+
+/** Genera (o regenera) una sola pieza del brief — simple o carrusel — y actualiza su estado/link de reintento. */
+function generarItemOCarruselBrief(i) {
+    const it = BRIEF_ITEMS[i];
+    const estadoEl = document.getElementById('briefEstado' + i);
+    const retryEl = document.getElementById('briefRetry' + i);
+    estadoEl.textContent = 'Generando...';
+    retryEl.style.display = 'none';
+    const promesa = it.tipo === 'carrusel' ? generarVariantesCarruselBrief(it, i) : generarVariantesItemBrief(it, i);
+    return promesa
+        .then(() => { estadoEl.textContent = '👉 Elegí una'; })
+        .catch(e => { estadoEl.textContent = '⚠️ Falló'; retryEl.style.display = ''; console.error(it.titulo, e); });
+}
+
+function reintentarItemBrief(i) {
+    generarItemOCarruselBrief(i);
 }
 
 /** Carrusel: genera 3 variantes por cada slide, uno por uno (mismo producto, distinto texto por slide). */
