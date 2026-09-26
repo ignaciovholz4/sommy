@@ -77,6 +77,10 @@
     .pub-brief-item .desc { color: #6E7A96; font-weight: 300; margin-top: 2px; }
     .pub-brief-item .estado-item { font-size: 10.5px; font-weight: 600; color: #6E7A96; text-align: right; }
     .pub-brief-item .badge-precio { border: none; border-radius: 999px; padding: 3px 10px; font-size: 10.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .pub-carrusel-slides { border-left: 2px solid #E7EAF2; margin-top: 8px; padding-left: 10px; }
+    .pub-carrusel-slide { margin-bottom: 10px; }
+    .pub-carrusel-slide .slide-tit { font-size: 11px; font-weight: 600; color: #47536F; margin-bottom: 4px; }
+    .pub-carrusel-slide .slide-tit em { font-weight: 300; color: #6E7A96; }
 
     /* Historial */
     .pub-hist-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
@@ -1230,13 +1234,27 @@ function renderBriefItems() {
     BRIEF_ITEMS.forEach((it, i) => {
         const esCombo = it.modo === 'combo';
         const prod = it.producto_id ? PRODUCTOS.find(p => p.id === it.producto_id && !!p.esCombo === esCombo) : null;
+        const esCarrusel = it.tipo === 'carrusel';
         const row = document.createElement('div');
         row.className = 'pub-brief-item';
+
+        let contenidoImagenes;
+        if (esCarrusel) {
+            contenidoImagenes = '<div class="pub-carrusel-slides">' + it.slides.map((s, si) =>
+                '<div class="pub-carrusel-slide">' +
+                    '<div class="slide-tit">Slide ' + (s.numero ?? (si + 1)) + ': ' + (s.headline || '') + (s.texto ? ' · <em>' + s.texto + '</em>' : '') + '</div>' +
+                    '<div class="pub-msg-imagenes" id="briefSlide' + i + '_' + si + '"></div>' +
+                '</div>'
+            ).join('') + '</div>';
+        } else {
+            contenidoImagenes = '<div class="pub-msg-imagenes" id="briefVariantes' + i + '"></div>';
+        }
+
         row.innerHTML =
             '<span class="num">' + (it.numero ?? (i + 1)) + '</span>' +
-            '<div><div class="tit">' + it.titulo + '<span class="badge-modo">' + it.modo + (prod ? ' · ' + prod.nombre : '') + '</span></div>' +
+            '<div><div class="tit">' + it.titulo + '<span class="badge-modo">' + it.modo + (esCarrusel ? ' · carrusel (' + it.slides.length + ')' : '') + (prod ? ' · ' + prod.nombre : '') + '</span></div>' +
             '<div class="desc">' + it.instrucciones + (it.menciona_tambien ? ' <em>(también: ' + it.menciona_tambien + ')</em>' : '') + '</div>' +
-            '<div class="pub-msg-imagenes" id="briefVariantes' + i + '"></div></div>' +
+            contenidoImagenes + '</div>' +
             '<button type="button" class="badge-precio" id="briefPrecio' + i + '" onclick="toggleBriefPrecio(' + i + ')"></button>' +
             '<span class="estado-item" id="briefEstado' + i + '">Pendiente</span>';
         cont.appendChild(row);
@@ -1268,7 +1286,8 @@ function generarBriefTodo(btn) {
         cadena = cadena.then(() => {
             const estadoEl = document.getElementById('briefEstado' + i);
             estadoEl.textContent = 'Generando...';
-            return generarVariantesItemBrief(it, i)
+            const promesa = it.tipo === 'carrusel' ? generarVariantesCarruselBrief(it, i) : generarVariantesItemBrief(it, i);
+            return promesa
                 .then(() => { estadoEl.textContent = '👉 Elegí una'; })
                 .catch(e => { estadoEl.textContent = '⚠️ Falló'; console.error(it.titulo, e); });
         });
@@ -1276,8 +1295,57 @@ function generarBriefTodo(btn) {
     cadena.then(() => {
         btn.disabled = false;
         document.getElementById('btnGuardarSeleccionadasBrief').style.display = '';
-        alert('Listo. Elegí la mejor variante de cada pieza (click en la miniatura) y después tocá "Guardar seleccionadas".');
+        alert('Listo. Elegí la mejor variante de cada pieza/slide (click en la miniatura) y después tocá "Guardar seleccionadas".');
     });
+}
+
+/** Carrusel: genera 3 variantes por cada slide, uno por uno (mismo producto, distinto texto por slide). */
+function generarVariantesCarruselBrief(it, i) {
+    let cadena = Promise.resolve();
+    it.slides.forEach((s, si) => {
+        cadena = cadena.then(() => generarVariantesSlideBrief(it, i, si));
+    });
+    return cadena;
+}
+
+function generarVariantesSlideBrief(it, i, si) {
+    const esCombo = it.modo === 'combo';
+    const formato = it.formato === 'story' ? 'story' : 'feed';
+    const slide = it.slides[si];
+    const headline = slide.headline || it.titulo;
+
+    return postJson('{{ route('publicaciones.chat') }}', {
+        producto_id: it.producto_id || null,
+        es_combo: esCombo,
+        formato: formato,
+        con_precio: !!it.con_precio,
+        mensaje: 'Generá 3 variantes de imagen para el slide ' + (si + 1) + ' de ' + it.slides.length + ' de un carrusel de campaña: "' + it.titulo + '". '
+            + it.instrucciones + ' Este slide puntual trata sobre: "' + headline + (slide.texto ? '. ' + slide.texto : '') + '".'
+            + (it.producto_id ? ' El titular del banner de este slide tiene que ser exactamente: "' + headline + '".' : ''),
+        historial: []
+    }).then(data => {
+        const variantes = (data.imagenes || []).filter(v => !v.error);
+        if (!variantes.length) throw new Error('No se generó ninguna imagen para el slide ' + (si + 1) + '.');
+        slide.variantes = variantes;
+        slide.textos = data.textos || null;
+        slide.seleccion = 0;
+        renderVariantesSlideBrief(i, si);
+    });
+}
+
+function renderVariantesSlideBrief(i, si) {
+    const slide = BRIEF_ITEMS[i].slides[si];
+    const cont = document.getElementById('briefSlide' + i + '_' + si);
+    cont.innerHTML = slide.variantes.map((v, j) =>
+        '<div class="pub-variante chica' + (j === slide.seleccion ? ' seleccionada' : '') + '" onclick="elegirVarianteSlideBrief(' + i + ',' + si + ',' + j + ')">' +
+            '<img src="' + v.url + '"><div class="check"><i class="fas fa-check"></i></div>' +
+        '</div>'
+    ).join('');
+}
+
+function elegirVarianteSlideBrief(i, si, j) {
+    BRIEF_ITEMS[i].slides[si].seleccion = j;
+    renderVariantesSlideBrief(i, si);
 }
 
 /** Fase 1: genera 3 variantes de imagen + copy para una pieza, sin guardar nada todavía. */
@@ -1320,18 +1388,20 @@ function elegirVarianteBrief(i, j) {
 
 /** Fase 2: dibuja (logo + overlay real) y guarda la variante que el usuario eligió de cada pieza. */
 function guardarSeleccionadasBrief(btn) {
-    const pendientes = BRIEF_ITEMS.filter(it => it.variantes && it.variantes.length);
-    if (!pendientes.length) { alert('Primero generá las variantes.'); return; }
+    const listas = BRIEF_ITEMS.filter(it => (it.tipo === 'carrusel' ? it.slides.every(s => s.variantes && s.variantes.length) : it.variantes && it.variantes.length));
+    if (!listas.length) { alert('Primero generá las variantes.'); return; }
     btn.disabled = true;
     const campanaId = document.getElementById('briefCampana').value || null;
 
     let cadena = Promise.resolve();
     BRIEF_ITEMS.forEach((it, i) => {
-        if (!it.variantes || !it.variantes.length) return;
+        const listo = it.tipo === 'carrusel' ? (it.slides.length && it.slides.every(s => s.variantes && s.variantes.length)) : (it.variantes && it.variantes.length);
+        if (!listo) return;
         cadena = cadena.then(() => {
             const estadoEl = document.getElementById('briefEstado' + i);
             estadoEl.textContent = 'Guardando...';
-            return guardarUnaSeleccionBrief(it, campanaId)
+            const promesa = it.tipo === 'carrusel' ? guardarCarruselBrief(it, campanaId) : guardarUnaSeleccionBrief(it, campanaId);
+            return promesa
                 .then(() => { estadoEl.textContent = '✓ Guardada'; })
                 .catch(e => { estadoEl.textContent = '⚠️ Falló al guardar'; console.error(it.titulo, e); });
         });
@@ -1340,6 +1410,53 @@ function guardarSeleccionadasBrief(btn) {
         btn.disabled = false;
         renderFeedSimulado(); renderProximas();
         alert('Listo, se guardaron las piezas seleccionadas como borrador — revisalas en la Biblioteca/Feed antes de publicar.');
+    });
+}
+
+/** Guarda cada slide del carrusel en orden, encadenando padre_id (el primer slide es la fila contenedora). */
+function guardarCarruselBrief(it, campanaId) {
+    let cadena = Promise.resolve();
+    let padreId = null;
+    it.slides.forEach((slide, si) => {
+        cadena = cadena.then(() => guardarUnSlideBrief(it, slide, campanaId, padreId, si)
+            .then(id => { if (si === 0) padreId = id; }));
+    });
+    return cadena;
+}
+
+function guardarUnSlideBrief(it, slide, campanaId, padreId, slideOrden) {
+    const esCombo = it.modo === 'combo';
+    const prodIdx = it.producto_id ? PRODUCTOS.findIndex(p => p.id === it.producto_id && !!p.esCombo === esCombo) : -1;
+    const formato = it.formato === 'story' ? 'story' : 'feed';
+    const v = slide.variantes[slide.seleccion];
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            if (prodIdx >= 0) { sel.value = prodIdx; modoContenido = 'producto'; }
+            else { modoContenido = 'marca'; }
+            document.querySelector('input[name=pubFormato][value="' + formato + '"]').checked = true;
+            document.querySelector('input[name=pubPrecio][value="' + (it.con_precio ? 'si' : 'no') + '"]').checked = true;
+            varianteElegida = { img, url: v.url, path: v.path, prompt: v.prompt };
+            pubGuardadaId = null;
+            ['ovHeadline', 'ovCta', 'ovBadge'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('ovWebsite').checked = false;
+            if (slide.textos) {
+                document.getElementById('txtCaption').value = slide.textos.caption || '';
+                document.getElementById('txtTituloML').value = slide.textos.titulo_ml || slide.headline || it.titulo;
+                document.getElementById('txtDescML').value = slide.textos.desc_ml || '';
+                document.getElementById('txtWa').value = slide.textos.texto_wa || '';
+            }
+            cargarLogo(() => {
+                dibujar();
+                postJson('{{ route('publicaciones.guardar') }}', Object.assign(payloadBase(), {
+                    campana_id: campanaId, es_carrusel: true, slide_orden: slideOrden, padre_id: padreId
+                })).then(data => resolve(data.id)).catch(reject);
+            });
+        };
+        img.onerror = () => reject(new Error('No se pudo cargar la imagen generada.'));
+        img.src = v.url;
     });
 }
 

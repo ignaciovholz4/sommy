@@ -24,7 +24,7 @@ class CampaignBriefService
     /**
      * @param string $brief texto pegado por el usuario (una línea o bloque por pieza)
      * @param array<int, array{id:int,nombre:string,esCombo?:bool}> $catalogo productos y combos reales disponibles
-     * @return array<int, array{numero:int,titulo:string,modo:string,producto_id:?int,menciona_tambien:string,instrucciones:string,formato:string,con_precio:bool}>
+     * @return array<int, array{numero:int,titulo:string,modo:string,producto_id:?int,menciona_tambien:string,instrucciones:string,formato:string,con_precio:bool,tipo:string,slides:array}>
      */
     public function interpretar(string $brief, array $catalogo): array
     {
@@ -38,7 +38,9 @@ class CampaignBriefService
             . "- menciona_tambien: si modo es 'comparativo', los nombres reales del catalogo que tambien aparecen, separados por coma. Si no aplica, string vacio.\n"
             . "- instrucciones: 1-2 frases en espanol describiendo que mostrar en la imagen y de que hablar en el texto, basadas en la descripcion original de esa pieza del brief. No inventes datos (precios, medidas) que no esten ya en el catalogo o en el brief. Si modo es 'comparativo', aclara que en la IMAGEN se muestra SOLO el producto ancla real (producto_id), nunca los otros productos mencionados (esos van solo en el texto/copy).\n"
             . "- formato: 'feed' salvo que el brief pida explicitamente una historia (entonces 'story').\n"
-            . "- con_precio: true SOLO si esa pieza puntual es de oferta/precio/descuento/venta directa (ej: menciona '\$PRECIO', 'OFF', 'promo', 'oferta', 'precio directo'). false para piezas de detalle/macro/textura, institucionales, educativas, de asesoramiento o de marca — la mayoria de las piezas NO llevan precio.\n\n"
+            . "- con_precio: true SOLO si esa pieza puntual es de oferta/precio/descuento/venta directa (ej: menciona '\$PRECIO', 'OFF', 'promo', 'oferta', 'precio directo'). false para piezas de detalle/macro/textura, institucionales, educativas, de asesoramiento o de marca — la mayoria de las piezas NO llevan precio.\n"
+            . "- tipo: 'carrusel' SOLO si el brief dice explicitamente que esa pieza es un carrusel/carousel o lista varios 'slides' numerados dentro de ella. Si no, 'simple'.\n"
+            . "- slides: SOLO si tipo es 'carrusel' — un array con cada slide del brief, en orden, cada uno {numero (posicion 1,2,3...), headline (titular corto de ESE slide), texto (subtexto/dato de ESE slide, breve)}. Si tipo es 'simple', array vacio [].\n\n"
             . "Respondes UNICAMENTE un JSON valido con la forma {\"items\": [...]}, sin texto ni markdown alrededor.";
 
         $user = "CATALOGO REAL (unicos ids validos):\n" . json_encode($catalogo, JSON_UNESCAPED_UNICODE) . "\n\n"
@@ -64,6 +66,11 @@ class CampaignBriefService
                 $item['modo'] = 'marca';
             }
             $item['con_precio'] = (bool) ($item['con_precio'] ?? false);
+            $item['tipo'] = ($item['tipo'] ?? 'simple') === 'carrusel' ? 'carrusel' : 'simple';
+            $item['slides'] = $item['tipo'] === 'carrusel' && is_array($item['slides'] ?? null) ? array_values($item['slides']) : [];
+            if ($item['tipo'] === 'carrusel' && !$item['slides']) {
+                $item['tipo'] = 'simple'; // sin slides no hay carrusel real: se degrada a pieza simple.
+            }
             // Salvaguarda: aunque la IA se olvide de aclararlo, una pieza comparativa nunca puede
             // pedirle a Gemini que dibuje mas de un colchon real (solo tenemos la foto del ancla).
             if (($item['modo'] ?? '') === 'comparativo') {
