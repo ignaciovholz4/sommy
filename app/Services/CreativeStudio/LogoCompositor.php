@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
  */
 class LogoCompositor
 {
-    /** Fondo blanco detrás del logo color, tipo placa, para que siempre resalte sobre una foto. */
+    /** Pegado con fondo transparente real (sin placa blanca), arriba a la izquierda. */
     public function pegarConPlaca($im, int $w, int $h): void
     {
         $logo = $this->cargarLogo(false);
@@ -24,11 +24,6 @@ class LogoCompositor
         $lh = (int) ($lw * imagesy($logo) / imagesx($logo));
         $lx = (int) ($w * 0.055);
         $ly = (int) ($h * 0.045);
-        $padX = (int) ($w * 0.025);
-        $padY = (int) ($lh * 0.28);
-
-        $placa = imagecolorallocate($im, 255, 255, 255);
-        imagefilledrectangle($im, $lx - $padX, $ly - $padY, $lx + $lw + $padX, $ly + $lh + $padY, $placa);
 
         $this->pegarRedimensionado($im, $logo, $lx, $ly, $lw, $lh);
         imagedestroy($logo);
