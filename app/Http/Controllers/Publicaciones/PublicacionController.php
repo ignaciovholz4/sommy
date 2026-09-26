@@ -100,7 +100,7 @@ class PublicacionController extends Controller
     public function interpretarBrief(Request $request, CampaignBriefService $brief)
     {
         $request->validate([
-            'brief' => 'required|string|max:8000',
+            'brief' => 'required|string|max:60000',
         ]);
 
         $catalogo = Articulo::where('estado', 'Activo')->orderBy('nombre')->get()

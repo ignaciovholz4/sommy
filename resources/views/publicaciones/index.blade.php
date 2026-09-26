@@ -606,7 +606,7 @@ function postJson(url, body) {
         body: JSON.stringify(body)
     }).then(async r => {
         const data = await r.json().catch(() => ({}));
-        if (!r.ok || data.status === 0) throw new Error(data.error || 'Error del servidor');
+        if (!r.ok || data.status === 0) throw new Error(data.error || data.message || ('Error del servidor (' + r.status + ')'));
         return data;
     });
 }
