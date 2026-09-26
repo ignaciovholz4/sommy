@@ -37,10 +37,11 @@ class VideoIaService
             . 'ILUMINACIÓN: luz natural pareja y difusa de depósito/local (ventanales o luz de tubo suave), SIN sombras duras ni contraste marcado sobre la cara ni sobre los colchones — nada de un solo foco lateral duro ni sombras teatrales. '
             . 'CÁMARA: la sostiene otra persona (no ella), a la altura de los ojos, con el micro-temblor natural de una mano real, sin selfie stick. '
             . 'RITMO: hablar pausado, con una pausa natural antes del cierre, usando los 8 segundos completos sin apurar el texto. '
-            . 'Incluí un subtítulo animado quemado en el video (estilo reels, letras blancas con contorno, apareciendo en sincro con lo que dice), EXACTAMENTE con este texto, sin inventar ni cambiar palabras: '
+            . 'Incluí SOLAMENTE un subtítulo de texto simple quemado en la parte inferior del video (letras blancas con contorno negro, sin fondo ni globo de dialogo, sin iconos), EXACTAMENTE con este texto, sin inventar ni cambiar palabras: '
             . '"' . $p['nombre'] . ($specs ? '. ' . ucfirst($specs) : '') . '. Directo de fábrica, sin intermediarios.' . $precio . '" '
             . 'Ella dice en voz alta, en español argentino, lo mismo que dice el subtítulo, con entusiasmo genuino y sin sobreactuar, y al final toca el colchón con la mano sonriendo con calma. '
-            . 'Estética real de contenido de redes: un solo plano continuo, sin cortes, sin marca de agua de ninguna otra app.';
+            . 'Estética real de contenido de redes: un solo plano continuo, sin cortes. '
+            . 'PROHIBIDO agregar cualquier elemento de interfaz de aplicación: nada de nombre de usuario, foto de perfil, iconos de me gusta/comentar/compartir, globos de dialogo, barra de navegacion, ni ningun otro overlay de red social — SOLO el video real y el subtítulo de texto simple indicado arriba, nada más.';
     }
 
     /**
