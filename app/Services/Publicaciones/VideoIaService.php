@@ -38,7 +38,7 @@ class VideoIaService
             . 'CÁMARA: la sostiene otra persona (no ella), a la altura de los ojos, con el micro-temblor natural de una mano real, sin selfie stick. '
             . 'RITMO: hablar pausado, con una pausa natural antes del cierre, usando los 8 segundos completos sin apurar el texto. '
             . 'Incluí SOLAMENTE un subtítulo de texto simple quemado en la parte inferior del video (letras blancas con contorno negro, sin fondo ni globo de dialogo, sin iconos), EXACTAMENTE con este texto, sin inventar ni cambiar palabras: '
-            . '"' . $p['nombre'] . ($specs ? '. ' . ucfirst($specs) : '') . '. Directo de fábrica, sin intermediarios.' . $precio . '" '
+            . '"' . $p['nombre'] . ($specs ? '. ' . ucfirst($specs) : '') . '. Directo de fábrica: pagás recién cuando lo recibís.' . $precio . '" '
             . 'Ella dice en voz alta, en español argentino, lo mismo que dice el subtítulo, con entusiasmo genuino y sin sobreactuar, y al final toca el colchón con la mano sonriendo con calma. '
             . 'Estética real de contenido de redes: un solo plano continuo, sin cortes. '
             . 'PROHIBIDO agregar cualquier elemento de interfaz de aplicación: nada de nombre de usuario, foto de perfil, iconos de me gusta/comentar/compartir, globos de dialogo, barra de navegacion, ni ningun otro overlay de red social — SOLO el video real y el subtítulo de texto simple indicado arriba, nada más.';
@@ -55,7 +55,7 @@ class VideoIaService
 
         set_time_limit(400);
 
-        $model = config('services.gemini.video_model', 'veo-3.0-fast-generate-001');
+        $model = config('services.gemini.video_model', 'veo-3.1-fast-generate-preview');
         $apiKey = config('services.gemini.api_key');
         $base = 'https://generativelanguage.googleapis.com/v1beta';
 
