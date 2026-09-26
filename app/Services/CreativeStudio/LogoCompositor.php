@@ -12,21 +12,52 @@ use Illuminate\Support\Facades\DB;
  */
 class LogoCompositor
 {
-    /** Pegado con fondo transparente real (sin placa blanca), arriba a la izquierda. */
+    /**
+     * Pegado con fondo transparente real (sin placa), arriba a la izquierda.
+     * Detecta automáticamente si esa esquina de la foto es oscura o clara y
+     * elige la variante blanca o color del logo para que siempre se vea bien.
+     */
     public function pegarConPlaca($im, int $w, int $h): void
     {
-        $logo = $this->cargarLogo(false);
+        $lw = (int) ($w * 0.30);
+        $lx = (int) ($w * 0.055);
+        $ly = (int) ($h * 0.045);
+
+        $fondoOscuro = $this->esZonaOscura($im, $lx, $ly, $lw, (int) ($lw * 0.4));
+
+        $logo = $this->cargarLogo($fondoOscuro);
         if (!$logo) {
             return;
         }
 
-        $lw = (int) ($w * 0.30);
         $lh = (int) ($lw * imagesy($logo) / imagesx($logo));
-        $lx = (int) ($w * 0.055);
-        $ly = (int) ($h * 0.045);
-
         $this->pegarRedimensionado($im, $logo, $lx, $ly, $lw, $lh);
         imagedestroy($logo);
+    }
+
+    /** Promedia el brillo de una zona de la imagen para decidir si el fondo ahí es oscuro. */
+    protected function esZonaOscura($im, int $x, int $y, int $w, int $h): bool
+    {
+        $anchoImg = imagesx($im);
+        $altoImg = imagesy($im);
+        $paso = 6;
+        $total = 0;
+        $muestras = 0;
+
+        for ($px = $x; $px < min($x + $w, $anchoImg); $px += $paso) {
+            for ($py = $y; $py < min($y + $h, $altoImg); $py += $paso) {
+                $color = imagecolorat($im, $px, $py);
+                $rgb = imagecolorsforindex($im, $color);
+                $total += (0.299 * $rgb['red'] + 0.587 * $rgb['green'] + 0.114 * $rgb['blue']);
+                $muestras++;
+            }
+        }
+
+        if ($muestras === 0) {
+            return false;
+        }
+
+        return ($total / $muestras) < 140;
     }
 
     /** Pegado directo (sin placa), eligiendo la variante blanca si el fondo es oscuro. */
