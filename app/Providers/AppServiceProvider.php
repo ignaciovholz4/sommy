@@ -12,6 +12,9 @@ use App\Http\ViewComposers\RedirectComposer;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Http\Request;
+use App\Services\CreativeStudio\AiProvider\ImageProviderInterface;
+use App\Services\CreativeStudio\AiProvider\GeminiImageProvider;
+use App\Services\CreativeStudio\AiProvider\OpenAiImageProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,7 +25,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        // Estudio de Publicaciones: proveedor de imagenes intercambiable (config('services.publicaciones.image_provider')).
+        $this->app->bind(ImageProviderInterface::class, function () {
+            return config('services.publicaciones.image_provider') === 'gemini'
+                ? new GeminiImageProvider()
+                : new OpenAiImageProvider();
+        });
     }
 
     /**

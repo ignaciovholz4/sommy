@@ -32,6 +32,7 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
+        'image_model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-1'),
     ],
 
     'gemini' => [
@@ -43,6 +44,7 @@ return [
 
     'publicaciones' => [
         'copy_model' => env('PUBLICACIONES_COPY_MODEL', 'gpt-4o-mini'),
+        'image_provider' => env('PUBLICACIONES_IMAGE_PROVIDER', 'openai'), // 'openai' o 'gemini'
     ],
 
     'reportes' => [

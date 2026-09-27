@@ -2,17 +2,19 @@
 
 namespace App\Services\Publicaciones;
 
-use App\Services\CreativeStudio\AiProvider\GeminiImageProvider;
+use App\Services\CreativeStudio\AiProvider\ImageProviderInterface;
+use App\Services\CreativeStudio\AiProvider\OpenAiImageProvider;
 use App\Services\CreativeStudio\PromptEngine\PromptBuilder;
 use App\Services\CreativeStudio\ProductLibraryService;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Fachada del chat sobre el motor compartido de Sommy Creative Studio
- * (PromptBuilder + GeminiImageProvider): arma el prompt con las reglas de
- * marca/fidelidad de producto y genera la(s) escena(s). El precio/logo NO
- * van en la imagen IA: los superpone el canvas del Estudio con datos
- * exactos del ERP.
+ * (PromptBuilder + ImageProviderInterface): arma el prompt con las reglas de
+ * marca/fidelidad de producto y genera la(s) escena(s). El proveedor de IA
+ * (OpenAI/Gemini) se elige por config('services.publicaciones.image_provider'),
+ * ver AppServiceProvider. El precio/logo NO van en la imagen IA: los superpone
+ * el canvas del Estudio con datos exactos del ERP.
  */
 class ImagenIaService
 {
@@ -20,7 +22,7 @@ class ImagenIaService
     public const ESCENAS = PromptBuilder::ESCENAS;
 
     public function __construct(
-        protected GeminiImageProvider $provider = new GeminiImageProvider(),
+        protected ImageProviderInterface $provider = new OpenAiImageProvider(),
         protected ProductLibraryService $productos = new ProductLibraryService(),
     ) {
     }
