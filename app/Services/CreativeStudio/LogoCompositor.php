@@ -30,7 +30,7 @@ class LogoCompositor
 
         $logo = $this->cargarLogo($fondoOscuro);
         if (!$logo) {
-            return;
+            throw new \RuntimeException('No se pudo cargar el logo real para componer (archivo faltante o fallo de decodificacion) — la pieza NO se genero para evitar publicar el logo falso que dibuja la IA.');
         }
 
         $recorte = $this->recortarAlContenido($logo);
@@ -101,7 +101,7 @@ class LogoCompositor
     {
         $logo = $this->cargarLogo($fondoOscuro);
         if (!$logo) {
-            return;
+            throw new \RuntimeException('No se pudo cargar el logo real para componer (archivo faltante o fallo de decodificacion).');
         }
 
         $lw = (int) ($w * 0.34);
@@ -147,12 +147,21 @@ class LogoCompositor
             return null;
         }
 
-        $im = match (strtolower(pathinfo($ruta, PATHINFO_EXTENSION))) {
+        $decodificar = fn () => match (strtolower(pathinfo($ruta, PATHINFO_EXTENSION))) {
             'webp' => @imagecreatefromwebp($ruta),
             'png'  => @imagecreatefrompng($ruta),
             'jpg', 'jpeg' => @imagecreatefromjpeg($ruta),
             default => null,
         };
+
+        // Reintento simple: la decodificacion puede fallar transitoriamente por
+        // memoria si justo antes se cargo una foto grande (fotos de OpenAI pesan
+        // bastante mas que las de Gemini) — con un segundo intento casi siempre alcanza.
+        $im = $decodificar();
+        if (!$im) {
+            usleep(200000);
+            $im = $decodificar();
+        }
 
         if ($im) {
             imagealphablending($im, true);
