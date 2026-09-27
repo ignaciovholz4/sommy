@@ -46,7 +46,7 @@
                   </div>
 
                   @if($product->precio_desde && $product->variantes->count() > 1)
-                    <div style="font-size:11px;color:#475569;">
+                    <div style="font-size:13px;color:#475569;">
                       @foreach($product->variantes as $variante)
                         <div class="d-flex justify-content-between">
                           <span>{{ $variante->plaza }} <span class="text-muted">{{ $variante->medida }}</span></span>
@@ -56,7 +56,7 @@
                     </div>
                   @else
                     @if($product->precio_desde)
-                      <span class="d-block" style="font-size:11px;color:#64748b;">Desde</span>
+                      <span class="d-block" style="font-size:13px;color:#64748b;">Desde</span>
                     @endif
                     <span class="price">{{ format_money_global($product->display_price) }}</span>
                   @endif

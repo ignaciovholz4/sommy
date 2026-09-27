@@ -193,7 +193,7 @@ img { max-width: 100%; }
 
 .product-item .qty {
     display: block;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--ec-light);
     margin-bottom: 4px;
     text-transform: uppercase;
