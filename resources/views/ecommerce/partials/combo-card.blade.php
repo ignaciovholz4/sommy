@@ -43,8 +43,14 @@
       <span class="fw-bold">${{ number_format($combo->display_price, 2, ',', '.') }}</span>
     </div>
 
-    <div class="text-center div-button-cart">
+    <div class="text-center div-button-cart d-flex flex-column gap-2">
       <a class="btn btn-add-prod" href="{{ url('producto/' . $combo->producto->slug) }}">Armar combo</a>
+      @if(!empty($arrayEmpresa['whatsapp']))
+      <a class="btn-whatsapp-prod" target="_blank" rel="noopener noreferrer"
+         href="https://wa.me/{{ preg_replace('/\D/', '', $arrayEmpresa['whatsapp']) }}?text={{ urlencode('Hola! Quiero consultar por el combo ' . $combo->producto->nombre . ' a $' . number_format($combo->display_price, 0, ',', '.') . '. Lo vi acá: ' . url('producto/' . $combo->producto->slug)) }}">
+        <i class="fa-brands fa-whatsapp"></i> Pedir por WhatsApp
+      </a>
+      @endif
     </div>
   </div>
 </div>
