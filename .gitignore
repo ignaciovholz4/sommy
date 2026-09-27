@@ -30,3 +30,6 @@ script.sql
 /whatsapp-bridge/.env
 
 /public/storage
+
+# Videos de referencia personales (pesados, no son parte del codigo ni se deployan)
+/videos/
