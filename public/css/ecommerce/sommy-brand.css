@@ -483,7 +483,7 @@ p { line-height: 1.7; }
    pasa a mostrarse: si "display" se pisa para TODOS los .carousel-item, Bootstrap
    ya no puede ocultar los inactivos y quedan todos apilados uno debajo del otro. */
 .sommy-banner-slide {
-    min-height: 380px;
+    min-height: 560px;
     background: #fff;
     border-radius: 0;
     overflow: hidden;
@@ -613,6 +613,7 @@ p { line-height: 1.7; }
     .sommy-banner-slide.carousel-item-prev {
         display: block;
     }
+    .sommy-banner-slide { min-height: 0; }
     .sommy-banner-media { max-width: 100%; height: auto; }
     .sommy-banner-img { height: auto; object-fit: initial; }
     /* Pisa una regla vieja y genérica de main_ecommerce.css (".carousel-item img
