@@ -13,21 +13,17 @@
         <img src="{{asset('imagenes/articulos/'.$combo->producto->imagen )}}" class="tab-image">
       </a>
     </figure>
+    @php
+      $extras = array_filter([
+        !empty($combo->incluye) ? implode(' + ', $combo->incluye) : null,
+        !empty($combo->regalos) ? implode(' + ', $combo->regalos) . ' de regalo' : null,
+      ]);
+    @endphp
     <div class="name-product">
-      <h3>
-        {{ $combo->producto->nombre }}
-        @if($combo->incluye_sommier)
-          <span class="badge bg-primary" style="font-size:10px;vertical-align:middle;">+ Sommier</span>
-        @endif
-      </h3>
-      @if(!empty($combo->incluye))
-        <div style="font-size:12px;color:#16a34a;">
-          <i class="fas fa-check-circle"></i> Incluye {{ implode(' + ', $combo->incluye) }}
-        </div>
-      @endif
-      @if(!empty($combo->regalos))
-        <div style="font-size:12px;color:#16a34a;">
-          <i class="fas fa-gift"></i> + {{ implode(' + ', $combo->regalos) }} de regalo
+      <h3>{{ $combo->producto->nombre }}</h3>
+      @if(!empty($extras))
+        <div style="font-size:12.5px;color:#16a34a;font-weight:600;">
+          <i class="fas fa-gift"></i> + {{ implode(' + ', $extras) }}
         </div>
       @endif
     </div>
