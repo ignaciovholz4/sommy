@@ -665,10 +665,10 @@ class VentaController extends Controller
     }
 
     /** Descarga la factura/comprobante de una venta en PDF (A4). */
-    public function pdf($id)
+    public function pdf($idventa)
     {
         $venta = Venta::with(['cliente', 'tipoComprobante', 'sucursal', 'detalles.articulo', 'detalles.combinacion', 'movimientos.cuenta'])
-            ->findOrFail($id);
+            ->findOrFail($idventa);
 
         $empresa = (object) \App\Http\Controllers\Ecommerce\ShareController::getEmpresaImage();
         $configuracion = DB::table('configuracion')->first();
