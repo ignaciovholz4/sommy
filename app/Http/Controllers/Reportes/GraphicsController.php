@@ -560,8 +560,7 @@ class GraphicsController extends Controller
             ->where('v.estado', 'NOT LIKE', 'Cancel%')
             ->where('v.estado', 'NOT LIKE', 'Anul%')
             ->whereBetween('v.fecha', [$desde, $hasta])
-            ->when($sucursalesPermitidas, fn ($q, $s) => $q->whereIn('v.sucursal_id', $s))
-            ->selectRaw('dv.subtotal_con_iva as venta, dv.cantidad * COALESCE(pc.pcompra_variante, p.pcompra_con_iva, 0) as costo');
+            ->when($sucursalesPermitidas, fn ($q, $s) => $q->whereIn('v.sucursal_id', $s));
 
         $conGanancia = fn ($r) => tap($r, function ($row) {
             $row->ganancia = (float) $row->facturado - (float) $row->costo;
@@ -603,7 +602,7 @@ class GraphicsController extends Controller
             ->map($conGanancia)
             ->sortByDesc('ganancia')->values();
 
-        $totalesRow = $base()->selectRaw('COALESCE(SUM(venta),0) as facturado, COALESCE(SUM(costo),0) as costo')->first();
+        $totalesRow = $base()->selectRaw('COALESCE(SUM(dv.subtotal_con_iva),0) as facturado, COALESCE(SUM(dv.cantidad * COALESCE(pc.pcompra_variante, p.pcompra_con_iva, 0)),0) as costo')->first();
         $totales = (object) [
             'facturado'  => (float) $totalesRow->facturado,
             'costo'      => (float) $totalesRow->costo,
