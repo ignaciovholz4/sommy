@@ -58,7 +58,7 @@
             <div class="folio">{{ $venta->num_folio ?: 'Venta #' . $venta->idventa }}</div>
             <div class="fecha">{{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}</div>
         </div>
-        <img class="logo" src="{{ public_path('imagenes/marca/sommy-logo-header.png') }}" alt="Sommy">
+        @if($logo)<img class="logo" src="{{ $logo }}" alt="Sommy">@endif
         <div class="empresa">{{ $razonSocial }}</div>
         <div class="empresa-sub">
             @if($cuit)CUIT: {{ $cuit }}<br>@endif

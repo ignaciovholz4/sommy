@@ -246,11 +246,12 @@
                 <div class="dato"><i class="fas fa-truck"></i> {{ optional($e->transportista)->nombre ?: '—' }}
                     @if($e->fecha_entrega_real) · {{ $e->fecha_entrega_real->format('d/m/Y') }}@endif
                 </div>
-                @if($e->estado === 'fallido')
                 <div class="env-btns">
+                    <a class="env-btn sec" href="{{ $e->order_ecommerce_id ? url('remito/pedido/' . $e->order_ecommerce_id) : url('remito/venta/' . $e->venta_id) }}" target="_blank" title="Remito en PDF"><i class="fas fa-file-alt"></i> Remito</a>
+                    @if($e->estado === 'fallido')
                     <button class="env-btn sec" onclick="etapa({{ $e->id }}, 'despachar', this)">Reintentar envío</button>
+                    @endif
                 </div>
-                @endif
             </div>
             @empty
             <div class="env-vacio">Sin entregas en el último mes.</div>

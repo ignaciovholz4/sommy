@@ -147,14 +147,14 @@ class PresupuestoController extends Controller
     /**
      * Formulario de edición
      */
-    public function edit($idpresupuesto)
+    public function edit($presupuesto)
     {
         $presupuesto = Presupuesto::with([
             'cliente',
             'detalles.articulo',
             'detalles.combinacion.producto',
             'detalles.priceList'
-        ])->findOrFail($idpresupuesto);
+        ])->findOrFail($presupuesto);
 
         $clientes = Cliente::where('estatus', 'Activo')->orderBy('nombre')->get();
         $ivas = Iva::all();
@@ -344,7 +344,7 @@ class PresupuestoController extends Controller
     }
 
     // Detalle de un presupuesto
-    public function detail($id)
+    public function detail($idpresupuesto)
     {
         $presupuesto = Presupuesto::with([
             'cliente',
@@ -352,7 +352,7 @@ class PresupuestoController extends Controller
             'detalles.combinacion',
             'detalles.priceList',
             'sucursal'
-        ])->findOrFail($id);
+        ])->findOrFail($idpresupuesto);
 
         $detalles = $presupuesto->detalles->map(function($d) {
             return [
@@ -392,20 +392,31 @@ class PresupuestoController extends Controller
 
     public function generatePdf($idpresupuesto)
     {
-        $presupuesto = Presupuesto::with(['cliente', 'detalles.articulo', 'detalles.combinacion'])
+        $presupuesto = Presupuesto::with(['cliente', 'detalles.articulo.imagenes', 'detalles.combinacion'])
             ->findOrFail($idpresupuesto);
 
+        $dataUri = function (?string $path) {
+            if (!$path) return null;
+            $full = public_path($path);
+            if (!is_file($full)) return null;
+            $mime = mime_content_type($full) ?: 'image/jpeg';
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($full));
+        };
+
         // Armamos los detalles
-        $detalle = $presupuesto->detalles->map(function($d) {
+        $detalle = $presupuesto->detalles->map(function($d) use ($dataUri) {
             // La medida (ej. "0,80 x 1,90") vive en la combinación elegida; si el
             // producto no tiene variantes, se muestra la plaza fija del artículo.
             $medida = $d->combinacion->combinacion
                 ?? ($d->articulo->plazas ? (Articulo::PLAZAS[$d->articulo->plazas] ?? $d->articulo->plazas) : '');
 
+            $imgPrincipal = $d->articulo->imagenes->firstWhere('principal', true) ?? $d->articulo->imagenes->first();
+
             return [
                 'codigo' => $d->articulo->codigo ?? '',
                 'nombre' => $d->articulo->nombre,
                 'medida' => $medida,
+                'imagen' => $dataUri($imgPrincipal->path ?? null),
                 'cantidad' => $d->cantidad,
                 'precio_unitario' => number_format($d->precio_unitario, 2, ',', '.'),
                 'subtotal_neto' => number_format($d->subtotal_neto, 2, ',', '.'),
@@ -418,7 +429,7 @@ class PresupuestoController extends Controller
 
         // Armamos datos del presupuesto
         $data = [
-            'logo' => public_path('imagenes/marca/sommy-logo-magia.png'),
+            'logo' => $dataUri('imagenes/marca/sommy-logo-magia.png'),
             'cliente' => $presupuesto->cliente->nombre.' '.$presupuesto->cliente->paterno.' '.$presupuesto->cliente->materno,
             'direccion' => $presupuesto->cliente->direccion ?? '',
             'telefono' => $presupuesto->cliente->telefono ?? '',
@@ -442,9 +453,9 @@ class PresupuestoController extends Controller
         return $pdf->stream('presupuesto_'.$presupuesto->idpresupuesto.'.pdf');
     }
 
-    public function changeState(Request $request, $id)
+    public function changeState(Request $request, $idpresupuesto)
     {
-        $presupuesto = Presupuesto::with('detalles.articulo', 'cliente')->findOrFail($id);
+        $presupuesto = Presupuesto::with('detalles.articulo', 'cliente')->findOrFail($idpresupuesto);
         $nuevoEstado = $request->input('estado');
 
         if ($presupuesto->estado === 'borrador' && $nuevoEstado === 'confirmado') {

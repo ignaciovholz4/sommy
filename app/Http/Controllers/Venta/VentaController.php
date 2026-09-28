@@ -675,6 +675,9 @@ class VentaController extends Controller
 
         $cobrado = (float) $venta->movimientos->sum('total_ars');
 
+        $logoPath = public_path('imagenes/marca/sommy-logo-header.png');
+        $logo = is_file($logoPath) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath)) : null;
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('ventas.pdf', [
             'venta'         => $venta,
             'empresa'       => $empresa,
@@ -682,6 +685,7 @@ class VentaController extends Controller
             'razonSocial'   => $configuracion->razon_social ?? $empresa->name,
             'cobrado'       => $cobrado,
             'pendiente'     => max(0, (float) $venta->total_con_iva - $cobrado),
+            'logo'          => $logo,
         ])->setPaper('a4');
 
         $nombre = 'factura-' . ($venta->num_folio ?: $venta->idventa) . '.pdf';

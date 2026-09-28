@@ -967,6 +967,8 @@ Route::get('/fletero/{token}', [\App\Http\Controllers\Envios\FleteroPortalContro
 Route::post('/fletero/{token}/entrega/{envioId}', [\App\Http\Controllers\Envios\FleteroPortalController::class, 'confirmarEntrega'])->name('fletero.entrega')->middleware('throttle:30,1');
 Route::get('/etiqueta/pedido/{id}', [\App\Http\Controllers\Envios\EtiquetaController::class, 'pedido'])->name('etiqueta.pedido')->middleware(['auth','verified']);
 Route::get('/etiqueta/venta/{id}', [\App\Http\Controllers\Envios\EtiquetaController::class, 'venta'])->name('etiqueta.venta')->middleware(['auth','verified']);
+Route::get('/remito/pedido/{id}', [\App\Http\Controllers\Envios\RemitoController::class, 'pedido'])->name('remito.pedido')->middleware(['auth','verified']);
+Route::get('/remito/venta/{id}', [\App\Http\Controllers\Envios\RemitoController::class, 'venta'])->name('remito.venta')->middleware(['auth','verified']);
 
 /** ESTUDIO DE PUBLICACIONES */
 Route::get('/publicaciones', [\App\Http\Controllers\Publicaciones\PublicacionController::class, 'index'])->name('publicaciones.index')->middleware(['auth','verified']);
