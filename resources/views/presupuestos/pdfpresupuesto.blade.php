@@ -5,32 +5,41 @@
     <title>Presupuesto {{ $folio }}</title>
     <style>
         * { font-family: Helvetica, Arial, sans-serif; box-sizing: border-box; }
-        body { color: #1F2A44; font-size: 13px; margin: 0; padding: 28px 34px; }
+        body { color: #1F2A44; font-size: 13px; margin: 0; padding: 0 34px 28px; }
 
-        /* ── Encabezado ─────────────────────────────────────────── */
-        .header { width: 100%; margin-bottom: 22px; }
-        .header .logo-cell { width: 55%; float: left; }
-        .header .logo-cell img { height: 46px; }
-        .header .title-cell { width: 45%; float: left; text-align: right; }
-        .header .title-cell .titulo { font-size: 22px; font-weight: bold; color: #03569F; letter-spacing: .5px; }
-        .header .title-cell .folio { display: inline-block; margin-top: 6px; padding: 5px 12px; background-color: #03569F; color: #fff; font-size: 12px; font-weight: bold; border-radius: 3px; }
+        /* ── Encabezado oscuro (estilo "Somos fabricantes") ────── */
+        .top-band {
+            background-color: #0C1428;
+            margin: 0 -34px 24px;
+            padding: 26px 34px 24px;
+            border-radius: 0 0 18px 18px;
+        }
+        .top-band .logo-plate {
+            display: inline-block;
+            background-color: #fff;
+            border-radius: 999px;
+            padding: 8px 18px;
+        }
+        .top-band .logo-plate img { height: 32px; }
+        .top-band .title-cell { width: 45%; float: right; text-align: right; margin-top: 4px; }
+        .top-band .logo-cell { width: 55%; float: left; }
+        .top-band .title-cell .titulo { font-size: 20px; font-weight: bold; color: #fff; letter-spacing: 1.5px; }
+        .top-band .title-cell .folio { display: inline-block; margin-top: 8px; padding: 5px 14px; background-color: #C9A227; color: #0C1428; font-size: 12px; font-weight: bold; border-radius: 999px; }
         .clear { clear: both; }
-        .divider { border-bottom: 2px solid #03569F; margin-bottom: 18px; }
 
         /* ── Datos cliente / presupuesto ───────────────────────── */
         .info { width: 100%; margin-bottom: 22px; }
-        .info .box { width: 48%; float: left; background-color: #F4F7FB; border-radius: 6px; padding: 14px 16px; }
+        .info .box { width: 48%; float: left; background-color: #F4F7FB; border-radius: 10px; padding: 14px 16px; }
         .info .box.right { float: right; }
         .info .box p { margin: 0 0 6px 0; }
         .info .box p:last-child { margin-bottom: 0; }
         .label { color: #6B7A99; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; display: block; }
         .value { font-size: 13px; font-weight: bold; color: #1F2A44; }
-        .badge-estado { display: inline-block; padding: 2px 9px; border-radius: 10px; background-color: #E7EEF8; color: #03569F; font-weight: bold; font-size: 11px; text-transform: capitalize; }
 
         /* ── Tabla de artículos ─────────────────────────────────── */
-        .section-title { font-size: 13px; font-weight: bold; color: #1F2A44; margin: 0 0 8px 0; }
+        .section-title { font-size: 13px; font-weight: bold; color: #1B2B5A; margin: 0 0 8px 0; }
         table.items { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
-        table.items thead th { background-color: #03569F; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; padding: 9px 8px; text-align: left; }
+        table.items thead th { background-color: #1B2B5A; color: #fff; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; padding: 9px 8px; text-align: left; }
         table.items thead th.num { text-align: right; }
         table.items tbody td { padding: 8px; border-bottom: 1px solid #E7EAF2; font-size: 12.5px; }
         table.items tbody td.num { text-align: right; }
@@ -44,15 +53,17 @@
         .totales td { padding: 6px 10px; font-size: 12.5px; }
         .totales td.lbl { color: #6B7A99; }
         .totales td.val { text-align: right; }
-        .totales tr.total td { border-top: 2px solid #03569F; padding-top: 10px; font-size: 15px; font-weight: bold; color: #03569F; }
+        .totales tr.total td { border-top: 2px solid #1B2B5A; padding-top: 10px; font-size: 15px; font-weight: bold; color: #1B2B5A; }
 
         .footer-note { margin-top: 34px; padding-top: 10px; border-top: 1px solid #E7EAF2; font-size: 10.5px; color: #8A93A6; text-align: center; }
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="top-band">
         <div class="logo-cell">
-            @if(is_file($logo))<img src="{{ $logo }}">@endif
+            @if(is_file($logo))
+            <div class="logo-plate"><img src="{{ $logo }}"></div>
+            @endif
         </div>
         <div class="title-cell">
             <div class="titulo">PRESUPUESTO</div>
@@ -60,7 +71,6 @@
         </div>
         <div class="clear"></div>
     </div>
-    <div class="divider"></div>
 
     <div class="info">
         <div class="box">
@@ -71,7 +81,6 @@
         </div>
         <div class="box right">
             <p><span class="label">Fecha</span><span class="value">{{ $fecha }}</span></p>
-            <p><span class="label">Estado</span><span class="badge-estado">{{ $estado }}</span></p>
         </div>
         <div class="clear"></div>
     </div>

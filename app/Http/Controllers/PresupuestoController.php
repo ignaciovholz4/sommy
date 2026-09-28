@@ -418,7 +418,7 @@ class PresupuestoController extends Controller
 
         // Armamos datos del presupuesto
         $data = [
-            'logo' => public_path('imagenes/marca/sommy-logo.png'),
+            'logo' => public_path('imagenes/marca/sommy-logo-magia.png'),
             'cliente' => $presupuesto->cliente->nombre.' '.$presupuesto->cliente->paterno.' '.$presupuesto->cliente->materno,
             'direccion' => $presupuesto->cliente->direccion ?? '',
             'telefono' => $presupuesto->cliente->telefono ?? '',
