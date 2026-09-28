@@ -162,7 +162,8 @@
     // Datos de cada venta para la tarjeta (los mismos que tenía la grilla)
     $cardDatos = function ($v) {
         $costoTotal = 0;
-        $productos = $v->detalles->map(function ($d) use (&$costoTotal) {
+        $puedeVerCostos = auth()->user()->havePermission('productos.ver_costos');
+        $productos = $v->detalles->map(function ($d) use (&$costoTotal, $puedeVerCostos) {
             $nombre = optional($d->articulo)->nombre ?: 'Producto eliminado';
             $medida = optional($d->combinacion)->combinacion;
             // Costo actual del producto/variante (no queda guardado el costo
@@ -171,10 +172,18 @@
             $costoUnitario = $d->combinacion_id
                 ? (float) optional($d->combinacion)->pcompra_variante
                 : (float) optional($d->articulo)->pcompra_con_iva;
-            $costoTotal += $costoUnitario * $d->cantidad;
+            $costoLinea = $costoUnitario * $d->cantidad;
+            $costoTotal += $costoLinea;
+            $gananciaLinea = (float) $d->subtotal_con_iva - $costoLinea;
 
-            return (int) $d->cantidad . 'x ' . $nombre . ($medida ? ' — ' . $medida : '')
+            $linea = (int) $d->cantidad . 'x ' . $nombre . ($medida ? ' — ' . $medida : '')
                 . ' — $' . number_format($d->subtotal_con_iva, 0, ',', '.');
+
+            if ($puedeVerCostos) {
+                $linea .= ' <span style="color:' . ($gananciaLinea >= 0 ? '#0d8a4f' : '#b4552d') . ';font-weight:600;">(ganancia $' . number_format($gananciaLinea, 0, ',', '.') . ')</span>';
+            }
+
+            return $linea;
         })->all();
 
         return [
@@ -225,7 +234,7 @@
                 @if(!empty($d['productos']))
                 <div class="dato" style="line-height:1.7;">
                     <i class="fas fa-box"></i>
-                    @foreach($d['productos'] as $p){{ $p }}@if(!$loop->last)<br>@endif @endforeach
+                    @foreach($d['productos'] as $p){!! $p !!}@if(!$loop->last)<br>@endif @endforeach
                 </div>
                 @endif
                 @php $cobradoV = (float) $v->movimientos->sum('total'); @endphp
@@ -275,7 +284,7 @@
                 @if(!empty($d['productos']))
                 <div class="dato" style="line-height:1.7;">
                     <i class="fas fa-box"></i>
-                    @foreach($d['productos'] as $p){{ $p }}@if(!$loop->last)<br>@endif @endforeach
+                    @foreach($d['productos'] as $p){!! $p !!}@if(!$loop->last)<br>@endif @endforeach
                 </div>
                 @endif
                 <div class="monto">${{ number_format($v->total_con_iva, 2, ',', '.') }}</div>
@@ -313,7 +322,7 @@
                 @if(!empty($d['productos']))
                 <div class="dato" style="line-height:1.7;">
                     <i class="fas fa-box"></i>
-                    @foreach($d['productos'] as $p){{ $p }}@if(!$loop->last)<br>@endif @endforeach
+                    @foreach($d['productos'] as $p){!! $p !!}@if(!$loop->last)<br>@endif @endforeach
                 </div>
                 @endif
                 <div class="monto" style="text-decoration:line-through;">${{ number_format($v->total_con_iva, 2, ',', '.') }}</div>
