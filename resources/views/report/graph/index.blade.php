@@ -208,7 +208,11 @@
             </div>
         </div>
         <div class="ceo-panel">
-            <h3>Top productos del período</h3>
+            <h3>Top productos del período
+                @if($kpis['margen'])
+                    <a class="ceo-link" style="float:right;text-transform:none;font-weight:500;" href="{{ url('/graph/rentabilidad') }}?desde={{ $desde->format('Y-m-d') }}&hasta={{ $hasta->format('Y-m-d') }}">Ver ganancia por cliente y producto →</a>
+                @endif
+            </h3>
             @if($topProductos->isEmpty())
                 <div class="empty">Sin ventas en el período.</div>
             @else

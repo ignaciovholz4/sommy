@@ -821,6 +821,8 @@ Route::get('/ticketcorte', [CortecajaController::class, 'ticket'])->name('ticket
 /**REPORTS*/
 Route::get('/graph', [GraphicsController::class, 'index'])->name('graph')->middleware(['auth','verified']);
 Route::get('/graph/movimientos', [GraphicsController::class, 'movimientos'])->name('graph.movimientos')->middleware(['auth','verified']);
+Route::get('/graph/rentabilidad', [GraphicsController::class, 'rentabilidad'])->name('graph.rentabilidad')->middleware(['auth','verified']);
+Route::get('/graph/rentabilidad/pdf', [GraphicsController::class, 'rentabilidadPdf'])->name('graph.rentabilidad.pdf')->middleware(['auth','verified']);
 Route::post('/getdatagraph', [GraphicsController::class, 'get_data'])->name('getdatagraph')->middleware(['auth','verified']);
 Route::post('/getmesgraph', [GraphicsController::class, 'get_data_mes'])->name('getmesgraph')->middleware(['auth','verified']);
 

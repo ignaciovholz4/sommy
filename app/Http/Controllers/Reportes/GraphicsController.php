@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Gate;
 
 use Illuminate\Support\Facades\DB;
 use Response;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -496,6 +497,121 @@ class GraphicsController extends Controller
             'cxpVencidas', 'cxpProximas', 'cxpVencidoTotal', 'cxpProximasTotal',
             'comparativaProveedores'
         ));
+    }
+
+    /**
+     * Rentabilidad: ganancia real (venta - costo) por cliente y por producto,
+     * mas el total del periodo. Usa el costo ACTUAL del producto/variante
+     * (pcompra_con_iva / pcompra_variante) porque detalle_ventas no guarda
+     * una foto del costo al momento de la venta -- si el costo cambio desde
+     * entonces, el numero de ventas viejas queda aproximado, no exacto.
+     * Oculto sin el permiso "productos.ver_costos" (misma regla que el margen
+     * del dashboard principal).
+     */
+    public function rentabilidad(Request $request)
+    {
+        Gate::authorize('haveaccess', 'reporte.index');
+
+        if (!auth()->user()->havePermission('productos.ver_costos')) {
+            abort(403, 'No tenés permiso para ver costos y ganancias.');
+        }
+
+        [$desde, $hasta, $porCliente, $porProducto, $totales] = $this->calcularRentabilidad($request);
+
+        return view('report.graph.rentabilidad', compact('desde', 'hasta', 'porCliente', 'porProducto', 'totales'));
+    }
+
+    public function rentabilidadPdf(Request $request)
+    {
+        Gate::authorize('haveaccess', 'reporte.index');
+
+        if (!auth()->user()->havePermission('productos.ver_costos')) {
+            abort(403, 'No tenés permiso para ver costos y ganancias.');
+        }
+
+        [$desde, $hasta, $porCliente, $porProducto, $totales] = $this->calcularRentabilidad($request);
+
+        $pdf = Pdf::loadView('report.graph.rentabilidad-pdf', [
+            'desde' => $desde, 'hasta' => $hasta,
+            'porCliente' => $porCliente, 'porProducto' => $porProducto, 'totales' => $totales,
+            'fecha' => now()->format('d/m/Y H:i'),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('rentabilidad-' . $desde->format('Ymd') . '_' . $hasta->format('Ymd') . '.pdf');
+    }
+
+    /** Arma ganancia por cliente y por producto para el periodo pedido, reutilizado por rentabilidad() y rentabilidadPdf(). */
+    protected function calcularRentabilidad(Request $request): array
+    {
+        $desde = $request->filled('desde') ? Carbon::parse($request->input('desde'))->startOfDay() : Carbon::now()->startOfMonth();
+        $hasta = $request->filled('hasta') ? Carbon::parse($request->input('hasta'))->endOfDay()   : Carbon::now()->endOfDay();
+        if ($hasta->lt($desde)) {
+            [$desde, $hasta] = [$hasta->copy()->startOfDay(), $desde->copy()->endOfDay()];
+        }
+
+        $sucursalesPermitidas = auth()->user()->sucursalesPermitidas();
+
+        // Costo real: el de la variante vendida (pcompra_variante) si la venta fue por
+        // combinacion, si no el costo base del producto (pcompra_con_iva).
+        $base = fn () => DB::table('detalle_ventas as dv')
+            ->join('ventas as v', 'v.idventa', '=', 'dv.venta_id')
+            ->join('productos as p', 'p.idarticulo', '=', 'dv.articulo_id')
+            ->leftJoin('producto_combinaciones as pc', 'pc.idcombinacion', '=', 'dv.combinacion_id')
+            ->where('v.estado', 'NOT LIKE', 'Cancel%')
+            ->where('v.estado', 'NOT LIKE', 'Anul%')
+            ->whereBetween('v.fecha', [$desde, $hasta])
+            ->when($sucursalesPermitidas, fn ($q, $s) => $q->whereIn('v.sucursal_id', $s))
+            ->selectRaw('dv.subtotal_con_iva as venta, dv.cantidad * COALESCE(pc.pcompra_variante, p.pcompra_con_iva, 0) as costo');
+
+        $conGanancia = fn ($r) => tap($r, function ($row) {
+            $row->ganancia = (float) $row->facturado - (float) $row->costo;
+            $row->margen_pct = $row->facturado > 0 ? ($row->ganancia / $row->facturado) * 100 : 0;
+        });
+
+        $porCliente = DB::table('detalle_ventas as dv')
+            ->join('ventas as v', 'v.idventa', '=', 'dv.venta_id')
+            ->join('productos as p', 'p.idarticulo', '=', 'dv.articulo_id')
+            ->leftJoin('producto_combinaciones as pc', 'pc.idcombinacion', '=', 'dv.combinacion_id')
+            ->join('clientes as c', 'c.idcliente', '=', 'v.cliente_id')
+            ->where('v.estado', 'NOT LIKE', 'Cancel%')
+            ->where('v.estado', 'NOT LIKE', 'Anul%')
+            ->whereBetween('v.fecha', [$desde, $hasta])
+            ->when($sucursalesPermitidas, fn ($q, $s) => $q->whereIn('v.sucursal_id', $s))
+            ->groupBy('c.idcliente', 'c.nombre', 'c.paterno')
+            ->selectRaw("c.idcliente, TRIM(CONCAT(c.nombre,' ',COALESCE(c.paterno,''))) as nombre,
+                COUNT(DISTINCT v.idventa) as ventas,
+                COALESCE(SUM(dv.subtotal_con_iva),0) as facturado,
+                COALESCE(SUM(dv.cantidad * COALESCE(pc.pcompra_variante, p.pcompra_con_iva, 0)),0) as costo")
+            ->orderByDesc('facturado')->get()
+            ->map($conGanancia)
+            ->sortByDesc('ganancia')->values();
+
+        $porProducto = DB::table('detalle_ventas as dv')
+            ->join('ventas as v', 'v.idventa', '=', 'dv.venta_id')
+            ->join('productos as p', 'p.idarticulo', '=', 'dv.articulo_id')
+            ->leftJoin('producto_combinaciones as pc', 'pc.idcombinacion', '=', 'dv.combinacion_id')
+            ->where('v.estado', 'NOT LIKE', 'Cancel%')
+            ->where('v.estado', 'NOT LIKE', 'Anul%')
+            ->whereBetween('v.fecha', [$desde, $hasta])
+            ->when($sucursalesPermitidas, fn ($q, $s) => $q->whereIn('v.sucursal_id', $s))
+            ->groupBy('p.idarticulo', 'p.nombre')
+            ->selectRaw('p.idarticulo, p.nombre,
+                COALESCE(SUM(dv.cantidad),0) as unidades,
+                COALESCE(SUM(dv.subtotal_con_iva),0) as facturado,
+                COALESCE(SUM(dv.cantidad * COALESCE(pc.pcompra_variante, p.pcompra_con_iva, 0)),0) as costo')
+            ->orderByDesc('facturado')->get()
+            ->map($conGanancia)
+            ->sortByDesc('ganancia')->values();
+
+        $totalesRow = $base()->selectRaw('COALESCE(SUM(venta),0) as facturado, COALESCE(SUM(costo),0) as costo')->first();
+        $totales = (object) [
+            'facturado'  => (float) $totalesRow->facturado,
+            'costo'      => (float) $totalesRow->costo,
+            'ganancia'   => (float) $totalesRow->facturado - (float) $totalesRow->costo,
+            'margen_pct' => $totalesRow->facturado > 0 ? (((float) $totalesRow->facturado - (float) $totalesRow->costo) / (float) $totalesRow->facturado) * 100 : 0,
+        ];
+
+        return [$desde, $hasta, $porCliente, $porProducto, $totales];
     }
 
     /**
