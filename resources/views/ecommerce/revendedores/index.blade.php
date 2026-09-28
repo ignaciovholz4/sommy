@@ -1,6 +1,6 @@
 @extends('ecommerce.layouts.main-ecommerce')
-@section('meta_title', 'Vendé Sommy y ganá comisión | Programa de revendedores')
-@section('meta_description', 'Sumate como revendedor de Sommy. Te damos tu link y tu QR: compartís, la gente compra y vos cobrás comisión. Sin stock, sin inversión y sin trámites.')
+@section('meta_title', 'Programa de Creadores Sommy | Creá contenido y ganá comisión')
+@section('meta_description', 'Sumate al Programa de Creadores de Sommy. Recomendá nuestros productos en tus redes con tu link y tu QR propios: cuando alguien compra, cobrás comisión. Sin stock, sin inversión.')
 @section('contentEcommerce')
 
 <style>
@@ -14,11 +14,11 @@
     .rvp-hero h1 { font-size: clamp(30px, 5vw, 50px); font-weight: 600; margin: 14px 0 16px; line-height: 1.15; }
     .rvp-hero p { font-size: clamp(15px, 2vw, 17px); font-weight: 300; color: #D3DAEC; max-width: 640px; margin: 0 auto 30px; line-height: 1.7; }
     .rvp-hero .cta {
-        display: inline-block; background: #fff; color: #1B2B5A; border-radius: 999px;
+        display: inline-flex; align-items: center; gap: 10px; background: #1EBE5A; color: #fff; border-radius: 999px;
         padding: 15px 40px; font-size: 15px; font-weight: 600; text-decoration: none;
         box-shadow: 0 16px 40px rgba(0,0,0,.28); transition: transform .25s ease;
     }
-    .rvp-hero .cta:hover { transform: translateY(-2px); color: #1B2B5A; }
+    .rvp-hero .cta:hover { transform: translateY(-2px); color: #fff; }
 
     .rvp-pasos { max-width: 1080px; margin: -52px auto 0; padding: 0 20px; position: relative; z-index: 3; }
     .rvp-pasos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
@@ -33,9 +33,28 @@
     .rvp-paso h3 { font-size: 16.5px; font-weight: 600; margin-bottom: 8px; }
     .rvp-paso p { font-size: 13.5px; font-weight: 300; color: #5D6884; line-height: 1.65; margin: 0; }
 
-    .rvp-beneficios { max-width: 1080px; margin: 74px auto 0; padding: 0 20px; }
+    .rvp-seccion { max-width: 1080px; margin: 74px auto 0; padding: 0 20px; }
     .rvp-h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 600; text-align: center; margin-bottom: 12px; }
     .rvp-lead { text-align: center; font-size: 15px; font-weight: 300; color: #5D6884; max-width: 620px; margin: 0 auto 38px; line-height: 1.7; }
+
+    .rvp-check-grid { max-width: 560px; margin: 0 auto; }
+    .rvp-check-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #EDF0F7; }
+    .rvp-check-item:last-of-type { border-bottom: none; }
+    .rvp-check-item i { color: #1EBE5A; font-size: 17px; margin-top: 2px; }
+    .rvp-check-item span { font-size: 14.5px; color: #1B2B5A; font-weight: 500; }
+    .rvp-nota-autentico { text-align: center; font-size: 13.5px; color: #5D6884; font-weight: 300; margin-top: 18px; }
+
+    .rvp-como-card {
+        max-width: 560px; margin: 0 auto; background: #F4F6FB; border-radius: 24px; padding: 36px 32px; text-align: center;
+    }
+    .rvp-como-card p { font-size: 14.5px; color: #5D6884; font-weight: 300; line-height: 1.7; margin: 0 0 22px; }
+    .rvp-wsp-btn {
+        display: inline-flex; align-items: center; gap: 10px; background: #1EBE5A; color: #fff; border-radius: 999px;
+        padding: 15px 34px; font-size: 15px; font-weight: 600; text-decoration: none;
+    }
+    .rvp-wsp-btn:hover { color: #fff; opacity: .92; }
+    .rvp-como-post { font-size: 13px; color: #9AA5BD; margin-top: 18px; line-height: 1.6; }
+
     .rvp-benef-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
     .rvp-benef { text-align: center; padding: 8px; }
     .rvp-benef i { font-size: 26px; color: #C6A15B; margin-bottom: 12px; display: block; }
@@ -56,6 +75,7 @@
         width: 100%; border: 1px solid #E1E6F0; border-radius: 12px; padding: 13px 16px;
         font-size: 15px; font-family: inherit; color: #1B2B5A; background: #fff; transition: border-color .2s;
     }
+    .rvp-campo input[type="file"] { padding: 10px 14px; }
     .rvp-campo input:focus, .rvp-campo textarea:focus { outline: none; border-color: #1B2B5A; }
     .rvp-campo .hint { font-size: 11.5px; color: #9AA5BD; margin-top: 5px; }
     .rvp-sep { border: none; border-top: 1px solid #EDF0F7; margin: 26px 0 22px; }
@@ -67,6 +87,10 @@
     }
     .rvp-submit:hover { background: #2563EB; }
     .rvp-legal { font-size: 12px; color: #9AA5BD; text-align: center; margin-top: 16px; line-height: 1.6; }
+
+    .rvp-declaracion { background: #F8FAFC; border: 1px solid #E7EAF2; border-radius: 14px; padding: 16px 18px; margin-top: 4px; }
+    .rvp-declaracion label { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; font-weight: 400; color: #47536F; line-height: 1.6; cursor: pointer; }
+    .rvp-declaracion input[type="checkbox"] { width: auto; margin-top: 3px; flex-shrink: 0; }
 
     .rvp-error { background: #FBEDE6; color: #b4552d; border-radius: 12px; padding: 13px 18px; font-size: 13.5px; margin-bottom: 20px; }
     .rvp-error ul { margin: 6px 0 0; padding-left: 18px; }
@@ -92,48 +116,90 @@
         .rvp-grid2 { grid-template-columns: 1fr; }
         .rvp-form-card { padding: 28px 22px; border-radius: 20px; }
         .rvp-hero { padding: 64px 20px 84px; }
+        .rvp-como-card { padding: 28px 22px; }
     }
 </style>
+
+@php
+    $wspNumero = preg_replace('/\D/', '', $arrayEmpresa['whatsapp'] ?? '');
+    $wspTexto = urlencode('Hola! Quiero sumarme al Programa de Creadores de Sommy 🙌');
+    $wspLink = $wspNumero ? "https://wa.me/{$wspNumero}?text={$wspTexto}" : '#sumarme';
+@endphp
 
 <div class="rvp">
 
     <section class="rvp-hero">
-        <div class="kicker">Programa de revendedores</div>
-        <h1>Vendé Sommy sin poner un peso</h1>
+        <div class="kicker">Programa de Creadores</div>
+        <h1>Creá contenido y ganá con Sommy</h1>
         <p>
-            Te damos tu link y tu QR personal. Lo compartís por WhatsApp, Instagram o donde vendas:
-            cuando alguien compra por ahí, la venta queda registrada a tu nombre y te pagamos la comisión.
-            Sin stock, sin inversión y sin planillas — de la logística, la facturación y la posventa nos ocupamos nosotros.
+            Si te gusta hacer contenido, hablar a cámara o editar videos, este programa es para vos.
+            En Sommy buscamos personas que quieran recomendar nuestros productos de forma auténtica
+            y ayudar a otros a mejorar su descanso y bienestar.
         </p>
-        <a href="#sumarme" class="cta">Quiero mi link</a>
+        <a href="{{ $wspLink }}" target="_blank" rel="noopener noreferrer" class="cta">
+            <i class="fab fa-whatsapp"></i> Quiero ser creador
+        </a>
     </section>
 
     <section class="rvp-pasos">
         <div class="rvp-pasos-grid">
             <div class="rvp-paso">
                 <div class="n">1</div>
-                <h3>Te registrás</h3>
-                <p>Un formulario corto, una sola vez. Al terminar te aparece tu link y tu QR, y también te los mandamos por mail.</p>
+                <h3>Creás contenido</h3>
+                <p>Mostrás o recomendás productos Sommy a tu manera: un video, una foto, una reseña.</p>
             </div>
             <div class="rvp-paso">
                 <div class="n">2</div>
-                <h3>Compartís</h3>
-                <p>Mandás tu link o mostrás tu QR. Tu cliente compra en la tienda con precios y promos oficiales de Sommy.</p>
+                <h3>Lo compartís</h3>
+                <p>Lo subís a tus redes sociales con tu link o tu QR de Sommy.</p>
             </div>
             <div class="rvp-paso">
                 <div class="n">3</div>
-                <h3>Nosotros entregamos</h3>
-                <p>Coordinamos el envío, cobramos y hacemos la posventa. Vos no tocás stock ni te ocupás de la entrega.</p>
+                <h3>Conectás con tu comunidad</h3>
+                <p>Recomendás de forma real, sin guion armado — eso es lo que más convierte.</p>
             </div>
             <div class="rvp-paso">
                 <div class="n">4</div>
                 <h3>Cobrás tu comisión</h3>
-                <p>Llevamos la cuenta de todo lo que vendiste y te transferimos. No tenés que registrar ni reclamar nada.</p>
+                <p>Cada compra que entra por tu link queda a tu nombre. Nosotros liquidamos, vos no reclamás nada.</p>
             </div>
         </div>
     </section>
 
-    <section class="rvp-beneficios">
+    <section class="rvp-seccion">
+        <h2 class="rvp-h2">¿Qué necesitás para participar?</h2>
+        <div class="rvp-check-grid">
+            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Tener al menos una red social activa (Instagram, TikTok, X o YouTube)</span></div>
+            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Perfil público</span></div>
+            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Ganas de crear contenido</span></div>
+        </div>
+        <p class="rvp-nota-autentico">No hace falta ser influencer. Buscamos autenticidad.</p>
+    </section>
+
+    <section class="rvp-seccion">
+        <h2 class="rvp-h2">¿Cómo me sumo?</h2>
+        <div class="rvp-como-card">
+            <p>Es muy simple. Enviá un mensaje por WhatsApp y contanos que querés sumarte al Programa de Creadores.</p>
+            <a href="{{ $wspLink }}" target="_blank" rel="noopener noreferrer" class="rvp-wsp-btn">
+                <i class="fab fa-whatsapp"></i> {{ $arrayEmpresa['whatsapp'] ?? 'Escribinos' }}
+            </a>
+            <p class="rvp-como-post">
+                Vamos a revisar tu perfil y, si cumplís con los requisitos, te confirmamos el ingreso al programa.
+                Una vez dentro, completás tu registro más abajo para generar tu link y tu QR, y ya podés empezar a crear contenido y generar ingresos.
+            </p>
+        </div>
+    </section>
+
+    <section class="rvp-seccion">
+        <h2 class="rvp-h2">¿Por qué sumarte?</h2>
+        <div class="rvp-check-grid">
+            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Monetizás tu contenido</span></div>
+            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Trabajás con una marca en crecimiento</span></div>
+            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Ayudás a otras personas a mejorar su descanso</span></div>
+        </div>
+    </section>
+
+    <section class="rvp-seccion">
         <h2 class="rvp-h2">Por qué conviene</h2>
         <p class="rvp-lead">Somos fabricantes: colchones, sommiers, almohadas, sábanas y todo lo que hace falta para una buena habitación.</p>
         <div class="rvp-benef-grid">
@@ -162,8 +228,8 @@
 
     <div class="rvp-form-wrap" id="sumarme">
         <div class="rvp-form-card">
-            <h2>Sumate como revendedor</h2>
-            <p class="sub">Completá tus datos y en el mismo momento te generamos tu link. Tarda menos de un minuto.</p>
+            <h2>Generá tu link y tu QR</h2>
+            <p class="sub">Ya te confirmamos por WhatsApp o querés empezar de una — completá tus datos y en el mismo momento te generamos tu link y tu QR. Tu cuenta queda a revisión hasta que la validemos.</p>
 
             @if($errors->any())
                 <div class="rvp-error">
@@ -175,7 +241,7 @@
                 <div class="rvp-error">{{ session('error_recuperar') }}</div>
             @endif
 
-            <form method="POST" action="{{ route('revendedores.store') }}">
+            <form method="POST" action="{{ route('revendedores.store') }}" enctype="multipart/form-data">
                 @csrf
 
                 <div class="rvp-grid2">
@@ -218,8 +284,14 @@
                 </div>
 
                 <div class="rvp-campo">
-                    <label for="rv-vende">¿Dónde pensás vender?</label>
-                    <textarea id="rv-vende" name="como_vende" rows="3" placeholder="Local, redes, ferias, mi grupo de conocidos...">{{ old('como_vende') }}</textarea>
+                    <label for="rv-vende">¿Dónde pensás crear/compartir contenido?</label>
+                    <textarea id="rv-vende" name="como_vende" rows="3" placeholder="Instagram, TikTok, YouTube, mi grupo de conocidos...">{{ old('como_vende') }}</textarea>
+                </div>
+
+                <div class="rvp-campo">
+                    <label for="rv-dnifoto">Foto de tu DNI (frente) *</label>
+                    <input type="file" id="rv-dnifoto" name="dni_foto" accept="image/*" required>
+                    <div class="hint">La usamos solo para validar tu identidad antes de aprobarte. No se publica en ningún lado.</div>
                 </div>
 
                 <hr class="rvp-sep">
@@ -240,17 +312,27 @@
                     <input type="text" id="rv-titular" name="titular_cuenta" value="{{ old('titular_cuenta') }}" placeholder="Si es distinto a tu nombre">
                 </div>
 
-                <button type="submit" class="rvp-submit">Generar mi link de revendedor</button>
+                <div class="rvp-declaracion">
+                    <label for="rv-declaracion">
+                        <input type="checkbox" id="rv-declaracion" name="acepta_independiente" value="1" required>
+                        <span>
+                            Declaro que <strong>no soy empleado de Sommy</strong>: actúo como
+                            <strong>vendedor/creador independiente que trabaja por comisión online</strong>,
+                            sin relación de dependencia, sin horario fijo ni obligación de exclusividad.
+                        </span>
+                    </label>
+                </div>
+
+                <button type="submit" class="rvp-submit">Generar mi link y mi QR</button>
                 <p class="rvp-legal">
                     Al registrarte aceptás nuestros <a href="{{ url('/terminos') }}" style="color:#5D6884;text-decoration:underline;">términos y condiciones</a>.
-                    Podés cargar los datos bancarios más adelante escribiéndonos.
                 </p>
             </form>
         </div>
 
         <div class="rvp-recuperar">
             <details>
-                <summary>Ya soy revendedor y perdí mi link</summary>
+                <summary>Ya soy creador y perdí mi link</summary>
                 <form method="POST" action="{{ route('revendedores.recuperar') }}">
                     @csrf
                     <input type="email" name="email" placeholder="El email con el que te registraste" required>
@@ -265,12 +347,22 @@
 
         <details open>
             <summary>¿Cuánto gano por venta?</summary>
-            <p>Cobrás un porcentaje sobre el valor de los productos de cada compra confirmada. El porcentaje base es del {{ $comisionBase }}% y te lo confirmamos por mail junto con tu link; si vendés volumen, lo revisamos y lo subimos.</p>
+            <p>Cobrás un porcentaje sobre el valor de los productos de cada compra confirmada. El porcentaje base es del {{ $comisionBase }}% y te lo confirmamos por WhatsApp junto con tu link; si generás volumen, lo revisamos y lo subimos.</p>
         </details>
 
         <details>
             <summary>¿Tengo que comprar mercadería o tener stock?</summary>
             <p>No. No comprás nada ni guardás productos. Vos recomendás, la compra se hace en nuestra tienda y nosotros entregamos.</p>
+        </details>
+
+        <details>
+            <summary>¿Por qué me piden mi DNI?</summary>
+            <p>Para validar que sos una persona real antes de aprobarte y poder pagarte tu comisión sin problemas. Es solo para nosotros, no se publica.</p>
+        </details>
+
+        <details>
+            <summary>¿Ya puedo empezar a vender apenas me registro?</summary>
+            <p>Tu link y tu QR se generan al toque, pero quedan <strong>a revisión</strong> hasta que validemos tu perfil y tu DNI. Recién cuando te aprobamos tu link empieza a sumar ventas — te avisamos por WhatsApp apenas quede activo.</p>
         </details>
 
         <details>
@@ -291,6 +383,11 @@
         <details>
             <summary>¿Qué pasa si el cliente devuelve el producto?</summary>
             <p>Si la venta se cae o se anula, esa comisión no se liquida. Las demás siguen su curso normal.</p>
+        </details>
+
+        <details>
+            <summary>¿Soy empleado de Sommy?</summary>
+            <p>No. Sos un creador/vendedor independiente que trabaja por comisión, sin relación de dependencia, sin horario ni exclusividad. Vos decidís cuánto y cuándo compartir tu link.</p>
         </details>
     </section>
 

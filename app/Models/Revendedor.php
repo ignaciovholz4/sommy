@@ -11,12 +11,15 @@ class Revendedor extends Model
     protected $fillable = [
         'codigo', 'nombre', 'email', 'telefono', 'dni_cuit', 'localidad', 'provincia',
         'instagram', 'como_vende', 'comision_porcentaje', 'cbu', 'alias_cbu',
-        'titular_cuenta', 'estado', 'notas', 'visitas', 'ultima_visita',
+        'titular_cuenta', 'dni_foto', 'declaracion_independiente', 'declaracion_aceptada_at',
+        'estado', 'notas', 'visitas', 'ultima_visita',
     ];
 
     protected $casts = [
         'comision_porcentaje' => 'float',
         'ultima_visita' => 'datetime',
+        'declaracion_independiente' => 'boolean',
+        'declaracion_aceptada_at' => 'datetime',
     ];
 
     public function comisiones()

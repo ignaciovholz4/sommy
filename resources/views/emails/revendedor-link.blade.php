@@ -21,11 +21,19 @@
                 <tr>
                     <td style="padding:28px;">
                         <p style="margin:0 0 14px;font-size:16px;">¡Hola {{ $revendedor->nombre }}!</p>
+                        @if($revendedor->estado === 'activo')
                         <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#47536F;">
                             Ya sos revendedor de Sommy. Este es tu link personal: cada compra que se haga
                             entrando por acá queda registrada a tu nombre y te la liquidamos nosotros.
                             No tenés que hacer ningún seguimiento ni cargar nada.
                         </p>
+                        @else
+                        <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#47536F;">
+                            Recibimos tu registro. Este ya es tu link y tu QR definitivos, pero todavía están
+                            <strong>en revisión</strong>: en cuanto validemos tu DNI y tus datos los activamos
+                            y ahí sí empiezan a contar las ventas. Te avisamos apenas quede listo.
+                        </p>
+                        @endif
 
                         <div style="background:#F4F6FB;border-radius:14px;padding:18px;text-align:center;">
                             <div style="font-size:12px;color:#7A869F;text-transform:uppercase;letter-spacing:1px;">Tu link</div>

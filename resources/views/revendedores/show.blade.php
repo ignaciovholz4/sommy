@@ -55,13 +55,18 @@
     .rv-alerta.ok { background: #E4F5EC; color: #0d8a4f; }
     .rv-alerta.err { background: #FBEDE6; color: #b4552d; }
     .rv-scroll { overflow-x: auto; }
+    .rv-estado-chip { display: inline-block; border-radius: 999px; padding: 3px 13px; font-size: 12px; font-weight: 600; margin-left: 8px; vertical-align: middle; }
+    .rv-estado-chip.activo { background: #E4F5EC; color: #0d8a4f; }
+    .rv-estado-chip.pendiente { background: #FDF3E2; color: #b4552d; }
+    .rv-estado-chip.suspendido { background: #F1F4F9; color: #6E7A96; }
+    .rv-dni-thumb { display: block; width: 100%; max-width: 260px; border-radius: 12px; border: 1px solid #E7EAF2; }
     @media (max-width: 820px) { .rv-table { min-width: 720px; } }
 </style>
 
 <div class="rv-wrap">
 
     <a href="{{ url('/revendedores-panel') }}" class="rv-volver"><i class="fas fa-arrow-left"></i> Volver a revendedores</a>
-    <div class="rv-title">{{ $revendedor->nombre }}</div>
+    <div class="rv-title">{{ $revendedor->nombre }} <span class="rv-estado-chip {{ $revendedor->estado }}">{{ ucfirst($revendedor->estado) }}</span></div>
     <div class="rv-mail">
         {{ $revendedor->email }}
         @if($revendedor->telefono) · {{ $revendedor->telefono }} @endif
@@ -217,6 +222,65 @@
                 </form>
                 <p style="font-size:12px;color:#9AA5BD;margin-top:12px;line-height:1.6;">
                     Si lo suspendés, su link deja de atribuir ventas nuevas. Las comisiones ya generadas se mantienen.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="rv-grid">
+
+        <div class="rv-card">
+            <div class="h">Verificación</div>
+            <div class="b">
+                @if($revendedor->dni_foto)
+                    <a href="{{ asset('storage/' . $revendedor->dni_foto) }}" target="_blank">
+                        <img src="{{ asset('storage/' . $revendedor->dni_foto) }}" alt="DNI de {{ $revendedor->nombre }}" class="rv-dni-thumb">
+                    </a>
+                @else
+                    <div class="rv-vacio" style="padding:20px 0;">No cargó foto de DNI.</div>
+                @endif
+
+                <div style="margin-top:14px;font-size:13px;color:#47536F;line-height:1.7;">
+                    @if($revendedor->declaracion_independiente)
+                        <i class="fas fa-check-circle" style="color:#0d8a4f;"></i>
+                        Aceptó la declaración de vendedor independiente el
+                        <strong>{{ optional($revendedor->declaracion_aceptada_at)->format('d/m/Y H:i') }}</strong>.
+                    @else
+                        <i class="fas fa-triangle-exclamation" style="color:#b4552d;"></i>
+                        Todavía no aceptó la declaración de vendedor independiente.
+                    @endif
+                </div>
+
+                @if($revendedor->estado === 'pendiente')
+                <form method="POST" action="{{ route('rev.update', $revendedor->id) }}" style="margin-top:16px;">
+                    @csrf
+                    <input type="hidden" name="comision_porcentaje" value="{{ $revendedor->comision_porcentaje }}">
+                    <input type="hidden" name="estado" value="activo">
+                    <input type="hidden" name="cbu" value="{{ $revendedor->cbu }}">
+                    <input type="hidden" name="alias_cbu" value="{{ $revendedor->alias_cbu }}">
+                    <input type="hidden" name="titular_cuenta" value="{{ $revendedor->titular_cuenta }}">
+                    <input type="hidden" name="telefono" value="{{ $revendedor->telefono }}">
+                    <input type="hidden" name="notas" value="{{ $revendedor->notas }}">
+                    <button type="submit" class="rv-btn verde">
+                        <i class="fas fa-user-check"></i> Aprobar revendedor
+                    </button>
+                </form>
+                @endif
+            </div>
+        </div>
+
+        <div class="rv-card">
+            <div class="h">Condiciones que aceptó</div>
+            <div class="b" style="font-size:13px;color:#47536F;line-height:1.75;">
+                <p>
+                    Declaró que <strong>no es empleado de Sommy</strong>, que actúa como
+                    <strong>vendedor independiente por comisión online</strong> y que no cumple horario ni depende
+                    de la empresa. Solo cobra comisión sobre las ventas atribuidas a su link.
+                </p>
+                <p style="margin-top:10px;color:#9AA5BD;">
+                    Mientras el estado sea <strong>Pendiente</strong>, su link y su QR no atribuyen ventas nuevas —
+                    recién empieza a generar comisión cuando lo aprobás arriba.
                 </p>
             </div>
         </div>

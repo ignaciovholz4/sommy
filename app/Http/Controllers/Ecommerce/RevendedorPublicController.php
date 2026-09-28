@@ -31,7 +31,11 @@ class RevendedorPublicController extends Controller
         ));
     }
 
-    /** Alta del revendedor. No hay panel: se registra, recibe su link y listo. */
+    /**
+     * Alta del revendedor. No hay panel: se registra, recibe su link y listo
+     * (a la espera de que aprobemos su cuenta — recién ahí empieza a sumar ventas,
+     * ver Revendedor::estado y RevendedorPublicController::ref()).
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -46,9 +50,15 @@ class RevendedorPublicController extends Controller
             'cbu'      => 'nullable|string|max:40',
             'alias_cbu'=> 'nullable|string|max:60',
             'titular_cuenta' => 'nullable|string|max:150',
+            'dni_foto' => 'required|image|mimes:jpg,jpeg,png,webp|max:6144',
+            'acepta_independiente' => 'required|accepted',
         ], [
             'email.unique' => 'Ya hay un revendedor registrado con ese email. Pedí tu link desde "Recuperar mi link".',
+            'dni_foto.required' => 'Necesitamos una foto de tu DNI para validar tu cuenta.',
+            'acepta_independiente.accepted' => 'Tenés que aceptar la declaración para poder registrarte.',
         ]);
+
+        $rutaDni = $request->file('dni_foto')->store('revendedores/dni', 'public');
 
         $revendedor = Revendedor::create([
             'codigo'   => Revendedor::generarCodigo($request->nombre),
@@ -63,8 +73,12 @@ class RevendedorPublicController extends Controller
             'cbu'      => $request->cbu,
             'alias_cbu'=> $request->alias_cbu,
             'titular_cuenta' => $request->titular_cuenta ?: $request->nombre,
+            'dni_foto' => $rutaDni,
+            'declaracion_independiente' => true,
+            'declaracion_aceptada_at' => now(),
             'comision_porcentaje' => 10,
-            'estado'   => 'activo',
+            // estado queda en su default ("pendiente"): hasta que no lo aprobamos
+            // desde el panel interno, su link no genera comisión (ver ref() abajo).
         ]);
 
         $this->enviarLink($revendedor);

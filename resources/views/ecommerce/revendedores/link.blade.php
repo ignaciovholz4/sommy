@@ -35,6 +35,11 @@
     .rvl-nota h3 { font-size: 15.5px; font-weight: 600; margin-bottom: 12px; }
     .rvl-nota li { font-size: 13.5px; font-weight: 300; color: #5D6884; line-height: 1.8; }
 
+    .rvl-pendiente { max-width: 640px; margin: 0 auto 20px; background: #FFF8E6; border: 1px solid #F0D999; border-radius: 16px; padding: 18px 22px; display: flex; gap: 14px; align-items: flex-start; }
+    .rvl-pendiente i { color: #B8860B; font-size: 20px; margin-top: 2px; }
+    .rvl-pendiente strong { display: block; margin-bottom: 4px; }
+    .rvl-pendiente p { font-size: 13.5px; font-weight: 300; color: #5D6884; margin: 0; line-height: 1.65; }
+
     @media (max-width: 560px) {
         .rvl-card { padding: 32px 22px; border-radius: 20px; }
         .rvl-qr img { width: 190px; height: 190px; }
@@ -42,6 +47,16 @@
 </style>
 
 <div class="rvl">
+
+    @if($revendedor->estado !== 'activo')
+    <div class="rvl-pendiente">
+        <i class="fas fa-clock"></i>
+        <div>
+            <strong>Tu cuenta está en revisión</strong>
+            <p>Ya tenés tu link y tu QR generados, pero todavía no suman ventas: los activamos en cuanto validemos tu DNI y tus datos. Te avisamos por WhatsApp o mail apenas quede aprobado — no hace falta que hagas nada más.</p>
+        </div>
+    </div>
+    @endif
 
     <div class="rvl-card">
         <div class="rvl-check"><i class="fas fa-check"></i></div>
