@@ -79,6 +79,21 @@
     .rvp-declaracion { background: #F8FAFC; border: 1px solid #E7EAF2; border-radius: 14px; padding: 16px 18px; margin-top: 4px; }
     .rvp-declaracion label { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; font-weight: 400; color: #47536F; line-height: 1.6; cursor: pointer; }
     .rvp-declaracion input[type="checkbox"] { width: auto; margin-top: 3px; flex-shrink: 0; }
+    .rvp-declaracion input[type="checkbox"]:disabled + span { color: #B7C0D4; }
+
+    .rvp-terminos-box { max-height: 220px; overflow-y: auto; border: 1px solid #E1E6F0; border-radius: 14px; padding: 16px 18px; background: #F8FAFC; font-size: 12.5px; color: #47536F; line-height: 1.7; }
+    .rvp-terminos-box h4 { font-size: 12.5px; font-weight: 700; color: #1B2B5A; margin: 14px 0 4px; }
+    .rvp-terminos-box h4:first-child { margin-top: 0; }
+    .rvp-terminos-box p { margin: 0; }
+    .rvp-terminos-estado { display: flex; align-items: center; gap: 7px; font-size: 12.5px; margin-top: 8px; color: #b4552d; font-weight: 500; }
+    .rvp-terminos-estado.ok { color: #0d8a4f; }
+
+    .rvp-firma-wrap { margin-top: 4px; opacity: .45; transition: opacity .25s; }
+    .rvp-firma-wrap.activo { opacity: 1; }
+    .rvp-firma-canvas { width: 100%; height: 170px; border: 1.5px dashed #C7CFE0; border-radius: 14px; background: #fff; touch-action: none; display: block; cursor: crosshair; }
+    .rvp-firma-wrap:not(.activo) .rvp-firma-canvas { pointer-events: none; }
+    .rvp-firma-acciones { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 10px; flex-wrap: wrap; }
+    .rvp-firma-limpiar { border: none; background: none; color: #2563EB; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 0; font-family: inherit; }
 
     .rvp-error { background: #FBEDE6; color: #b4552d; border-radius: 12px; padding: 13px 18px; font-size: 13.5px; margin-bottom: 20px; }
     .rvp-error ul { margin: 6px 0 0; padding-left: 18px; }
@@ -123,8 +138,8 @@
             Recomendá nuestros colchones y sommiers en tus redes, de forma auténtica,
             y cobrá comisión por cada venta. Sin stock, sin inversión.
         </p>
-        <a href="{{ $wspLink }}" target="_blank" rel="noopener noreferrer" class="cta">
-            <i class="fab fa-whatsapp"></i> Quiero ser creador
+        <a href="#sumarme" class="cta">
+            <i class="fas fa-pen-nib"></i> Quiero ser creador
         </a>
     </section>
 
@@ -260,16 +275,66 @@
                     <input type="text" id="rv-titular" name="titular_cuenta" value="{{ old('titular_cuenta') }}" placeholder="Si es distinto a tu nombre">
                 </div>
 
+                <div class="rvp-campo">
+                    <label>Términos y condiciones del Programa de Creadores *</label>
+                    <div class="rvp-terminos-box" id="rv-terminos-box" tabindex="0">
+                        <h4>1. Qué es esto</h4>
+                        <p>El Programa de Creadores de Sommy te da un link y un QR propios para recomendar nuestros productos en tus redes. Cuando alguien compra entrando por tu link, cobrás una comisión. No es un empleo: es una colaboración comercial independiente.</p>
+
+                        <h4>2. No hay relación de dependencia</h4>
+                        <p>Participás como <strong>creador/vendedor independiente</strong>, no como empleado de Sommy. No hay horario que cumplir, no hay exclusividad, no hay obligación de generar contenido con una frecuencia mínima y podés dejar de participar cuando quieras, sin ningún tipo de indemnización ni preaviso. Vos decidís cuánto, cómo y cuándo compartir tu link.</p>
+
+                        <h4>3. Cómo se paga</h4>
+                        <p>Cobrás únicamente <strong>comisión sobre ventas confirmadas</strong> atribuidas a tu link o QR (por defecto {{ $comisionBase }}% sobre el valor de los productos vendidos). No hay sueldo, viático ni ningún otro pago fijo. La comisión se liquida una vez que el pedido fue entregado y cobrado, transferida a la cuenta que nos dejaste en este formulario.</p>
+
+                        <h4>4. Atribución de ventas</h4>
+                        <p>Tu link/QR deja una marca (cookie) en el navegador de quien lo abre, válida por 30 días. Si esa persona compra dentro de ese plazo, la venta queda a tu nombre automáticamente. Si el pedido se cancela, se devuelve o se anula, la comisión correspondiente tampoco se liquida.</p>
+
+                        <h4>5. Aprobación de la cuenta</h4>
+                        <p>Tu link y tu QR se generan apenas te registrás, pero tu cuenta queda <strong>pendiente de revisión</strong>. Recién empieza a atribuir ventas cuando Sommy valida tus datos y tu DNI y aprueba tu cuenta. Sommy puede rechazar o suspender una cuenta en cualquier momento, por ejemplo ante datos falsos, contenido engañoso o incumplimiento de estos términos.</p>
+
+                        <h4>6. Tu DNI y tus datos</h4>
+                        <p>Pedimos una foto de tu DNI únicamente para verificar tu identidad antes de aprobarte y poder transferirte tu comisión sin problemas. No se publica ni se comparte con terceros, y se usa conforme a la Ley 25.326 de Protección de Datos Personales.</p>
+
+                        <h4>7. Cómo tenés que promocionar</h4>
+                        <p>El contenido que hagas tiene que ser auténtico y honesto: mostrar el producto real, sin inventar precios, promociones, plazos de entrega o características que Sommy no ofrece. No podés usar spam, mensajes masivos no solicitados ni publicidad paga con la marca Sommy sin autorización previa por escrito.</p>
+
+                        <h4>8. Propiedad intelectual</h4>
+                        <p>El contenido que crees mencionando a Sommy podés seguir usándolo en tus redes; Sommy puede resubir o compartir ese contenido dando crédito a su autor, salvo que nos pidas expresamente que no lo hagamos.</p>
+
+                        <h4>9. Sin garantías de ingresos</h4>
+                        <p>Sommy no garantiza un monto mínimo de ventas ni de ingresos. Lo que cobrás depende exclusivamente de las ventas reales atribuidas a tu link durante tu participación en el programa.</p>
+
+                        <h4>10. Aceptación</h4>
+                        <p>Al completar este formulario y firmar en el recuadro de abajo, declarás que leíste y aceptás estos términos en su totalidad, junto con los <a href="{{ url('/terminos') }}" target="_blank" style="color:#2563EB;">términos y condiciones generales</a> del sitio.</p>
+                    </div>
+                    <div class="rvp-terminos-estado" id="rv-terminos-estado">
+                        <i class="fas fa-arrow-down"></i> Desplazate hasta el final para poder firmar
+                    </div>
+                </div>
+
                 <div class="rvp-declaracion">
                     <label for="rv-declaracion">
-                        <input type="checkbox" id="rv-declaracion" name="acepta_independiente" value="1" required>
+                        <input type="checkbox" id="rv-declaracion" name="acepta_independiente" value="1" required disabled>
                         <span>
                             Declaro que <strong>no soy empleado de Sommy</strong>: actúo como
                             <strong>vendedor/creador independiente que trabaja por comisión online</strong>,
-                            sin relación de dependencia, sin horario fijo ni obligación de exclusividad.
+                            sin relación de dependencia, sin horario fijo ni obligación de exclusividad, y que leí
+                            los términos y condiciones completos de arriba.
                         </span>
                     </label>
                 </div>
+
+                <div class="rvp-campo rvp-firma-wrap" id="rv-firma-wrap">
+                    <label>Tu firma *</label>
+                    <canvas id="rv-firma-canvas" class="rvp-firma-canvas" width="600" height="170"></canvas>
+                    <div class="rvp-firma-acciones">
+                        <span class="hint" style="margin:0;">Dibujá tu firma con el mouse o el dedo.</span>
+                        <button type="button" class="rvp-firma-limpiar" id="rv-firma-limpiar">Borrar y firmar de nuevo</button>
+                    </div>
+                </div>
+                <input type="hidden" name="firma" id="rv-firma-input">
+                <input type="hidden" name="terminos_leidos" id="rv-terminos-input" value="">
 
                 <button type="submit" class="rvp-submit">Generar mi link y mi QR</button>
                 <p class="rvp-legal">
@@ -340,5 +405,113 @@
     </section>
 
 </div>
+
+<script>
+(function () {
+    var canvas = document.getElementById('rv-firma-canvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#1B2B5A';
+    ctx.lineWidth = 2.2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    var wrap = document.getElementById('rv-firma-wrap');
+    var drawing = false;
+    var hasDrawn = false;
+
+    function activo() { return wrap.classList.contains('activo'); }
+
+    function pos(e) {
+        var rect = canvas.getBoundingClientRect();
+        var scaleX = canvas.width / rect.width;
+        var scaleY = canvas.height / rect.height;
+        var t = e.touches && e.touches[0];
+        var clientX = t ? t.clientX : e.clientX;
+        var clientY = t ? t.clientY : e.clientY;
+        return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+    }
+    function start(e) {
+        if (!activo()) return;
+        drawing = true;
+        var p = pos(e);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        e.preventDefault();
+    }
+    function move(e) {
+        if (!drawing) return;
+        var p = pos(e);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        hasDrawn = true;
+        e.preventDefault();
+    }
+    function end() { drawing = false; }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+
+    document.getElementById('rv-firma-limpiar').addEventListener('click', function () {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasDrawn = false;
+    });
+
+    // Gate: hay que llegar al final de los términos para poder marcar la declaración,
+    // y hay que marcar la declaración para que se habilite el recuadro de firma.
+    var box = document.getElementById('rv-terminos-box');
+    var estado = document.getElementById('rv-terminos-estado');
+    var terminosInput = document.getElementById('rv-terminos-input');
+    var checkbox = document.getElementById('rv-declaracion');
+
+    function marcarLeido() {
+        terminosInput.value = '1';
+        checkbox.disabled = false;
+        estado.classList.add('ok');
+        estado.innerHTML = '<i class="fas fa-check-circle"></i> Leíste los términos completos';
+    }
+    function chequearFin() {
+        if (box.scrollTop + box.clientHeight >= box.scrollHeight - 6) marcarLeido();
+    }
+    box.addEventListener('scroll', chequearFin);
+    // Si el texto ya entra completo sin necesidad de scrollear (pantallas muy altas), no lo bloqueamos.
+    window.addEventListener('load', chequearFin);
+    chequearFin();
+
+    checkbox.addEventListener('change', function () {
+        if (checkbox.checked) {
+            wrap.classList.add('activo');
+        } else {
+            wrap.classList.remove('activo');
+        }
+    });
+
+    var form = checkbox.closest('form');
+    form.addEventListener('submit', function (e) {
+        if (terminosInput.value !== '1') {
+            e.preventDefault();
+            alert('Tenés que leer los términos y condiciones completos antes de firmar.');
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        if (!checkbox.checked) {
+            e.preventDefault();
+            alert('Tenés que aceptar la declaración de vendedor independiente.');
+            return;
+        }
+        if (!hasDrawn) {
+            e.preventDefault();
+            alert('Tenés que firmar en el recuadro para poder registrarte.');
+            canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        document.getElementById('rv-firma-input').value = canvas.toDataURL('image/png');
+    });
+})();
+</script>
 
 @endsection

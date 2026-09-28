@@ -11,7 +11,7 @@ class Revendedor extends Model
     protected $fillable = [
         'codigo', 'nombre', 'email', 'telefono', 'dni_cuit', 'localidad', 'provincia',
         'instagram', 'como_vende', 'comision_porcentaje', 'cbu', 'alias_cbu',
-        'titular_cuenta', 'dni_foto', 'declaracion_independiente', 'declaracion_aceptada_at',
+        'titular_cuenta', 'dni_foto', 'declaracion_independiente', 'declaracion_aceptada_at', 'firma',
         'estado', 'notas', 'visitas', 'ultima_visita',
     ];
 

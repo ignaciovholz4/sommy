@@ -233,18 +233,33 @@
         <div class="rv-card">
             <div class="h">Verificación</div>
             <div class="b">
-                @if($revendedor->dni_foto)
-                    <a href="{{ asset('storage/' . $revendedor->dni_foto) }}" target="_blank">
-                        <img src="{{ asset('storage/' . $revendedor->dni_foto) }}" alt="DNI de {{ $revendedor->nombre }}" class="rv-dni-thumb">
-                    </a>
-                @else
-                    <div class="rv-vacio" style="padding:20px 0;">No cargó foto de DNI.</div>
-                @endif
+                <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:180px;">
+                        <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6E7A96;margin-bottom:6px;">DNI</div>
+                        @if($revendedor->dni_foto)
+                            <a href="{{ asset('storage/' . $revendedor->dni_foto) }}" target="_blank">
+                                <img src="{{ asset('storage/' . $revendedor->dni_foto) }}" alt="DNI de {{ $revendedor->nombre }}" class="rv-dni-thumb">
+                            </a>
+                        @else
+                            <div class="rv-vacio" style="padding:20px 0;">No cargó foto de DNI.</div>
+                        @endif
+                    </div>
+                    <div style="flex:1;min-width:180px;">
+                        <div style="font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6E7A96;margin-bottom:6px;">Firma</div>
+                        @if($revendedor->firma)
+                            <a href="{{ asset('storage/' . $revendedor->firma) }}" target="_blank">
+                                <img src="{{ asset('storage/' . $revendedor->firma) }}" alt="Firma de {{ $revendedor->nombre }}" class="rv-dni-thumb" style="background:#fff;padding:6px;">
+                            </a>
+                        @else
+                            <div class="rv-vacio" style="padding:20px 0;">No firmó.</div>
+                        @endif
+                    </div>
+                </div>
 
                 <div style="margin-top:14px;font-size:13px;color:#47536F;line-height:1.7;">
                     @if($revendedor->declaracion_independiente)
                         <i class="fas fa-check-circle" style="color:#0d8a4f;"></i>
-                        Aceptó la declaración de vendedor independiente el
+                        Aceptó y firmó la declaración de vendedor independiente el
                         <strong>{{ optional($revendedor->declaracion_aceptada_at)->format('d/m/Y H:i') }}</strong>.
                     @else
                         <i class="fas fa-triangle-exclamation" style="color:#b4552d;"></i>

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class RevendedorPublicController extends Controller
 {
@@ -52,13 +53,22 @@ class RevendedorPublicController extends Controller
             'titular_cuenta' => 'nullable|string|max:150',
             'dni_foto' => 'required|image|mimes:jpg,jpeg,png,webp|max:6144',
             'acepta_independiente' => 'required|accepted',
+            'firma' => 'required|string|starts_with:data:image/png;base64,',
+            'terminos_leidos' => 'required|accepted',
         ], [
             'email.unique' => 'Ya hay un revendedor registrado con ese email. Pedí tu link desde "Recuperar mi link".',
             'dni_foto.required' => 'Necesitamos una foto de tu DNI para validar tu cuenta.',
             'acepta_independiente.accepted' => 'Tenés que aceptar la declaración para poder registrarte.',
+            'firma.required' => 'Tenés que firmar en el recuadro para poder registrarte.',
+            'firma.starts_with' => 'Tu firma no se cargó bien, volvé a firmar.',
+            'terminos_leidos.accepted' => 'Tenés que leer los términos y condiciones completos antes de firmar.',
         ]);
 
         $rutaDni = $request->file('dni_foto')->store('revendedores/dni', 'public');
+
+        $firmaBase64 = substr($request->input('firma'), strpos($request->input('firma'), ',') + 1);
+        $rutaFirma = 'revendedores/firmas/' . uniqid('firma_') . '.png';
+        Storage::disk('public')->put($rutaFirma, base64_decode($firmaBase64));
 
         $revendedor = Revendedor::create([
             'codigo'   => Revendedor::generarCodigo($request->nombre),
@@ -74,6 +84,7 @@ class RevendedorPublicController extends Controller
             'alias_cbu'=> $request->alias_cbu,
             'titular_cuenta' => $request->titular_cuenta ?: $request->nombre,
             'dni_foto' => $rutaDni,
+            'firma' => $rutaFirma,
             'declaracion_independiente' => true,
             'declaracion_aceptada_at' => now(),
             'comision_porcentaje' => 10,
