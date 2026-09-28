@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cuentas;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cliente;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,32 @@ class CuentaCorrienteController extends Controller
     {
         Gate::authorize('haveaccess', 'ventas.index');
 
-        $q = trim($request->input('q', ''));
+        [$clientes, $totalDeuda, $q] = $this->clientesConSaldo($request->input('q', ''));
+
+        return view('cuentas.cc.index', compact('clientes', 'totalDeuda', 'q'));
+    }
+
+    /** PDF general: listado de todos los clientes con su deuda (misma tabla que el index). */
+    public function pdf(Request $request)
+    {
+        Gate::authorize('haveaccess', 'ventas.index');
+
+        [$clientes, $totalDeuda, $q] = $this->clientesConSaldo($request->input('q', ''));
+
+        $pdf = Pdf::loadView('cuentas.cc.pdf-index', [
+            'clientes'   => $clientes,
+            'totalDeuda' => $totalDeuda,
+            'q'          => $q,
+            'fecha'      => now()->format('d/m/Y H:i'),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream('cuentas-corrientes-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    /** Arma la lista de clientes con cargos/pagos/ventas pendientes y el total adeudado, reutilizado por index() y pdf(). */
+    protected function clientesConSaldo(string $q): array
+    {
+        $q = trim($q);
 
         $saldos = DB::table('clientes as c')
             ->leftJoin('cliente_cc_movimientos as m', 'm.cliente_id', '=', 'c.idcliente')
@@ -61,13 +87,42 @@ class CuentaCorrienteController extends Controller
         $clientes = $clientes->sortByDesc('saldo_total')->values();
         $totalDeuda = $clientes->where('saldo_total', '>', 0)->sum('saldo_total');
 
-        return view('cuentas.cc.index', compact('clientes', 'totalDeuda', 'q'));
+        return [$clientes, $totalDeuda, $q];
     }
 
     public function cliente($id)
     {
         Gate::authorize('haveaccess', 'ventas.index');
 
+        [$cliente, $movimientos, $saldo, $cargos, $pagos, $ventasACobrar, $deudaVentas] = $this->datosCliente($id);
+
+        return view('cuentas.cc.cliente', compact('cliente', 'movimientos', 'saldo', 'cargos', 'pagos', 'ventasACobrar', 'deudaVentas'));
+    }
+
+    /** PDF del estado de cuenta de un cliente: movimientos (cargos/pagos) y detalle de cada factura a cobrar. */
+    public function pdfCliente($id)
+    {
+        Gate::authorize('haveaccess', 'ventas.index');
+
+        [$cliente, $movimientos, $saldo, $cargos, $pagos, $ventasACobrar, $deudaVentas] = $this->datosCliente($id, true);
+
+        $pdf = Pdf::loadView('cuentas.cc.pdf-cliente', [
+            'cliente'       => $cliente,
+            'movimientos'   => $movimientos,
+            'saldo'         => $saldo,
+            'cargos'        => $cargos,
+            'pagos'         => $pagos,
+            'ventasACobrar' => $ventasACobrar,
+            'deudaVentas'   => $deudaVentas,
+            'fecha'         => now()->format('d/m/Y H:i'),
+        ])->setPaper('a4');
+
+        return $pdf->stream('cuenta-corriente-' . \Illuminate\Support\Str::slug($cliente->nombre . ' ' . $cliente->paterno) . '.pdf');
+    }
+
+    /** Arma todos los datos de la cuenta de un cliente, reutilizado por cliente() y pdfCliente(). */
+    protected function datosCliente($id, bool $conDetalleItems = false): array
+    {
         $cliente = Cliente::findOrFail($id);
 
         $movimientos = DB::table('cliente_cc_movimientos')
@@ -81,10 +136,15 @@ class CuentaCorrienteController extends Controller
         $saldo  = $cargos - $pagos;
 
         // Ventas a cobrar del cliente: total, cobrado hasta ahora y lo que falta
-        $ventasACobrar = \App\Models\Venta::with('movimientos.cuenta')
+        $ventasQuery = \App\Models\Venta::with('movimientos.cuenta')
             ->where('cliente_id', $id)
-            ->where('estado', 'a cobrar')
-            ->orderByDesc('fecha')->get()
+            ->where('estado', 'a cobrar');
+
+        if ($conDetalleItems) {
+            $ventasQuery->with('detalles.articulo');
+        }
+
+        $ventasACobrar = $ventasQuery->orderByDesc('fecha')->get()
             ->map(function ($v) {
                 $v->cobrado = (float) $v->movimientos->sum('total_ars');
                 $v->pendiente = max((float) $v->total_con_iva - $v->cobrado, 0);
@@ -92,7 +152,7 @@ class CuentaCorrienteController extends Controller
             });
         $deudaVentas = (float) $ventasACobrar->sum('pendiente');
 
-        return view('cuentas.cc.cliente', compact('cliente', 'movimientos', 'saldo', 'cargos', 'pagos', 'ventasACobrar', 'deudaVentas'));
+        return [$cliente, $movimientos, $saldo, $cargos, $pagos, $ventasACobrar, $deudaVentas];
     }
 
     public function storeMovimiento(Request $request, $id)

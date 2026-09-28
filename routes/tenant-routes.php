@@ -898,7 +898,9 @@ Route::get('/orders/manual', [OrderController::class, 'createManual'])->name('or
 
 /** CUENTA CORRIENTE DE CLIENTES */
 Route::get('/cc', [\App\Http\Controllers\Cuentas\CuentaCorrienteController::class, 'index'])->name('cc.index')->middleware(['auth','verified']);
+Route::get('/cc/pdf', [\App\Http\Controllers\Cuentas\CuentaCorrienteController::class, 'pdf'])->name('cc.pdf')->middleware(['auth','verified']);
 Route::get('/cc/cliente/{id}', [\App\Http\Controllers\Cuentas\CuentaCorrienteController::class, 'cliente'])->name('cc.cliente')->middleware(['auth','verified']);
+Route::get('/cc/cliente/{id}/pdf', [\App\Http\Controllers\Cuentas\CuentaCorrienteController::class, 'pdfCliente'])->name('cc.cliente.pdf')->middleware(['auth','verified']);
 Route::post('/cc/cliente/{id}/movimiento', [\App\Http\Controllers\Cuentas\CuentaCorrienteController::class, 'storeMovimiento'])->name('cc.movimiento')->middleware(['auth','verified']);
 
 /** REVENDEDORES (panel interno: acá se gestiona todo y se liquidan comisiones) */

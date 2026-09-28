@@ -51,9 +51,14 @@
 <div class="cc-wrap">
     <div class="cc-head">
         <div class="cc-title"><i class="fas fa-file-invoice-dollar" style="color:#2563EB;"></i> Cuentas corrientes de clientes</div>
-        <div class="cc-deuda">
-            <div class="l">Deuda total de clientes</div>
-            <div class="v">${{ number_format($totalDeuda, 2, ',', '.') }}</div>
+        <div style="display:flex;align-items:center;gap:14px;">
+            <div class="cc-deuda">
+                <div class="l">Deuda total de clientes</div>
+                <div class="v">${{ number_format($totalDeuda, 2, ',', '.') }}</div>
+            </div>
+            <a href="{{ route('cc.pdf', ['q' => $q]) }}" target="_blank" class="cc-ver" style="white-space:nowrap;">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </a>
         </div>
     </div>
 

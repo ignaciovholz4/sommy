@@ -76,6 +76,10 @@
                 @endif
             </div>
         </div>
+        <a href="{{ route('cc.cliente.pdf', $cliente->idcliente) }}" target="_blank"
+           style="display:inline-block;border:1.5px solid #1B2B5A;color:#1B2B5A;border-radius:999px;padding:8px 20px;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap;">
+            <i class="fas fa-file-pdf"></i> Descargar PDF
+        </a>
     </div>
 
     @if(session('cc_ok'))
