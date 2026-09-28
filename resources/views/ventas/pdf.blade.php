@@ -9,6 +9,7 @@
     body { font-family: DejaVu Sans, sans-serif; color: #1B2B5A; font-size: 11px; }
 
     .top { width: 100%; border-bottom: 2px solid #1B2B5A; padding-bottom: 12px; margin-bottom: 16px; }
+    .top .logo { height: 46px; margin-bottom: 6px; }
     .top .empresa { font-size: 17px; font-weight: bold; }
     .top .empresa-sub { font-size: 9.5px; color: #47536F; margin-top: 3px; line-height: 1.5; }
     .top .comp { float: right; text-align: right; border: 1.5px solid #1B2B5A; border-radius: 8px; padding: 10px 16px; }
@@ -57,6 +58,7 @@
             <div class="folio">{{ $venta->num_folio ?: 'Venta #' . $venta->idventa }}</div>
             <div class="fecha">{{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}</div>
         </div>
+        <img class="logo" src="{{ public_path('imagenes/marca/sommy-logo-header.png') }}" alt="Sommy">
         <div class="empresa">{{ $razonSocial }}</div>
         <div class="empresa-sub">
             @if($cuit)CUIT: {{ $cuit }}<br>@endif
