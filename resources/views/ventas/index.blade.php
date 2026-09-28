@@ -260,6 +260,7 @@
                 <div class="vb-btns">
                     <button class="vb-btn cobrar" onclick="openPagoModal({{ $v->idventa }}, {{ $v->sucursal_id ?: 'null' }})"><i class="fas fa-dollar-sign"></i> Cobrar</button>
                     <button class="vb-btn" onclick="getDetailVenta({{ $v->idventa }})"><i class="fas fa-eye"></i> Ver</button>
+                    <a class="vb-btn" href="{{ route('ventas.pdf', $v->idventa) }}" target="_blank" style="text-decoration:none;display:inline-block;"><i class="fas fa-file-pdf"></i> PDF</a>
                     <button class="vb-btn rojo" onclick="anularVenta({{ $v->idventa }})">Anular</button>
                 </div>
             </div>
@@ -302,6 +303,7 @@
                 @endif
                 <div class="vb-btns">
                     <button class="vb-btn" onclick="getDetailVenta({{ $v->idventa }})"><i class="fas fa-eye"></i> Ver</button>
+                    <a class="vb-btn" href="{{ route('ventas.pdf', $v->idventa) }}" target="_blank" style="text-decoration:none;display:inline-block;"><i class="fas fa-file-pdf"></i> PDF</a>
                 </div>
             </div>
             @empty
@@ -328,6 +330,7 @@
                 <div class="monto" style="text-decoration:line-through;">${{ number_format($v->total_con_iva, 2, ',', '.') }}</div>
                 <div class="vb-btns">
                     <button class="vb-btn" onclick="getDetailVenta({{ $v->idventa }})"><i class="fas fa-eye"></i> Ver</button>
+                    <a class="vb-btn" href="{{ route('ventas.pdf', $v->idventa) }}" target="_blank" style="text-decoration:none;display:inline-block;"><i class="fas fa-file-pdf"></i> PDF</a>
                 </div>
             </div>
             @empty

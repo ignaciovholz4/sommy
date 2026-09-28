@@ -575,6 +575,7 @@ Route::prefix('ventas')->middleware(['auth','verified'])->group(function () {
     Route::post('/store', [VentaController::class, 'store'])->name('ventas.store');
     Route::post('/{idventa}/anular', [VentaController::class, 'anular'])->name('ventas.anular');
     Route::get('/{idventa}/detail', [VentaController::class, 'detail'])->name('ventas.detail');
+    Route::get('/{idventa}/pdf', [VentaController::class, 'pdf'])->name('ventas.pdf');
     Route::get('/{idventa}/pendiente', [VentaController::class, 'pendiente'])->name('ventas.pendiente');
     Route::post('/{idventa}/registrar-pago', [VentaController::class, 'registrarPago'])->name('ventas.registrarPago');
 });

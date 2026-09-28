@@ -33,7 +33,7 @@
             <h3><i class="fas fa-cash-register"></i> Ventas ({{ $ventas->count() }})</h3>
         </div>
         <table class="fx-table">
-            <thead><tr><th>Folio</th><th>Fecha</th><th>Tipo</th><th>Estado</th><th>Dónde pagó</th><th class="der">Total</th></tr></thead>
+            <thead><tr><th>Folio</th><th>Fecha</th><th>Tipo</th><th>Estado</th><th>Dónde pagó</th><th class="der">Total</th><th></th></tr></thead>
             <tbody>
             @forelse($ventas as $v)
                 <tr>
@@ -52,9 +52,10 @@
                         @endforeach
                     </td>
                     <td class="der" style="font-weight:600;">${{ number_format($v->total_con_iva, 2, ',', '.') }}</td>
+                    <td><a href="{{ route('ventas.pdf', $v->idventa) }}" target="_blank" title="Descargar PDF" style="color:#2563EB;"><i class="fas fa-file-pdf"></i></a></td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="fx-vacio">Sin ventas registradas.</td></tr>
+                <tr><td colspan="7" class="fx-vacio">Sin ventas registradas.</td></tr>
             @endforelse
             </tbody>
         </table>

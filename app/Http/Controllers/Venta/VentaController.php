@@ -664,4 +664,29 @@ class VentaController extends Controller
         }
     }
 
+    /** Descarga la factura/comprobante de una venta en PDF (A4). */
+    public function pdf($id)
+    {
+        $venta = Venta::with(['cliente', 'tipoComprobante', 'sucursal', 'detalles.articulo', 'detalles.combinacion', 'movimientos.cuenta'])
+            ->findOrFail($id);
+
+        $empresa = (object) \App\Http\Controllers\Ecommerce\ShareController::getEmpresaImage();
+        $configuracion = DB::table('configuracion')->first();
+
+        $cobrado = (float) $venta->movimientos->sum('total_ars');
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('ventas.pdf', [
+            'venta'         => $venta,
+            'empresa'       => $empresa,
+            'cuit'          => $configuracion->cuit ?? null,
+            'razonSocial'   => $configuracion->razon_social ?? $empresa->name,
+            'cobrado'       => $cobrado,
+            'pendiente'     => max(0, (float) $venta->total_con_iva - $cobrado),
+        ])->setPaper('a4');
+
+        $nombre = 'factura-' . ($venta->num_folio ?: $venta->idventa) . '.pdf';
+
+        return $pdf->stream($nombre);
+    }
+
 }
