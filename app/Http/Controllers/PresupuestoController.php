@@ -392,14 +392,20 @@ class PresupuestoController extends Controller
 
     public function generatePdf($idpresupuesto)
     {
-        $presupuesto = Presupuesto::with(['cliente', 'detalles.articulo'])
+        $presupuesto = Presupuesto::with(['cliente', 'detalles.articulo', 'detalles.combinacion'])
             ->findOrFail($idpresupuesto);
 
         // Armamos los detalles
         $detalle = $presupuesto->detalles->map(function($d) {
+            // La medida (ej. "0,80 x 1,90") vive en la combinación elegida; si el
+            // producto no tiene variantes, se muestra la plaza fija del artículo.
+            $medida = $d->combinacion->combinacion
+                ?? ($d->articulo->plazas ? (Articulo::PLAZAS[$d->articulo->plazas] ?? $d->articulo->plazas) : '');
+
             return [
                 'codigo' => $d->articulo->codigo ?? '',
                 'nombre' => $d->articulo->nombre,
+                'medida' => $medida,
                 'cantidad' => $d->cantidad,
                 'precio_unitario' => number_format($d->precio_unitario, 2, ',', '.'),
                 'subtotal_neto' => number_format($d->subtotal_neto, 2, ',', '.'),
@@ -407,8 +413,12 @@ class PresupuestoController extends Controller
             ];
         });
 
+        // Solo mostramos el desglose de IVA si realmente hay IVA cargado
+        $tieneIva = round((float) $presupuesto->total_con_iva - (float) $presupuesto->total_neto, 2) != 0;
+
         // Armamos datos del presupuesto
         $data = [
+            'logo' => public_path('imagenes/marca/sommy-logo.png'),
             'cliente' => $presupuesto->cliente->nombre.' '.$presupuesto->cliente->paterno.' '.$presupuesto->cliente->materno,
             'direccion' => $presupuesto->cliente->direccion ?? '',
             'telefono' => $presupuesto->cliente->telefono ?? '',
@@ -418,6 +428,7 @@ class PresupuestoController extends Controller
             'estado' => $presupuesto->estado,
             'total_neto' => number_format($presupuesto->total_neto, 2, ',', '.'),
             'total_con_iva' => number_format($presupuesto->total_con_iva, 2, ',', '.'),
+            'tieneIva' => $tieneIva,
             'iva_discriminado' => collect($presupuesto->iva_discriminado)->map(function($monto, $porcentaje) {
                 return [
                     'porcentaje' => $porcentaje,
