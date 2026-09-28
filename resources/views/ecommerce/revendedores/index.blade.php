@@ -8,58 +8,46 @@
 
     .rvp-hero {
         background: linear-gradient(135deg, #131C36 0%, #1B2B5A 55%, #223a75 100%);
-        color: #fff; padding: 84px 20px 96px; text-align: center; position: relative; overflow: hidden;
+        color: #fff; padding: 64px 20px 88px; text-align: center; position: relative; overflow: hidden;
     }
     .rvp-hero .kicker { font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: #C6A15B; font-weight: 500; }
-    .rvp-hero h1 { font-size: clamp(30px, 5vw, 50px); font-weight: 600; margin: 14px 0 16px; line-height: 1.15; }
-    .rvp-hero p { font-size: clamp(15px, 2vw, 17px); font-weight: 300; color: #D3DAEC; max-width: 640px; margin: 0 auto 30px; line-height: 1.7; }
+    .rvp-hero h1 { font-size: clamp(28px, 5vw, 46px); font-weight: 600; margin: 14px 0 16px; line-height: 1.18; color: #fff; }
+    .rvp-hero p { font-size: clamp(14.5px, 2vw, 16.5px); font-weight: 300; color: #D3DAEC; max-width: 560px; margin: 0 auto 28px; line-height: 1.65; }
     .rvp-hero .cta {
         display: inline-flex; align-items: center; gap: 10px; background: #1EBE5A; color: #fff; border-radius: 999px;
-        padding: 15px 40px; font-size: 15px; font-weight: 600; text-decoration: none;
+        padding: 15px 38px; font-size: 15px; font-weight: 600; text-decoration: none;
         box-shadow: 0 16px 40px rgba(0,0,0,.28); transition: transform .25s ease;
     }
     .rvp-hero .cta:hover { transform: translateY(-2px); color: #fff; }
 
-    .rvp-pasos { max-width: 1080px; margin: -52px auto 0; padding: 0 20px; position: relative; z-index: 3; }
-    .rvp-pasos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; }
+    .rvp-pasos { max-width: 1080px; margin: -46px auto 0; padding: 0 20px; position: relative; z-index: 3; }
+    .rvp-pasos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
     .rvp-paso {
-        background: #fff; border: 1px solid #E7EAF2; border-radius: 20px; padding: 28px 24px;
+        background: #fff; border: 1px solid #E7EAF2; border-radius: 20px; padding: 24px 22px;
         box-shadow: 0 20px 50px rgba(27,43,90,.10);
     }
     .rvp-paso .n {
-        width: 40px; height: 40px; border-radius: 50%; background: #1B2B5A; color: #fff;
-        display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; margin-bottom: 14px;
+        width: 36px; height: 36px; border-radius: 50%; background: #1B2B5A; color: #fff;
+        display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; margin-bottom: 12px;
     }
-    .rvp-paso h3 { font-size: 16.5px; font-weight: 600; margin-bottom: 8px; }
-    .rvp-paso p { font-size: 13.5px; font-weight: 300; color: #5D6884; line-height: 1.65; margin: 0; }
+    .rvp-paso h3 { font-size: 16px; font-weight: 600; margin-bottom: 7px; }
+    .rvp-paso p { font-size: 13.5px; font-weight: 300; color: #5D6884; line-height: 1.6; margin: 0; }
+    .rvp-mini-wsp { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; font-weight: 600; color: #1EBE5A; text-decoration: none; }
+    .rvp-mini-wsp:hover { text-decoration: underline; color: #1EBE5A; }
 
-    .rvp-seccion { max-width: 1080px; margin: 74px auto 0; padding: 0 20px; }
-    .rvp-h2 { font-size: clamp(24px, 3.4vw, 32px); font-weight: 600; text-align: center; margin-bottom: 12px; }
-    .rvp-lead { text-align: center; font-size: 15px; font-weight: 300; color: #5D6884; max-width: 620px; margin: 0 auto 38px; line-height: 1.7; }
+    .rvp-seccion { max-width: 1080px; margin: 60px auto 0; padding: 0 20px; }
+    .rvp-h2 { font-size: clamp(22px, 3.4vw, 30px); font-weight: 600; text-align: center; margin-bottom: 30px; }
 
-    .rvp-check-grid { max-width: 560px; margin: 0 auto; }
-    .rvp-check-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid #EDF0F7; }
+    .rvp-dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 900px; margin: 0 auto; }
+    .rvp-col-card { background: #fff; border: 1px solid #E7EAF2; border-radius: 20px; padding: 26px 24px; box-shadow: 0 14px 34px rgba(27,43,90,.06); }
+    .rvp-col-card h3 { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #9AA5BD; margin-bottom: 12px; }
+    .rvp-col-card .rvp-check-item:first-of-type { padding-top: 0; }
+    .rvp-col-card .rvp-nota-autentico { text-align: left; font-size: 12.5px; color: #9AA5BD; font-weight: 300; margin-top: 12px; }
+
+    .rvp-check-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid #EDF0F7; }
     .rvp-check-item:last-of-type { border-bottom: none; }
-    .rvp-check-item i { color: #1EBE5A; font-size: 17px; margin-top: 2px; }
-    .rvp-check-item span { font-size: 14.5px; color: #1B2B5A; font-weight: 500; }
-    .rvp-nota-autentico { text-align: center; font-size: 13.5px; color: #5D6884; font-weight: 300; margin-top: 18px; }
-
-    .rvp-como-card {
-        max-width: 560px; margin: 0 auto; background: #F4F6FB; border-radius: 24px; padding: 36px 32px; text-align: center;
-    }
-    .rvp-como-card p { font-size: 14.5px; color: #5D6884; font-weight: 300; line-height: 1.7; margin: 0 0 22px; }
-    .rvp-wsp-btn {
-        display: inline-flex; align-items: center; gap: 10px; background: #1EBE5A; color: #fff; border-radius: 999px;
-        padding: 15px 34px; font-size: 15px; font-weight: 600; text-decoration: none;
-    }
-    .rvp-wsp-btn:hover { color: #fff; opacity: .92; }
-    .rvp-como-post { font-size: 13px; color: #9AA5BD; margin-top: 18px; line-height: 1.6; }
-
-    .rvp-benef-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
-    .rvp-benef { text-align: center; padding: 8px; }
-    .rvp-benef i { font-size: 26px; color: #C6A15B; margin-bottom: 12px; display: block; }
-    .rvp-benef h4 { font-size: 15.5px; font-weight: 600; margin-bottom: 6px; }
-    .rvp-benef p { font-size: 13.5px; font-weight: 300; color: #5D6884; line-height: 1.65; margin: 0; }
+    .rvp-check-item i { color: #1EBE5A; font-size: 16px; margin-top: 2px; }
+    .rvp-check-item span { font-size: 14px; color: #1B2B5A; font-weight: 500; }
 
     .rvp-form-wrap { background: #F4F6FB; margin-top: 78px; padding: 66px 20px 80px; }
     .rvp-form-card {
@@ -115,8 +103,8 @@
     @media (max-width: 620px) {
         .rvp-grid2 { grid-template-columns: 1fr; }
         .rvp-form-card { padding: 28px 22px; border-radius: 20px; }
-        .rvp-hero { padding: 64px 20px 84px; }
-        .rvp-como-card { padding: 28px 22px; }
+        .rvp-hero { padding: 48px 20px 76px; }
+        .rvp-dos-col { grid-template-columns: 1fr; }
     }
 </style>
 
@@ -132,9 +120,8 @@
         <div class="kicker">Programa de Creadores</div>
         <h1>Creá contenido y ganá con Sommy</h1>
         <p>
-            Si te gusta hacer contenido, hablar a cámara o editar videos, este programa es para vos.
-            En Sommy buscamos personas que quieran recomendar nuestros productos de forma auténtica
-            y ayudar a otros a mejorar su descanso y bienestar.
+            Recomendá nuestros colchones y sommiers en tus redes, de forma auténtica,
+            y cobrá comisión por cada venta. Sin stock, sin inversión.
         </p>
         <a href="{{ $wspLink }}" target="_blank" rel="noopener noreferrer" class="cta">
             <i class="fab fa-whatsapp"></i> Quiero ser creador
@@ -145,83 +132,44 @@
         <div class="rvp-pasos-grid">
             <div class="rvp-paso">
                 <div class="n">1</div>
-                <h3>Creás contenido</h3>
-                <p>Mostrás o recomendás productos Sommy a tu manera: un video, una foto, una reseña.</p>
+                <h3>Nos escribís</h3>
+                <p>Contanos quién sos y por dónde pensás compartir. Te confirmamos rápido.</p>
+                <a href="{{ $wspLink }}" target="_blank" rel="noopener noreferrer" class="rvp-mini-wsp"><i class="fab fa-whatsapp"></i> Escribinos</a>
             </div>
             <div class="rvp-paso">
                 <div class="n">2</div>
-                <h3>Lo compartís</h3>
-                <p>Lo subís a tus redes sociales con tu link o tu QR de Sommy.</p>
+                <h3>Cargás tus datos</h3>
+                <p>Un formulario corto con tu DNI. Al toque te generamos tu link y tu QR propios.</p>
             </div>
             <div class="rvp-paso">
                 <div class="n">3</div>
-                <h3>Conectás con tu comunidad</h3>
-                <p>Recomendás de forma real, sin guion armado — eso es lo que más convierte.</p>
+                <h3>Compartís contenido</h3>
+                <p>Mostrás o recomendás productos Sommy a tu manera en tus redes, con tu link.</p>
             </div>
             <div class="rvp-paso">
                 <div class="n">4</div>
                 <h3>Cobrás tu comisión</h3>
-                <p>Cada compra que entra por tu link queda a tu nombre. Nosotros liquidamos, vos no reclamás nada.</p>
+                <p>Cada venta que entra por tu link queda a tu nombre. Nosotros liquidamos, vos no reclamás nada.</p>
             </div>
         </div>
     </section>
 
     <section class="rvp-seccion">
-        <h2 class="rvp-h2">¿Qué necesitás para participar?</h2>
-        <div class="rvp-check-grid">
-            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Tener al menos una red social activa (Instagram, TikTok, X o YouTube)</span></div>
-            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Perfil público</span></div>
-            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Ganas de crear contenido</span></div>
-        </div>
-        <p class="rvp-nota-autentico">No hace falta ser influencer. Buscamos autenticidad.</p>
-    </section>
-
-    <section class="rvp-seccion">
-        <h2 class="rvp-h2">¿Cómo me sumo?</h2>
-        <div class="rvp-como-card">
-            <p>Es muy simple. Enviá un mensaje por WhatsApp y contanos que querés sumarte al Programa de Creadores.</p>
-            <a href="{{ $wspLink }}" target="_blank" rel="noopener noreferrer" class="rvp-wsp-btn">
-                <i class="fab fa-whatsapp"></i> {{ $arrayEmpresa['whatsapp'] ?? 'Escribinos' }}
-            </a>
-            <p class="rvp-como-post">
-                Vamos a revisar tu perfil y, si cumplís con los requisitos, te confirmamos el ingreso al programa.
-                Una vez dentro, completás tu registro más abajo para generar tu link y tu QR, y ya podés empezar a crear contenido y generar ingresos.
-            </p>
-        </div>
-    </section>
-
-    <section class="rvp-seccion">
-        <h2 class="rvp-h2">¿Por qué sumarte?</h2>
-        <div class="rvp-check-grid">
-            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Monetizás tu contenido</span></div>
-            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Trabajás con una marca en crecimiento</span></div>
-            <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Ayudás a otras personas a mejorar su descanso</span></div>
-        </div>
-    </section>
-
-    <section class="rvp-seccion">
-        <h2 class="rvp-h2">Por qué conviene</h2>
-        <p class="rvp-lead">Somos fabricantes: colchones, sommiers, almohadas, sábanas y todo lo que hace falta para una buena habitación.</p>
-        <div class="rvp-benef-grid">
-            <div class="rvp-benef">
-                <i class="fas fa-wallet"></i>
-                <h4>Cero inversión</h4>
-                <p>No comprás mercadería ni pagás nada para entrar. Solo compartís tu link.</p>
+        <h2 class="rvp-h2">Lo que necesitás y lo que ganás</h2>
+        <div class="rvp-dos-col">
+            <div class="rvp-col-card">
+                <h3>Necesitás</h3>
+                <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Una red social activa (Instagram, TikTok, X o YouTube)</span></div>
+                <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Perfil público</span></div>
+                <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Ganas de crear contenido</span></div>
+                <p class="rvp-nota-autentico">No hace falta ser influencer. Buscamos autenticidad.</p>
             </div>
-            <div class="rvp-benef">
-                <i class="fas fa-industry"></i>
-                <h4>Precio de fábrica</h4>
-                <p>Tu cliente compra directo al fabricante, con garantía y sin intermediarios.</p>
-            </div>
-            <div class="rvp-benef">
-                <i class="fas fa-truck-fast"></i>
-                <h4>Envío y posventa nuestros</h4>
-                <p>Entregamos, facturamos y resolvemos cualquier reclamo. Tu trabajo termina en la recomendación.</p>
-            </div>
-            <div class="rvp-benef">
-                <i class="fas fa-qrcode"></i>
-                <h4>Link y QR propios</h4>
-                <p>Un QR imprimible para tu local, tu feria o tu tarjeta, y un link para redes.</p>
+            <div class="rvp-col-card">
+                <h3>Ganás</h3>
+                <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Cero inversión: no comprás ni pagás nada para entrar</span></div>
+                <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Precio de fábrica, con garantía, para tu cliente</span></div>
+                <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Nosotros hacemos el envío, la facturación y la posventa</span></div>
+                <div class="rvp-check-item"><i class="fas fa-check-circle"></i><span>Tu link y tu QR propios para compartir donde quieras</span></div>
             </div>
         </div>
     </section>
