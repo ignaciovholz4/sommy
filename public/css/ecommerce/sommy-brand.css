@@ -476,6 +476,15 @@ p { line-height: 1.7; }
 .sommy-banner-section {
     background: #fff;
     padding: 0;
+    /* Full-bleed real: aunque este section quede anidado dentro de cualquier
+       contenedor con max-width/padding (actual o futuro), esto lo saca del
+       flujo de ese contenedor y lo estira a los 100vw de la ventana, igual
+       que el hero de Bausing. Requiere overflow-x:hidden en <body> (ya está
+       seteado más arriba) para que los márgenes negativos no generen scroll. */
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
 }
 .sommy-banner { position: relative; width: 100%; max-width: none; margin: 0; }
 .sommy-banner .carousel-inner { border-radius: 0; }
@@ -514,6 +523,12 @@ p { line-height: 1.7; }
     height: auto;
     object-fit: contain;
 }
+/* Pisa una regla vieja y genérica de main_ecommerce.css (".carousel-item img
+   { max-height: 520px }", pensada para otro carrusel del tema) que por compartir
+   la clase de Bootstrap ".carousel-item" también agarraba el banner de Sommy en
+   escritorio: con object-fit:contain + esa altura tope, la imagen "sin texto"
+   quedaba achicada y centrada en vez de ocupar todo el ancho del banner. */
+.sommy-banner-media .sommy-banner-img { max-height: none; }
 .sommy-banner-img {
     width: 100%;
     height: 100%;
@@ -588,8 +603,8 @@ p { line-height: 1.7; }
     box-shadow: var(--sm-shadow);
     opacity: 1;
 }
-.sommy-banner-nav.carousel-control-prev { left: -14px; }
-.sommy-banner-nav.carousel-control-next { right: -14px; }
+.sommy-banner-nav.carousel-control-prev { left: 20px; }
+.sommy-banner-nav.carousel-control-next { right: 20px; }
 .sommy-banner-nav .carousel-control-prev-icon,
 .sommy-banner-nav .carousel-control-next-icon {
     width: 16px;
