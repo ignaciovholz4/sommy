@@ -23,6 +23,7 @@ script.sql
 /public/imagenes/banner/
 /public/imagenes/categorias/
 /public/imagenes/empresa/
+/public/imagenes/reels/
 
 # WhatsApp bridge (Baileys) - runtime y secretos
 /whatsapp-bridge/node_modules/
