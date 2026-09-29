@@ -2101,8 +2101,8 @@ a:not(.btn):hover { color: var(--sm-blue); }
     .sommy-prod-carrusel .product-grid::-webkit-scrollbar { display: none; }
     .sommy-prod-carrusel .product-grid > .col {
         flex: 0 0 auto;
-        width: 47%;
-        max-width: 180px;
+        width: 62%;
+        max-width: 230px;
         scroll-snap-align: start;
     }
 
@@ -2165,7 +2165,7 @@ a:not(.btn):hover { color: var(--sm-blue); }
     .sommy-prod-carrusel-arrow {
         display: flex;
         position: absolute;
-        top: 78px;
+        top: 100px;
         width: 30px;
         height: 30px;
         border: none;
