@@ -285,6 +285,17 @@
     </script>
     @endif
 
+    <script>
+        // Flechas del carrusel de productos/combos en mobile (mismo patrón que los reels)
+        function moverProdCarrusel(trackId, dir) {
+            const track = document.getElementById(trackId);
+            if (!track) return;
+            const card = track.querySelector('.col');
+            const paso = card ? (card.offsetWidth + 12) : 180;
+            track.scrollBy({ left: dir * paso, behavior: 'smooth' });
+        }
+    </script>
+
     @if($getDataCombos->isNotEmpty())
     <!--Combos en oferta: vidriera de los combos dinamicos reales (colchon + relacionados)-->
     <section class="py-5" id="combos">
@@ -299,10 +310,20 @@
               <a href="{{ route('ecommerce.combos') }}" class="ec-nav-link" style="font-size:13px;">Ver todos →</a>
             </div>
             <p class="text-muted mb-4" data-aos="fade-up">Colchón + base sommier + almohadas: armando el combo te sale más barato que comprando todo por separado.</p>
-            <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 justify-content-start">
-              @foreach ($getDataCombos as $combo)
-                @include('ecommerce.partials.combo-card')
-              @endforeach
+            <div class="sommy-prod-carrusel">
+              <div class="sommy-prod-carrusel-wrap">
+                <button type="button" class="sommy-prod-carrusel-arrow" onclick="moverProdCarrusel('combosTrack', -1)" aria-label="Anterior">
+                  <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 justify-content-start" id="combosTrack">
+                  @foreach ($getDataCombos as $combo)
+                    @include('ecommerce.partials.combo-card')
+                  @endforeach
+                </div>
+                <button type="button" class="sommy-prod-carrusel-arrow" onclick="moverProdCarrusel('combosTrack', 1)" aria-label="Siguiente">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -347,56 +368,70 @@
               @else
               <div class="tab-content" id="nav-tabContent">
                 <div class="tab-pane fade show active" id="nav-all" role="tabpanel" aria-labelledby="nav-all-tab">
-                  <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 justify-content-start">
-                    @foreach ($getDataProd as $product)
-                      <div class="col" data-aos="fade-up" data-aos-delay="{{ ($loop->index % 5) * 80 }}">
-                        <div class="product-item">
+                  <div class="sommy-prod-carrusel">
+                    <div class="sommy-prod-carrusel-wrap">
+                      <button type="button" class="sommy-prod-carrusel-arrow" onclick="moverProdCarrusel('destacadosTrack', -1)" aria-label="Anterior">
+                        <i class="fa-solid fa-chevron-left"></i>
+                      </button>
+                      <div class="product-grid row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 justify-content-start" id="destacadosTrack">
+                        @foreach ($getDataProd as $product)
+                          <div class="col" data-aos="fade-up" data-aos-delay="{{ ($loop->index % 5) * 80 }}">
+                            <div class="product-item">
 
-                          @if($product->has_offer)
-                            <span class="badge bg-success position-absolute m-3">
-                              <i class="fas fa-tags"></i> Oferta
-                            </span>
-                          @endif
-
-                          <figure>
-                            <a href="{{ url('producto/' . $product->producto->slug) }}" title="{{ $product->producto->nombre }}">
-                              <img src="{{asset('imagenes/articulos/'.$product->producto->imagen )}}" class="tab-image">
-                            </a>
-                          </figure>
-                          <div class="name-product">
-                            <h3>{{ $product->producto->nombre }}</h3>
-                          </div>
-
-                          <div class="text-center mb-2">
-                            @if($product->precio_desde && $product->variantes->count() > 1)
-                              <div style="font-size:13px;color:#475569;">
-                                @foreach($product->variantes as $variante)
-                                  <div class="d-flex justify-content-between">
-                                    <span>{{ $variante->plaza }} <span class="text-muted">{{ $variante->medida }}</span></span>
-                                    <span class="fw-bold">${{ number_format($variante->precio, 0, ',', '.') }}</span>
-                                  </div>
-                                @endforeach
-                              </div>
-                            @else
-                              @if($product->precio_desde)
-                                <span class="d-block" style="font-size:13px;color:#64748b;">Desde</span>
+                              @if($product->has_offer)
+                                <span class="badge bg-success position-absolute m-3">
+                                  <i class="fas fa-tags"></i> Oferta
+                                </span>
                               @endif
-                              <span class="fw-bold">${{ number_format($product->display_price, 2, ',', '.') }}</span>
-                            @endif
-                          </div>
 
-                          <div class="text-center div-button-cart d-flex flex-column gap-2">
-                            <a class="btn btn-add-prod" href="{{ url('producto/' . $product->producto->slug) }}">Agregar al carrito</a>
-                            @if(!empty($arrayEmpresa['whatsapp']))
-                            <a class="btn-whatsapp-prod" target="_blank" rel="noopener noreferrer"
-                               href="https://wa.me/{{ preg_replace('/\D/', '', $arrayEmpresa['whatsapp']) }}?text={{ urlencode('Hola! Quiero pedir el ' . $product->producto->nombre . '. Lo vi acá: ' . url('producto/' . $product->producto->slug)) }}">
-                                <i class="fa-brands fa-whatsapp"></i> Pedir por WhatsApp
-                            </a>
-                            @endif
+                              <figure>
+                                <a href="{{ url('producto/' . $product->producto->slug) }}" title="{{ $product->producto->nombre }}">
+                                  <img src="{{asset('imagenes/articulos/'.$product->producto->imagen )}}" class="tab-image">
+                                </a>
+                              </figure>
+                              <div class="name-product">
+                                <h3>{{ $product->producto->nombre }}</h3>
+                              </div>
+                              <div class="text-center sommy-prod-pago" style="font-size:12px;color:#16a34a;font-weight:500;">Efectivo o transferencia</div>
+
+                              <div class="text-center mb-2">
+                                @if($product->precio_desde && $product->variantes->count() > 1)
+                                  <div style="font-size:13px;color:#475569;">
+                                    @foreach($product->variantes as $variante)
+                                      <div class="d-flex justify-content-between">
+                                        <span>{{ $variante->plaza }} <span class="text-muted">{{ $variante->medida }}</span></span>
+                                        <span class="fw-bold">${{ number_format($variante->precio, 0, ',', '.') }}</span>
+                                      </div>
+                                    @endforeach
+                                  </div>
+                                @else
+                                  @if($product->precio_desde)
+                                    <span class="d-block" style="font-size:13px;color:#64748b;">Desde</span>
+                                  @endif
+                                  <span class="fw-bold">${{ number_format($product->display_price, 2, ',', '.') }}</span>
+                                  @if($product->has_offer)
+                                    <span class="d-block" style="font-size:11px;color:#94a3b8;">Precio de lista: <span style="text-decoration:line-through;">${{ number_format($product->precio_base, 0, ',', '.') }}</span></span>
+                                  @endif
+                                @endif
+                              </div>
+
+                              <div class="text-center div-button-cart d-flex flex-column gap-2">
+                                <a class="btn btn-add-prod" href="{{ url('producto/' . $product->producto->slug) }}">Agregar al carrito</a>
+                                @if(!empty($arrayEmpresa['whatsapp']))
+                                <a class="btn-whatsapp-prod" target="_blank" rel="noopener noreferrer"
+                                   href="https://wa.me/{{ preg_replace('/\D/', '', $arrayEmpresa['whatsapp']) }}?text={{ urlencode('Hola! Quiero pedir el ' . $product->producto->nombre . '. Lo vi acá: ' . url('producto/' . $product->producto->slug)) }}">
+                                    <i class="fa-brands fa-whatsapp"></i> Pedir por WhatsApp
+                                </a>
+                                @endif
+                              </div>
+                            </div>
                           </div>
-                        </div>
+                        @endforeach
                       </div>
-                    @endforeach
+                      <button type="button" class="sommy-prod-carrusel-arrow" onclick="moverProdCarrusel('destacadosTrack', 1)" aria-label="Siguiente">
+                        <i class="fa-solid fa-chevron-right"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

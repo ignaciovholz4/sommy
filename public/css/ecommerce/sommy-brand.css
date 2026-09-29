@@ -2043,6 +2043,74 @@ a:not(.btn):hover { color: var(--sm-blue); }
     .sommy-reel-card--embed iframe { height: 400px; }
 }
 
+/* ── Carrusel de productos/combos en mobile (home) ─────────────
+   Reusa el patrón de los reels: en desktop/tablet queda la grilla de
+   siempre (.product-grid con row-cols-*); en mobile esas mismas cards
+   pasan a ser un carrusel horizontal con scroll-snap, ~2 tarjetas
+   angostas a la vista, como el resto de las vidrieras del rubro. */
+.sommy-prod-carrusel-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.sommy-prod-carrusel-arrow {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--sm-border);
+    background: #fff;
+    color: var(--sm-navy);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    font-size: 13px;
+}
+.sommy-prod-carrusel-arrow:hover { background: var(--sm-navy); color: #fff; }
+
+@media (max-width: 768px) {
+    .sommy-prod-carrusel-arrow { display: flex; }
+    .sommy-prod-carrusel .product-grid {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        gap: 12px;
+        padding: 2px 2px 10px;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .sommy-prod-carrusel .product-grid::-webkit-scrollbar { display: none; }
+    .sommy-prod-carrusel .product-grid > .col {
+        flex: 0 0 auto;
+        width: 47%;
+        max-width: 190px;
+        scroll-snap-align: start;
+    }
+    /* Tarjeta compacta: imagen más baja, título a una línea, botones chicos */
+    .sommy-prod-carrusel .product-item { padding: 8px; }
+    .sommy-prod-carrusel .product-item figure { height: 120px; margin-bottom: 8px; }
+    .sommy-prod-carrusel .product-item h3 {
+        font-size: 12.5px;
+        height: auto;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        margin-bottom: 2px;
+    }
+    .sommy-prod-carrusel .sommy-prod-pago { font-size: 10.5px; }
+    .sommy-prod-carrusel .product-item .fw-bold { font-size: 14px; }
+    .sommy-prod-carrusel .product-item .badge { font-size: 9.5px; padding: 4px 7px; margin: 8px !important; }
+    .sommy-prod-carrusel .product-item .btn-add-prod,
+    .sommy-prod-carrusel .product-item .btn-whatsapp-prod {
+        font-size: 11px;
+        padding: 7px 10px;
+    }
+}
+
 /* ================================================================
    SOMMY — Expresión Promocional (Manual de Identidad, sección
    "Sistema Gráfico Comercial"). Registro secundario para piezas de
