@@ -2101,16 +2101,15 @@ a:not(.btn):hover { color: var(--sm-blue); }
     .sommy-prod-carrusel .product-grid::-webkit-scrollbar { display: none; }
     .sommy-prod-carrusel .product-grid > .col {
         flex: 0 0 auto;
-        width: 62%;
-        max-width: 230px;
+        width: 80%;
+        max-width: 280px;
         scroll-snap-align: start;
     }
 
     /* Tarjeta compacta estilo vidriera: imagen cuadrada, badge pegado a la
-       esquina, textos a una sola línea (con puntos suspensivos si no entran
-       en vez de desbordar y pisar lo de abajo) y sin botones — se toca la
-       imagen para entrar a la ficha, como en el resto del carrusel. */
-    .sommy-prod-carrusel .product-item { padding: 0 0 12px; overflow: hidden; text-align: left; }
+       esquina, y el texto siempre completo (envuelve en varias líneas en vez
+       de recortarse) — por eso la tarjeta es ancha, para que entre todo. */
+    .sommy-prod-carrusel .product-item { padding: 0 0 12px; text-align: left; }
     .sommy-prod-carrusel .product-item figure {
         height: auto;
         aspect-ratio: 1 / 1;
@@ -2123,15 +2122,12 @@ a:not(.btn):hover { color: var(--sm-blue); }
         padding: 0 10px;
     }
     .sommy-prod-carrusel .product-item h3 {
-        font-size: 12.5px;
+        font-size: 13px;
         line-height: 1.3;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
         margin: 0 0 3px;
     }
     .sommy-prod-carrusel .product-item .sommy-prod-pago {
-        font-size: 10.5px;
+        font-size: 11px;
         text-align: left;
         padding: 0 10px;
         margin-bottom: 3px !important;
@@ -2141,11 +2137,6 @@ a:not(.btn):hover { color: var(--sm-blue); }
         padding: 0 10px;
         margin-bottom: 4px;
     }
-    .sommy-prod-carrusel .product-item .text-center.mb-2 span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
     .sommy-prod-carrusel .product-item .fw-bold { font-size: 15px; }
     .sommy-prod-carrusel .product-item .badge {
         position: absolute;
@@ -2153,19 +2144,19 @@ a:not(.btn):hover { color: var(--sm-blue); }
         left: 0;
         margin: 0 !important;
         border-radius: 12px 0 10px 0;
-        font-size: 9px;
+        font-size: 9.5px;
         padding: 5px 9px;
         z-index: 2;
         white-space: nowrap;
     }
-    .sommy-prod-carrusel .product-item .div-button-cart { display: none; }
+    .sommy-prod-carrusel .product-item .div-button-cart { padding: 0 10px; }
 
     /* Flechas superpuestas sobre el carril (no ocupan lugar aparte) */
     .sommy-prod-carrusel-wrap { display: block; position: relative; }
     .sommy-prod-carrusel-arrow {
         display: flex;
         position: absolute;
-        top: 100px;
+        top: 120px;
         width: 30px;
         height: 30px;
         border: none;

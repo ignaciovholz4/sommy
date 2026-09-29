@@ -137,9 +137,8 @@ class EcommerceController extends Controller
             ->with('combinaciones')
             ->get()
             ->map(function ($anchor) {
-                $variante = $anchor->combinaciones->firstWhere('combinacion', '1,40 x 1,90')
-                    ?? $anchor->combinaciones->where('pventa_variante', '>', 0)->sortByDesc('pventa_variante')->first();
-                if (!$variante) {
+                $variantesAncla = $anchor->combinaciones->where('pventa_variante', '>', 0);
+                if ($variantesAncla->isEmpty()) {
                     return null;
                 }
 
@@ -157,39 +156,9 @@ class EcommerceController extends Controller
                     ->with('combinaciones')
                     ->get();
 
-                $descuento = (float) $anchor->combo_descuento_pct / 100;
-                $anchorPrice = (float) $variante->pventa_variante;
-                // Medida del colchón elegido (ej. "1,40 x 1,90" -> "1.40"), para
-                // buscar la variante de la misma medida en los relacionados con
-                // variantes (la base), en vez de quedarnos con la más barata.
-                $anchorMedida = str_replace(',', '.', trim(explode('x', $variante->combinacion)[0] ?? ''));
-                $addonsFull = 0.0;
-                $incluye = [];
-                $incluyeSommier = false;
-
-                foreach ($relacionados as $rel) {
-                    if ($rel->tipo_producto_id == 2) {
-                        $variantesConPrecio = $rel->combinaciones->where('pventa_variante', '>', 0);
-                        $match = $variantesConPrecio->first(fn ($v) => str_replace(',', '.', trim($v->combinacion)) === $anchorMedida);
-                        $precioUnit = (float) ($match->pventa_variante ?? $variantesConPrecio->min('pventa_variante') ?? 0);
-                    } else {
-                        $precioUnit = (float) $rel->pventa_con_iva;
-                    }
-
-                    if ($precioUnit <= 0) {
-                        continue;
-                    }
-                    $addonsFull += $precioUnit;
-                    $nombreLimpio = $this->nombreParaMostrar($rel->nombre);
-                    $incluye[] = $nombreLimpio;
-                    if (stripos($nombreLimpio, 'sommier') !== false || stripos($nombreLimpio, 'base') !== false) {
-                        $incluyeSommier = true;
-                    }
-                }
-
                 // Regalos reales (producto_regalos): van a $0 en el combo, pero
                 // suman a precio de lista en "precio_separado" para mostrar el
-                // ahorro real de llevarlos gratis.
+                // ahorro real de llevarlos gratis. Es el mismo para toda medida.
                 $regalosValor = 0.0;
                 $regalosNombres = [];
                 $regalos = DB::table('producto_regalos as pr')
@@ -206,23 +175,89 @@ class EcommerceController extends Controller
                     $regalosNombres[] = $cant > 1 ? "{$nombreLimpio} x{$cant}" : $nombreLimpio;
                 }
 
-                if ($addonsFull <= 0 && $regalosValor <= 0) {
+                $descuento = (float) $anchor->combo_descuento_pct / 100;
+
+                // El combo cambia de precio según la medida del colchón ancla: para
+                // cada una buscamos la base/relacionados de esa misma medida y
+                // calculamos el total, así se puede mostrar el precio por medida
+                // (igual que ya se hace con los productos con variantes).
+                $variantesCombo = collect();
+                $incluyeMasCompleto = [];
+                $incluyeSommierGlobal = false;
+
+                foreach ($variantesAncla as $variante) {
+                    $anchorMedida = str_replace(',', '.', trim(explode('x', $variante->combinacion)[0] ?? ''));
+                    $anchorPrice = (float) $variante->pventa_variante;
+                    $addonsFull = 0.0;
+                    $incluye = [];
+                    $incluyeSommier = false;
+
+                    foreach ($relacionados as $rel) {
+                        if ($rel->tipo_producto_id == 2) {
+                            $variantesConPrecio = $rel->combinaciones->where('pventa_variante', '>', 0);
+                            $match = $variantesConPrecio->first(fn ($v) => str_replace(',', '.', trim($v->combinacion)) === $anchorMedida);
+                            $precioUnit = (float) ($match->pventa_variante ?? $variantesConPrecio->min('pventa_variante') ?? 0);
+                        } else {
+                            $precioUnit = (float) $rel->pventa_con_iva;
+                        }
+
+                        if ($precioUnit <= 0) {
+                            continue;
+                        }
+                        $addonsFull += $precioUnit;
+                        $nombreLimpio = $this->nombreParaMostrar($rel->nombre);
+                        $incluye[] = $nombreLimpio;
+                        if (stripos($nombreLimpio, 'sommier') !== false || stripos($nombreLimpio, 'base') !== false) {
+                            $incluyeSommier = true;
+                        }
+                    }
+
+                    if ($addonsFull <= 0 && $regalosValor <= 0) {
+                        continue;
+                    }
+
+                    $separado = \App\Support\Precio::redondear($anchorPrice + $addonsFull + $regalosValor);
+                    $comboTotal = \App\Support\Precio::redondear($anchorPrice + $addonsFull * (1 - $descuento));
+
+                    $variantesCombo->push((object) [
+                        'medida'          => trim($variante->combinacion),
+                        'plaza'           => ShareController::getPlazaLabel($variante->combinacion),
+                        'precio'          => $comboTotal,
+                        'precio_separado' => $separado,
+                        'ahorro'          => $separado - $comboTotal,
+                    ]);
+
+                    // Nos quedamos con el detalle de "incluye" de la medida que más
+                    // artículos relacionados sumó, para mostrar en la card (suele ser
+                    // la misma lista para todas las medidas, pero por las dudas).
+                    if (count($incluye) > count($incluyeMasCompleto)) {
+                        $incluyeMasCompleto = $incluye;
+                        $incluyeSommierGlobal = $incluyeSommier;
+                    }
+                }
+
+                if ($variantesCombo->isEmpty()) {
                     return null;
                 }
 
-                $separado = \App\Support\Precio::redondear($anchorPrice + $addonsFull + $regalosValor);
-                $comboTotal = \App\Support\Precio::redondear($anchorPrice + $addonsFull * (1 - $descuento));
+                $variantesCombo = $variantesCombo->sortBy('precio')->values();
+
+                // Medida "de referencia" para el precio principal de la card:
+                // 2 plazas si está disponible, si no la más barata.
+                $refEntry = $variantesCombo->firstWhere('medida', '1,40 x 1,90') ?? $variantesCombo->first();
 
                 return (object) [
                     'producto'         => $anchor,
-                    'medida'           => trim($variante->combinacion),
-                    'plaza'            => ShareController::getPlazaLabel($variante->combinacion),
-                    'incluye'          => $incluye,
-                    'incluye_sommier'  => $incluyeSommier,
+                    'medida'           => $refEntry->medida,
+                    'plaza'            => $refEntry->plaza,
+                    'incluye'          => $incluyeMasCompleto,
+                    'incluye_sommier'  => $incluyeSommierGlobal,
                     'regalos'          => $regalosNombres,
-                    'display_price'    => $comboTotal,
-                    'precio_separado'  => $separado,
-                    'ahorro'           => $separado - $comboTotal,
+                    'display_price'    => $refEntry->precio,
+                    'precio_separado'  => $refEntry->precio_separado,
+                    'ahorro'           => $refEntry->ahorro,
+                    'variantes'        => $variantesCombo,
+                    'precio_desde'     => $variantesCombo->count() > 1,
                 ];
             })
             ->filter()

@@ -29,7 +29,18 @@
     </div>
 
     <div class="text-center mb-2">
-      <span class="fw-bold">${{ number_format($combo->display_price, 2, ',', '.') }}</span>
+      @if(!empty($combo->precio_desde) && $combo->variantes->count() > 1)
+        <div style="font-size:13px;color:#475569;">
+          @foreach($combo->variantes as $variante)
+            <div class="d-flex justify-content-between">
+              <span>{{ $variante->plaza }} <span class="text-muted">{{ $variante->medida }}</span></span>
+              <span class="fw-bold">${{ number_format($variante->precio, 0, ',', '.') }}</span>
+            </div>
+          @endforeach
+        </div>
+      @else
+        <span class="fw-bold">${{ number_format($combo->display_price, 2, ',', '.') }}</span>
+      @endif
     </div>
 
     <div class="text-center div-button-cart d-flex flex-column gap-2">
