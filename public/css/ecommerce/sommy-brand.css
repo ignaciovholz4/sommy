@@ -532,23 +532,13 @@ p { line-height: 1.7; }
     object-fit: contain;
 }
 .sommy-banner-slide--full { min-height: 0; }
-@media (min-width: 769px) {
-    /* Escritorio: el rectángulo del banner "sin texto" queda fijo en proporción
-       2200x680 (~3.24:1, estilo Bausing — bien panorámico y bajo) sea cual
-       sea el ancho de pantalla — la imagen se recorta (cover) para llenarlo,
-       en vez de mostrarse completa a su proporción real. Así el banner
-       siempre se ve con ese mismo formato de rectángulo, consistente entre
-       banners y entre pantallas. */
-    .sommy-banner-slide--full .sommy-banner-media {
-        height: auto;
-        aspect-ratio: 2200 / 680;
-    }
-    .sommy-banner-slide--full .sommy-banner-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-}
+/* Se probaron varios rectángulos fijos (2200x900, 2200x1400, 2200x680) con
+   object-fit:cover, pero cada banner tiene su propio diseño (texto e íconos
+   en distintas zonas) y el recorte siempre corría riesgo de comerse algo
+   importante — pasó con un banner que tenía una fila de íconos pegada abajo.
+   Se vuelve a mostrar la imagen COMPLETA, a su proporción real, sin recortar
+   nunca — el alto del banner queda variable, distinto según la imagen que
+   se suba en cada caso. */
 /* Pisa una regla vieja y genérica de main_ecommerce.css (".carousel-item img
    { max-height: 520px }", pensada para otro carrusel del tema) que por compartir
    la clase de Bootstrap ".carousel-item" también agarraba el banner de Sommy en
