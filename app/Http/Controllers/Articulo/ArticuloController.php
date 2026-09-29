@@ -418,19 +418,20 @@ class ArticuloController extends Controller
                         if ($costo <= 0) {
                             return '<div style="font-size:0.78rem;"><span class="text-muted">—</span></div>';
                         }
-                        $pct = round((((float) $v->pventa_variante - $costo) / $costo) * 100);
+                        $ganancia = (float) $v->pventa_variante - $costo;
+                        $pct = round(($ganancia / $costo) * 100);
                         $color = $pct <= 0 ? '#B91C1C' : ($pct < 20 ? '#92400E' : '#15803D');
-                        return '<div style="font-size:0.78rem;white-space:nowrap;"><span style="font-weight:800;color:'.$color.';">'.($pct > 0 ? '+' : '').$pct.'%</span></div>';
+                        return '<div style="font-size:0.78rem;white-space:nowrap;"><span style="font-weight:800;color:'.$color.';">$'.number_format($ganancia, 0, ',', '.').' ('.($pct > 0 ? '+' : '').$pct.'%)</span></div>';
                     })->implode('');
                 }
 
                 if ($a->pcompra_sin_iva <= 0) {
                     return '<span class="text-muted">—</span>';
                 }
-                $pct = round((($a->pventa_sin_iva - $a->pcompra_sin_iva) / $a->pcompra_sin_iva) * 100);
+                $ganancia = $a->pventa_sin_iva - $a->pcompra_sin_iva;
+                $pct = round(($ganancia / $a->pcompra_sin_iva) * 100);
                 $color = $pct <= 0 ? '#B91C1C' : ($pct < 20 ? '#92400E' : '#15803D');
-                return '<span style="font-weight:800;color:'.$color.';">'.($pct > 0 ? '+' : '').$pct.'%</span>'
-                     . '<div style="font-size:0.72rem;color:#94a3b8;">$'.number_format($a->pventa_sin_iva - $a->pcompra_sin_iva, 0, ',', '.').' x u.</div>';
+                return '<span style="font-weight:800;color:'.$color.';">$'.number_format($ganancia, 0, ',', '.').' ('.($pct > 0 ? '+' : '').$pct.'%)</span>';
             })
             ->addColumn('action', function($a){
                 $id = $a->idarticulo;
