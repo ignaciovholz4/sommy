@@ -19,10 +19,10 @@
         !empty($combo->regalos) ? implode(' + ', $combo->regalos) . ' de regalo' : null,
       ]);
     @endphp
-    <div class="name-product">
+    <div class="name-product name-product--combo">
       <h3>{{ $combo->producto->nombre }}</h3>
       @if(!empty($extras))
-        <div style="font-size:12.5px;color:#16a34a;font-weight:600;">
+        <div style="font-size:12.5px;color:#16a34a;font-weight:600;line-height:1.4;">
           <i class="fas fa-gift"></i> + {{ implode(' + ', $extras) }}
         </div>
       @endif

@@ -523,14 +523,14 @@ p { line-height: 1.7; }
 .sommy-banner-slide--full { min-height: 0; }
 @media (min-width: 769px) {
     /* Escritorio: el rectángulo del banner "sin texto" queda fijo en proporción
-       2200x1400 (~1.57:1, la medida recomendada) sea cual sea el ancho de
+       2200x900 (~2.44:1, la medida recomendada) sea cual sea el ancho de
        pantalla — la imagen se recorta (cover) para llenarlo, en vez de
        mostrarse completa a su proporción real. Así el banner siempre se ve
        con ese mismo formato de rectángulo, consistente entre banners y
        entre pantallas. */
     .sommy-banner-slide--full .sommy-banner-media {
         height: auto;
-        aspect-ratio: 2200 / 1400;
+        aspect-ratio: 2200 / 900;
     }
     .sommy-banner-slide--full .sommy-banner-img {
         width: 100%;
@@ -2058,6 +2058,17 @@ a:not(.btn):hover { color: var(--sm-blue); }
     .sommy-reel-card--embed iframe { height: 400px; }
 }
 
+/* ── Card de combo: título + regalos sin recortar ──────────────
+   .name-product trae de fábrica height:44px + overflow:hidden (pensado
+   para un título de 2 líneas nomás). La card de combo mete ahí también
+   la línea de "+ Base Sommier + Almohadas de regalo", que con esa altura
+   fija quedaba cortada a la mitad ("+ Base Sommier Sommy Ecocuero +" sin
+   el resto). Sin límite de alto: la card crece lo que haga falta. */
+.name-product--combo {
+    height: auto;
+    overflow: visible;
+}
+
 /* ── Carrusel de productos/combos en mobile (home) ─────────────
    Reusa el patrón de los reels: en desktop/tablet queda la grilla de
    siempre (.product-grid con row-cols-*); en mobile esas mismas cards
@@ -2101,41 +2112,45 @@ a:not(.btn):hover { color: var(--sm-blue); }
     .sommy-prod-carrusel .product-grid::-webkit-scrollbar { display: none; }
     .sommy-prod-carrusel .product-grid > .col {
         flex: 0 0 auto;
-        width: 80%;
-        max-width: 280px;
+        width: 86%;
+        max-width: 310px;
         scroll-snap-align: start;
     }
 
     /* Tarjeta compacta estilo vidriera: imagen cuadrada, badge pegado a la
        esquina, y el texto siempre completo (envuelve en varias líneas en vez
-       de recortarse) — por eso la tarjeta es ancha, para que entre todo. */
-    .sommy-prod-carrusel .product-item { padding: 0 0 12px; text-align: left; }
+       de recortarse) — por eso la tarjeta es ancha, para que entre todo con
+       aire entre cada renglón (título, regalos, precios, botones). */
+    .sommy-prod-carrusel .product-item { padding: 0 0 14px; text-align: left; }
     .sommy-prod-carrusel .product-item figure {
         height: auto;
         aspect-ratio: 1 / 1;
-        margin: 0 0 8px;
+        margin: 0 0 10px;
         border-radius: 12px 12px 0 0;
     }
     .sommy-prod-carrusel .product-item .name-product {
         height: auto;
         overflow: visible;
-        padding: 0 10px;
+        padding: 0 12px;
     }
     .sommy-prod-carrusel .product-item h3 {
-        font-size: 13px;
-        line-height: 1.3;
-        margin: 0 0 3px;
+        font-size: 13.5px;
+        line-height: 1.35;
+        margin: 0 0 5px;
     }
     .sommy-prod-carrusel .product-item .sommy-prod-pago {
         font-size: 11px;
         text-align: left;
-        padding: 0 10px;
-        margin-bottom: 3px !important;
+        padding: 0 12px;
+        margin-bottom: 6px !important;
     }
     .sommy-prod-carrusel .product-item .text-center.mb-2 {
         text-align: left;
-        padding: 0 10px;
-        margin-bottom: 4px;
+        padding: 0 12px;
+        margin-bottom: 10px;
+    }
+    .sommy-prod-carrusel .product-item .text-center.mb-2 .d-flex {
+        padding: 3px 0;
     }
     .sommy-prod-carrusel .product-item .fw-bold { font-size: 15px; }
     .sommy-prod-carrusel .product-item .badge {
@@ -2149,14 +2164,21 @@ a:not(.btn):hover { color: var(--sm-blue); }
         z-index: 2;
         white-space: nowrap;
     }
-    .sommy-prod-carrusel .product-item .div-button-cart { padding: 0 10px; }
+    .sommy-prod-carrusel .product-item .div-button-cart {
+        padding: 0 12px;
+        gap: 8px !important;
+    }
+    .sommy-prod-carrusel .product-item .btn-add-prod,
+    .sommy-prod-carrusel .product-item .btn-whatsapp-prod {
+        padding: 9px 12px;
+    }
 
     /* Flechas superpuestas sobre el carril (no ocupan lugar aparte) */
     .sommy-prod-carrusel-wrap { display: block; position: relative; }
     .sommy-prod-carrusel-arrow {
         display: flex;
         position: absolute;
-        top: 120px;
+        top: 135px;
         width: 30px;
         height: 30px;
         border: none;
