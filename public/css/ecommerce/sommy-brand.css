@@ -534,14 +534,14 @@ p { line-height: 1.7; }
 .sommy-banner-slide--full { min-height: 0; }
 @media (min-width: 769px) {
     /* Escritorio: el rectángulo del banner "sin texto" queda fijo en proporción
-       2200x900 (~2.44:1, la medida recomendada) sea cual sea el ancho de
-       pantalla — la imagen se recorta (cover) para llenarlo, en vez de
-       mostrarse completa a su proporción real. Así el banner siempre se ve
-       con ese mismo formato de rectángulo, consistente entre banners y
-       entre pantallas. */
+       2200x680 (~3.24:1, estilo Bausing — bien panorámico y bajo) sea cual
+       sea el ancho de pantalla — la imagen se recorta (cover) para llenarlo,
+       en vez de mostrarse completa a su proporción real. Así el banner
+       siempre se ve con ese mismo formato de rectángulo, consistente entre
+       banners y entre pantallas. */
     .sommy-banner-slide--full .sommy-banner-media {
         height: auto;
-        aspect-ratio: 2200 / 900;
+        aspect-ratio: 2200 / 680;
     }
     .sommy-banner-slide--full .sommy-banner-img {
         width: 100%;
