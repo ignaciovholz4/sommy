@@ -510,10 +510,7 @@ p { line-height: 1.7; }
     overflow: hidden;
 }
 /* Banner sin título/subtítulo/botón (el texto ya viene en la imagen): la
-   imagen ocupa todo el ancho en vez de dejar la mitad derecha en blanco.
-   Se muestra COMPLETA a su proporción real (nunca recortada) en vez de
-   "cover" dentro de una altura fija — cualquiera sea la medida que se
-   suba, entra entera. Vale para escritorio y mobile por igual. */
+   imagen ocupa todo el ancho en vez de dejar la mitad derecha en blanco. */
 .sommy-banner-slide--full .sommy-banner-media {
     flex-basis: 100%;
     max-width: 100%;
@@ -522,6 +519,23 @@ p { line-height: 1.7; }
 .sommy-banner-slide--full .sommy-banner-img {
     height: auto;
     object-fit: contain;
+}
+.sommy-banner-slide--full { min-height: 0; }
+@media (min-width: 769px) {
+    /* Escritorio: el rectángulo del banner "sin texto" queda fijo en proporción
+       2200x900 (22:9, la medida recomendada) sea cual sea el ancho de pantalla —
+       la imagen se recorta (cover) para llenarlo, en vez de mostrarse completa
+       a su proporción real. Así el banner siempre se ve con ese mismo formato
+       de rectángulo, consistente entre banners y entre pantallas. */
+    .sommy-banner-slide--full .sommy-banner-media {
+        height: auto;
+        aspect-ratio: 2200 / 900;
+    }
+    .sommy-banner-slide--full .sommy-banner-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 }
 /* Pisa una regla vieja y genérica de main_ecommerce.css (".carousel-item img
    { max-height: 520px }", pensada para otro carrusel del tema) que por compartir

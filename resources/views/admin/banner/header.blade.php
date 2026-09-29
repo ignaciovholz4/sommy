@@ -103,7 +103,7 @@
             </p>
             <hr>
             <div id="bloqueDesktop">
-              <span id="hintDesktop">Imagen horizontal, solo se ve en escritorio. Con texto al lado usá algo cercano a 1400px x 740px (se recorta para llenar ese rectángulo); sin texto (ocupa todo el ancho) cualquier proporción horizontal entra <strong>completa, sin recortar</strong> — la que ya venís usando (1725x912) anda bien.</span><br>
+              <span id="hintDesktop">Imagen horizontal, solo se ve en escritorio. Con texto al lado usá algo cercano a 1400px x 740px (se recorta para llenar ese rectángulo); sin texto (ocupa todo el ancho) usá <strong>2200 x 900px</strong> — el banner queda fijo en ese formato de rectángulo (se recorta para llenarlo si subís otra proporción).</span><br>
               <div class="input-group mb-3">
                 <input type="file" id="file" name="file" class="form-control" accept="image/*">
                 <div class="input-group-append">
