@@ -391,42 +391,60 @@
                             </div>
 
                             @if(($getProd[0]->combo_descuento_pct ?? 0) > 0)
-                            <div id="comboBuilder" class="mt-4" style="display:none;"
+                            <div id="comboBuilder" class="sommy-combo-card mt-4" style="display:none;"
                                  data-product-id="{{ $getProd[0]->idarticulo }}"
                                  data-discount="{{ $getProd[0]->combo_descuento_pct }}">
-                                <label class="form-label fw-bold">
-                                    Armá tu combo y ahorrá {{ rtrim(rtrim(number_format($getProd[0]->combo_descuento_pct, 2, ',', '.'), '0'), ',') }}%
-                                </label>
-                                <p class="text-muted small mb-2">Elegí qué sumar: el descuento se aplica sobre lo que agregues, no sobre este producto.</p>
-                                <div id="comboItemsList" class="d-flex flex-column gap-2 mb-2"></div>
-                                <div class="mb-2">
-                                    <div class="text-muted small" id="comboPrecioNormal" style="text-decoration:line-through;"></div>
-                                    <div class="fw-bold" style="font-size:1.1rem;color:#212529;" id="comboPrecioFinal"></div>
+                                <div class="sommy-combo-head">
+                                    <span class="sommy-combo-step">1</span>
+                                    <div>
+                                        <div class="sommy-combo-title">
+                                            Armá tu combo y ahorrá {{ rtrim(rtrim(number_format($getProd[0]->combo_descuento_pct, 2, ',', '.'), '0'), ',') }}%
+                                        </div>
+                                        <p class="sommy-combo-sub">Elegí qué sumar: el descuento se aplica sobre lo que agregues, no sobre este producto.</p>
+                                    </div>
                                 </div>
+                                <div id="comboItemsList" class="sommy-combo-items"></div>
+                                <div class="sommy-combo-total" id="comboTotalBox" style="display:none;">
+                                    <div class="sommy-combo-total-old" id="comboPrecioNormal"></div>
+                                    <div class="sommy-combo-total-final" id="comboPrecioFinal"></div>
+                                </div>
+                                <p class="sommy-combo-hint" id="comboHint">Todavía no sumaste nada del combo: el precio queda igual que arriba.</p>
                             </div>
                             @endif
 
                             @if($regalos->isNotEmpty())
-                            <div class="mt-4" id="regaloPicker">
-                                <label class="form-label fw-bold"><i class="fa-solid fa-gift text-danger me-1"></i> Sumá esto también</label>
-                                <div class="d-flex flex-column gap-2" style="max-width:420px;">
+                            <div class="sommy-combo-card mt-3" id="regaloPicker">
+                                <div class="sommy-combo-head">
+                                    <span class="sommy-combo-step"><i class="fa-solid fa-gift"></i></span>
+                                    <div>
+                                        <div class="sommy-combo-title">Sumá esto también</div>
+                                        <p class="sommy-combo-sub" id="regaloHint">
+                                            @if(($getProd[0]->combo_descuento_pct ?? 0) > 0)
+                                                Es gratis si además sumaste algo del combo de arriba; si no, se agrega a precio normal.
+                                            @else
+                                                Se agrega a precio normal junto con tu pedido.
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-column gap-2">
                                     @foreach($regalos as $regalo)
-                                    <label class="d-flex align-items-center gap-2 border rounded p-2" style="cursor:pointer;">
+                                    <label class="sommy-combo-item" style="cursor:pointer;">
                                         <input type="radio" name="regaloElegido" value="{{ $regalo->id }}" class="form-check-input mt-0"
                                                data-nombre="{{ $regalo->nombre }}" data-precio="{{ $regalo->precio }}"
                                                data-cantidad="{{ $regalo->cantidad }}"
                                                data-stock="{{ $regalo->stock }}" data-imagen="{{ $regalo->imagen_url }}"
                                                {{ $loop->first ? 'checked' : '' }}>
                                         @if($regalo->imagen_url)
-                                        <img src="{{ $regalo->imagen_url }}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
+                                        <img src="{{ $regalo->imagen_url }}" alt="" class="sommy-combo-item-thumb">
                                         @endif
-                                        <span class="flex-grow-1">{{ $regalo->nombre }}{{ $regalo->cantidad > 1 ? ' x' . $regalo->cantidad : '' }}</span>
+                                        <span class="sommy-combo-item-name">{{ $regalo->nombre }}{{ $regalo->cantidad > 1 ? ' x' . $regalo->cantidad : '' }}</span>
                                         <span class="badge bg-secondary regalo-precio-badge" data-precio-fmt="${{ number_format($regalo->precio, 2, ',', '.') }}">${{ number_format($regalo->precio, 2, ',', '.') }}</span>
                                     </label>
                                     @endforeach
-                                    <label class="d-flex align-items-center gap-2" style="cursor:pointer;">
+                                    <label class="sommy-combo-item sommy-combo-item--plain" style="cursor:pointer;">
                                         <input type="radio" name="regaloElegido" value="" class="form-check-input mt-0">
-                                        <span class="text-muted small">No quiero sumar nada más</span>
+                                        <span class="sommy-combo-item-name text-muted">No quiero sumar nada más</span>
                                     </label>
                                 </div>
                             </div>
@@ -513,6 +531,8 @@
         const itemsList = document.getElementById('comboItemsList');
         const precioNormalEl = document.getElementById('comboPrecioNormal');
         const precioFinalEl = document.getElementById('comboPrecioFinal');
+        const totalBox = document.getElementById('comboTotalBox');
+        const hintEl = document.getElementById('comboHint');
         const btnAdd = document.getElementById('btn-add-product');
         let comboProductos = [];
 
@@ -531,8 +551,9 @@
         function recalcularTotales() {
             const base = precioProductoActual();
             if (!base) {
-                precioNormalEl.textContent = '';
-                precioFinalEl.textContent = 'Elegí una medida para ver el precio del combo';
+                totalBox.style.display = 'none';
+                hintEl.style.display = '';
+                hintEl.textContent = 'Elegí una medida arriba para ver el precio del combo.';
                 return;
             }
 
@@ -553,10 +574,23 @@
                 }
             });
 
+            // Sin nada tildado el precio "con combo" es igual al normal: mostrar
+            // los dos montos iguales (uno tachado arriba del otro) confundía más
+            // de lo que aclaraba, así que en ese caso ocultamos el precio y
+            // dejamos solo la ayuda de abajo.
+            if (addons <= 0) {
+                totalBox.style.display = 'none';
+                hintEl.style.display = '';
+                hintEl.textContent = 'Todavía no sumaste nada del combo: el precio queda igual que arriba.';
+                return;
+            }
+
             const normal = anchor + addons;
             const final = Math.round((anchor + addons * (1 - descuentoPct / 100)) * 100) / 100;
             precioNormalEl.textContent = window.fnFormatMoney(normal);
             precioFinalEl.textContent = window.fnFormatMoney(final) + ' con el combo';
+            totalBox.style.display = '';
+            hintEl.style.display = 'none';
         }
 
         fetch(`/Ecommercerelacionados?ids=${productoId}`)
@@ -574,19 +608,19 @@
                     const tieneStock = p.tipo_producto_id === 1 ? p.stock > 0 : variantes.length > 0;
                     if (!tieneStock) return '';
 
-                    const thumb = p.imagen ? `<img src="${esc(p.imagen)}" alt="">` : '';
+                    const thumb = p.imagen ? `<img src="${esc(p.imagen)}" alt="" class="sommy-combo-item-thumb">` : '';
                     const selector = (p.tipo_producto_id === 2 && variantes.length > 0)
-                        ? `<select class="combo-variant-select form-control" data-product-id="${p.id}">
+                        ? `<select class="combo-variant-select form-select form-select-sm" data-product-id="${p.id}">
                              ${variantes.map(v => `<option value="${v.idcombinacion}">${esc(v.label)} — ${window.fnFormatMoney(v.precio)}</option>`).join('')}
                            </select>`
                         : `<div class="combo-item-price">${window.fnFormatMoney(p.precio)}</div>`;
 
                     return `
-                        <label class="combo-item">
+                        <label class="combo-item sommy-combo-item sommy-combo-item--addon">
                             <input type="checkbox" class="combo-item-check" data-product-id="${p.id}">
                             ${thumb}
                             <div class="combo-item-info">
-                                <div class="combo-item-name">${esc(p.nombre)}</div>
+                                <div class="sommy-combo-item-name">${esc(p.nombre)}</div>
                                 ${selector}
                             </div>
                         </label>
@@ -713,6 +747,15 @@
                     badge.className = 'badge bg-secondary regalo-precio-badge';
                 }
             });
+
+            // El texto de ayuda confirma por qué está gratis (o no), en vez de que
+            // el cliente tenga que adivinarlo mirando el badge de cada opción.
+            const hint = document.getElementById('regaloHint');
+            if (hint && comboItemsList) {
+                hint.textContent = esGratis
+                    ? '¡Buenísimo! Al sumar algo del combo de arriba, esto te sale gratis.'
+                    : 'Es gratis si además sumás algo del combo de arriba; si no, se agrega a precio normal.';
+            }
         }
 
         actualizarBadgesRegalo();

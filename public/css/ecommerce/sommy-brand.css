@@ -503,6 +503,17 @@ p { line-height: 1.7; }
     display: flex;
     align-items: stretch;
 }
+/* El banner "sin texto" no necesita el stretch de arriba (ahí solo hay un
+   hijo, la imagen, sin columna de texto al lado) y ese stretch es justo lo
+   que hacía que el alto quedara enorme/desproporcionado: al estirar la media
+   a una altura "auto" ambigua dentro de un flex row, el aspect-ratio de abajo
+   no terminaba de gobernar el alto real. Con flex-start, el alto de la media
+   lo define solo su propio aspect-ratio. */
+.sommy-banner-slide--full.active,
+.sommy-banner-slide--full.carousel-item-next,
+.sommy-banner-slide--full.carousel-item-prev {
+    align-items: flex-start;
+}
 .sommy-banner-media {
     flex: 0 0 54%;
     max-width: 54%;
@@ -2067,6 +2078,125 @@ a:not(.btn):hover { color: var(--sm-blue); }
 .name-product--combo {
     height: auto;
     overflow: visible;
+}
+
+/* ── Armador de combo en la ficha de producto ──────────────────
+   No tenía NINGÚN estilo propio (dependía del select/checkbox nativos
+   del navegador), por eso se veía deslucido y confuso comparado con el
+   resto de la ficha. */
+.sommy-combo-card {
+    background: #fff;
+    border: 1px solid var(--sm-border);
+    border-radius: 16px;
+    padding: 18px 20px;
+}
+.sommy-combo-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.sommy-combo-step {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--sm-navy);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+}
+.sommy-combo-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--sm-navy);
+}
+.sommy-combo-sub {
+    font-size: 12.5px;
+    color: var(--sm-text-3, #8A93AD);
+    margin: 3px 0 0;
+    line-height: 1.5;
+}
+.sommy-combo-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.sommy-combo-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1.5px solid var(--sm-border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    transition: border-color .15s, background .15s;
+}
+.sommy-combo-item:has(input:checked) {
+    border-color: var(--sm-navy);
+    background: #F4F7FB;
+}
+.sommy-combo-item input[type="checkbox"],
+.sommy-combo-item input[type="radio"] {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+.sommy-combo-item-thumb {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #F4F7FB;
+}
+.sommy-combo-item .combo-item-info { flex: 1; min-width: 0; }
+.sommy-combo-item-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--sm-navy);
+}
+.sommy-combo-item .combo-item-price {
+    font-weight: 700;
+    color: var(--sm-navy);
+    font-size: 13.5px;
+}
+.sommy-combo-item .combo-variant-select {
+    margin-top: 4px;
+    font-size: 12.5px;
+    max-width: 220px;
+}
+.sommy-combo-item .regalo-precio-badge {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+.sommy-combo-item--plain {
+    border: none;
+    padding: 4px 12px;
+}
+.sommy-combo-total {
+    padding-top: 10px;
+    border-top: 1px dashed var(--sm-border);
+}
+.sommy-combo-total-old {
+    font-size: 13px;
+    color: var(--sm-text-3, #8A93AD);
+    text-decoration: line-through;
+}
+.sommy-combo-total-final {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--sm-navy);
+}
+.sommy-combo-hint {
+    font-size: 12.5px;
+    color: var(--sm-text-3, #8A93AD);
+    margin: 0;
+    padding-top: 4px;
 }
 
 /* ── Carrusel de productos/combos en mobile (home) ─────────────
