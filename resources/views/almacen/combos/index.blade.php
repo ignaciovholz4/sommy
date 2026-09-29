@@ -24,6 +24,8 @@
                         <th>Descuento</th>
                         <th>Relacionados (con descuento)</th>
                         <th>Regalos (gratis)</th>
+                        <th>Precio de venta</th>
+                        <th>Ganancia</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>

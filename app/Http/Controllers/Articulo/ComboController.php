@@ -32,7 +32,7 @@ class ComboController extends Controller
         $combos = DB::table('productos as p')
             ->where('p.estado', 'Activo')
             ->where('p.combo_descuento_pct', '>', 0)
-            ->select('p.idarticulo', 'p.nombre', 'p.combo_descuento_pct')
+            ->select('p.idarticulo', 'p.nombre', 'p.combo_descuento_pct', 'p.tipo_producto_id', 'p.pventa_con_iva', 'p.pcompra_con_iva')
             ->orderBy('p.nombre')
             ->get()
             ->map(function ($c) {
@@ -57,14 +57,100 @@ class ComboController extends Controller
             ->addColumn('descuento_fmt', fn ($c) => rtrim(rtrim(number_format((float) $c->combo_descuento_pct, 2, ',', '.'), '0'), ',') . '%')
             ->addColumn('relacionados_fmt', fn ($c) => $c->relacionados !== '' ? $c->relacionados : '<span class="text-muted">—</span>')
             ->addColumn('regalos_fmt', fn ($c) => $c->regalos !== '' ? $c->regalos : '<span class="text-muted">—</span>')
+            ->addColumn('precio_venta_fmt', fn ($c) => $this->filaPorMedida($c, fn ($v) => '<strong>$' . number_format($v['venta'], 2, ',', '.') . '</strong>'))
+            ->addColumn('ganancia_fmt', fn ($c) => $this->filaPorMedida($c, function ($v) {
+                if ($v['costo'] <= 0) {
+                    return '<span class="text-muted">—</span>';
+                }
+                $pct = round(($v['ganancia'] / $v['costo']) * 100);
+                $color = $v['ganancia'] <= 0 ? '#B91C1C' : ($pct < 20 ? '#92400E' : '#15803D');
+                return '<strong style="color:' . $color . ';">$' . number_format($v['ganancia'], 2, ',', '.') . '</strong> '
+                    . '<span style="font-size:0.75rem;color:' . $color . ';">(' . ($pct > 0 ? '+' : '') . $pct . '%)</span>';
+            }))
             ->addColumn('action', function ($c) {
                 return '
                     <button class="btn btn-sm btn-primary" onclick="edit_combo(' . $c->idarticulo . ')" title="Editar"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-sm btn-danger" onclick="delete_combo(' . $c->idarticulo . ')" title="Eliminar"><i class="fas fa-trash"></i></button>
                 ';
             })
-            ->rawColumns(['relacionados_fmt', 'regalos_fmt', 'action'])
+            ->rawColumns(['relacionados_fmt', 'regalos_fmt', 'precio_venta_fmt', 'ganancia_fmt', 'action'])
             ->make(true);
+    }
+
+    /**
+     * Arma, para un combo, el precio de venta / costo / ganancia REAL por cada
+     * medida del ancla (igual formula que la vidriera de combos del ecommerce:
+     * precio = ancla + relacionados*(1-descuento); el costo NO se descuenta,
+     * y los regalos gratis se suman de punta a punta como costo puro porque
+     * se entregan sin cobrar). $render decide qué mostrar de cada fila.
+     */
+    private function filaPorMedida(object $c, \Closure $render): string
+    {
+        $descuento = (float) $c->combo_descuento_pct / 100;
+
+        $regaloIdsAncla = DB::table('producto_regalos')->where('idarticulo', $c->idarticulo)->pluck('regalo_id');
+        $relacionadosIds = DB::table('producto_relacionados')
+            ->where('idarticulo', $c->idarticulo)
+            ->whereNotIn('relacionado_id', $regaloIdsAncla)
+            ->pluck('relacionado_id');
+
+        $relacionados = Articulo::whereIn('idarticulo', $relacionadosIds)
+            ->where('estado', 'Activo')
+            ->with('combinaciones')
+            ->get();
+
+        $regalos = DB::table('producto_regalos as pr')
+            ->join('productos as p2', 'p2.idarticulo', '=', 'pr.regalo_id')
+            ->where('pr.idarticulo', $c->idarticulo)
+            ->select('p2.idarticulo', 'p2.pcompra_con_iva', 'pr.cantidad')
+            ->get();
+        $costoRegalos = $regalos->sum(fn ($r) => (float) $r->pcompra_con_iva * (int) $r->cantidad);
+
+        // Costo/precio de cada relacionado, matcheado por medida si es un
+        // producto con variantes (ej. la base sommier), si no a precio plano.
+        $sumarRelacionados = function (?string $anchorMedida) use ($relacionados) {
+            $venta = 0.0;
+            $costo = 0.0;
+            foreach ($relacionados as $rel) {
+                $variantes = $rel->combinaciones->where('pventa_variante', '>', 0);
+                if ($variantes->isNotEmpty() && $anchorMedida !== null) {
+                    $match = $variantes->first(fn ($v) => str_replace(',', '.', trim($v->combinacion)) === $anchorMedida) ?? $variantes->sortBy('pventa_variante')->first();
+                    $venta += (float) ($match->pventa_variante ?? 0);
+                    $costo += (float) ($match->pcompra_variante ?? 0);
+                } else {
+                    $venta += (float) $rel->pventa_con_iva;
+                    $costo += (float) $rel->pcompra_con_iva;
+                }
+            }
+            return [$venta, $costo];
+        };
+
+        $anchor = Articulo::with('combinaciones')->find($c->idarticulo);
+        $variantesAncla = $anchor ? $anchor->combinaciones->where('pventa_variante', '>', 0) : collect();
+
+        $filas = collect();
+        if ($variantesAncla->isNotEmpty()) {
+            foreach ($variantesAncla as $variante) {
+                $anchorMedida = str_replace(',', '.', trim(explode('x', $variante->combinacion)[0] ?? ''));
+                [$addonsVenta, $addonsCosto] = $sumarRelacionados($anchorMedida);
+
+                $venta = (float) $variante->pventa_variante + $addonsVenta * (1 - $descuento);
+                $costo = (float) $variante->pcompra_variante + $addonsCosto + $costoRegalos;
+
+                $filas->push(['medida' => trim($variante->combinacion), 'venta' => $venta, 'costo' => $costo, 'ganancia' => $venta - $costo]);
+            }
+        } else {
+            [$addonsVenta, $addonsCosto] = $sumarRelacionados(null);
+            $venta = (float) $c->pventa_con_iva + $addonsVenta * (1 - $descuento);
+            $costo = (float) $c->pcompra_con_iva + $addonsCosto + $costoRegalos;
+            $filas->push(['medida' => null, 'venta' => $venta, 'costo' => $costo, 'ganancia' => $venta - $costo]);
+        }
+
+        return $filas->map(function ($v) use ($render) {
+            $contenido = $render($v);
+            $prefijo = $v['medida'] ? '<span style="color:#94a3b8;">' . e($v['medida']) . ':</span> ' : '';
+            return '<div style="font-size:0.78rem;white-space:nowrap;">' . $prefijo . $contenido . '</div>';
+        })->implode('');
     }
 
     /**

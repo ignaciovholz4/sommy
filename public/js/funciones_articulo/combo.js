@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'descuento_fmt', name: 'combo_descuento_pct', searchable: false },
             { data: 'relacionados_fmt', name: 'relacionados', orderable: false },
             { data: 'regalos_fmt', name: 'regalos', orderable: false },
+            { data: 'precio_venta_fmt', name: 'precio_venta_fmt', orderable: false, searchable: false },
+            { data: 'ganancia_fmt', name: 'ganancia_fmt', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         order: [[0, 'asc']]
