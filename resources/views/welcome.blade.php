@@ -309,7 +309,6 @@
               </div>
               <a href="{{ route('ecommerce.combos') }}" class="ec-nav-link" style="font-size:13px;">Ver todos →</a>
             </div>
-            <p class="text-muted mb-4" data-aos="fade-up">Colchón + base sommier + almohadas: armando el combo te sale más barato que comprando todo por separado.</p>
             <div class="sommy-prod-carrusel">
               <div class="sommy-prod-carrusel-wrap">
                 <button type="button" class="sommy-prod-carrusel-arrow" onclick="moverProdCarrusel('combosTrack', -1)" aria-label="Anterior">
