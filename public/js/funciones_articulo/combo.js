@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
         serverSide: true,
         ajax: { url: '/showcombos', type: 'GET' },
         columns: [
+            { data: 'imagen_fmt', name: 'imagen_fmt', orderable: false, searchable: false },
             { data: 'nombre', name: 'nombre' },
             { data: 'descuento_fmt', name: 'combo_descuento_pct', searchable: false },
             { data: 'relacionados_fmt', name: 'relacionados', orderable: false },
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
             { data: 'ganancia_fmt', name: 'ganancia_fmt', orderable: false, searchable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
-        order: [[0, 'asc']]
+        order: [[1, 'asc']]
     });
     window.refreshComboTable = () => table.ajax.reload(null, false);
 
@@ -52,12 +53,149 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('btnAgregarRegaloRow').addEventListener('click', () => agregarRegaloRow(null, 1));
 
+    /* ---------- Imágenes del combo ----------
+       Van contra el producto ancla, así que se suben apenas hay un producto
+       elegido (no hace falta guardar el combo antes). La primera de la lista
+       es la que se muestra en la vidriera. */
+    const imagenesBox = document.getElementById('combo_imagenes_box');
+    const imagenesVacio = document.getElementById('combo_imagenes_vacio');
+    const imagenesGrid = document.getElementById('combo_imagenes_grid');
+    const imagenesInput = document.getElementById('combo_imagenes_input');
+    let imagenesCombo = [];
+
+    function productoActual() {
+        return $productoSelect.val();
+    }
+
+    function pintarImagenes() {
+        const hayProducto = !!productoActual();
+        imagenesBox.style.display = hayProducto ? '' : 'none';
+        imagenesVacio.style.display = hayProducto ? 'none' : '';
+
+        if (!hayProducto) {
+            imagenesGrid.innerHTML = '';
+            return;
+        }
+
+        if (!imagenesCombo.length) {
+            imagenesGrid.innerHTML = '<div class="text-muted small">Sin imágenes propias: el combo muestra la foto del producto.</div>';
+            return;
+        }
+
+        imagenesGrid.innerHTML = imagenesCombo.map((img, i) => `
+            <div class="combo-img-thumb" data-id="${img.id}">
+                ${i === 0 ? '<span class="combo-img-principal">Vidriera</span>' : ''}
+                <img src="${img.url}" alt="${img.alt || ''}">
+                <div class="combo-img-acciones">
+                    <button type="button" class="combo-img-mover" data-dir="-1" ${i === 0 ? 'disabled' : ''} title="Mover a la izquierda"><i class="fas fa-arrow-left"></i></button>
+                    <button type="button" class="combo-img-borrar" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    <button type="button" class="combo-img-mover" data-dir="1" ${i === imagenesCombo.length - 1 ? 'disabled' : ''} title="Mover a la derecha"><i class="fas fa-arrow-right"></i></button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function cargarImagenes(productoId) {
+        imagenesCombo = [];
+        pintarImagenes();
+        if (!productoId) return;
+
+        $.get('/combo-imagenes/' + productoId, function (data) {
+            imagenesCombo = data.imagenes || [];
+            pintarImagenes();
+        });
+    }
+
+    $productoSelect.on('change', function () {
+        cargarImagenes(productoActual());
+    });
+
+    document.getElementById('btnSubirComboImagenes').addEventListener('click', function () {
+        const productoId = productoActual();
+        if (!productoId) {
+            toastr.error('Elegí primero el producto principal');
+            return;
+        }
+        if (!imagenesInput.files.length) {
+            toastr.error('Elegí al menos una imagen');
+            return;
+        }
+
+        const form = new FormData();
+        Array.from(imagenesInput.files).forEach(f => form.append('imagenes[]', f));
+
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = 'Subiendo...';
+
+        fetch('/combo-imagenes/' + productoId, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
+            body: form
+        })
+            .then(res => res.json().then(data => ({ status: res.status, data })))
+            .then(({ status, data }) => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-upload"></i> Subir';
+                if (status === 422) {
+                    toastr.error(Object.values(data.errors || {}).flat().join(' '));
+                    return;
+                }
+                imagenesInput.value = '';
+                imagenesCombo = data.imagenes || [];
+                pintarImagenes();
+                toastr.success(data.mensaje || 'Imágenes subidas');
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-upload"></i> Subir';
+                toastr.error('No se pudieron subir las imágenes');
+            });
+    });
+
+    imagenesGrid.addEventListener('click', function (e) {
+        const thumb = e.target.closest('.combo-img-thumb');
+        if (!thumb) return;
+        const id = Number(thumb.dataset.id);
+
+        if (e.target.closest('.combo-img-borrar')) {
+            $.post('/combo-imagen-eliminar', { id: id }, function (data) {
+                imagenesCombo = data.imagenes || [];
+                pintarImagenes();
+                toastr.success(data.mensaje);
+            });
+            return;
+        }
+
+        const mover = e.target.closest('.combo-img-mover');
+        if (!mover) return;
+
+        const dir = Number(mover.dataset.dir);
+        const i = imagenesCombo.findIndex(img => Number(img.id) === id);
+        const j = i + dir;
+        if (i < 0 || j < 0 || j >= imagenesCombo.length) return;
+
+        [imagenesCombo[i], imagenesCombo[j]] = [imagenesCombo[j], imagenesCombo[i]];
+        pintarImagenes();
+
+        $.post('/combo-imagenes-orden', {
+            producto_id: productoActual(),
+            ids: imagenesCombo.map(img => img.id)
+        }, function (data) {
+            imagenesCombo = data.imagenes || imagenesCombo;
+            pintarImagenes();
+        });
+    });
+
     function resetForm() {
         document.getElementById('form_combo').reset();
         document.getElementById('combo_id_original').value = '';
         $productoSelect.val(null).trigger('change');
         $relacionadosSelect.val(null).trigger('change');
         regalosRows.innerHTML = '';
+        imagenesCombo = [];
+        if (imagenesInput) imagenesInput.value = '';
+        pintarImagenes();
         $('.print-save-error-msg').hide();
     }
 
@@ -76,6 +214,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('combo_descuento_pct').value = data.combo_descuento_pct;
             $relacionadosSelect.val((data.relacionados || []).map(String)).trigger('change');
             (data.regalos || []).forEach(r => agregarRegaloRow(r.regalo_id, r.cantidad));
+            imagenesCombo = data.imagenes || [];
+            pintarImagenes();
             modal.show();
         });
     };

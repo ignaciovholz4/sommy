@@ -8,9 +8,15 @@
       </span>
     @endif
 
+    {{-- Si el combo tiene foto propia (producto armado con base y almohadas) va esa,
+         y entera: son piezas diseñadas con texto, recortarlas las arruina. --}}
     <figure>
       <a href="{{ url('producto/' . $combo->producto->slug) }}" title="{{ $combo->producto->nombre }}">
-        <img src="{{asset('imagenes/articulos/'.$combo->producto->imagen )}}" class="tab-image">
+        @if(!empty($combo->imagen_combo))
+          <img src="{{ asset($combo->imagen_combo) }}" alt="{{ $combo->imagen_combo_alt ?? $combo->producto->nombre }}" class="tab-image tab-image--combo">
+        @else
+          <img src="{{asset('imagenes/articulos/'.$combo->producto->imagen )}}" class="tab-image">
+        @endif
       </a>
     </figure>
     @php

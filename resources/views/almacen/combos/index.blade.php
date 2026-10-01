@@ -2,6 +2,56 @@
 @section('contenido')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
+<style>
+    .combo-img-thumb {
+        position: relative;
+        width: 110px;
+        height: 110px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
+        overflow: hidden;
+    }
+    .combo-img-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    .combo-img-thumb .combo-img-acciones {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: space-between;
+        background: rgba(15, 23, 42, 0.72);
+    }
+    .combo-img-thumb .combo-img-acciones button {
+        border: 0;
+        background: transparent;
+        color: #fff;
+        font-size: 11px;
+        line-height: 1;
+        padding: 5px 7px;
+        cursor: pointer;
+    }
+    .combo-img-thumb .combo-img-acciones button[disabled] {
+        opacity: 0.35;
+        cursor: default;
+    }
+    .combo-img-thumb .combo-img-principal {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        background: #16a34a;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        border-radius: 4px;
+        padding: 2px 5px;
+    }
+</style>
+
 <section class="margindivsection">
     <div class="d-flex align-items-center justify-content-between flex-wrap">
         <h4 class="mb-0">Combos</h4>
@@ -20,6 +70,7 @@
             <table id="combo_table" class="table table-striped" style="width:100%">
                 <thead>
                     <tr>
+                        <th>Imagen</th>
                         <th>Producto</th>
                         <th>Descuento</th>
                         <th>Relacionados (con descuento)</th>
@@ -72,6 +123,30 @@
                                 <option value="{{ $p->idarticulo }}">{{ $p->nombre }}</option>
                             @endforeach
                         </select>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-group">
+                        <label>
+                            <i class="fa-solid fa-images text-primary me-1"></i> Imágenes del combo
+                            <small class="text-muted">(la primera es la que se ve en la vidriera de combos, en lugar de la foto del producto suelto)</small>
+                        </label>
+
+                        <div id="combo_imagenes_vacio" class="text-muted small mb-2">
+                            Elegí primero el producto principal para poder subir imágenes.
+                        </div>
+
+                        <div id="combo_imagenes_box" style="display:none;">
+                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                <input type="file" id="combo_imagenes_input" class="form-control" accept="image/*" multiple style="max-width:320px;">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnSubirComboImagenes">
+                                    <i class="fas fa-upload"></i> Subir
+                                </button>
+                                <span class="text-muted small">JPG, PNG o WEBP, hasta 8 MB cada una.</span>
+                            </div>
+                            <div id="combo_imagenes_grid" class="d-flex flex-wrap gap-2"></div>
+                        </div>
                     </div>
 
                     <hr>

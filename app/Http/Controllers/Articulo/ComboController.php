@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Articulo;
 
 use App\Http\Controllers\Controller;
 use App\Models\Articulo;
+use App\Models\ComboImagen;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Yajra\Datatables\Datatables;
 
 /**
@@ -50,10 +52,19 @@ class ComboController extends Controller
                     ->map(fn ($r) => $r->nombre . ((int) $r->cantidad > 1 ? " x{$r->cantidad}" : ''))
                     ->implode(', ');
 
+                $c->imagen_combo = DB::table('combo_imagenes')
+                    ->where('producto_id', $c->idarticulo)
+                    ->orderBy('orden')
+                    ->orderBy('id')
+                    ->value('path');
+
                 return $c;
             });
 
         return Datatables::of($combos)
+            ->addColumn('imagen_fmt', fn ($c) => $c->imagen_combo
+                ? '<img src="' . asset($c->imagen_combo) . '" style="width:56px;height:56px;object-fit:contain;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;">'
+                : '<span class="text-muted" style="font-size:0.75rem;">foto del producto</span>')
             ->addColumn('descuento_fmt', fn ($c) => rtrim(rtrim(number_format((float) $c->combo_descuento_pct, 2, ',', '.'), '0'), ',') . '%')
             ->addColumn('relacionados_fmt', fn ($c) => $c->relacionados !== '' ? $c->relacionados : '<span class="text-muted">—</span>')
             ->addColumn('regalos_fmt', fn ($c) => $c->regalos !== '' ? $c->regalos : '<span class="text-muted">—</span>')
@@ -73,7 +84,7 @@ class ComboController extends Controller
                     <button class="btn btn-sm btn-danger" onclick="delete_combo(' . $c->idarticulo . ')" title="Eliminar"><i class="fas fa-trash"></i></button>
                 ';
             })
-            ->rawColumns(['relacionados_fmt', 'regalos_fmt', 'precio_venta_fmt', 'ganancia_fmt', 'action'])
+            ->rawColumns(['imagen_fmt', 'relacionados_fmt', 'regalos_fmt', 'precio_venta_fmt', 'ganancia_fmt', 'action'])
             ->make(true);
     }
 
@@ -169,7 +180,124 @@ class ComboController extends Controller
             'combo_descuento_pct' => (float) $producto->combo_descuento_pct,
             'relacionados'        => $relacionados,
             'regalos'             => $regalos,
+            'imagenes'            => $this->galeriaCombo((int) $id),
         ]);
+    }
+
+    /**
+     * Galería del combo (la primera es la que se ve en la vidriera).
+     */
+    public function imagenes($id)
+    {
+        return response()->json(['imagenes' => $this->galeriaCombo((int) $id)]);
+    }
+
+    /**
+     * Sube una o varias imágenes a la galería del combo. Se guardan en
+     * public/imagenes/combos/articulo-{id}/ con nombre hasheado, igual que la
+     * galería de productos.
+     */
+    public function subirImagenes(Request $request, $id)
+    {
+        $request->validate([
+            'imagenes'   => 'required|array',
+            'imagenes.*' => 'image|mimes:jpg,jpeg,png,webp|max:8192',
+        ]);
+
+        $producto = Articulo::findOrFail($id);
+        $productoId = (int) $producto->idarticulo;
+
+        $dir = public_path('imagenes/combos/articulo-' . $productoId);
+        if (!File::isDirectory($dir)) {
+            File::makeDirectory($dir, 0755, true);
+        }
+
+        $orden = (int) ComboImagen::where('producto_id', $productoId)->max('orden');
+
+        foreach ($request->file('imagenes') as $file) {
+            if (!$file || !$file->isValid()) {
+                continue;
+            }
+
+            $nombre = hash('crc32b', uniqid('', true)) . time() . '.' . strtolower($file->getClientOriginalExtension());
+            $file->move($dir, $nombre);
+
+            ComboImagen::create([
+                'producto_id' => $productoId,
+                'path'        => 'imagenes/combos/articulo-' . $productoId . '/' . $nombre,
+                'orden'       => ++$orden,
+                'alt'         => 'Combo ' . $producto->nombre,
+            ]);
+        }
+
+        return response()->json([
+            'estado'   => 1,
+            'mensaje'  => 'Imágenes subidas',
+            'imagenes' => $this->galeriaCombo($productoId),
+        ]);
+    }
+
+    /**
+     * Borra una imagen del combo (fila + archivo físico).
+     */
+    public function eliminarImagen(Request $request)
+    {
+        $imagen = ComboImagen::findOrFail((int) $request->input('id'));
+        $productoId = (int) $imagen->producto_id;
+
+        if (File::exists(public_path($imagen->path))) {
+            File::delete(public_path($imagen->path));
+        }
+        $imagen->delete();
+
+        return response()->json([
+            'estado'   => 1,
+            'mensaje'  => 'Imagen eliminada',
+            'imagenes' => $this->galeriaCombo($productoId),
+        ]);
+    }
+
+    /**
+     * Reordena la galería: recibe los ids en el orden deseado; el primero es
+     * el que queda como imagen del combo en la vidriera.
+     */
+    public function ordenarImagenes(Request $request)
+    {
+        $validado = $request->validate([
+            'producto_id' => 'required|integer|exists:productos,idarticulo',
+            'ids'         => 'required|array',
+            'ids.*'       => 'integer',
+        ]);
+
+        $productoId = (int) $validado['producto_id'];
+
+        DB::transaction(function () use ($validado, $productoId) {
+            foreach (array_values($validado['ids']) as $posicion => $imagenId) {
+                ComboImagen::where('producto_id', $productoId)
+                    ->where('id', (int) $imagenId)
+                    ->update(['orden' => $posicion]);
+            }
+        });
+
+        return response()->json([
+            'estado'   => 1,
+            'mensaje'  => 'Orden actualizado',
+            'imagenes' => $this->galeriaCombo($productoId),
+        ]);
+    }
+
+    private function galeriaCombo(int $productoId): array
+    {
+        return ComboImagen::where('producto_id', $productoId)
+            ->orderBy('orden')
+            ->orderBy('id')
+            ->get(['id', 'path', 'alt'])
+            ->map(fn ($img) => [
+                'id'  => $img->id,
+                'url' => asset($img->path),
+                'alt' => $img->alt,
+            ])
+            ->all();
     }
 
     public function store(Request $request)

@@ -365,6 +365,10 @@ Route::get('showcombos', 'Articulo\ComboController@data')->name('combos.data')->
 Route::get('combo-list/{id}', 'Articulo\ComboController@edit')->name('combos.edit')->middleware(['auth','verified']);
 Route::post('savecombo', 'Articulo\ComboController@store')->name('combos.store')->middleware(['auth','verified']);
 Route::post('deletecombo', 'Articulo\ComboController@destroy')->name('combos.destroy')->middleware(['auth','verified']);
+Route::get('combo-imagenes/{id}', 'Articulo\ComboController@imagenes')->name('combos.imagenes')->middleware(['auth','verified']);
+Route::post('combo-imagenes/{id}', 'Articulo\ComboController@subirImagenes')->name('combos.imagenes.store')->middleware(['auth','verified']);
+Route::post('combo-imagen-eliminar', 'Articulo\ComboController@eliminarImagen')->name('combos.imagenes.destroy')->middleware(['auth','verified']);
+Route::post('combo-imagenes-orden', 'Articulo\ComboController@ordenarImagenes')->name('combos.imagenes.orden')->middleware(['auth','verified']);
 
 
 /** RUTAS DE SUCURSAL */

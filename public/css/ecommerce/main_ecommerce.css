@@ -178,6 +178,13 @@ img { max-width: 100%; }
     transform: scale(1.05);
 }
 
+/* Foto propia del combo: es una pieza diseñada (colchón + base + almohadas,
+   con nombre y specs), así que se muestra completa en vez de recortada. */
+.product-item figure .tab-image--combo {
+    object-fit: contain;
+    background: #ffffff;
+}
+
 .product-item h3 {
     font-size: 14px;
     font-weight: 600;

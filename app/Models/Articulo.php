@@ -151,6 +151,13 @@ class Articulo extends Model
         return $this->hasMany(ProductoImagen::class, 'producto_id', 'idarticulo')->orderBy('orden');
     }
 
+    // Galería propia del combo que arma este producto (vidriera de combos),
+    // separada de la galería del producto suelto.
+    public function comboImagenes()
+    {
+        return $this->hasMany(ComboImagen::class, 'producto_id', 'idarticulo')->orderBy('orden')->orderBy('id');
+    }
+
     // Productos que se recomiendan junto a este (carrito, ficha de producto)
     public function relacionados()
     {

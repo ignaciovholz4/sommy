@@ -134,7 +134,7 @@ class EcommerceController extends Controller
         return \App\Models\Articulo::where('estado', 'Activo')
             ->where('tipo_producto_id', 2)
             ->where('combo_descuento_pct', '>', 0)
-            ->with('combinaciones')
+            ->with(['combinaciones', 'comboImagenes'])
             ->get()
             ->map(function ($anchor) {
                 $variantesAncla = $anchor->combinaciones->where('pventa_variante', '>', 0);
@@ -246,8 +246,15 @@ class EcommerceController extends Controller
                 // 2 plazas si está disponible, si no la más barata.
                 $refEntry = $variantesCombo->firstWhere('medida', '1,40 x 1,90') ?? $variantesCombo->first();
 
+                // Foto propia del combo (producto armado con base y almohadas),
+                // si la cargaron desde el panel. Si no hay, la card cae a la
+                // imagen del producto suelto.
+                $imagenCombo = $anchor->comboImagenes->first();
+
                 return (object) [
                     'producto'         => $anchor,
+                    'imagen_combo'     => $imagenCombo ? $imagenCombo->path : null,
+                    'imagen_combo_alt' => $imagenCombo ? $imagenCombo->alt : null,
                     'medida'           => $refEntry->medida,
                     'plaza'            => $refEntry->plaza,
                     'incluye'          => $incluyeMasCompleto,
